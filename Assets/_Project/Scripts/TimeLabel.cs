@@ -24,8 +24,8 @@ namespace TekCan
             _cam = cameraTransform;
             _text = gameObject.AddComponent<TextMesh>();
             _text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (_text.font != null)
-                GetComponent<MeshRenderer>().sharedMaterial = _text.font.material;
+            var mr = GetComponent<MeshRenderer>();
+            if (_text.font != null && mr != null) mr.sharedMaterial = _text.font.material;
             _text.fontSize = 64;
             _text.characterSize = 0.06f;
             _text.anchor = TextAnchor.LowerCenter;

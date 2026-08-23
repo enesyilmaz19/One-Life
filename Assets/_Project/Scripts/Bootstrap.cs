@@ -14,6 +14,8 @@ namespace TekCan
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Build()
         {
+            ResetStatics();
+
             var t = Resources.Load<Tuning>("Tuning");
             if (t == null)
             {
@@ -80,6 +82,18 @@ namespace TekCan
             }
 
             Debug.Log($"[Tek Can] Faz 1 arena hazır — {t.enemyCount} düşman, {t.startSeconds:0}s saat.");
+        }
+
+        /// <summary>
+        /// "Enter Play Mode Options" açıkken domain reload olmaz ve statikler iki Play
+        /// arasında yaşar — Enemy.All ölü kayıtlarla dolar, hit-stop kilitli kalır.
+        /// His ayarı yaparken Play'e sık basılacağı için o seçenek büyük ihtimalle açılacak.
+        /// </summary>
+        static void ResetStatics()
+        {
+            Enemy.All.Clear();
+            HitStop.Reset();
+            Time.timeScale = 1f;
         }
 
         static void SpawnEnemy(Tuning t, Vector3 pos, Transform player, Transform cam)

@@ -11,6 +11,13 @@ namespace TekCan
 
         public static void Init(HitStop runner) => _runner = runner;
 
+        /// <summary>Play oturumları arası statik kalıntıyı temizler (bkz. Bootstrap.ResetStatics).</summary>
+        public static void Reset()
+        {
+            _runner = null;
+            _until = 0f;
+        }
+
         public static void Freeze(float seconds)
         {
             if (_runner == null || seconds <= 0f) return;

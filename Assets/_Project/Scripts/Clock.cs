@@ -38,13 +38,16 @@ namespace TekCan
 
             InCombat = AnyLivingEnemyNear();
             Seconds -= (InCombat ? _t.drainInCombat : _t.drainOutOfCombat) * Time.deltaTime;
+            CheckDeath();
+        }
 
-            if (Seconds <= 0f)
-            {
-                Seconds = 0f;
-                Dead = true;
-                OnDeath?.Invoke();
-            }
+        /// <summary>Saatin sıfıra inmesinin tek çıkışı. Akış da harcama da buradan geçer.</summary>
+        void CheckDeath()
+        {
+            if (Dead || Seconds > 0f) return;
+            Seconds = 0f;
+            Dead = true;
+            OnDeath?.Invoke();
         }
 
         /// <summary>Hasat: hasar verdikçe sürekli kazanç. Öldürünce toplu ödeme yoktur.</summary>
@@ -59,12 +62,7 @@ namespace TekCan
         {
             if (Dead) return;
             Seconds -= Mathf.Max(0f, seconds);
-            if (Seconds <= 0f)
-            {
-                Seconds = 0f;
-                Dead = true;
-                OnDeath?.Invoke();
-            }
+            CheckDeath();
         }
 
         /// <summary>Faz 2: saniyeyle satın alınan hasat yükseltmesi. Tavan aşılamaz.</summary>
