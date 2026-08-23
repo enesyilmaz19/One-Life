@@ -65,6 +65,47 @@ Ayrıca risk sırası da bunu söylüyor: bu projenin en büyük batma riski **d
 
 ---
 
+## Dövüş — düşman canı ve zaman hasadı ✅ (2026-08-23, Enes)
+
+**Çekirdek soru** (oyunun dakikada onlarca kez sorduğu şey): *Hangi düşmana zaman harcayacağım?*
+
+**Düşman canı:** İçeride **düz can** (hit point havuzu — basit, ayarlanabilir, tuhaf etkileşim yok). Dışarıda **zaman olarak gösterilir**: düşmanın üstünde geri sayan bir sayı, "bu bedende kaç saniye kaldı" der. Sıfır → ölür.
+
+**Zaman hasadı:** Öldürünce toplu ödeme **yok**. Hasar verdikçe **sürekli** zaman çalınır (can çalma gibi, ama zaman). Her vuruş anında ödüyor.
+
+**Neden toplu ödemeden iyi:**
+- Her vuruş geri bildirim veriyor → dövüş hissi çok daha sıkı
+- Toplu ödemede kalın düşmana girmek uzun bir kuraklık olurdu (saat sadece inerdi) → oyuncu tank düşmandan kaçardı. Sürekli hasatta girmek anında ödüyor.
+- **"Hızlı öldürme daha çok verir" mekaniğini bedavaya içeriyor:** saat sabit hızda inerken hasat DPS'e bağlı olduğu için hızlı öldürmek zaten matematiksel olarak daha kârlı. Ayrı bir sistem yazmaya gerek yok.
+
+**Açtığı silah ekseni:** hasar başına çalınan zaman **silaha göre değişebilir**. "Az hasar verir ama hasar başına çok zaman çalar" ile "çok vurur az çalar" iki farklı oyun tarzı — DPS eşit olsa bile. Silah tasarımının ana kadranlarından biri bu.
+
+> ⚠️ **OYUNUN EN KRİTİK SAYISI: hasar başına çalınan zaman oranı.**
+> Çok yüksekse dövüş kendi kendini besler, saat anlamsızlaşır, oyun biter. Çok düşükse her kavga net kayıptır, oyuncu kaçmaya başlar — ki tasarımın tam tersi.
+> **Hedef denge: temiz kavga net pozitif, dağınık kavga net negatif.** Bütün oyun bu tek orana asılı. Faz 2'de deterministik simülasyonla taranacak.
+
+**Özel düşmanlar:** bazılarının özel zaman etkileri olacak (saati hızlandıran, vurunca zaman çalan, öldürücü darbede toplu ödeyen, kaçıp zamanını götüren...). Meta ilerleme olmadığı için **koşu içi çeşitliliğin ana kaynağı burası.**
+
+**Bosslar:** ayrı kural. Daha özel, zamanla ilişkili mekanikler (faz geçişi oyuncunun saatine bağlı, büyük saldırı zaman çalar, süre kapısı vb.). Faz 4+ konusu.
+
+### Savunma
+
+| Karar | Sebep |
+|---|---|
+| **Blok yok** | Blok = köşede bekleme = tasarım ölür |
+| **Savunma = dash + i-frame** | Hareket temelli, oyuncuyu kavganın içinde tutar |
+| **Saldırılar kısa, dash ile iptal edilebilir** | Uzun taahhüt saldırganlığı cezalandırır |
+| **Dövüş dışında saat daha hızlı iner** | Kaçmak ve beklemek açıkça cezalandırılır |
+| **Parry Faz 1'de YOK** | İleride eklenecek. Eklenirse **saniye geri vermeli**, yoksa "bekle ve savuştur" tasarımı bozar |
+
+### Gösterge — sayı, parlaklık değil ✅
+
+Parlaklık fikri reddedildi (Enes: saçma kaçar). Düşmanın üstünde **geri sayan sayı** olacak, saniye biriminde.
+
+⚠️ **Ama iki tür sayıyı ayırmak şart:**
+- **Kalıcı sayı** (düşmanda kalan süre) → var, tek, sakin tipografi, ölçülü
+- **Uçuşan hasar sayıları** → **YOK.** Ekranı rakam çorbasına çeviren şey bu; "mobil/tarayıcı oyunu" görüntüsü buradan gelir
+
 ## Riskler
 
 | Risk | Not |

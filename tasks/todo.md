@@ -23,11 +23,14 @@
 > Can barı **yazılmayacak** — yerine 20 satırlık taslak saat, ki dövüş baştan doğru baskı altında tasarlansın.
 
 - [ ] İzometrik kamera kurulumu (açı, mesafe, takip)
-- [ ] Hareket + dash (his burada başlar)
-- [ ] `Clock` taslağı — azalır, darbe düşürür, öldürme yükseltir. **Dengesiz, ayarsız, sadece var**
-- [ ] Temel saldırı: hit-stop, ekran sarsıntısı, vuruş VFX'i
-- [ ] Tek düşman tipi + saldırgan oynamayı ödüllendiren basit yapay zekâ
+- [ ] Hareket + dash + i-frame (his burada başlar)
+- [ ] `Clock` taslağı — azalır, darbe düşürür. **Dengesiz, ayarsız, sadece var**
+- [ ] Temel saldırı: kısa, dash ile iptal edilebilir, hit-stop + ekran sarsıntısı + VFX
+- [ ] Düşman: düz can havuzu, üstünde **geri sayan saniye sayısı** (uçuşan hasar sayısı YOK)
+- [ ] **Zaman hasadı** — hasar verdikçe sürekli zaman çalma (oranı ayarlanabilir alan)
+- [ ] Tek düşman tipi + saldırgan oynamayı ödüllendiren basit YZ (state machine, ECS yok)
 - [ ] Test sahnesi: greybox arena, 5 düşman
+- [ ] Bütün his değerleri Inspector'da ayarlanabilir olacak — sayıları sohbette değil playtest'te bulacağız
 - [ ] 🎮 **PLAYTEST KAPISI — Enes oynar, his onaylanmadan Faz 2 başlamaz**
 
 ## Faz 2 — Saat ekonomisi
