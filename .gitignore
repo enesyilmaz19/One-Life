@@ -46,3 +46,8 @@ import.log
 
 # Crashlytics
 crashlytics-build.properties
+
+# graphify ciktisi (yeniden uretilebilir)
+Assets/_Project/Scripts/graphify-out/
+build.log
+check.log

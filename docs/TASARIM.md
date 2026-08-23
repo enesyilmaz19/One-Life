@@ -39,6 +39,8 @@ Altın yok. Ruh yok. Ayrı para birimi yok. Tek sayı oyunun tamamını çevirir
 
 ## Açık kararlar
 
+- [ ] ⚠️ **HİKÂYE — kapsam değişikliği.** 2026-08-24'te Enes "hikâye olacağı için haritayı ileride konuşuruz" dedi. Ama bu belge "hikâye yükü yok, özgünlük mekanikte" varsayımıyla ve **3-4 ay** tahminiyle kuruldu. Hikâye eklenirse: ① süre uzar ② Kaos'un ayırt edici özelliği hikâyeydi, iki oyun birbirine yaklaşır. **Faz 4 (harita/koşu yapısı) başlamadan netleşmeli** — Faz 1-3 dövüş odaklı olduğu için hikâyeden bağımsız, engel değil.
+- [ ] Harita / bölge tasarımı — hikâye kararından sonra
 - [ ] Nihai silah seti (tohumlar `../../FIKIR_DEFTERI.md` içinde, nihai değil)
 - [ ] Koşu uzunluğu hedefi
 - [ ] Oda/bölüm yapısı: elle tasarım mı, prosedürel mi, karma mı
@@ -70,6 +72,21 @@ Ayrıca risk sırası da bunu söylüyor: bu projenin en büyük batma riski **d
 **Çekirdek soru** (oyunun dakikada onlarca kez sorduğu şey): *Hangi düşmana zaman harcayacağım?*
 
 **Düşman canı:** İçeride **düz can** (hit point havuzu — basit, ayarlanabilir, tuhaf etkileşim yok). Dışarıda **zaman olarak gösterilir**: düşmanın üstünde geri sayan bir sayı, "bu bedende kaç saniye kaldı" der. Sıfır → ölür.
+
+**Düşman zamanı kendi kendine de akar** (yavaşça). Süresi dolan düşman **ölmez** — durum değiştirir:
+
+| Durum | Tehlike | Canı | Ödemesi |
+|---|---|---|---|
+| **Dolu** (süresi var) | **Yüksek** — hızlı, agresif, acıtır | Zaman havuzu | Hasat eder |
+| **Boş** (süresi bitti) | **Düşük** — yavaşlar, zayıflar | **Tek atımlık** | **Hiç** |
+
+**Neden AFK sömürüsü değil:** beklemek her zaman baskın olarak kötü. Kendi saatin akar, karşılığında sıfır hasat alırsın. Düşmanları bedavaya temizlersin ama o temizlik sana hiçbir şey kazandırmaz — cebin boş, saatin yanmış.
+
+**Neden bu "hep tehlikeli kalsın"dan iyi:** boşalıp hâlâ ölümcül kalan düşman saf ceza olurdu — hata yapan oyuncuyu kazanılamaz bir duruma sokar. Bu haliyle ceza **ekonomik**, ölümcül değil: odayı batırırsan koşuyu kaybetmezsin, **fakir çıkarsın.** Roguelite'ta doğru ceza budur.
+
+**Kasıtlı kaçış vanası:** kazanamayacağı bir odada oyuncu kaçınıp düşmanların boşalmasını bekleyebilir, sonra tek vuruşla temizler. Bu sömürü değil, **bilinçli bir seçenek** — hayatta kalırsın ama zararına. Beceri kararı: şimdi dövüşüp kâr et, ya da hayatta kal ve zararı ye.
+
+**Okunabilirlik:** boş düşman tek vuruşta ölüyor → oyuncu durum değişimini anında anlıyor, açıklamaya gerek kalmıyor.
 
 **Zaman hasadı:** Öldürünce toplu ödeme **yok**. Hasar verdikçe **sürekli** zaman çalınır (can çalma gibi, ama zaman). Her vuruş anında ödüyor.
 

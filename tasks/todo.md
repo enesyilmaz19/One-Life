@@ -13,24 +13,24 @@
 - [x] Git deposu + Unity `.gitignore` + ilk commit
 - [x] Klasör iskeleti: `Assets/_Project/{Scripts,Art,Prefabs,Scenes}`
 - [x] Proje `CLAUDE.md`'si
-- [ ] graphify — **kod yazılınca kurulacak.** Boş projede graph üretmek anlamsız; Faz 1 sonunda `graphify update Assets/_Project/Scripts` ile kurulur
+- [x] graphify kuruldu — `Assets/_Project/Scripts/graphify-out/` (78 düğüm, 108 kenar, 10 topluluk)
 
 ---
 
-## Faz 1 — Dövüş hissi ⬅️ **SIRADAKİ**
+## Faz 1 — Dövüş hissi ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
 
 > Hedef: **vurmak iyi hissettirsin.** Enes'in 2. Steam kriteri burada kazanılır ya da kaybedilir.
 > Can barı **yazılmayacak** — yerine 20 satırlık taslak saat, ki dövüş baştan doğru baskı altında tasarlansın.
 
-- [ ] İzometrik kamera kurulumu (açı, mesafe, takip)
-- [ ] Hareket + dash + i-frame (his burada başlar)
-- [ ] `Clock` taslağı — azalır, darbe düşürür. **Dengesiz, ayarsız, sadece var**
-- [ ] Temel saldırı: kısa, dash ile iptal edilebilir, hit-stop + ekran sarsıntısı + VFX
-- [ ] Düşman: düz can havuzu, üstünde **geri sayan saniye sayısı** (uçuşan hasar sayısı YOK)
-- [ ] **Zaman hasadı** — hasar verdikçe sürekli zaman çalma (oranı ayarlanabilir alan)
-- [ ] Tek düşman tipi + saldırgan oynamayı ödüllendiren basit YZ (state machine, ECS yok)
-- [ ] Test sahnesi: greybox arena, 5 düşman
-- [ ] Bütün his değerleri Inspector'da ayarlanabilir olacak — sayıları sohbette değil playtest'te bulacağız
+- [x] İzometrik kamera kurulumu (açı, mesafe, takip)
+- [x] Hareket + dash + i-frame (his burada başlar)
+- [x] `Clock` taslağı — azalır, darbe düşürür. **Dengesiz, ayarsız, sadece var**
+- [x] Temel saldırı: kısa, dash ile iptal edilebilir, hit-stop + ekran sarsıntısı + VFX
+- [x] Düşman: düz can havuzu, üstünde **geri sayan saniye sayısı** (uçuşan hasar sayısı YOK)
+- [x] **Zaman hasadı** — hasar verdikçe sürekli zaman çalma (oranı ayarlanabilir alan)
+- [x] Tek düşman tipi + saldırgan oynamayı ödüllendiren basit YZ (state machine, ECS yok)
+- [x] Test sahnesi: greybox arena, 5 düşman
+- [x] Bütün his değerleri Inspector'da ayarlanabilir olacak — sayıları sohbette değil playtest'te bulacağız
 - [ ] 🎮 **PLAYTEST KAPISI — Enes oynar, his onaylanmadan Faz 2 başlamaz**
 
 ## Faz 2 — Saat ekonomisi
