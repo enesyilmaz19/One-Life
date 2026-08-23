@@ -2,48 +2,53 @@
 
 ## 📥 ENES'İN MASASI
 
-- [ ] **Bakış açısı kararı** — izometrik/tepeden mi, 2.5D yandan mı? Önerim izometrik (gerekçe: `docs/TASARIM.md` → Bakış açısı). Bugün bedava, bir ay sonra pahalı. → cevabı buraya
-- [ ] **Unity projesini ben mi açayım, sen Hub'dan mı açacaksın?** (bu klasöre, 6000.5.2f1, URP) → cevabı buraya
+- [ ] **Faz 1 bittiğinde oynayıp his onayı vereceksin.** Klavye girdisi otomasyondan Unity play-mode'a geçmiyor — hareketin ve vuruşun nasıl hissettirdiğini sadece sen söyleyebilirsin. Ben log + ekran görüntüsüyle doğrularım, "iyi hissettiriyor mu" sorusunun cevabı sende.
+- [ ] *(şimdilik başka bir şey yok — Faz 0 ve 1'de bana düşen kısım var)*
 
 ---
 
-## Faz 0 — Kurulum (başlamadı)
+## Faz 0 — Kurulum ✅
 
-- [ ] Unity projesi oluştur (`UnityProjects/Tek Can`, 6000.5.2f1, URP)
-- [ ] Git deposu + `.gitignore` (Unity şablonu)
-- [ ] graphify'ı proje içine kur, `graphify-out/` üret
-- [ ] Proje `CLAUDE.md`'sini yaz (ev dizinindeki ölü olan silindi)
-- [ ] Klasör iskeleti: `Assets/_Project/{Scripts,Art,Prefabs,Scenes}`
+- [x] Unity projesi oluşturuldu (`UnityProjects/Tek Can`, 6000.5.2f1, **URP**, izometrik 3B)
+- [x] Git deposu + Unity `.gitignore` + ilk commit
+- [x] Klasör iskeleti: `Assets/_Project/{Scripts,Art,Prefabs,Scenes}`
+- [x] Proje `CLAUDE.md`'si
+- [ ] graphify — **kod yazılınca kurulacak.** Boş projede graph üretmek anlamsız; Faz 1 sonunda `graphify update Assets/_Project/Scripts` ile kurulur
 
-## Faz 1 — Saat (ilk oynanabilir çekirdek)
+---
 
-Hedef: **tek sayının çalıştığını görmek.** Görsel yok, düşman yok, sadece sistem.
+## Faz 1 — Dövüş hissi ⬅️ **SIRADAKİ**
 
-- [ ] `Clock` — tek kaynak: azalır, darbe düşürür, öldürme yükseltir
-- [ ] Ekranda saat göstergesi (okunur, dramatik — bu oyunun HUD'ı)
-- [ ] Test sahnesi: bir düşman, bir vuruş, saatin hareket ettiğini gör
-- [ ] Sıfır → koşu bitişi
+> Hedef: **vurmak iyi hissettirsin.** Enes'in 2. Steam kriteri burada kazanılır ya da kaybedilir.
+> Can barı **yazılmayacak** — yerine 20 satırlık taslak saat, ki dövüş baştan doğru baskı altında tasarlansın.
 
-## Faz 2 — Dövüş hissi
+- [ ] İzometrik kamera kurulumu (açı, mesafe, takip)
+- [ ] Hareket + dash (his burada başlar)
+- [ ] `Clock` taslağı — azalır, darbe düşürür, öldürme yükseltir. **Dengesiz, ayarsız, sadece var**
+- [ ] Temel saldırı: hit-stop, ekran sarsıntısı, vuruş VFX'i
+- [ ] Tek düşman tipi + saldırgan oynamayı ödüllendiren basit yapay zekâ
+- [ ] Test sahnesi: greybox arena, 5 düşman
+- [ ] 🎮 **PLAYTEST KAPISI — Enes oynar, his onaylanmadan Faz 2 başlamaz**
 
-Hedef: **vurmak iyi hissettirsin.** Enes'in 2. Steam kriteri burada kazanılır ya da kaybedilir.
+## Faz 2 — Saat ekonomisi
 
-- [ ] Hareket + dash
-- [ ] Temel saldırı, hit-stop, ekran sarsıntısı, VFX
-- [ ] Tek düşman tipi, saldırgan oynamayı ödüllendiren yapay zekâ
-- [ ] 🎮 **PLAYTEST KAPISI — Enes oynar, his onaylanmadan Faz 3 başlamaz**
-
-## Faz 3 — Ekonomi
-
+- [ ] Saatin gerçek dengesi: öldürme kazancı / darbe kaybı oranları
+- [ ] Saat göstergesi — okunur ve dramatik. **Bu oyunun HUD'ı bu, tek gösterge**
 - [ ] Saniyeyle satın alma (dükkân/sunak)
-- [ ] 3 silah tohumu prototipi (Faizli · Durgun · Vadeli)
-- [ ] Risk/ödül döngüsü: oda başına "girer miyim" kararı
+- [ ] Sıfır → koşu bitişi ekranı
+- [ ] Denge testi: deterministik simülasyonla kazanç/kayıp oranlarını tara
+
+## Faz 3 — Silahlar
+
+- [ ] 3 silah tohumu prototipi: **Faizli** · **Durgun** · **Vadeli** (bkz. `../../FIKIR_DEFTERI.md`)
+- [ ] Silah başına VFX kimliği
+- [ ] 🎮 Playtest kapısı — hangi silah tutuyor, hangisi çöp
 
 ## Faz 4 — Koşu yapısı
 
-- [ ] Oda zinciri + koşu sonu
-- [ ] Düşman çeşitliliği
-- [ ] Denge: saniye kazanç/kayıp oranları
+- [ ] Oda zinciri + oda başına "girer miyim" risk kararı
+- [ ] Düşman çeşitliliği (meta ilerleme yok → tekrar oynanabilirlik tamamen buradan gelir)
+- [ ] Koşu sonu / yeniden başlama akışı
 
 ---
 
@@ -52,3 +57,4 @@ Hedef: **vurmak iyi hissettirsin.** Enes'in 2. Steam kriteri burada kazanılır 
 - Fikir defteri (ikinci oyun "Kaos" dâhil): `../../FIKIR_DEFTERI.md`
 - Tasarım: `docs/TASARIM.md`
 - **Her fazın sonunda:** ne yapıldığını ve nasıl test edileceğini anlat, dur, Enes'in onayını bekle. Yeşil testler "faz tamam" demek değil.
+- **En büyük risk:** içerik çeşitliliği. Meta ilerleme olmadığı için tekrar oynanabilirliğin tamamı koşunun *içinden* gelmek zorunda.

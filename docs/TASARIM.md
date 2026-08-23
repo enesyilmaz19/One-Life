@@ -34,9 +34,11 @@ Altın yok. Ruh yok. Ayrı para birimi yok. Tek sayı oyunun tamamını çevirir
 - [x] Silah ilkesi: *göründüğü* için değil **kararı değiştirdiği** için özgün
 - [x] Erken erişim hedefi
 
+- [x] **Bakış açısı: izometrik 3B** (2026-08-23). Kaos da izometrik olacak — kamera tempoyu belirlemez, ayrışma dövüş tasarımından gelir (Hades izometrik ve hızlı, Diablo izometrik ve ağır)
+- [x] **Yapım sırası: temel oynanış önce, saat ekonomisi sonra** — ama can barı hiç yazılmayacak, yerine baştan taslak saat konacak (gerekçe aşağıda)
+
 ## Açık kararlar
 
-- [ ] **Bakış açısı** — 2.5D yandan mı, izometrik/tepeden mi? (aşağıdaki nota bak, bugün ucuz, bir ay sonra pahalı)
 - [ ] Nihai silah seti (tohumlar `../../FIKIR_DEFTERI.md` içinde, nihai değil)
 - [ ] Koşu uzunluğu hedefi
 - [ ] Oda/bölüm yapısı: elle tasarım mı, prosedürel mi, karma mı
@@ -45,21 +47,21 @@ Altın yok. Ruh yok. Ayrı para birimi yok. Tek sayı oyunun tamamını çevirir
 
 ---
 
-## Bakış açısı — karar verilmedi, varsayım olarak sürüklendi
+## Bakış açısı — izometrik 3B ✅
 
-Motor sorusu "2.5D hack and slash" üzerinden konuşuldu ve o yön varsayıldı, ama **Tek Can'ın kendi tasarımına karşı hiç sınanmadı.**
+Saat mekaniği "yeterince hızlı öldürüyor muyum" gerilimi üzerine kurulu ve bu gerilim **her yönden baskı** ister — kuşatılmış hissetmezsen saat inerken panik olmaz. İzometrik 3B 360° tehdit veriyor, okunur, ve 3B modeller VFX'i parlatıyor (görsel kimliğimiz oraya kurulu).
 
-**Mekaniğin istediği:** saat mekaniği "yeterince hızlı öldürüyor muyum" gerilimi üzerine kurulu. Bu gerilim **her yönden baskı** ister — kuşatılmış hissetmezsen saat inerken panik olmaz.
+Kaos da izometrik olacak. Kamera tempoyu belirlemez — Hades izometrik ve hızlı, Diablo izometrik ve ağır. İki oyunun ayrışması **dövüş tasarımından** gelecek, açıdan değil.
 
-| Bakış | Tek Can'a uyumu |
-|---|---|
-| **2.5D yandan** (Ori, Hollow Knight, Nine Sols) | Düşman tek eksenden gelir → kuşatma hissi zayıf. Ağır ve düşünen dövüşe uygun, sürü baskısına değil. |
-| **Tepeden / twin-stick** (Nuclear Throne) | 360° tehdit → saat mekaniğine en uygun. |
-| **İzometrik 3B** (Hades) | 360° tehdit + okunur + 3B modeller VFX'i parlatır. **Mekanik olarak en uygunu.** |
+## Yapım sırası — temel oynanış önce ✅
 
-**Ek gerekçe — iki oyunu ayırmak:** B mekaniğini iki oyunda kullanmama sebebiyle aynı: Tek Can ile Kaos birbirinin kostümü gibi görünmemeli. Tek Can izometrik/tepeden, Kaos 2.5D yandan olursa hem her biri kendi mekaniğine hizmet eder hem görsel olarak ayrışırlar.
+Saat, dövüşün *üstüne binen* bir sistem. Dövüş yokken saati ayarlayamazsın: "öldürme kaç saniye getirsin" sorusunun cevabı bir dövüşün ne kadar sürdüğüne bağlı. Önce saat yazılırsa bütün sayılar tahminle konur, dövüş gelince hepsi baştan ayarlanır — iki kez iş.
 
-**Öneri:** Tek Can = izometrik/tepeden 3B · Kaos = 2.5D yandan. **Enes'in kararı bekleniyor.**
+Ayrıca risk sırası da bunu söylüyor: bu projenin en büyük batma riski **dövüş hissi**. Dövüş kötü hissettiriyorsa saat onu kurtaramaz. Önce en ölümcül riske vurulur.
+
+**Ama bir tuzak var:** dövüşü normal can barıyla kurup sonra saati takarsan **yanlış dövüşü** kurmuş olursun. Saat ekonomisi saldırganlığı zorunlu kılıyor; can barıyla tasarlanan dövüş savunmayı ödüllendirir ve o alışkanlıklar sisteme gömülür.
+
+**Çözüm:** can barı **hiç yazılmayacak.** Faz 1'de saat 20 satırlık bir taslak olarak konur (azalır, darbe düşürür, öldürme yükseltir — dengesiz, ayarsız). Dövüş baştan doğru baskı altında tasarlanır. Gerçek ekonomi işi (fiyatlar, satın alma, denge) Faz 3'e kalır.
 
 ---
 
