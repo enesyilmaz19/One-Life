@@ -32,7 +32,22 @@
 - [x] Tek düşman tipi + saldırgan oynamayı ödüllendiren basit YZ (state machine, ECS yok)
 - [x] Test sahnesi: greybox arena, 5 düşman
 - [x] Bütün his değerleri Inspector'da ayarlanabilir olacak — sayıları sohbette değil playtest'te bulacağız
-- [ ] 🎮 **PLAYTEST KAPISI — Enes oynar, his onaylanmadan Faz 2 başlamaz**
+- [ ] 🎮 **PLAYTEST KAPISI** — 2026-08-24'te denendi, **ÇALIŞMADI**
+
+### ❌ Faz 1 kapanmadı — geri bildirim eksik (2026-08-24 playtest)
+
+Enes'in raporu: *"Dash tamam çalışıyor, düşmanlar bana vurunca zaman gidiyor tamam. Ben saldırı yaptığımı ya da onların bana saldırı yaptığını göremiyorum."*
+
+Sonuç: 5 değerlendirme sorusundan **3, 4, 5 sorulamadı**. Sebebi ve dersi `lessons.md`'de.
+
+**Yapılacaklar — sıra önemli, geri bildirim önce:**
+
+- [ ] **Oyuncu savurma yayı** — saldırı konisi görünsün (dönen mesh ya da iz). Vurduğunu görmeden hissi yargılayamaz
+- [ ] **Düşman hazırlık hareketi (telegraph)** — vuruştan önce görünür uyarı. Bu olmadan dodge tahmin, i-frame değerlendirilemez
+- [ ] **Düşman saldırı görseli** — darbenin kendisi görünsün
+- [ ] **Oyuncu hasar tepkisi** — parlama/geri tepme, "yedim" anı okunmalı
+- [ ] Saldırı menzili ve konisi debug çizimi (Gizmos) — ayar yaparken görünsün
+- [ ] 🎮 **PLAYTEST TEKRAR** — bu sefer 5 sorunun beşi de sorulabilir olacak
 
 ## Faz 2 — Saat ekonomisi
 
