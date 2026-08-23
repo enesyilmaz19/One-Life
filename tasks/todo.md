@@ -54,7 +54,7 @@ Sonuç: 5 değerlendirme sorusundan **3, 4, 5 sorulamadı**. Sebebi ve dersi `le
 - [ ] Saatin gerçek dengesi: öldürme kazancı / darbe kaybı oranları
 - [ ] Saat göstergesi — okunur ve dramatik. **Bu oyunun HUD'ı bu, tek gösterge**
 - [ ] Saniyeyle satın alma (dükkân/sunak)
-- [ ] Sıfır → koşu bitişi ekranı
+- [ ] Sıfır → koşu bitişi ekranı — **`Clock.OnDeath`'e ya burada abone ol ya da olayı sil.** Şu an abonesi yok, ölü kod (2026-08-24 öz-incelemesinde bulundu)
 - [ ] Denge testi: deterministik simülasyonla kazanç/kayıp oranlarını tara
 
 ## Faz 3 — Silahlar
