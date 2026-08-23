@@ -25,7 +25,8 @@
 - [x] İzometrik kamera kurulumu (açı, mesafe, takip)
 - [x] Hareket + dash + i-frame (his burada başlar)
 - [x] `Clock` taslağı — azalır, darbe düşürür. **Dengesiz, ayarsız, sadece var**
-- [x] Temel saldırı: kısa, dash ile iptal edilebilir, hit-stop + ekran sarsıntısı + VFX
+- [x] Temel saldırı: kısa, dash ile iptal edilebilir, hit-stop + kamera sarsıntısı + isabet parlaması
+- [ ] Gerçek VFX (parçacık, iz, boşalma efekti) — Faz 3te silahlarla birlikte
 - [x] Düşman: düz can havuzu, üstünde **geri sayan saniye sayısı** (uçuşan hasar sayısı YOK)
 - [x] **Zaman hasadı** — hasar verdikçe sürekli zaman çalma (oranı ayarlanabilir alan)
 - [x] Tek düşman tipi + saldırgan oynamayı ödüllendiren basit YZ (state machine, ECS yok)

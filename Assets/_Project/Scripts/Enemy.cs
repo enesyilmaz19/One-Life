@@ -21,6 +21,7 @@ namespace TekCan
         Renderer _renderer;
         TimeLabel _label;
         float _attackTimer;
+        float _flashTimer;
 
         /// <summary>Bedende kalan saniye. Sıfırlanınca ölmez — boşalır.</summary>
         public float TimeLeft { get; private set; }
@@ -47,6 +48,12 @@ namespace TekCan
             if (_t == null || _player == null) return;
 
             bool wasHollow = Hollow;
+
+            if (_flashTimer > 0f)
+            {
+                _flashTimer -= Time.unscaledDeltaTime;   // hit-stop sırasında da sönsün
+                if (_flashTimer <= 0f) Paint();
+            }
 
             // Havuz kendi kendine akar. Boşalınca daha aşağı inmez.
             if (!Hollow)
@@ -107,7 +114,8 @@ namespace TekCan
             TimeLeft -= drained;
             Clock.Instance?.Add(drained * Clock.Instance.HarvestRate);
 
-            if (Hollow) Paint();
+            _flashTimer = _t.hitFlashDuration;
+            Paint();
         }
 
         void Kill()
@@ -120,8 +128,9 @@ namespace TekCan
         void Paint()
         {
             if (_renderer == null) return;
-            _renderer.material.color = Hollow ? HollowColor : FullColor;
-            // ponytail: renk değişimi yeterli işaret. Boşalma VFX'i Faz 2'de.
+            _renderer.material.color = _flashTimer > 0f ? Color.white : (Hollow ? HollowColor : FullColor);
+            // ponytail: renk değişimi + beyaz parlama greybox için yeterli isabet işareti.
+            // Gerçek VFX (parçacık, iz, boşalma efekti) Faz 3'te silahlarla birlikte.
         }
     }
 }

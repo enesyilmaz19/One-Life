@@ -9,12 +9,24 @@ namespace TekCan
     /// </summary>
     public class IsoCamera : MonoBehaviour
     {
+        public static IsoCamera Instance { get; private set; }
+
         Tuning _t;
         Transform _target;
         Vector3 _offset;
+        float _shake, _shakeDecay;
+
+        /// <summary>İsabette kamerayı sarsar. Hit-stop'la birlikte tokluğun ikinci yarısı.</summary>
+        public static void Shake(float amount)
+        {
+            if (Instance == null) return;
+            Instance._shake = Mathf.Max(Instance._shake, amount);
+            Instance._shakeDecay = amount / 0.18f;
+        }
 
         public void Init(Tuning tuning, Transform target)
         {
+            Instance = this;
             _t = tuning;
             _target = target;
 
@@ -38,6 +50,14 @@ namespace TekCan
 
             transform.position = Vector3.Lerp(transform.position, _target.position + _offset,
                 1f - Mathf.Exp(-_t.camFollowLerp * Time.unscaledDeltaTime));
+
+            // Sarsıntı unscaled zamanla iner ki hit-stop sırasında da titresin.
+            if (_shake > 0f)
+            {
+                _shake = Mathf.Max(0f, _shake - _shakeDecay * Time.unscaledDeltaTime);
+                transform.position += (transform.right * Random.Range(-1f, 1f) +
+                                       transform.up * Random.Range(-1f, 1f)) * _shake;
+            }
         }
     }
 }

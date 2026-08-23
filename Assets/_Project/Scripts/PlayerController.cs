@@ -166,7 +166,11 @@ namespace TekCan
                 hitSomething = true;
             }
 
-            if (hitSomething) HitStop.Freeze(_t.hitStopDuration);
+            if (hitSomething)
+            {
+                HitStop.Freeze(_t.hitStopDuration);
+                IsoCamera.Shake(_t.hitShake);
+            }
         }
 
         /// <summary>Darbe yemek saniye götürür. Dash i-frame'i içindeyken geçmez.</summary>
@@ -175,6 +179,7 @@ namespace TekCan
             if (Invulnerable) return;
             Clock.Instance?.Spend(secondsCost);
             HitStop.Freeze(_t.hitStopDuration * 1.5f);
+            IsoCamera.Shake(_t.hurtShake);
         }
     }
 }
