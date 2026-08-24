@@ -18,6 +18,13 @@ namespace TekCan.EditorTools
         [MenuItem("Tek Can/Faz 1 öz-denetimi çalıştır")]
         public static void Run()
         {
+            int failures = Execute();
+            if (Application.isBatchMode) EditorApplication.Exit(failures == 0 ? 0 : 1);
+        }
+
+        /// <summary>Başarısız kontrol sayısını döndürür; toplu koşucu bunu kullanıyor.</summary>
+        public static int Execute()
+        {
             int failed = 0, total = 0;
             var t = ScriptableObject.CreateInstance<Tuning>();
             t.enemyTimePool = 10f;
@@ -159,7 +166,7 @@ namespace TekCan.EditorTools
             if (failed == 0) Debug.Log($"[Faz 1 öz-denetim] ✅ {total}/{total} GEÇTİ");
             else Debug.LogError($"[Faz 1 öz-denetim] ❌ {total} kontrolden {failed} tanesi BAŞARISIZ");
 
-            if (Application.isBatchMode) EditorApplication.Exit(failed == 0 ? 0 : 1);
+            return failed;
         }
 
         static int Check(ref int total, string name, bool ok, float actual)

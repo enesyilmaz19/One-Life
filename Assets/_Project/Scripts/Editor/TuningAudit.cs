@@ -22,12 +22,18 @@ namespace TekCan.EditorTools
         [MenuItem("Tek Can/Ayar kaynağı denetimi")]
         public static void Run()
         {
+            int problems = Execute();
+            if (Application.isBatchMode) EditorApplication.Exit(problems == 0 ? 0 : 1);
+        }
+
+        /// <summary>Ayrışan alan sayısını döndürür; toplu koşucu bunu kullanıyor.</summary>
+        public static int Execute()
+        {
             var asset = AssetDatabase.LoadAssetAtPath<Tuning>(AssetPath);
             if (asset == null)
             {
                 Debug.LogWarning($"[Ayar denetimi] {AssetPath} yok — çalışma anında C# varsayılanları geçerli.");
-                Finish();
-                return;
+                return 0;
             }
 
             // C# varsayılanları: sınıfın taze bir örneği alan başlatıcılarını taşır.
@@ -56,7 +62,7 @@ namespace TekCan.EditorTools
                     "→ Bu değerleri Inspector'dan düzenle, .cs'ten değil.");
 
             Object.DestroyImmediate(fresh);
-            Finish(overridden.Count);
+            return overridden.Count;
         }
 
         /// <summary>Asset dosyasında gerçekten yazılı olan alan adları.</summary>

@@ -30,7 +30,19 @@ geçerlidir; asset'te zaten serileşmiş bir alan C# varsayılanını **sessizce
 2026-08-24'te Enes'in üç ayarı bu yüzden hiç uygulanmadı ve bütün playtest yanlış
 varsayımla geçti.
 
-Kontrol: `Tek Can → Ayar kaynağı denetimi` (sapma varsa listeler, batch'te 1 ile çıkar).
+Kontrol: `Tek Can → Ayar kaynağı denetimi`.
+
+## Doğrulama — tek komut
+
+`Tek Can → TÜM kapıları çalıştır`, ya da batch'ten:
+`-executeMethod TekCan.EditorTools.AllChecks.Run`
+
+Faz 1 + Faz 2 öz-denetimleri ve ayar denetimini **tek Unity açılışında** çalıştırır;
+bir kontrol düşerse 1 ile çıkar. (Ayar sapması yalnızca uyarı — hangi değerin doğru
+olduğu Enes'in kararı.)
+
+Diğer araçlar: `Faz 1 hasar reprodüksiyonu` (gerçek spawn geometrisiyle regresyon) ·
+`Denge simülasyonu` (hasat oranı taraması) · `Geri bildirim ekran görüntüsü al`.
 
 ## graphify
 

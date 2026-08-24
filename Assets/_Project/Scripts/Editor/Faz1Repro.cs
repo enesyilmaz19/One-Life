@@ -80,14 +80,16 @@ namespace TekCan.EditorTools
                       $"saat {before:0.00} -> {clock.Seconds:0.00}");
 
             bool ok = nearest.TimeLeft < poolBefore && clock.Seconds > before;
+            // Regresyon kapısı: düşmanların havada doğduğu hata buradan geçmişti.
+            // Gerçek spawn geometrisiyle hasarın indiğini her seferinde kanıtlar.
             Debug.Log(ok
-                ? "[REPRO] ✅ GERÇEK GEOMETRİDE HASAR İNİYOR — sorun Strike'ta değil, ona giden yolda"
-                : "[REPRO] ❌ GERÇEK GEOMETRİDE HASAR İNMİYOR — sebep burada");
+                ? "[REPRO] ✅ Gerçek geometride hasar iniyor ve saat artıyor"
+                : "[REPRO] ❌ GERÇEK GEOMETRİDE HASAR İNMİYOR — regresyon");
 
             foreach (var e in Enemy.All.ToArray()) if (e != null) Object.DestroyImmediate(e.gameObject);
             Enemy.All.Clear();
             Object.DestroyImmediate(root);
-            if (Application.isBatchMode) EditorApplication.Exit(0);
+            if (Application.isBatchMode) EditorApplication.Exit(ok ? 0 : 1);
         }
     }
 }
