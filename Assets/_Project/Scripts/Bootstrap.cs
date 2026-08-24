@@ -11,6 +11,26 @@ namespace TekCan
     /// </summary>
     public static class Bootstrap
     {
+        /// <summary>
+        /// Arena yerleşiminin TEK kaynağı. Faz1Repro da buradan okuyor —
+        /// yoksa reprodüksiyon oyundan sessizce ayrışır ve yanlış sonuç verir.
+        /// </summary>
+        public static readonly Vector3 PlayerSpawn = new Vector3(0f, 1f, 0f);
+        public static readonly Vector3 EnemyScale = new Vector3(0.9f, 0.9f, 0.9f);
+
+        public static Vector3 EnemySpawnPosition(Tuning t, int index)
+        {
+            // ⚠️ Yükseklik yarıçapla ÇARPILMAMALI. Eski hali
+            //   new Vector3(cos, 1f, sin) * radius
+            // idi ve y'yi de çarpıyordu: düşmanlar y=7.7'de, havada doğuyordu.
+            // ChaseMove yalnızca yatay hareket ettiği için hiç inmiyorlardı.
+            // İzometrikte havadaki nesne ekranda kayık görünür → oyuncu gördüğü
+            // yere nişan alıp ıskalıyordu. "Hasar vurmuyorum" şikâyetinin sebebi buydu.
+            float a = (360f / Mathf.Max(1, t.enemyCount)) * index * Mathf.Deg2Rad;
+            float r = t.arenaRadius * 0.55f;
+            return new Vector3(Mathf.Cos(a) * r, PlayerSpawn.y, Mathf.Sin(a) * r);
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Build()
         {
@@ -52,7 +72,7 @@ namespace TekCan
             // Oyuncu
             var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             player.name = "Player";
-            player.transform.position = new Vector3(0f, 1f, 0f);
+            player.transform.position = PlayerSpawn;
             Object.Destroy(player.GetComponent<Collider>());
             Paint(player, new Color(0.9f, 0.9f, 0.95f));
 
@@ -82,11 +102,7 @@ namespace TekCan
 
             // Düşmanlar
             for (int i = 0; i < t.enemyCount; i++)
-            {
-                float a = (360f / Mathf.Max(1, t.enemyCount)) * i * Mathf.Deg2Rad;
-                var pos = new Vector3(Mathf.Cos(a), 1f, Mathf.Sin(a)) * (t.arenaRadius * 0.55f);
-                SpawnEnemy(t, pos, player.transform, camGo.transform);
-            }
+                SpawnEnemy(t, EnemySpawnPosition(t, i), player.transform, camGo.transform);
 
             Debug.Log($"[Tek Can] Faz 1 arena hazır — {t.enemyCount} düşman, {t.startSeconds:0}s saat.");
         }
@@ -111,7 +127,7 @@ namespace TekCan
             var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             go.name = "Enemy";
             go.transform.position = pos;
-            go.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
+            go.transform.localScale = EnemyScale;
             Object.Destroy(go.GetComponent<Collider>());
 
             var labelGo = new GameObject("TimeLabel");

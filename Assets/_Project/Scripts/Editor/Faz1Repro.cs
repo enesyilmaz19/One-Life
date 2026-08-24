@@ -26,7 +26,7 @@ namespace TekCan.EditorTools
             // ── Bootstrap ile BİREBİR aynı kurulum ──
             var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             player.transform.SetParent(root.transform);
-            player.transform.position = new Vector3(0f, 1f, 0f);      // ← y=1, testlerdeki gibi 0 değil
+            player.transform.position = Bootstrap.PlayerSpawn;        // ← oyunun kendi yerleşiminden
 
             var clockGo = new GameObject("clock"); clockGo.transform.SetParent(root.transform);
             var clock = clockGo.AddComponent<Clock>();
@@ -37,17 +37,15 @@ namespace TekCan.EditorTools
 
             for (int i = 0; i < t.enemyCount; i++)
             {
-                float a = (360f / Mathf.Max(1, t.enemyCount)) * i * Mathf.Deg2Rad;
-                var pos = new Vector3(Mathf.Cos(a), 1f, Mathf.Sin(a)) * (t.arenaRadius * 0.55f);
-
                 var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
                 go.transform.SetParent(root.transform);
-                go.transform.position = pos;
-                go.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
+                go.transform.position = Bootstrap.EnemySpawnPosition(t, i);   // ← tek kaynak
+                go.transform.localScale = Bootstrap.EnemyScale;
                 go.AddComponent<Enemy>().Init(t, player.transform, null);
             }
 
-            Debug.Log($"[REPRO] kurulum: {Enemy.All.Count} düşman, spawn yarıçapı {t.arenaRadius * 0.55f:0.00}");
+            Debug.Log($"[REPRO] kurulum: {Enemy.All.Count} düşman, " +
+                      $"ilk spawn mesafesi {Bootstrap.EnemySpawnPosition(t, 0).magnitude:0.00}");
 
             // ── Kovalamayı simüle et: ChaseMove ile AYNI matematik ──
             foreach (var e in Enemy.All)

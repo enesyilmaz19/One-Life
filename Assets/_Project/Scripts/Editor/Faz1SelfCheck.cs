@@ -131,6 +131,16 @@ namespace TekCan.EditorTools
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
                 .Invoke(pc, new object[] { Vector3.right, 1f, false });
 
+            // 10) ⚠️ Düşmanlar oyuncuyla AYNI YÜKSEKLİKTE doğmalı.
+            //     Havada doğarlarsa izometrikte ekranda kayık görünürler ve oyuncu
+            //     gördüğü yere nişan alıp ıskalar. Bu hata bir playtest turu yaktı.
+            for (int i = 0; i < t.enemyCount; i++)
+            {
+                var sp = Bootstrap.EnemySpawnPosition(t, i);
+                failed += Check(ref total, $"düşman {i} oyuncu yüksekliğinde doğuyor",
+                    Mathf.Abs(sp.y - Bootstrap.PlayerSpawn.y) < 0.001f, sp.y);
+            }
+
             failed += Check(ref total, "saldırıda hareket DÖNDÜRMÜYOR",
                 Vector3.Angle(facingBefore, pGo.transform.forward) < 0.01f,
                 Vector3.Angle(facingBefore, pGo.transform.forward));
