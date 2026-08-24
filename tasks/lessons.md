@@ -20,6 +20,30 @@ Raporun altına "dürüst eksikler" diye **ses yok · telegraf yok · gerçek VF
 
 ---
 
+## 2026-08-24 (2) — Testler geçiyordu, oyun çalışmıyordu
+
+**Ne oldu:** "Hasar inmiyor" şikâyetini üç turda çözebildim. İki kez yanlış kök sebep önerdim (önce hit tespiti, sonra ölü `Clock.Instance`). Gerçek sebep: düşmanlar **havada doğuyordu**.
+
+```csharp
+new Vector3(Mathf.Cos(a), 1f, Mathf.Sin(a)) * (arenaRadius * 0.55f)
+```
+
+Çarpan y'yi de çarpıyordu → düşmanlar y=7.7'de. `ChaseMove` yalnızca yatay hareket ettiği için hiç inmiyorlardı. İsabet hesabı y'yi düzlediği için **matematik doğruydu**; ama izometrikte havadaki nesne ekranda kayık görünür, oyuncu gördüğü yere nişan alıp ıskalıyordu.
+
+**Neden testler yakalayamadı:** testlerim kendi dünyalarını kuruyordu — oyuncu y=0'da, düşman tam önde, ideal koordinatlar. Oyunun gerçek yerleşimini hiç kullanmıyorlardı. Yani test yeşildi ama **test ettiği dünya oyunun dünyası değildi.**
+
+**Neden sonunda bulundu:** öz-inceleme "benzer fonksiyonları birleştirmeli misin?" diye sordu. Spawn geometrisi `Bootstrap` ve `Faz1Repro`'da kopyalanmıştı. Tek kaynağa indirip mesafeyi loglayınca sayı yanlış çıktı: 7.70 yerine **10.89**. Hata kendini orada ele verdi.
+
+### KURAL (2)
+
+> **Test düzeneği, üretim yerleşimini KOPYALAMAZ; ondan İTHAL EDER.**
+
+Bir test koordinat, ölçek, spawn konumu gibi şeyleri kendi elleriyle kuruyorsa, ürünle sessizce ayrışır ve yanlış güven verir. Ortak kaynak (`Bootstrap.EnemySpawnPosition` gibi) hem tekrarı kaldırır hem sapmayı imkânsızlaştırır.
+
+**İkinci kural:** iki kez üst üste yanlış kök sebep önerdiysem, üçüncü tahmini yapmam — **reprodüksiyon yazarım.** `Faz1Repro` gerçek geometriyi kurup gerçek yolu çağırdı ve cevabı tek çalıştırmada verdi.
+
+---
+
 ## KURAL
 
 > **Bir fazı playtest'e hazır ilan etmeden önce sor: oyuncu, yargılamasını istediğim şeyi algılayabiliyor mu?**

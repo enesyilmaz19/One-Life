@@ -75,12 +75,11 @@ namespace TekCan.EditorTools
             typeof(PlayerController).GetMethod("Strike", BindingFlags.NonPublic | BindingFlags.Instance)
                 .Invoke(pc, null);
 
-            Debug.Log($"[REPRO] SONUÇ: savurma={pc.StrikesFired} isabet={pc.HitsLanded} | " +
-                      $"düşman havuzu {poolBefore:0.00} -> {nearest.TimeLeft:0.00} | " +
+            // Sayaçlara değil SONUCA bakılıyor: havuz eridi mi, saat arttı mı.
+            Debug.Log($"[REPRO] SONUÇ: düşman havuzu {poolBefore:0.00} -> {nearest.TimeLeft:0.00} | " +
                       $"saat {before:0.00} -> {clock.Seconds:0.00}");
-            Debug.Log($"[REPRO] rapor: {pc.LastStrikeReport}");
 
-            bool ok = pc.HitsLanded > 0 && clock.Seconds > before;
+            bool ok = nearest.TimeLeft < poolBefore && clock.Seconds > before;
             Debug.Log(ok
                 ? "[REPRO] ✅ GERÇEK GEOMETRİDE HASAR İNİYOR — sorun Strike'ta değil, ona giden yolda"
                 : "[REPRO] ❌ GERÇEK GEOMETRİDE HASAR İNMİYOR — sebep burada");

@@ -47,7 +47,12 @@ Sonuç: 5 değerlendirme sorusundan **3, 4, 5 sorulamadı**. Sebebi ve dersi `le
 - [ ] **Düşman saldırı görseli** — darbenin kendisi görünsün
 - [ ] **Oyuncu hasar tepkisi** — parlama/geri tepme, "yedim" anı okunmalı
 - [ ] Saldırı menzili ve konisi debug çizimi (Gizmos) — ayar yaparken görünsün
-- [ ] 🎮 **PLAYTEST TEKRAR** — bu sefer 5 sorunun beşi de sorulabilir olacak
+- [x] 🎮 **PLAYTEST TEKRAR** — hasar iniyor, Enes onayladı (2026-08-24)
+- [ ] 🎮 **HİS ONAYI** — 3/4/5 soruları hâlâ cevaplanmadı: hit-stop+sarsıntı dozu, saatin baskısı, boşalmanın okunurluğu, hazırlık süresi (0.55) dodge için yeterli mi
+
+### Faz 2'ye devredilenler
+- [ ] **Dash sırasında saldırı (dash-atak)** — Enes istedi. Şu an dash saldırıyı iptal ediyor, dash sırasında saldırı girdisi hiç okunmuyor. Türün klasiği, eklenecek
+- [ ] Ses — vuruş hissinin ciddi bir kısmı, hâlâ yok
 
 ## Faz 2 — Saat ekonomisi
 

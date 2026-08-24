@@ -13,47 +13,8 @@ namespace TekCan
         Clock _clock;
         GUIStyle _big, _small;
 
-        PlayerController _player;
-        bool _diagnosticsOn = true;
 
-        void Update()
-        {
-            // Panel ekranın bir kısmını kapatıyor; F1 ile kalksın.
-            var kb = UnityEngine.InputSystem.Keyboard.current;
-            if (kb != null && kb.f1Key.wasPressedThisFrame) _diagnosticsOn = !_diagnosticsOn;
-        }
-
-        public void Init(Clock clock, PlayerController player)
-        {
-            _clock = clock;
-            _player = player;
-        }
-
-        /// <summary>
-        /// TEŞHİS PANELİ — "hasar inmiyor" sorunu için. Her savurmada hangi kontrolün
-        /// elediğini canlı gösteriyor. Sorun çözülünce bu blok komple silinecek.
-        /// </summary>
-        void DrawDiagnostics()
-        {
-            if (_player == null || !_diagnosticsOn) return;
-
-            var st = new GUIStyle(GUI.skin.box)
-            {
-                fontSize = 15,
-                alignment = TextAnchor.UpperLeft,
-                wordWrap = false,
-                richText = false
-            };
-            st.normal.textColor = _player.HitsLanded > 0 ? new Color(0.5f, 1f, 0.6f) : new Color(1f, 0.6f, 0.6f);
-
-            string txt =
-                $" TEŞHİS  (F1 gizler)\n" +
-                $" sahnedeki düşman : {Enemy.All.Count}\n" +
-                $" savurma / isabet : {_player.StrikesFired} / {_player.HitsLanded}\n" +
-                $" {_player.LastStrikeReport}";
-
-            GUI.Box(new Rect(12f, 90f, 480f, 96f), txt, st);
-        }
+        public void Init(Clock clock) => _clock = clock;
 
         void OnGUI()
         {
@@ -102,7 +63,6 @@ namespace TekCan
             GUI.Label(new Rect(12f, Screen.height - 26f, 600f, 20f),
                 "WASD hareket · Sol tık saldırı · Shift/Space dash", _small);
 
-            DrawDiagnostics();
         }
     }
 }

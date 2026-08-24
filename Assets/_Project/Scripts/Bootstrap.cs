@@ -96,9 +96,8 @@ namespace TekCan
             HitStop.Init(systems.AddComponent<HitStop>());
             var clock = systems.AddComponent<Clock>();
             clock.Init(t, player.transform);
-            var pc = player.AddComponent<PlayerController>();
-            pc.Init(t, camGo.transform);
-            systems.AddComponent<Hud>().Init(clock, pc);
+            player.AddComponent<PlayerController>().Init(t, camGo.transform);
+            systems.AddComponent<Hud>().Init(clock);
 
             // Düşmanlar
             for (int i = 0; i < t.enemyCount; i++)
