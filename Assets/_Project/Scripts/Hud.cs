@@ -13,7 +13,39 @@ namespace TekCan
         Clock _clock;
         GUIStyle _big, _small;
 
-        public void Init(Clock clock) => _clock = clock;
+        PlayerController _player;
+
+        public void Init(Clock clock, PlayerController player)
+        {
+            _clock = clock;
+            _player = player;
+        }
+
+        /// <summary>
+        /// TEŞHİS PANELİ — "hasar inmiyor" sorunu için. Her savurmada hangi kontrolün
+        /// elediğini canlı gösteriyor. Sorun çözülünce bu blok komple silinecek.
+        /// </summary>
+        void DrawDiagnostics()
+        {
+            if (_player == null) return;
+
+            var st = new GUIStyle(GUI.skin.box)
+            {
+                fontSize = 15,
+                alignment = TextAnchor.UpperLeft,
+                wordWrap = false,
+                richText = false
+            };
+            st.normal.textColor = _player.HitsLanded > 0 ? new Color(0.5f, 1f, 0.6f) : new Color(1f, 0.6f, 0.6f);
+
+            string txt =
+                $" TEŞHİS  (F1 gizler)\n" +
+                $" sahnedeki düşman : {Enemy.All.Count}\n" +
+                $" savurma / isabet : {_player.StrikesFired} / {_player.HitsLanded}\n" +
+                $" {_player.LastStrikeReport}";
+
+            GUI.Box(new Rect(12f, 90f, 480f, 96f), txt, st);
+        }
 
         void OnGUI()
         {
@@ -61,6 +93,8 @@ namespace TekCan
             // Faz 1 kontrol hatırlatması
             GUI.Label(new Rect(12f, Screen.height - 26f, 600f, 20f),
                 "WASD hareket · Sol tık saldırı · Shift/Space dash", _small);
+
+            DrawDiagnostics();
         }
     }
 }

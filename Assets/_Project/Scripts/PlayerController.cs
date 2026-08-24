@@ -213,24 +213,55 @@ namespace TekCan
             }
         }
 
+        // ── TEŞHİS ──────────────────────────────────────────────────────────
+        // "Hasar inmiyor" sorununu tahminle değil ölçerek bulmak için. Her Strike'ta
+        // hangi kontrolün elediğini kaydediyor. Sorun çözülünce silinecek.
+        public int StrikesFired { get; private set; }
+        public int HitsLanded { get; private set; }
+        public string LastStrikeReport { get; private set; } = "henüz saldırı yok";
+
         void Strike()
         {
             bool hitSomething = false;
             float half = _t.attackAngle * 0.5f;
 
+            StrikesFired++;
+            int checkedCount = 0, failedRange = 0, failedCone = 0, hits = 0;
+            float nearestDist = 999f, nearestAngle = 999f;
+
             for (int i = Enemy.All.Count - 1; i >= 0; i--)
             {
                 var e = Enemy.All[i];
                 if (e == null) continue;
+                checkedCount++;
 
                 Vector3 to = e.transform.position - transform.position;
                 to.y = 0f;
-                if (to.magnitude > _t.attackRange) continue;
-                if (Vector3.Angle(transform.forward, to) > half) continue;
+
+                float d = to.magnitude;
+                float ang = Vector3.Angle(transform.forward, to);
+                if (d < nearestDist) { nearestDist = d; nearestAngle = ang; }
+
+                if (d > _t.attackRange) { failedRange++; continue; }
+                if (ang > half) { failedCone++; continue; }
 
                 e.TakeDamage(_t.attackDamage);
                 hitSomething = true;
+                hits++;
+                HitsLanded++;
             }
+
+            LastStrikeReport =
+                $"bakılan:{checkedCount} menzil-dışı:{failedRange} koni-dışı:{failedCone} İSABET:{hits}\n" +
+                $"en yakın: mesafe={nearestDist:0.00} (menzil {_t.attackRange:0.0})  " +
+                $"açı={nearestAngle:0}° (yarı-koni {half:0}°)";
+
+            // Console'a da yaz: Enes'in hiçbir şey okuyup aktarmasına gerek kalmasın,
+            // Logs/Editor.log'dan doğrudan okunabilsin.
+            Debug.Log($"[STRIKE #{StrikesFired}] bakılan={checkedCount} menzilDışı={failedRange} " +
+                      $"koniDışı={failedCone} isabet={hits} | enYakınMesafe={nearestDist:0.00} " +
+                      $"enYakınAçı={nearestAngle:0.0} | oyuncuPos={transform.position} " +
+                      $"bakış={transform.forward} | clockInstance={(Clock.Instance != null ? "var" : "YOK")}");
 
             if (hitSomething)
             {
