@@ -3,7 +3,9 @@ using UnityEngine;
 namespace TekCan
 {
     /// <summary>
-    /// Faz 1 arenasını kodla kurar — sahne düzenlemesi yok.
+    /// Test arenasını kodla kurar — sahne düzenlemesi yok.
+    /// Zemin, oyuncu, kamera, sistemler, düşmanlar ve sunaklar; hepsi tek `Run` kökü altında,
+    /// böylece yeniden başlatma tek `Destroy` (bkz. `Restart`).
     ///
     /// ponytail: sahne YAML'ı elle yazmak veya editörden sahne üretmek kırılgan
     /// (GUID eşleştirme, prefab bağları). Greybox tamamen koddan doğuyor:

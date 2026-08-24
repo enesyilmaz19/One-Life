@@ -3,8 +3,12 @@ using UnityEngine;
 namespace TekCan
 {
     /// <summary>
-    /// Faz 1'in bütün his değerleri. Sohbette karara bağlanmaz, oynanarak bulunur.
+    /// Oyunun bütün his ve denge değerleri. Sohbette karara bağlanmaz, oynanarak bulunur.
     /// Play modundayken değiştirilebilir ve değerler kalıcıdır (ScriptableObject).
+    ///
+    /// ⚠️ Buradaki varsayılanlar yalnızca `Tuning.asset`'te HENÜZ OLMAYAN yeni alanlar
+    /// için geçerlidir. Var olan bir değeri değiştirmek istiyorsan Inspector'dan yap;
+    /// .cs'i düzenlemek işe yaramaz, asset onu ezer. Bkz. `Tek Can → Ayar kaynağı denetimi`.
     /// </summary>
     [CreateAssetMenu(fileName = "Tuning", menuName = "Tek Can/Tuning")]
     public class Tuning : ScriptableObject
@@ -115,7 +119,7 @@ namespace TekCan
         [Tooltip("Dash-atak menzil çarpanı")]
         public float dashAttackRangeMult = 1.15f;
 
-        [Header("── ARENA (Faz 1 test) ──")]
+        [Header("── ARENA (greybox test) ──")]
         public int enemyCount = 5;
         public float arenaRadius = 14f;
 
