@@ -1,0 +1,122 @@
+using UnityEngine;
+using UnityEngine.Rendering;
+
+namespace TekCan
+{
+    /// <summary>
+    /// Zeminde duran yassı koni. İki iş görür:
+    ///   • oyuncunun savurma yayı  (vurduğunu GÖRMEK için — isabet olmasa da çıkar)
+    ///   • düşmanın hazırlık işareti (vuruşun nereye ineceğini önceden göstermek için)
+    ///
+    /// ⚠️ Yay, gerçek vuruş alanının kendisidir: menzil ve açı doğrudan Tuning'den
+    /// geliyor. Yani ayarı çevirdiğinde gördüğün şey tam olarak isabet eden şey.
+    /// Görsel yalan söylemezse ayar dürüst olur.
+    /// </summary>
+    public class Arc : MonoBehaviour
+    {
+        static Material _shared;
+
+        Transform _follow;
+        MeshRenderer _mr;
+        Color _color;
+        float _life, _age;
+
+        public static Arc Spawn(Vector3 pos, Quaternion rot, float radius, float angleDeg,
+                                Color color, float life, Transform follow = null)
+        {
+            var go = new GameObject("Arc");
+            go.transform.SetPositionAndRotation(pos + Vector3.up * 0.06f, rot);
+
+            var mf = go.AddComponent<MeshFilter>();
+            mf.sharedMesh = BuildFan(radius, angleDeg);
+
+            var mr = go.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = SharedMaterial();
+            mr.shadowCastingMode = ShadowCastingMode.Off;
+            mr.receiveShadows = false;
+
+            var arc = go.AddComponent<Arc>();
+            arc._mr = mr;
+            arc._color = color;
+            arc._life = Mathf.Max(0.01f, life);
+            arc._follow = follow;
+            arc.Apply(1f);
+            return arc;
+        }
+
+        void LateUpdate()
+        {
+            // unscaled: hit-stop sırasında da sönsün, yoksa donan karede takılı kalır
+            _age += Time.unscaledDeltaTime;
+
+            if (_follow != null)
+                transform.SetPositionAndRotation(_follow.position + Vector3.up * 0.06f, _follow.rotation);
+
+            float k = 1f - Mathf.Clamp01(_age / _life);
+            if (k <= 0f) { Destroy(gameObject); return; }
+            Apply(k);
+        }
+
+        /// <summary>Hazırlık işaretini erken kaldırmak için (düşman ölürse yay ortada kalmasın).</summary>
+        public void Cancel() { if (this != null) Destroy(gameObject); }
+
+        void Apply(float alpha)
+        {
+            if (_mr == null) return;
+            var c = _color;
+            c.a *= alpha;
+            var mpb = new MaterialPropertyBlock();
+            mpb.SetColor("_BaseColor", c);
+            mpb.SetColor("_Color", c);      // Sprites/Default yedeği için
+            _mr.SetPropertyBlock(mpb);
+        }
+
+        /// <summary>Merkezden açılan yelpaze — yerel +Z ekseninde, XZ düzleminde yatık.</summary>
+        static Mesh BuildFan(float radius, float angleDeg)
+        {
+            const int segments = 24;
+            var verts = new Vector3[segments + 2];
+            var tris = new int[segments * 3];
+
+            verts[0] = Vector3.zero;
+            float half = angleDeg * 0.5f;
+            for (int i = 0; i <= segments; i++)
+            {
+                float a = Mathf.Lerp(-half, half, i / (float)segments) * Mathf.Deg2Rad;
+                verts[i + 1] = new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * radius;
+            }
+            for (int i = 0; i < segments; i++)
+            {
+                tris[i * 3] = 0;
+                tris[i * 3 + 1] = i + 1;
+                tris[i * 3 + 2] = i + 2;
+            }
+
+            var m = new Mesh { name = "ArcFan" };
+            m.SetVertices(verts);
+            m.SetTriangles(tris, 0);
+            m.RecalculateNormals();
+            return m;
+        }
+
+        static Material SharedMaterial()
+        {
+            if (_shared != null) return _shared;
+
+            var sh = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
+            _shared = new Material(sh);
+
+            if (_shared.HasProperty("_Surface")) _shared.SetFloat("_Surface", 1f);   // 1 = transparent
+            _shared.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
+            _shared.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
+            _shared.SetInt("_ZWrite", 0);
+            _shared.DisableKeyword("_ALPHATEST_ON");
+            _shared.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            _shared.renderQueue = (int)RenderQueue.Transparent;
+            return _shared;
+        }
+
+        /// <summary>Play oturumları arası statik kalıntıyı temizler (bkz. Bootstrap.ResetStatics).</summary>
+        public static void Reset() => _shared = null;
+    }
+}

@@ -53,6 +53,27 @@ namespace TekCan
         public float hurtShake = 0.30f;
         [Tooltip("İsabet eden düşmanın beyaz parlama süresi")]
         public float hitFlashDuration = 0.07f;
+        [Tooltip("Savurma yayının ekranda kalma süresi — vuruşu GÖRMEK için, isabet olmasa da çıkar")]
+        public float swingArcLife = 0.14f;
+
+        [Header("── OYUNCU: HASAR TEPKİSİ ──")]
+        public float playerHurtFlashDuration = 0.12f;
+        [Tooltip("Darbe yiyince ne kadar geri itilirsin — 'yedim' anı okunmalı")]
+        public float playerKnockback = 1.2f;
+
+        [Header("── DÜŞMAN: SALDIRI EVRELERİ ──")]
+        [Tooltip("HAZIRLIK: vuruştan önceki uyarı süresi. Bu olmadan dodge tahmindir.")]
+        public float enemyWindupDuration = 0.55f;
+        [Tooltip("VURUŞ: hasarın indiği kısa evre. Yön hazırlık bitince KİLİTLENİR — sonrası kaçılabilir.")]
+        public float enemyStrikeDuration = 0.15f;
+        [Tooltip("TOPARLANMA: vuruştan sonra açık kaldığı süre")]
+        public float enemyRecoverDuration = 0.45f;
+        [Tooltip("Boş düşmanın hazırlığı bu kat daha yavaş — zayıflığı görünür olsun")]
+        public float enemyHollowWindupMultiplier = 1.6f;
+        [Tooltip("Düşman vuruşunun koni açısı (derece)")]
+        public float enemyAttackAngle = 90f;
+        [Tooltip("Vuruş anında öne atılma mesafesi")]
+        public float enemyLungeDistance = 0.8f;
         [Tooltip("Saldırı sırasında hareket hızı çarpanı")]
         [Range(0f, 1f)] public float attackMoveDamping = 0.25f;
 

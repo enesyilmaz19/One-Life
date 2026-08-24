@@ -27,14 +27,21 @@ namespace TekCan
             foreach (var c in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include))
                 Object.Destroy(c.gameObject);
 
-            if (Object.FindObjectsByType<Light>(FindObjectsInactive.Include).Length == 0)
-            {
-                var lightGo = new GameObject("Sun");
-                var l = lightGo.AddComponent<Light>();
-                l.type = LightType.Directional;
-                l.intensity = 1.1f;
-                lightGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-            }
+            // Aydınlatma okunabilirliğin parçası: düşman durumları RENKLE ayrışıyor
+            // (kırmızı dolu / turuncu hazırlık / beyaz isabet / gri boş). Ortam ışığı
+            // zayıfsa hepsi aynı koyu griye ezilir ve geri bildirim yok olur.
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.42f, 0.42f, 0.48f);
+
+            foreach (var old in Object.FindObjectsByType<Light>(FindObjectsInactive.Include))
+                Object.Destroy(old.gameObject);
+
+            var lightGo = new GameObject("Sun");
+            var l = lightGo.AddComponent<Light>();
+            l.type = LightType.Directional;
+            l.intensity = 1.3f;
+            // Kameraya yakın yönden gelsin ki bize dönük yüzler aydınlansın.
+            lightGo.transform.rotation = Quaternion.Euler(55f, t.camYaw - 25f, 0f);
 
             // Zemin
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
@@ -93,6 +100,7 @@ namespace TekCan
         {
             Enemy.All.Clear();
             HitStop.Reset();
+            Arc.Reset();
             Time.timeScale = 1f;
         }
 

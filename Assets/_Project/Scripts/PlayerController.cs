@@ -17,6 +17,17 @@ namespace TekCan
         float _attackTimer;
         bool _attackHitDone;
 
+        Renderer _renderer;
+        Color _baseColor;
+        float _hurtFlash;
+        Vector3 _knockback;
+
+        static readonly Color SwingTint = new Color(0.65f, 0.9f, 1f, 0.42f);
+        static readonly Color HurtColor = new Color(1f, 0.3f, 0.3f);
+
+        /// <summary>Savurma yayı üretildi mi — öz-denetim bunu kontrol eder (ıskada da çıkmalı).</summary>
+        public int SwingsSpawned { get; private set; }
+
         public bool Dashing => _dashTimer > 0f;
         public bool Attacking => _attackTimer > 0f;
         public bool Invulnerable => _iFrames > 0f;
@@ -25,6 +36,8 @@ namespace TekCan
         {
             _t = tuning;
             _cam = cameraTransform;
+            _renderer = GetComponent<Renderer>();
+            if (_renderer != null) _baseColor = _renderer.material.color;
         }
 
         void Update()
@@ -33,6 +46,7 @@ namespace TekCan
 
             _dashCd -= Time.deltaTime;
             _iFrames -= Time.deltaTime;
+            TickHurt();
 
             Vector3 input = ReadMove();
 
@@ -132,6 +146,13 @@ namespace TekCan
             _attackTimer = _t.attackDuration;
             _attackHitDone = false;
             if (input.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(input);
+
+            // ⚠️ ISKADA DA ÇIKAR. Faz 1'in ilk playtest'i tam olarak bu eksik olduğu için
+            // yürümedi: oyuncu saldırdığını göremeyince hissi yargılayamadı.
+            // Yay, gerçek vuruş alanının kendisi — menzil ve açı Strike() ile aynı kaynaktan.
+            Arc.Spawn(transform.position, transform.rotation,
+                _t.attackRange, _t.attackAngle, SwingTint, _t.swingArcLife);
+            SwingsSpawned++;
         }
 
         void TickAttack(Vector3 input)
@@ -173,13 +194,56 @@ namespace TekCan
             }
         }
 
-        /// <summary>Darbe yemek saniye götürür. Dash i-frame'i içindeyken geçmez.</summary>
-        public void TakeHit(float secondsCost)
+        /// <summary>
+        /// Darbe yemek saniye götürür. Dash i-frame'i içindeyken geçmez.
+        /// Kırmızı parlama + geri itilme, "yedim" anını okunur kılıyor —
+        /// ilk playtest'te saatin azalması dışında hiçbir işaret yoktu.
+        /// </summary>
+        public void TakeHit(float secondsCost, Vector3 fromPosition)
         {
             if (Invulnerable) return;
+
             Clock.Instance?.Spend(secondsCost);
             HitStop.Freeze(_t.hitStopDuration * 1.5f);
             IsoCamera.Shake(_t.hurtShake);
+
+            _hurtFlash = _t.playerHurtFlashDuration;
+            Vector3 away = transform.position - fromPosition;
+            away.y = 0f;
+            if (away.sqrMagnitude > 0.0001f) _knockback = away.normalized * _t.playerKnockback;
+            Paint();
+        }
+
+        void TickHurt()
+        {
+            if (_hurtFlash > 0f)
+            {
+                _hurtFlash -= Time.unscaledDeltaTime;   // hit-stop sırasında da sönsün
+                if (_hurtFlash <= 0f) Paint();
+            }
+
+            if (_knockback.sqrMagnitude > 0.0001f)
+            {
+                transform.position += _knockback * Time.deltaTime;
+                _knockback = Vector3.Lerp(_knockback, Vector3.zero, 12f * Time.deltaTime);
+                if (_knockback.sqrMagnitude < 0.0001f) _knockback = Vector3.zero;
+            }
+        }
+
+        void Paint()
+        {
+            if (_renderer == null) return;
+            _renderer.material.color = _hurtFlash > 0f ? HurtColor : _baseColor;
+        }
+
+        /// <summary>Ayar yaparken vuruş alanı görünsün — Hierarchy'den Player'ı seç.</summary>
+        void OnDrawGizmosSelected()
+        {
+            if (_t == null) return;
+            Gizmos.color = new Color(0.4f, 0.9f, 1f, 0.9f);
+            float half = _t.attackAngle * 0.5f;
+            for (float a = -half; a <= half; a += 10f)
+                Gizmos.DrawRay(transform.position, Quaternion.Euler(0f, a, 0f) * transform.forward * _t.attackRange);
         }
     }
 }

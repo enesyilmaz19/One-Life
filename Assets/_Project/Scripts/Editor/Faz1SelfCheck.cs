@@ -63,6 +63,35 @@ namespace TekCan.EditorTools
             clock.UpgradeHarvest(5f);
             failed += Check(ref total, "hasat oranı tavanı aşmadı", Mathf.Approximately(clock.HarvestRate, 0.70f), clock.HarvestRate);
 
+            // 5) GERİ BİLDİRİM — ilk playtest'i öldüren hata tam buydu.
+            //    Saldırı ıskalasa bile görünür bir yay çıkmak ZORUNDA, yoksa
+            //    oyuncu saldırdığını göremez ve hissi yargılayamaz.
+            var pGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            var pc = pGo.AddComponent<PlayerController>();
+            pc.Init(t, null);
+            int arcsBefore = Object.FindObjectsByType<Arc>(FindObjectsInactive.Include).Length;
+            typeof(PlayerController).GetMethod("StartAttack",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(pc, new object[] { Vector3.forward });
+            int arcsAfter = Object.FindObjectsByType<Arc>(FindObjectsInactive.Include).Length;
+
+            failed += Check(ref total, "ISKADA BİLE savurma yayı üretildi", arcsAfter == arcsBefore + 1, arcsAfter - arcsBefore);
+            failed += Check(ref total, "savurma sayacı arttı", pc.SwingsSpawned == 1, pc.SwingsSpawned);
+
+            // 6) Düşman HAZIRLIK evresinde hasar vermez — hasar yalnızca vuruş anında iner
+            var e2Go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            var e2 = e2Go.AddComponent<Enemy>();
+            e2.Init(t, pGo.transform, null);
+            typeof(Enemy).GetMethod("EnterWindup",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(e2, null);
+            float clockBeforeWindup = clock.Seconds;
+            failed += Check(ref total, "hazırlık evresine girdi", e2.CurrentState == Enemy.State.Windup, (int)e2.CurrentState);
+            failed += Check(ref total, "HAZIRLIK hasar VERMEDİ (kaçış penceresi var)", Mathf.Approximately(clock.Seconds, clockBeforeWindup), clock.Seconds - clockBeforeWindup);
+
+            foreach (var a in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include)) Object.DestroyImmediate(a.gameObject);
+            Object.DestroyImmediate(e2Go);
+            Object.DestroyImmediate(pGo);
             Object.DestroyImmediate(root);
             Enemy.All.Clear();
 

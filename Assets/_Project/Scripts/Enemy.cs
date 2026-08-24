@@ -16,12 +16,26 @@ namespace TekCan
     {
         public static readonly List<Enemy> All = new List<Enemy>();
 
+        /// <summary>Kovala → HAZIRLIK (uyarı görünür) → VURUŞ (yön kilitli) → toparlanma.</summary>
+        public enum State { Chase, Windup, Strike, Recover }
+
         Tuning _t;
         Transform _player;
         Renderer _renderer;
         TimeLabel _label;
         float _attackTimer;
         float _flashTimer;
+
+        State _state = State.Chase;
+        float _stateTimer;
+        Vector3 _strikeDir;
+        Arc _telegraph;
+
+        public State CurrentState => _state;
+
+        static readonly Color WindupColor = new Color(1f, 0.75f, 0.2f);
+        static readonly Color TelegraphTint = new Color(1f, 0.55f, 0.15f, 0.30f);
+        static readonly Color StrikeTint = new Color(1f, 0.25f, 0.15f, 0.55f);
 
         /// <summary>Bedende kalan saniye. Sıfırlanınca ölmez — boşalır.</summary>
         public float TimeLeft { get; private set; }
@@ -62,40 +76,120 @@ namespace TekCan
                 if (Hollow && !wasHollow) Paint();
             }
 
-            Chase();
-            TryAttack();
+            TickState();
             if (_label != null) _label.Set(TimeLeft, Hollow);
         }
 
-        void Chase()
+        // ── saldırı evreleri ─────────────────────────────────────────────────
+        // Hazırlık boyunca oyuncuyu takip eder ve uyarı yayı görünür.
+        // Vuruş başlarken yön KİLİTLENİR — dodge burada mümkün olur.
+        // Kilit olmasaydı telegraf yalan söylerdi ve kaçmak imkânsız olurdu.
+
+        void TickState()
+        {
+            _stateTimer -= Time.deltaTime;
+
+            switch (_state)
+            {
+                case State.Chase:
+                    _attackTimer -= Time.deltaTime;
+                    ChaseMove();
+                    if (_attackTimer <= 0f && FlatDistanceToPlayer() <= _t.enemyAttackRange)
+                        EnterWindup();
+                    break;
+
+                case State.Windup:
+                    FacePlayer();                                   // hâlâ takip ediyor
+                    if (_stateTimer <= 0f) EnterStrike();
+                    break;
+
+                case State.Strike:
+                    transform.position += _strikeDir *
+                        (_t.enemyLungeDistance / Mathf.Max(0.0001f, _t.enemyStrikeDuration)) * Time.deltaTime;
+                    if (_stateTimer <= 0f) EnterState(State.Recover, _t.enemyRecoverDuration);
+                    break;
+
+                case State.Recover:
+                    if (_stateTimer <= 0f)
+                    {
+                        _attackTimer = _t.enemyAttackCooldown;
+                        EnterState(State.Chase, 0f);
+                    }
+                    break;
+            }
+        }
+
+        void EnterWindup()
+        {
+            float dur = _t.enemyWindupDuration * (Hollow ? _t.enemyHollowWindupMultiplier : 1f);
+            EnterState(State.Windup, dur);
+            FacePlayer();
+
+            _telegraph = Arc.Spawn(transform.position, transform.rotation,
+                _t.enemyAttackRange, _t.enemyAttackAngle, TelegraphTint, dur, transform);
+            Paint();
+        }
+
+        void EnterStrike()
+        {
+            _strikeDir = transform.forward;                         // ← yön burada kilitlenir
+            EnterState(State.Strike, _t.enemyStrikeDuration);
+
+            if (_telegraph != null) { _telegraph.Cancel(); _telegraph = null; }
+            Arc.Spawn(transform.position, transform.rotation,
+                _t.enemyAttackRange, _t.enemyAttackAngle, StrikeTint, _t.enemyStrikeDuration * 1.6f);
+            Paint();
+
+            // Hasar yalnızca bu anda, kilitli yöne göre iner. Kaçtıysan ıskalar.
+            if (PlayerInStrikeCone())
+            {
+                float cost = Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost;
+                _player.GetComponent<PlayerController>()?.TakeHit(cost, transform.position);
+            }
+        }
+
+        void EnterState(State s, float duration)
+        {
+            _state = s;
+            _stateTimer = duration;
+            if (s == State.Chase || s == State.Recover) Paint();
+        }
+
+        bool PlayerInStrikeCone()
+        {
+            Vector3 to = _player.position - transform.position;
+            to.y = 0f;
+            return to.magnitude <= _t.enemyAttackRange &&
+                   Vector3.Angle(_strikeDir, to) <= _t.enemyAttackAngle * 0.5f;
+        }
+
+        float FlatDistanceToPlayer()
+        {
+            Vector3 to = _player.position - transform.position;
+            to.y = 0f;
+            return to.magnitude;
+        }
+
+        void FacePlayer()
+        {
+            Vector3 to = _player.position - transform.position;
+            to.y = 0f;
+            if (to.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(to.normalized);
+        }
+
+        void ChaseMove()
         {
             Vector3 to = _player.position - transform.position;
             to.y = 0f;
             float dist = to.magnitude;
             if (dist < 0.01f) return;
 
-            Vector3 dir = to / dist;
             if (dist > _t.enemyAttackRange * 0.9f)
             {
                 float speed = Hollow ? _t.enemyHollowSpeed : _t.enemyFullSpeed;
-                transform.position += dir * speed * Time.deltaTime;
+                transform.position += (to / dist) * speed * Time.deltaTime;
             }
-            transform.rotation = Quaternion.LookRotation(dir);
-        }
-
-        void TryAttack()
-        {
-            _attackTimer -= Time.deltaTime;
-            if (_attackTimer > 0f) return;
-
-            Vector3 flat = _player.position - transform.position;
-            flat.y = 0f;
-            if (flat.magnitude > _t.enemyAttackRange) return;
-
-            _attackTimer = _t.enemyAttackCooldown;
-            float cost = Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost;
-            var player = _player.GetComponent<PlayerController>();
-            if (player != null) player.TakeHit(cost);
+            FacePlayer();
         }
 
         /// <summary>
@@ -120,6 +214,7 @@ namespace TekCan
 
         void Kill()
         {
+            if (_telegraph != null) _telegraph.Cancel();   // ölünce uyarı yayı ortada kalmasın
             All.Remove(this);
             if (Application.isPlaying) Destroy(gameObject);
             else DestroyImmediate(gameObject);   // öz-denetim editör modunda çalışabilsin
@@ -128,7 +223,13 @@ namespace TekCan
         void Paint()
         {
             if (_renderer == null) return;
-            _renderer.material.color = _flashTimer > 0f ? Color.white : (Hollow ? HollowColor : FullColor);
+
+            Color c;
+            if (_flashTimer > 0f) c = Color.white;                                  // isabet aldı
+            else if (_state == State.Windup || _state == State.Strike) c = WindupColor;  // saldırıyor
+            else c = Hollow ? HollowColor : FullColor;
+
+            _renderer.material.color = c;
             // ponytail: renk değişimi + beyaz parlama greybox için yeterli isabet işareti.
             // Gerçek VFX (parçacık, iz, boşalma efekti) Faz 3'te silahlarla birlikte.
         }
