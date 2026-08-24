@@ -233,7 +233,6 @@ namespace TekCan
                 hitSomething = true;
             }
 
-
             if (hitSomething)
             {
                 HitStop.Freeze(_t.hitStopDuration);

@@ -13,7 +13,6 @@ namespace TekCan
         Clock _clock;
         GUIStyle _big, _small;
 
-
         public void Init(Clock clock) => _clock = clock;
 
         void OnGUI()

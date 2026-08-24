@@ -92,7 +92,10 @@ namespace TekCan.EditorTools
             // 7) ⚠️ GERÇEK YOL: Strike() üzerinden hasar iniyor mu?
             //    Eski testler TakeDamage'i doğrudan çağırıyordu ve bu yüzden oyun
             //    kırıkken bile yeşil yanıyordu. Artık oyuncunun bastığı yoldan geçiyoruz.
-            pGo.transform.position = Vector3.zero;
+            // ⚠️ Üretim yüksekliğinde çalış — lessons.md'deki kural: test düzeneği
+            // yerleşimi KOPYALAMAZ, ithal eder. Düşmanların havada doğduğu hatayı
+            // testlerin görememesinin sebebi tam olarak y=0'da çalışmalarıydı.
+            pGo.transform.position = Bootstrap.PlayerSpawn;
             pGo.transform.rotation = Quaternion.LookRotation(Vector3.forward);
 
             // Önceki bölümlerden kalan düşmanları sahneden çıkar — yoksa Strike onları da
@@ -101,7 +104,8 @@ namespace TekCan.EditorTools
             Enemy.All.Clear();
 
             var e3Go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            e3Go.transform.position = new Vector3(0f, 0f, 1.6f);   // tam önde, menzil içinde
+            e3Go.transform.position = Bootstrap.PlayerSpawn + new Vector3(0f, 0f, 1.6f);  // tam önde, üretim yüksekliğinde
+            e3Go.transform.localScale = Bootstrap.EnemyScale;
             var e3 = e3Go.AddComponent<Enemy>();
             e3.Init(t, pGo.transform, null);
 
