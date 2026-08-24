@@ -147,12 +147,19 @@ namespace TekCan
 
         // ── hareket ──────────────────────────────────────────────────────────
 
-        void Move(Vector3 dir, float damping)
+        /// <summary>
+        /// rotate=false ise yalnızca yer değiştirir, dönmez.
+        /// Saldırı sırasında dönmek YASAK: nişan StartAttack'te imlece kilitleniyor ama
+        /// vuruş ~0.1 sn sonra iniyor. Arada hareket tuşu oyuncuyu çevirirse yay bir yere,
+        /// isabet başka yere gider — savurmaya bakıp ıskalarsın.
+        /// </summary>
+        void Move(Vector3 dir, float damping, bool rotate = true)
         {
             if (dir.sqrMagnitude < 0.0001f) return;
             transform.position += dir * _t.moveSpeed * damping * Time.deltaTime;
-            transform.rotation = Quaternion.Slerp(transform.rotation,
-                Quaternion.LookRotation(dir), _t.turnSpeed * Time.deltaTime);
+            if (rotate)
+                transform.rotation = Quaternion.Slerp(transform.rotation,
+                    Quaternion.LookRotation(dir), _t.turnSpeed * Time.deltaTime);
         }
 
         void StartDash(Vector3 input)
@@ -196,7 +203,7 @@ namespace TekCan
         void TickAttack(Vector3 input)
         {
             _attackTimer -= Time.deltaTime;
-            Move(input, _t.attackMoveDamping);
+            Move(input, _t.attackMoveDamping, rotate: false);   // savurma yönüne bağlı kal
 
             float elapsed = _t.attackDuration - _attackTimer;
             if (!_attackHitDone && elapsed >= _t.attackDuration * _t.attackHitMoment)

@@ -122,6 +122,19 @@ namespace TekCan.EditorTools
                 .Invoke(pc, null);
             failed += Check(ref total, "BOŞ düşman Strike ile öldü (ölümsüz değil)", Enemy.All.Count == countBefore - 1, Enemy.All.Count);
 
+            // 9) Saldırı sırasında hareket etmek oyuncuyu DÖNDÜRMEMELİ.
+            //    Nişan StartAttack'te kilitleniyor ama vuruş ~0.1 sn sonra iniyor;
+            //    arada dönerse yay bir yere, isabet başka yere gider.
+            pGo.transform.rotation = Quaternion.LookRotation(Vector3.forward);
+            var facingBefore = pGo.transform.forward;
+            typeof(PlayerController).GetMethod("Move",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(pc, new object[] { Vector3.right, 1f, false });
+
+            failed += Check(ref total, "saldırıda hareket DÖNDÜRMÜYOR",
+                Vector3.Angle(facingBefore, pGo.transform.forward) < 0.01f,
+                Vector3.Angle(facingBefore, pGo.transform.forward));
+
             foreach (var a in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include)) Object.DestroyImmediate(a.gameObject);
             if (e3Go != null) Object.DestroyImmediate(e3Go);
             if (e2Go != null) Object.DestroyImmediate(e2Go);
