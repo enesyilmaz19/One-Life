@@ -101,28 +101,26 @@ Ayrıca risk sırası da bunu söylüyor: bu projenin en büyük batma riski **d
 > Çok yüksekse dövüş kendi kendini besler, saat anlamsızlaşır, oyun biter. Çok düşükse her kavga net kayıptır, oyuncu kaçmaya başlar — ki tasarımın tam tersi.
 > **Hedef denge: temiz kavga net pozitif, dağınık kavga net negatif.** Bütün oyun bu tek orana asılı. Faz 2'de deterministik simülasyonla taranacak.
 
-### Denge taraması sonucu (2026-08-24, `Tek Can → Denge simülasyonu`)
+### Denge taraması sonucu — **KARAR VERİLDİ** (2026-08-24, Enes)
 
-Kritik sayı artık tahmin değil, ölçüm. Düşman başına **net saniye** (senkron sonrası
-değerlerle: hasar 3.5, savurma 0.35 sn, drenaj 1/sn, darbe 4 sn):
+`Tek Can → Denge simülasyonu`. Düşman başına **net saniye** (hasar 3.5, savurma 0.35 sn,
+drenaj 1/sn, darbe 4 sn):
 
 | hasat | TEMİZ | ORTA | DAĞINIK | |
 |---|---:|---:|---:|---|
-| **%20** (şu anki) | **−0.7** | −5.1 | −12.6 | ❌ temiz oyun bile zarar |
+| %20 | −0.7 | −5.1 | −12.6 | temiz oyun bile zarardaydı |
 | %30 | +0.2 | −4.1 | −11.7 | en düşük uygun |
-| %40 | +1.2 | −3.2 | −10.8 | ✅ rahat aralık |
-| %70 (tavan) | +4.1 | −0.3 | −8.1 | dağınık bile kâra yaklaşıyor |
+| **%35** ✅ | **+0.7** | −3.7 | −11.3 | **seçilen** |
+| %40 | +1.2 | −3.2 | −10.8 | |
+| %70 (tavan) | +4.1 | −0.3 | −8.1 | dağınık bile kâra yaklaşır |
 
-> ⚠️ **AÇIK KARAR — şu anki %20 tasarım hedefini tutmuyor.**
-> "Temiz kavga net pozitif" kuralı bozuluyor: tek hedefle ne kadar iyi oynarsan oyna
-> her düşman **−0.7 sn** zarar. Yani kâr etmenin tek yolu kalabalığa vurmak kalıyor —
-> ki bu tam olarak kaçınmak istediğimiz şey.
->
-> Kaldıraçlar: hasat oranını %30-40'a çek · `enemyFullHitCost`'u (4 sn) düşür ·
-> `enemyTimePool`'u büyüt (kavga uzar ama hasat da artar). Karar Enes'in.
+**Karar: hasat %35, darbe maliyeti 4 sn olarak KALIYOR** (Enes, 2026-08-24).
 
-**Ayrıca:** darbe maliyeti (4 sn) düşman başına kârı (en iyi ihtimalle ~1.2 sn) eziyor.
-**Bir hata üç kusursuz öldürmeyi siliyor.** Roguelike için savunulabilir ama bilinçli olmalı.
+Tasarım hedefi tutuyor: temiz kavga net pozitif (+0.7), dağınık kavga ağır negatif (−11.3).
+Marj bilerek dar — tek hedefli oyun kârlı ama zengin etmiyor, kâr beceriyle geliyor.
+
+**Darbe maliyeti bilinçli olarak sert bırakıldı:** 4 sn, düşman başına kârın ~6 katı.
+Bir hata altı temiz öldürmeyi siliyor. Roguelike'ta bu seçim savunulabilir; kazara değil.
 
 > ⚠️ **ÇOKLU HEDEF SORUNU (2026-08-24 playtest, Enes yakaladı):** Savurma koni içindeki
 > HERKESE tam hasar veriyor ve her birinden ayrı hasat ediliyor. Sonuç: kalabalık arttıkça

@@ -16,7 +16,7 @@ MonoBehaviour:
   drainInCombat: 1
   drainOutOfCombat: 2.5
   combatRadius: 12
-  harvestRate: 0.2
+  harvestRate: 0.35
   harvestRateCap: 0.7
   moveSpeed: 6
   turnSpeed: 18

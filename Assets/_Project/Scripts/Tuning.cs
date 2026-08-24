@@ -21,7 +21,7 @@ namespace TekCan
 
         [Header("── HASAT (oyunun en kritik sayısı) ──")]
         [Tooltip("Verilen hasarın ne kadarı saate yazılır. Yüksekse dövüş kendini besler, saat anlamsızlaşır.")]
-        [Range(0f, 1f)] public float harvestRate = 0.20f;
+        [Range(0f, 1f)] public float harvestRate = 0.35f;
         [Tooltip("Koşu içi yükseltmelerin çıkabileceği tavan — %100'e yaklaşırsa oyun bozulur")]
         [Range(0f, 1f)] public float harvestRateCap = 0.70f;
 

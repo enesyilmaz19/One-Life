@@ -1,14 +1,6 @@
 ## 📥 ENES'İN MASASI
 
-**Faz 2 playtest — saat ekonomisi.** Play'e bas, sunaklara git, birkaç koşu yap.
-
-- [ ] **Sunak fiyatı doğru mu?** İlk alım 6 sn = 60 sn'lik saatin %10'u. Çok ucuz mu, çok pahalı mı?
-- [ ] **HASAT alımı fark ediliyor mu?** Aldıktan sonra vuruş başına kazancın arttığını hissediyor musun? (HUD'da "hasat %" yazıyor)
-- [ ] **Dash-atak işe yarıyor mu?** Dash sırasında saldırıya bas. Kaçarken değil *dalarken* kullanılıyor mu?
-- [ ] **Yeniden başlama yeterince hızlı mı?** Öl → R → yeni koşu
-- [ ] **Bir darbe 4 sn, bir düşman ~1.5 sn kâr.** Yani bir hata üç kusursuz öldürmeyi siliyor. Adil mi, fazla sert mi? (simülasyon bunu ölçtü, karar senin)
-
-> Not: klavye girdisi otomasyondan Unity play-mode'a geçmiyor, his sorularının cevabı yalnızca sende.
+*Şu an sende bekleyen iş yok.* Faz 2 kapandı, Faz 3'e geçilmedi — Enes "kal burda" dedi.
 
 ---
 
@@ -51,30 +43,19 @@
 - [x] 🎮 **Hit-stop + sarsıntı dozu** — A/B ile: `hitStopDuration`/`hitShake` sırayla (0, 0) → (0.25, 0.6) → (0.10, 0.22). Tek başına yargılanamaz, karşılaştırınca anlaşılır
 - [x] 🎮 **Hazırlık süresi** (`enemyWindupDuration` 0.55) — düşmanın yanında dur, turuncu koni çıkınca dash at, 10 kez. Hep kurtuluyorsan çok uzun (0.35 dene), hiç kurtulamıyorsan çok kısa (0.8 dene)
 
-### Faz 2'ye devredilenler
-- [ ] **Dash sırasında saldırı (dash-atak)** — Enes istedi. Şu an dash saldırıyı iptal ediyor, dash sırasında saldırı girdisi hiç okunmuyor. Türün klasiği, eklenecek
-- [ ] Ses — vuruş hissinin ciddi bir kısmı, hâlâ yok
-
-## Faz 2 — Saat ekonomisi ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+## Faz 2 — Saat ekonomisi ✅ **KAPANDI** (2026-08-24)
 
 - [x] **Saniyeyle satın alma** — 3 sunak: HASAT (+%8) · KESKİNLİK (+1.2 hasar) · ÇEVİKLİK (dash −0.08sn). Fiyat her alımda ×1.6, sunak başına 3 alım
 - [x] **Yükseltmeler koşu kapsamlı** — Clock'ta tutuluyor, Tuning asset'ine SIZMIYOR (test korumalı)
 - [x] **Koşu bitiş ekranı** — süre, öldürme, hasat, harcama, net kazanç. `Clock.OnDeath` artık abonesi olan canlı kod
 - [x] **R ile anında yeniden başlama** — `Bootstrap.Restart()`, koşu kökü tek Destroy
 - [x] **Dash-atak** — dash sırasında saldırıya bas, dash bitiminde geniş vuruş (×1.6 hasar, 160° koni)
-- [x] **Denge simülatörü** — `Tek Can → Denge simülasyonu`. %40 hasat doğrulandı (temiz +1.5 / dağınık −10.1)
+- [x] **Denge simülatörü** — `Tek Can → Denge simülasyonu`, gerçek asset'ten okuyor
 - [x] Faz 2 öz-denetimi: 15/15
-- [ ] 🎮 **PLAYTEST KAPISI** — aşağıdaki sorular
+- [x] 🎮 **PLAYTEST KAPISI GEÇİLDİ** — Enes: sunak, HASAT alımı, dash-atak, yeniden başlama hepsi çalışıyor (2026-08-24)
+- [x] **Denge kararı:** hasat %20 → **%35** (temiz +0.7 / dağınık −11.3). Darbe maliyeti 4 sn bilerek kaldı
 - [ ] Saat göstergesi gerçek tipografi/animasyon — UI geçişine ertelendi, greybox okunuyor
 - [ ] Ses — hâlâ yok, vuruş hissinin kalan yarısı
-
-### 🎮 Faz 2 playtest soruları
-
-1. **Sunak fiyatı doğru mu?** İlk alım 6 sn (60 sn'lik saatin %10'u). Çok ucuz mu, çok pahalı mı?
-2. **HASAT alımı fark ediliyor mu?** Aldıktan sonra vuruş başına kazancın arttığını hissediyor musun?
-3. **Dash-atak işe yarıyor mu?** Dash + saldırı: kaçarken değil *dalarken* kullanılıyor mu?
-4. **Koşu bitiş ekranı** — R ile yeniden başlamak yeterince hızlı mı?
-5. **Bir darbe = 4 saniye, bir düşman = ~1.5 saniye kâr.** Yani bir hata üç kusursuz öldürmeyi siliyor. Bu sana adil mi geliyor, yoksa fazla mı sert?
 
 ## Faz 3 — Silahlar
 
@@ -91,13 +72,13 @@
 
 ---
 
-## ⚠️ Ayar tuzağı
+## ⚠️ Ayar kaynağı
 
-Değerleri **Inspector'dan** değiştir, `Tuning.cs`'ten değil. Çalışma anında `Tuning.asset` geçerli;
-asset'te zaten kayıtlı bir alan C# varsayılanını **ezer**. 2026-08-24'te Enes'in üç ayarı
-(`harvestRate`, `dashDistance`, `attackDuration`) bu yüzden hiç uygulanmadı.
+`Tuning.asset` çalışma anının tek gerçeği; `Tuning.cs` varsayılanları yalnızca asset'te
+**henüz olmayan** yeni alanların tohumu. Değer değiştirmek için **Inspector**.
 
-Kontrol: `Tek Can → Ayar kaynağı denetimi` (C# ile asset'i karşılaştırır).
+- C# değerlerini asset'e taşımak: `Tek Can → Ayarları senkronla (C# → asset)`
+- `TuningAudit` her derlemeden sonra kendiliğinden çalışıp sapmayı Console'a basar
 
 ## Notlar
 
