@@ -41,7 +41,7 @@ namespace TekCan
         public float attackDuration = 0.25f;
         [Tooltip("Vuruşun isabet ettiği an (saldırı süresinin oranı)")]
         [Range(0f, 1f)] public float attackHitMoment = 0.4f;
-        public float attackDamage = 10f;
+        public float attackDamage = 3.5f;
         public float attackRange = 2.2f;
         [Tooltip("Öndeki koninin toplam açısı (derece)")]
         public float attackAngle = 100f;

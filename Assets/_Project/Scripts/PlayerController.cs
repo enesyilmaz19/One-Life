@@ -262,7 +262,7 @@ namespace TekCan
             // değişmiyorsa hasar başka bir Clock nesnesine yazılıyor demektir.
             string clockInfo = Clock.Instance == null
                 ? "YOK"
-                : $"id={Clock.Instance.GetInstanceID()} saniye={Clock.Instance.Seconds:0.00} " +
+                : $"id={Clock.Instance.GetEntityId()} saniye={Clock.Instance.Seconds:0.00} " +
                   $"sahnede={(Clock.Instance.gameObject != null && Clock.Instance.isActiveAndEnabled ? "evet" : "HAYIR-ÖLÜ")}";
 
             Debug.Log($"[STRIKE #{StrikesFired}] bakılan={checkedCount} menzilDışı={failedRange} " +
