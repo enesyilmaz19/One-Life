@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -15,9 +16,13 @@ namespace TekCan
     public class Arc : MonoBehaviour
     {
         static Material _shared;
+        // Yay geometrisi yalnızca menzil+açıya bağlı ve bunlar Tuning'den geliyor,
+        // yani pratikte iki üç çeşit var. Her savurmada yeni Mesh üretmek boşuna çöp.
+        static readonly Dictionary<long, Mesh> _meshCache = new Dictionary<long, Mesh>();
 
         Transform _follow;
         MeshRenderer _mr;
+        MaterialPropertyBlock _mpb;      // her karede yenisini kurmak GC baskısı yapıyordu
         Color _color;
         float _life, _age;
 
@@ -37,6 +42,7 @@ namespace TekCan
 
             var arc = go.AddComponent<Arc>();
             arc._mr = mr;
+            arc._mpb = new MaterialPropertyBlock();
             arc._color = color;
             arc._life = Mathf.Max(0.01f, life);
             arc._follow = follow;
@@ -62,18 +68,20 @@ namespace TekCan
 
         void Apply(float alpha)
         {
-            if (_mr == null) return;
+            if (_mr == null || _mpb == null) return;
             var c = _color;
             c.a *= alpha;
-            var mpb = new MaterialPropertyBlock();
-            mpb.SetColor("_BaseColor", c);
-            mpb.SetColor("_Color", c);      // Sprites/Default yedeği için
-            _mr.SetPropertyBlock(mpb);
+            _mpb.SetColor("_BaseColor", c);
+            _mpb.SetColor("_Color", c);     // Sprites/Default yedeği için
+            _mr.SetPropertyBlock(_mpb);
         }
 
-        /// <summary>Merkezden açılan yelpaze — yerel +Z ekseninde, XZ düzleminde yatık.</summary>
+        /// <summary>Merkezden açılan yelpaze — yerel +Z ekseninde, XZ düzleminde yatık. Önbellekli.</summary>
         static Mesh BuildFan(float radius, float angleDeg)
         {
+            long key = ((long)Mathf.RoundToInt(radius * 100f) << 32) ^ (uint)Mathf.RoundToInt(angleDeg * 100f);
+            if (_meshCache.TryGetValue(key, out var cached) && cached != null) return cached;
+
             const int segments = 24;
             var verts = new Vector3[segments + 2];
             var tris = new int[segments * 3];
@@ -96,6 +104,7 @@ namespace TekCan
             m.SetVertices(verts);
             m.SetTriangles(tris, 0);
             m.RecalculateNormals();
+            _meshCache[key] = m;
             return m;
         }
 
@@ -117,6 +126,10 @@ namespace TekCan
         }
 
         /// <summary>Play oturumları arası statik kalıntıyı temizler (bkz. Bootstrap.ResetStatics).</summary>
-        public static void Reset() => _shared = null;
+        public static void Reset()
+        {
+            _shared = null;
+            _meshCache.Clear();
+        }
     }
 }

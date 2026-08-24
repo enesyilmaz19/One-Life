@@ -155,32 +155,32 @@ namespace TekCan
             if (s == State.Chase || s == State.Recover) Paint();
         }
 
-        bool PlayerInStrikeCone()
+        /// <summary>Oyuncuya doğru yatay vektör — y sıfırlanmış, dört yerde aynıydı.</summary>
+        Vector3 FlatToPlayer()
         {
             Vector3 to = _player.position - transform.position;
             to.y = 0f;
+            return to;
+        }
+
+        bool PlayerInStrikeCone()
+        {
+            Vector3 to = FlatToPlayer();
             return to.magnitude <= _t.enemyAttackRange &&
                    Vector3.Angle(_strikeDir, to) <= _t.enemyAttackAngle * 0.5f;
         }
 
-        float FlatDistanceToPlayer()
-        {
-            Vector3 to = _player.position - transform.position;
-            to.y = 0f;
-            return to.magnitude;
-        }
+        float FlatDistanceToPlayer() => FlatToPlayer().magnitude;
 
         void FacePlayer()
         {
-            Vector3 to = _player.position - transform.position;
-            to.y = 0f;
+            Vector3 to = FlatToPlayer();
             if (to.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(to.normalized);
         }
 
         void ChaseMove()
         {
-            Vector3 to = _player.position - transform.position;
-            to.y = 0f;
+            Vector3 to = FlatToPlayer();
             float dist = to.magnitude;
             if (dist < 0.01f) return;
 
