@@ -26,8 +26,22 @@ namespace TekCan
         public bool Dead { get; private set; }
         public bool InCombat { get; private set; }
 
-        /// <summary>Koşu içi yükseltmelerle artar (Faz 2). Tavanı Tuning'de.</summary>
+        // ── koşu boyunca yükseltilebilen değerler ────────────────────────────
+        // ⚠️ Bunlar Tuning'den KOPYALANIR, Tuning'e YAZILMAZ. ScriptableObject
+        // çalışma anında değiştirilirse editörde kalıcı olur ve bir sonraki koşu
+        // önceki koşunun yükseltmeleriyle başlar. Sunaklar burayı değiştirir.
         public float HarvestRate { get; private set; }
+        public float AttackDamage { get; private set; }
+        public float DashCooldown { get; private set; }
+
+        // ── koşu defteri ─────────────────────────────────────────────────────
+        // Koşu bitiş ekranı bunları gösteriyor. Saat zaten koşunun kasası,
+        // hesabı da burada tutmak tutarlı.
+        public float RunTime { get; private set; }
+        public float TotalHarvested { get; private set; }
+        public float TotalSpent { get; private set; }
+        public int EnemiesKilled { get; private set; }
+        public int Purchases { get; private set; }
 
         public event Action OnDeath;
 
@@ -38,6 +52,8 @@ namespace TekCan
             _player = player;
             Seconds = tuning.startSeconds;
             HarvestRate = tuning.harvestRate;
+            AttackDamage = tuning.attackDamage;
+            DashCooldown = tuning.dashCooldown;
             Dead = false;
         }
 
@@ -45,6 +61,7 @@ namespace TekCan
         {
             if (Dead || _t == null) return;
 
+            RunTime += Time.deltaTime;
             InCombat = AnyLivingEnemyNear();
             Seconds -= (InCombat ? _t.drainInCombat : _t.drainOutOfCombat) * Time.deltaTime;
             CheckDeath();
@@ -71,6 +88,7 @@ namespace TekCan
             if (seconds <= 0f) return;
 
             Seconds += seconds;
+            TotalHarvested += seconds;
 
             // Aynı karede birden çok düşmana isabet ederse tek bir toplamda göster.
             LastGain = (Time.unscaledTime - LastGainAt < 0.05f) ? LastGain + seconds : seconds;
@@ -90,6 +108,25 @@ namespace TekCan
         {
             HarvestRate = Mathf.Min(HarvestRate + delta, _t.harvestRateCap);
         }
+
+        public void UpgradeDamage(float delta) => AttackDamage += Mathf.Max(0f, delta);
+
+        public void UpgradeDash(float delta) => DashCooldown = Mathf.Max(0.1f, DashCooldown - delta);
+
+        /// <summary>
+        /// Satın alma. Ödeyemiyorsan gerçekleşmez — ve ÖLDÜRMEZ:
+        /// oyuncu yanlışlıkla kendini bitirememeli, ölüm dövüşte olmalı, menüde değil.
+        /// </summary>
+        public bool TryBuy(float price)
+        {
+            if (Dead || price <= 0f || Seconds <= price) return false;
+            Seconds -= price;
+            TotalSpent += price;
+            Purchases++;
+            return true;
+        }
+
+        public void ReportKill() => EnemiesKilled++;
 
         bool AnyLivingEnemyNear()
         {

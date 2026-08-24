@@ -1,13 +1,14 @@
-# Tek Can — Görevler
-
 ## 📥 ENES'İN MASASI
 
-**Faz 1'i kapatacak iki test kaldı.** İkisi de Play sırasında yapılır — `Tuning.asset`'i seç, oyun çalışırken değeri çevir.
+**Faz 2 playtest — saat ekonomisi.** Play'e bas, sunaklara git, birkaç koşu yap.
 
-- [ ] **A · Tokluk (2 dk):** `hitStopDuration`/`hitShake` sırayla `(0, 0)` → `(0.25, 0.6)` → `(0.10, 0.22)`, her birinde 20-30 sn vur. İlk ikisi uçları görmen için. "Az" ya da "fazla" demen yeter
-- [ ] **B · Kaçış penceresi (2 dk):** düşmanın yanında kıpırdamadan dur, turuncu koni çıkınca dash at, 10 kez. Hep kurtuluyorsan `enemyWindupDuration` 0.35 · hiç kurtulamıyorsan 0.8 · dikkatliyken kurtulup dalgınken yiyorsan doğru
+- [ ] **Sunak fiyatı doğru mu?** İlk alım 6 sn = 60 sn'lik saatin %10'u. Çok ucuz mu, çok pahalı mı?
+- [ ] **HASAT alımı fark ediliyor mu?** Aldıktan sonra vuruş başına kazancın arttığını hissediyor musun? (HUD'da "hasat %" yazıyor)
+- [ ] **Dash-atak işe yarıyor mu?** Dash sırasında saldırıya bas. Kaçarken değil *dalarken* kullanılıyor mu?
+- [ ] **Yeniden başlama yeterince hızlı mı?** Öl → R → yeni koşu
+- [ ] **Bir darbe 4 sn, bir düşman ~1.5 sn kâr.** Yani bir hata üç kusursuz öldürmeyi siliyor. Adil mi, fazla sert mi? (simülasyon bunu ölçtü, karar senin)
 
-> Not: klavye girdisi otomasyondan Unity play-mode'a geçmiyor, his sorularının cevabı yalnızca sende. Ben log + ekran görüntüsüyle doğrularım.
+> Not: klavye girdisi otomasyondan Unity play-mode'a geçmiyor, his sorularının cevabı yalnızca sende.
 
 ---
 
@@ -54,13 +55,26 @@
 - [ ] **Dash sırasında saldırı (dash-atak)** — Enes istedi. Şu an dash saldırıyı iptal ediyor, dash sırasında saldırı girdisi hiç okunmuyor. Türün klasiği, eklenecek
 - [ ] Ses — vuruş hissinin ciddi bir kısmı, hâlâ yok
 
-## Faz 2 — Saat ekonomisi
+## Faz 2 — Saat ekonomisi ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
 
-- [ ] Saatin gerçek dengesi: öldürme kazancı / darbe kaybı oranları
-- [ ] Saat göstergesi — okunur ve dramatik. **Bu oyunun HUD'ı bu, tek gösterge**
-- [ ] Saniyeyle satın alma (dükkân/sunak)
-- [ ] Sıfır → koşu bitişi ekranı — **`Clock.OnDeath`'e ya burada abone ol ya da olayı sil.** Şu an abonesi yok, ölü kod (2026-08-24 öz-incelemesinde bulundu)
-- [ ] Denge testi: deterministik simülasyonla kazanç/kayıp oranlarını tara
+- [x] **Saniyeyle satın alma** — 3 sunak: HASAT (+%8) · KESKİNLİK (+1.2 hasar) · ÇEVİKLİK (dash −0.08sn). Fiyat her alımda ×1.6, sunak başına 3 alım
+- [x] **Yükseltmeler koşu kapsamlı** — Clock'ta tutuluyor, Tuning asset'ine SIZMIYOR (test korumalı)
+- [x] **Koşu bitiş ekranı** — süre, öldürme, hasat, harcama, net kazanç. `Clock.OnDeath` artık abonesi olan canlı kod
+- [x] **R ile anında yeniden başlama** — `Bootstrap.Restart()`, koşu kökü tek Destroy
+- [x] **Dash-atak** — dash sırasında saldırıya bas, dash bitiminde geniş vuruş (×1.6 hasar, 160° koni)
+- [x] **Denge simülatörü** — `Tek Can → Denge simülasyonu`. %40 hasat doğrulandı (temiz +1.5 / dağınık −10.1)
+- [x] Faz 2 öz-denetimi: 15/15
+- [ ] 🎮 **PLAYTEST KAPISI** — aşağıdaki sorular
+- [ ] Saat göstergesi gerçek tipografi/animasyon — UI geçişine ertelendi, greybox okunuyor
+- [ ] Ses — hâlâ yok, vuruş hissinin kalan yarısı
+
+### 🎮 Faz 2 playtest soruları
+
+1. **Sunak fiyatı doğru mu?** İlk alım 6 sn (60 sn'lik saatin %10'u). Çok ucuz mu, çok pahalı mı?
+2. **HASAT alımı fark ediliyor mu?** Aldıktan sonra vuruş başına kazancın arttığını hissediyor musun?
+3. **Dash-atak işe yarıyor mu?** Dash + saldırı: kaçarken değil *dalarken* kullanılıyor mu?
+4. **Koşu bitiş ekranı** — R ile yeniden başlamak yeterince hızlı mı?
+5. **Bir darbe = 4 saniye, bir düşman = ~1.5 saniye kâr.** Yani bir hata üç kusursuz öldürmeyi siliyor. Bu sana adil mi geliyor, yoksa fazla mı sert?
 
 ## Faz 3 — Silahlar
 

@@ -23,7 +23,10 @@ namespace TekCan
         float _hurtFlash;
         Vector3 _knockback;
 
+        bool _dashAttackQueued;
+
         static readonly Color SwingTint = new Color(0.65f, 0.9f, 1f, 0.42f);
+        static readonly Color DashSwingTint = new Color(0.55f, 1f, 0.85f, 0.55f);
         static readonly Color HurtColor = new Color(1f, 0.3f, 0.3f);
 
         /// <summary>Savurma yayı üretildi mi — öz-denetim bunu kontrol eder (ıskada da çıkmalı).</summary>
@@ -52,7 +55,7 @@ namespace TekCan
 
             Vector3 input = ReadMove();
 
-            if (Dashing) { TickDash(); return; }
+            if (Dashing) { TickDash(); return; }        // dash sırasında saldırı girdisi burada okunuyor
 
             if (ReadDash() && _dashCd <= 0f)
             {
@@ -166,17 +169,44 @@ namespace TekCan
         {
             _dashDir = input.sqrMagnitude > 0.0001f ? input.normalized : transform.forward;
             _dashTimer = _t.dashDuration;
-            _dashCd = _t.dashCooldown;
+            _dashCd = Clock.Instance != null ? Clock.Instance.DashCooldown : _t.dashCooldown;
             _iFrames = _t.iFrameDuration;
             _attackTimer = 0f;              // dash saldırıyı keser
+            _dashAttackQueued = false;      // önceki dash'ten sarkmasın
             transform.rotation = Quaternion.LookRotation(_dashDir);
         }
 
         void TickDash()
         {
+            // DASH-ATAK: dash sırasında saldırıya basarsan dash bitiminde geniş bir
+            // vuruş iner. Dash hem kaçış hem giriş oluyor — kaçtığın yerde bırakmıyor,
+            // içine dalıp çıkmanı ödüllendiriyor. (Enes istedi, Faz 1'den devir.)
+            if (!_dashAttackQueued && ReadAttack()) _dashAttackQueued = true;
+
             _dashTimer -= Time.deltaTime;
             float speed = _t.dashDistance / Mathf.Max(0.0001f, _t.dashDuration);
             transform.position += _dashDir * speed * Time.deltaTime;
+
+            if (_dashTimer <= 0f && _dashAttackQueued)
+            {
+                _dashAttackQueued = false;
+                DashStrike();
+            }
+        }
+
+        void DashStrike()
+        {
+            transform.rotation = Quaternion.LookRotation(_dashDir);
+
+            float range = _t.attackRange * _t.dashAttackRangeMult;
+            float damage = (Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage)
+                           * _t.dashAttackDamageMult;
+
+            Arc.Spawn(transform.position, transform.rotation,
+                range, _t.dashAttackAngle, DashSwingTint, _t.swingArcLife * 1.3f);
+            SwingsSpawned++;
+
+            StrikeCone(range, _t.dashAttackAngle, damage, _t.hitStopDuration * 1.4f, _t.hitShake * 1.5f);
         }
 
         // ── saldırı ──────────────────────────────────────────────────────────
@@ -215,8 +245,21 @@ namespace TekCan
 
         void Strike()
         {
+            // Hasar Clock'tan okunuyor: sunak yükseltmeleri koşu kapsamlı,
+            // Tuning asset'i çalışma anında değiştirilmiyor.
+            float damage = Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage;
+            StrikeCone(_t.attackRange, _t.attackAngle, damage, _t.hitStopDuration, _t.hitShake);
+        }
+
+        /// <summary>
+        /// Tek isabet yolu — normal saldırı da dash-atak da buradan geçiyor.
+        /// İki ayrı kopya olsaydı biri düzeltilip diğeri unutulurdu; savurma yayı
+        /// da aynı menzil/açıdan çiziliyor, yani görsel ile isabet asla ayrışmaz.
+        /// </summary>
+        void StrikeCone(float range, float angleDeg, float damage, float hitStop, float shake)
+        {
             bool hitSomething = false;
-            float half = _t.attackAngle * 0.5f;
+            float half = angleDeg * 0.5f;
 
             for (int i = Enemy.All.Count - 1; i >= 0; i--)
             {
@@ -226,17 +269,17 @@ namespace TekCan
                 Vector3 to = e.transform.position - transform.position;
                 to.y = 0f;
 
-                if (to.magnitude > _t.attackRange) continue;
+                if (to.magnitude > range) continue;
                 if (Vector3.Angle(transform.forward, to) > half) continue;
 
-                e.TakeDamage(_t.attackDamage);
+                e.TakeDamage(damage);
                 hitSomething = true;
             }
 
             if (hitSomething)
             {
-                HitStop.Freeze(_t.hitStopDuration);
-                IsoCamera.Shake(_t.hitShake);
+                HitStop.Freeze(hitStop);
+                IsoCamera.Shake(shake);
             }
         }
 

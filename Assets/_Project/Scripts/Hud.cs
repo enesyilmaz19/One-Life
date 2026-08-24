@@ -1,34 +1,74 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace TekCan
 {
     /// <summary>
     /// Tek gösterge: saat. Can barı yok, mana yok, para yok — hepsi bu sayı.
+    /// Ayrıca sunak istemi ve koşu bitiş ekranı.
     ///
-    /// ponytail: greybox için OnGUI. Bu sayı oyunun kimliği olduğu için Faz 2'de
-    /// gerçek tipografi ve animasyonla yeniden yapılacak.
+    /// ponytail: greybox için OnGUI. Bu sayı oyunun kimliği olduğu için gerçek
+    /// tipografi/animasyon UI geçişinde yapılacak; şimdi okunurluk yeterli.
     /// </summary>
     public class Hud : MonoBehaviour
     {
         Clock _clock;
-        GUIStyle _big, _small;
+        GUIStyle _big, _small, _mid;
 
-        public void Init(Clock clock) => _clock = clock;
+        public void Init(Clock clock)
+        {
+            _clock = clock;
+            // Ölü kod değil artık: koşu bitiş ekranı bu olaya bağlı.
+            clock.OnDeath += OnRunEnded;
+        }
+
+        void OnDestroy()
+        {
+            if (_clock != null) _clock.OnDeath -= OnRunEnded;
+        }
+
+        void OnRunEnded() => IsoCamera.Shake(0.5f);
+
+        void Update()
+        {
+            if (_clock != null && _clock.Dead && RestartPressed()) Bootstrap.Restart();
+        }
+
+        static bool RestartPressed()
+        {
+            var kb = Keyboard.current;
+            if (kb != null && kb.rKey.wasPressedThisFrame) return true;
+            var gp = Gamepad.current;
+            return gp != null && gp.startButton.wasPressedThisFrame;
+        }
+
+        void EnsureStyles()
+        {
+            if (_big != null) return;
+            _big = new GUIStyle(GUI.skin.label) { fontSize = 64, alignment = TextAnchor.UpperCenter };
+            _mid = new GUIStyle(GUI.skin.label) { fontSize = 26, alignment = TextAnchor.UpperCenter };
+            _small = new GUIStyle(GUI.skin.label) { fontSize = 16, alignment = TextAnchor.UpperCenter };
+        }
 
         void OnGUI()
         {
             if (_clock == null) return;
+            EnsureStyles();
 
-            if (_big == null)
-            {
-                _big = new GUIStyle(GUI.skin.label) { fontSize = 64, alignment = TextAnchor.UpperCenter };
-                _small = new GUIStyle(GUI.skin.label) { fontSize = 16, alignment = TextAnchor.UpperCenter };
-            }
+            if (_clock.Dead) { DrawRunEnd(); return; }
 
-            // ⚠️ Hasat GÖRÜNÜR olmalı. Enes'in şikâyeti buydu: "zaman çekip çekmediğimi
-            // anlamıyorum". Saat, kazandığı anda yeşile dönüp büyüyor ve kazancı yazıyor.
-            // (Bu, reddedilen 'düşman üstünde uçuşan hasar sayısı' değil — tek yerde,
-            //  saatin kendi tepkisi.)
+            DrawClock();
+            DrawAltarPrompt();
+
+            GUI.Label(new Rect(12f, Screen.height - 26f, 900f, 20f),
+                "WASD hareket · Sol tık saldırı · Shift/Space dash · dash sırasında saldırı = DASH-ATAK · E sunak", _small);
+        }
+
+        void DrawClock()
+        {
+            // Hasat GÖRÜNÜR olmalı: saat kazandığı anda yeşile dönüp büyüyor ve
+            // kazancı yazıyor. (Reddedilen 'düşman üstünde uçuşan sayı' değil —
+            // tek yerde, saatin kendi tepkisi.)
             float sinceGain = Time.unscaledTime - _clock.LastGainAt;
             bool gaining = sinceGain < 0.30f;
             float punch = gaining ? 1f - sinceGain / 0.30f : 0f;
@@ -46,22 +86,56 @@ namespace TekCan
             if (gaining)
             {
                 _small.normal.textColor = new Color(0.4f, 1f, 0.5f, punch);
-                GUI.Label(new Rect(Screen.width * 0.5f + 70f, 34f, 160f, 30f),
-                          $"+{_clock.LastGain:0.0}", _small);
+                GUI.Label(new Rect(Screen.width * 0.5f + 70f, 34f, 160f, 30f), $"+{_clock.LastGain:0.0}", _small);
                 _small.normal.textColor = Color.white;
             }
 
             r.y += 78f;
-            GUI.Label(r, _clock.Dead ? "KOŞU BİTTİ"
-                : (_clock.InCombat ? "dövüşte" : "DÖVÜŞ DIŞI — saat hızlı iniyor"), _small);
+            GUI.Label(r, _clock.InCombat ? "dövüşte" : "DÖVÜŞ DIŞI — saat hızlı iniyor", _small);
 
             r.y += 24f;
-            GUI.Label(r, $"hasat %{_clock.HarvestRate * 100f:0}", _small);
+            GUI.Label(r, $"hasat %{_clock.HarvestRate * 100f:0}   ·   hasar {_clock.AttackDamage:0.0}", _small);
+        }
 
-            // Faz 1 kontrol hatırlatması
-            GUI.Label(new Rect(12f, Screen.height - 26f, 600f, 20f),
-                "WASD hareket · Sol tık saldırı · Shift/Space dash", _small);
+        /// <summary>Sunağa yaklaşınca ne aldığını ve kaça aldığını söyler.</summary>
+        void DrawAltarPrompt()
+        {
+            for (int i = 0; i < Altar.All.Count; i++)
+            {
+                var a = Altar.All[i];
+                if (a == null || !a.PlayerInRange) continue;
 
+                bool afford = !a.SoldOut && _clock.Seconds > a.Price;
+                _mid.normal.textColor = a.SoldOut ? new Color(0.5f, 0.5f, 0.55f)
+                                      : afford ? new Color(0.5f, 1f, 0.6f)
+                                               : new Color(1f, 0.5f, 0.45f);
+                GUI.Label(new Rect(0f, Screen.height - 130f, Screen.width, 40f), a.Label(), _mid);
+                _mid.normal.textColor = Color.white;
+                return;   // aynı anda tek sunak gösterilir
+            }
+        }
+
+        void DrawRunEnd()
+        {
+            _big.fontSize = 64;
+            _big.normal.textColor = new Color(1f, 0.35f, 0.35f);
+            GUI.Label(new Rect(0f, Screen.height * 0.22f, Screen.width, 90f), "KOŞU BİTTİ", _big);
+
+            _mid.normal.textColor = Color.white;
+            float net = _clock.TotalHarvested - _clock.TotalSpent;
+            string özet =
+                $"hayatta kalınan süre   {_clock.RunTime:0.0} sn\n" +
+                $"öldürülen düşman   {_clock.EnemiesKilled}\n" +
+                $"hasat edilen   {_clock.TotalHarvested:0.0} sn\n" +
+                $"sunaklara harcanan   {_clock.TotalSpent:0.0} sn   ({_clock.Purchases} alım)\n" +
+                $"net kazanç   {net:+0.0;-0.0} sn\n" +
+                $"son hasat oranı   %{_clock.HarvestRate * 100f:0}";
+            GUI.Label(new Rect(0f, Screen.height * 0.35f, Screen.width, 260f), özet, _mid);
+
+            _small.normal.textColor = new Color(0.8f, 0.8f, 0.85f);
+            GUI.Label(new Rect(0f, Screen.height * 0.72f, Screen.width, 30f),
+                      "R  ·  yeniden başla", _small);
+            _small.normal.textColor = Color.white;
         }
     }
 }

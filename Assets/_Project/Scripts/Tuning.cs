@@ -91,6 +91,30 @@ namespace TekCan
         public float enemyAttackRange = 1.8f;
         public float enemyAttackCooldown = 1.5f;
 
+        [Header("── SUNAK / EKONOMİ (Faz 2) ──")]
+        [Tooltip("İlk alımın saniye fiyatı")]
+        public float altarBasePrice = 6f;
+        [Tooltip("Her alımda fiyat bu kat artar — bileşik yatırım kararı")]
+        public float altarPriceGrowth = 1.6f;
+        [Tooltip("Bir sunaktan en fazla kaç alım")]
+        public int altarMaxPurchases = 3;
+        [Tooltip("Kullanmak için sunağa bu kadar yaklaşman gerek")]
+        public float altarUseRange = 2.5f;
+        [Tooltip("HASAT sunağı: her alımda hasat oranı bu kadar artar")]
+        public float altarHarvestStep = 0.08f;
+        [Tooltip("KESKİNLİK sunağı: her alımda saldırı hasarı bu kadar artar")]
+        public float altarDamageStep = 1.2f;
+        [Tooltip("ÇEVİKLİK sunağı: her alımda dash bekleme süresi bu kadar kısalır")]
+        public float altarDashStep = 0.08f;
+
+        [Header("── DASH-ATAK (Faz 2) ──")]
+        [Tooltip("Dash sırasında saldırıya basınca dash sonunda inen vuruşun hasar çarpanı")]
+        public float dashAttackDamageMult = 1.6f;
+        [Tooltip("Dash-atak konisi — normal saldırıdan geniş, çünkü hareket hâlindesin")]
+        public float dashAttackAngle = 160f;
+        [Tooltip("Dash-atak menzil çarpanı")]
+        public float dashAttackRangeMult = 1.15f;
+
         [Header("── ARENA (Faz 1 test) ──")]
         public int enemyCount = 5;
         public float arenaRadius = 14f;

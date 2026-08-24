@@ -31,10 +31,14 @@ namespace TekCan
             return new Vector3(Mathf.Cos(a) * r, PlayerSpawn.y, Mathf.Sin(a) * r);
         }
 
+        /// <summary>Koşuya ait her şey bunun altında — yeniden başlatma tek Destroy.</summary>
+        static GameObject _runRoot;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Build()
         {
             ResetStatics();
+            _runRoot = new GameObject("Run");
 
             var t = Resources.Load<Tuning>("Tuning");
             if (t == null)
@@ -56,7 +60,7 @@ namespace TekCan
             foreach (var old in Object.FindObjectsByType<Light>(FindObjectsInactive.Include))
                 Object.Destroy(old.gameObject);
 
-            var lightGo = new GameObject("Sun");
+            var lightGo = new GameObject("Sun"); lightGo.transform.SetParent(_runRoot.transform);
             var l = lightGo.AddComponent<Light>();
             l.type = LightType.Directional;
             l.intensity = 1.3f;
@@ -65,13 +69,13 @@ namespace TekCan
 
             // Zemin
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            ground.name = "Arena";
+            ground.name = "Arena"; ground.transform.SetParent(_runRoot.transform);
             ground.transform.localScale = Vector3.one * (t.arenaRadius / 5f) * 2f;
             Paint(ground, new Color(0.16f, 0.16f, 0.19f));
 
             // Oyuncu
             var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            player.name = "Player";
+            player.name = "Player"; player.transform.SetParent(_runRoot.transform);
             player.transform.position = PlayerSpawn;
             Object.Destroy(player.GetComponent<Collider>());
             Paint(player, new Color(0.9f, 0.9f, 0.95f));
@@ -85,14 +89,14 @@ namespace TekCan
             Paint(nose, new Color(1f, 0.55f, 0.2f));
 
             // Kamera
-            var camGo = new GameObject("IsoCamera");
+            var camGo = new GameObject("IsoCamera"); camGo.transform.SetParent(_runRoot.transform);
             var cam = camGo.AddComponent<Camera>();
             cam.backgroundColor = new Color(0.07f, 0.07f, 0.09f);
             cam.clearFlags = CameraClearFlags.SolidColor;
             camGo.AddComponent<IsoCamera>().Init(t, player.transform);
 
             // Sistemler
-            var systems = new GameObject("Systems");
+            var systems = new GameObject("Systems"); systems.transform.SetParent(_runRoot.transform);
             HitStop.Init(systems.AddComponent<HitStop>());
             var clock = systems.AddComponent<Clock>();
             clock.Init(t, player.transform);
@@ -103,7 +107,42 @@ namespace TekCan
             for (int i = 0; i < t.enemyCount; i++)
                 SpawnEnemy(t, EnemySpawnPosition(t, i), player.transform, camGo.transform);
 
-            Debug.Log($"[Tek Can] Faz 1 arena hazır — {t.enemyCount} düşman, {t.startSeconds:0}s saat.");
+            // Sunaklar — saniyeyle satın alma (Faz 2)
+            var kinds = new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash };
+            for (int i = 0; i < kinds.Length; i++)
+            {
+                float a = (360f / kinds.Length) * i * Mathf.Deg2Rad + Mathf.PI * 0.25f;
+                float r = t.arenaRadius * 0.28f;
+                SpawnAltar(t, new Vector3(Mathf.Cos(a) * r, PlayerSpawn.y, Mathf.Sin(a) * r),
+                           player.transform, kinds[i]);
+            }
+
+            Debug.Log($"[Tek Can] Arena hazır — {t.enemyCount} düşman, {kinds.Length} sunak, {t.startSeconds:0}s saat.");
+        }
+
+        /// <summary>Koşuyu sıfırdan kurar. Ölüm ekranı R'ye basınca burayı çağırıyor.</summary>
+        public static void Restart()
+        {
+            if (_runRoot != null)
+            {
+                // Destroy kare sonunda işliyor; önce kapat ki eski koşunun bileşenleri
+                // yeni koşuyla aynı karede bir tur daha Update almasın.
+                _runRoot.SetActive(false);
+                Object.Destroy(_runRoot);
+            }
+            _runRoot = null;
+            Build();
+        }
+
+        static void SpawnAltar(Tuning t, Vector3 pos, Transform player, Altar.Kind kind)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = "Altar_" + kind;
+            go.transform.SetParent(_runRoot.transform);
+            go.transform.position = pos + Vector3.up * 0.2f;
+            go.transform.localScale = new Vector3(0.7f, 1.1f, 0.7f);
+            Object.Destroy(go.GetComponent<Collider>());
+            go.AddComponent<Altar>().Init(t, player, kind);
         }
 
         /// <summary>
@@ -114,6 +153,7 @@ namespace TekCan
         static void ResetStatics()
         {
             Enemy.All.Clear();
+            Altar.ResetAll();
             HitStop.Reset();
             Arc.Reset();
             Clock.Reset();        // ← eksikti: ölü saate hasar yazılmasını önler
@@ -124,7 +164,7 @@ namespace TekCan
         static void SpawnEnemy(Tuning t, Vector3 pos, Transform player, Transform cam)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            go.name = "Enemy";
+            go.name = "Enemy"; go.transform.SetParent(_runRoot.transform);
             go.transform.position = pos;
             go.transform.localScale = EnemyScale;
             Object.Destroy(go.GetComponent<Collider>());

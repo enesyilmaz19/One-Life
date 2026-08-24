@@ -101,6 +101,23 @@ Ayrıca risk sırası da bunu söylüyor: bu projenin en büyük batma riski **d
 > Çok yüksekse dövüş kendi kendini besler, saat anlamsızlaşır, oyun biter. Çok düşükse her kavga net kayıptır, oyuncu kaçmaya başlar — ki tasarımın tam tersi.
 > **Hedef denge: temiz kavga net pozitif, dağınık kavga net negatif.** Bütün oyun bu tek orana asılı. Faz 2'de deterministik simülasyonla taranacak.
 
+### Denge taraması sonucu (2026-08-24, `Tek Can → Denge simülasyonu`)
+
+Kritik sayı artık tahmin değil, ölçüm. Düşman başına **net saniye**:
+
+| hasat | TEMİZ | ORTA | DAĞINIK | |
+|---|---:|---:|---:|---|
+| %20 | −0.4 | −4.7 | −12.0 | temiz bile zarar |
+| **%40** (şu anki) | **+1.5** | −2.8 | −10.1 | ✅ hedef aralıkta |
+| %70 (tavan) | +4.4 | +0.1 | −7.3 | dağınık bile kâra yaklaşıyor |
+
+**Sonuç: %40 doğru yerde.** En düşük uygun oran %25; tavan %70 zaten fazla cömert.
+
+⚠️ **Ama iki şey dikkat istiyor:**
+
+1. **ORTA oyuncu her düşmanda −2.8 sn.** Sadece neredeyse kusursuz oyun kârlı. Roguelike için savunulabilir ama bilinçli seçim olmalı.
+2. **Darbe maliyeti kârı eziyor:** `enemyFullHitCost` 4 sn, düşman başına temiz kâr ~1.5 sn. **Bir hata üç kusursuz öldürmeyi siliyor.** Oyunu istenenden daha savruk hissettiren şey bu olabilir. Kaldıraçlar: darbe maliyetini düşür, ya da hasat oranını yükselt.
+
 > ⚠️ **ÇOKLU HEDEF SORUNU (2026-08-24 playtest, Enes yakaladı):** Savurma koni içindeki
 > HERKESE tam hasar veriyor ve her birinden ayrı hasat ediliyor. Sonuç: kalabalık arttıkça
 > oyun **kolaylaşıyor** — roguelite'ta olmaması gereken şey.

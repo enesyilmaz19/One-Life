@@ -77,6 +77,24 @@ namespace TekCan.EditorTools
             hollow.transform.position = new Vector3(-1.5f, 1f, -3f);
             Tint(hollow, new Color(0.35f, 0.35f, 0.38f));
 
+            // Faz 2 sunakları — üç tür, renkle ayrışıyor mu
+            var altarColors = new[]
+            {
+                new Color(0.35f, 0.85f, 0.55f),   // HASAT
+                new Color(0.9f, 0.55f, 0.35f),    // KESKİNLİK
+                new Color(0.45f, 0.65f, 1f),      // ÇEVİKLİK
+            };
+            for (int i = 0; i < 3; i++)
+            {
+                var alt = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                alt.transform.SetParent(root.transform);
+                float ang = (360f / 3f) * i * Mathf.Deg2Rad + Mathf.PI * 0.25f;
+                alt.transform.position = new Vector3(Mathf.Cos(ang) * 3.9f, 1.2f, Mathf.Sin(ang) * 3.9f);
+                alt.transform.localScale = new Vector3(0.7f, 1.1f, 0.7f);
+                alt.transform.rotation = Quaternion.Euler(0f, 25f * i, 0f);
+                Tint(alt, altarColors[i]);
+            }
+
             // İzometrik kamera
             var camGo = new GameObject("cap-cam"); camGo.transform.SetParent(root.transform);
             var cam = camGo.AddComponent<Camera>();

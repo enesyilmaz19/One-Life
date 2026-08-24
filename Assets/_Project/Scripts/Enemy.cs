@@ -222,6 +222,7 @@ namespace TekCan
         void Kill()
         {
             if (_telegraph != null) _telegraph.Cancel();   // ölünce uyarı yayı ortada kalmasın
+            Clock.Instance?.ReportKill();
             All.Remove(this);
             if (Application.isPlaying) Destroy(gameObject);
             else DestroyImmediate(gameObject);   // öz-denetim editör modunda çalışabilsin

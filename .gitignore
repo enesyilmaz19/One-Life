@@ -57,3 +57,6 @@ probe.log
 api.log
 repro.log
 audit.log
+sim.log
+check2.log
+v.log
