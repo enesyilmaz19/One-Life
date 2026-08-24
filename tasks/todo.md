@@ -2,8 +2,12 @@
 
 ## 📥 ENES'İN MASASI
 
-- [ ] **Faz 1 bittiğinde oynayıp his onayı vereceksin.** Klavye girdisi otomasyondan Unity play-mode'a geçmiyor — hareketin ve vuruşun nasıl hissettirdiğini sadece sen söyleyebilirsin. Ben log + ekran görüntüsüyle doğrularım, "iyi hissettiriyor mu" sorusunun cevabı sende.
-- [ ] *(şimdilik başka bir şey yok — Faz 0 ve 1'de bana düşen kısım var)*
+**Faz 1'i kapatacak iki test kaldı.** İkisi de Play sırasında yapılır — `Tuning.asset`'i seç, oyun çalışırken değeri çevir.
+
+- [ ] **A · Tokluk (2 dk):** `hitStopDuration`/`hitShake` sırayla `(0, 0)` → `(0.25, 0.6)` → `(0.10, 0.22)`, her birinde 20-30 sn vur. İlk ikisi uçları görmen için. "Az" ya da "fazla" demen yeter
+- [ ] **B · Kaçış penceresi (2 dk):** düşmanın yanında kıpırdamadan dur, turuncu koni çıkınca dash at, 10 kez. Hep kurtuluyorsan `enemyWindupDuration` 0.35 · hiç kurtulamıyorsan 0.8 · dikkatliyken kurtulup dalgınken yiyorsan doğru
+
+> Not: klavye girdisi otomasyondan Unity play-mode'a geçmiyor, his sorularının cevabı yalnızca sende. Ben log + ekran görüntüsüyle doğrularım.
 
 ---
 
@@ -17,7 +21,7 @@
 
 ---
 
-## Faz 1 — Dövüş hissi ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+## Faz 1 — Dövüş hissi ⬅️ **2 HİS SORUSU KALDI**
 
 > Hedef: **vurmak iyi hissettirsin.** Enes'in 2. Steam kriteri burada kazanılır ya da kaybedilir.
 > Can barı **yazılmayacak** — yerine 20 satırlık taslak saat, ki dövüş baştan doğru baskı altında tasarlansın.
@@ -32,21 +36,14 @@
 - [x] Tek düşman tipi + saldırgan oynamayı ödüllendiren basit YZ (state machine, ECS yok)
 - [x] Test sahnesi: greybox arena, 5 düşman
 - [x] Bütün his değerleri Inspector'da ayarlanabilir olacak — sayıları sohbette değil playtest'te bulacağız
-- [ ] 🎮 **PLAYTEST KAPISI** — 2026-08-24'te denendi, **ÇALIŞMADI**
+### Geri bildirim katmanı ✅ (ilk playtest bu eksik olduğu için çökmüştü)
 
-### ❌ Faz 1 kapanmadı — geri bildirim eksik (2026-08-24 playtest)
-
-Enes'in raporu: *"Dash tamam çalışıyor, düşmanlar bana vurunca zaman gidiyor tamam. Ben saldırı yaptığımı ya da onların bana saldırı yaptığını göremiyorum."*
-
-Sonuç: 5 değerlendirme sorusundan **3, 4, 5 sorulamadı**. Sebebi ve dersi `lessons.md`'de.
-
-**Yapılacaklar — sıra önemli, geri bildirim önce:**
-
-- [ ] **Oyuncu savurma yayı** — saldırı konisi görünsün (dönen mesh ya da iz). Vurduğunu görmeden hissi yargılayamaz
-- [ ] **Düşman hazırlık hareketi (telegraph)** — vuruştan önce görünür uyarı. Bu olmadan dodge tahmin, i-frame değerlendirilemez
-- [ ] **Düşman saldırı görseli** — darbenin kendisi görünsün
-- [ ] **Oyuncu hasar tepkisi** — parlama/geri tepme, "yedim" anı okunmalı
-- [ ] Saldırı menzili ve konisi debug çizimi (Gizmos) — ayar yaparken görünsün
+- [x] **Oyuncu savurma yayı** — `Arc.cs`, ıskada da çıkıyor, menzil/açı Tuning'den (görsel = gerçek vuruş alanı)
+- [x] **Düşman hazırlık hareketi** — turuncu koni + gövde rengi; yön vuruş başında kilitleniyor → kaçış penceresi gerçek
+- [x] **Düşman saldırı görseli** — kırmızı koni + öne atılma
+- [x] **Oyuncu hasar tepkisi** — kırmızı parlama + geri itilme + kamera sarsıntısı
+- [x] Saldırı menzili/konisi Gizmo çizimi (Hierarchy'den Player'ı seç)
+- [x] İsabet ölçek darbesi — düşman vurulunca %28 büyüyüp iniyor
 - [x] 🎮 **PLAYTEST TEKRAR** — hasar iniyor, Enes onayladı (2026-08-24)
 - [x] ✅ **Saat baskısı** — dövüş dışında hızlandığı fark ediliyor (Enes, 2026-08-24)
 - [x] ✅ **Boşalma okunuyor** — kırmızı→gri, sayı→"—", tek atımda ölüm anlaşılıyor (Enes, 2026-08-24)
