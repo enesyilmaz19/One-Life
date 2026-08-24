@@ -51,3 +51,16 @@ Bir test koordinat, ölçek, spawn konumu gibi şeyleri kendi elleriyle kuruyors
 "Vuruş iyi hissettiriyor mu?" diye soracaksan **görünür bir vuruş olmak zorunda.** Fazın hedefini doğrula, hedefin kolay alt kümesini değil.
 
 **Somut sonucu:** dövüş fazlarında **ilk yazılacak şey geri bildirimdir** — savurma yayı, düşman hazırlık hareketi, isabet tepkisi. Sistemler taslak kalabilir; geri bildirim kalamaz, çünkü değerlendirilen ürün geri bildirimin kendisidir.
+
+---
+
+## 2026-08-24 (3) — Soruyu kendi kelimelerimle sordum
+
+**Ne oldu:** Faz 1 his kapısında dört soru sordum. Enes ikisini cevapladı, ikisine *"neyi test etmemi istiyorsun anlamadım"* ve *"bunu nasıl test edeceğim"* dedi.
+
+Sorular şunlardı: *"hit-stop + sarsıntı dozu az mı çok mu?"* ve *"hazırlık süresi 0.55 dodge için yeterli mi?"* — ikisi de **benim sözlüğümde** yazılmış. "Hit-stop" bir geliştirici terimi; oyuncu onu bilmez ve zaten **bilinçli olarak algılayamaz** (10 ms donma). Tek başına yargılanamayacak bir şeyi tek başına yargılamasını istemişim.
+
+**Kural:** Bir değeri onaylatmak istiyorsam ya **ne olduğunu günlük dille anlatırım**, ya da **karşılaştırma sunarım** (uç değerleri arka arkaya denet). Ve testin kendisini adım adım yazarım: *"şunu yap, şuna bak, şu olursa şu demektir."*
+
+Bu, `feedback_verify_the_phase_goal` kuralının kardeşi: orada *algılayabiliyor mu* diye sormuştum, burada eksik olan *anlayabiliyor mu*.
+

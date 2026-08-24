@@ -48,7 +48,10 @@ Sonuç: 5 değerlendirme sorusundan **3, 4, 5 sorulamadı**. Sebebi ve dersi `le
 - [ ] **Oyuncu hasar tepkisi** — parlama/geri tepme, "yedim" anı okunmalı
 - [ ] Saldırı menzili ve konisi debug çizimi (Gizmos) — ayar yaparken görünsün
 - [x] 🎮 **PLAYTEST TEKRAR** — hasar iniyor, Enes onayladı (2026-08-24)
-- [ ] 🎮 **HİS ONAYI** — 3/4/5 soruları hâlâ cevaplanmadı: hit-stop+sarsıntı dozu, saatin baskısı, boşalmanın okunurluğu, hazırlık süresi (0.55) dodge için yeterli mi
+- [x] ✅ **Saat baskısı** — dövüş dışında hızlandığı fark ediliyor (Enes, 2026-08-24)
+- [x] ✅ **Boşalma okunuyor** — kırmızı→gri, sayı→"—", tek atımda ölüm anlaşılıyor (Enes, 2026-08-24)
+- [ ] 🎮 **Hit-stop + sarsıntı dozu** — A/B ile: `hitStopDuration`/`hitShake` sırayla (0, 0) → (0.25, 0.6) → (0.10, 0.22). Tek başına yargılanamaz, karşılaştırınca anlaşılır
+- [ ] 🎮 **Hazırlık süresi** (`enemyWindupDuration` 0.55) — düşmanın yanında dur, turuncu koni çıkınca dash at, 10 kez. Hep kurtuluyorsan çok uzun (0.35 dene), hiç kurtulamıyorsan çok kısa (0.8 dene)
 
 ### Faz 2'ye devredilenler
 - [ ] **Dash sırasında saldırı (dash-atak)** — Enes istedi. Şu an dash saldırıyı iptal ediyor, dash sırasında saldırı girdisi hiç okunmuyor. Türün klasiği, eklenecek
