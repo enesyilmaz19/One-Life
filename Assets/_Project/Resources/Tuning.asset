@@ -16,20 +16,32 @@ MonoBehaviour:
   drainInCombat: 1
   drainOutOfCombat: 2.5
   combatRadius: 12
-  harvestRate: 0.4
+  harvestRate: 0.2
   harvestRateCap: 0.7
   moveSpeed: 6
   turnSpeed: 18
-  dashDistance: 4
+  dashDistance: 2.5
   dashDuration: 0.15
   dashCooldown: 0.5
   iFrameDuration: 0.2
-  attackDuration: 0.25
+  attackDuration: 0.35
   attackHitMoment: 0.4
   attackDamage: 3.5
   attackRange: 2.2
   attackAngle: 100
   hitStopDuration: 0.1
+  hitShake: 0.22
+  hurtShake: 0.3
+  hitFlashDuration: 0.2
+  swingArcLife: 0.2
+  playerHurtFlashDuration: 0.18
+  playerKnockback: 1.2
+  enemyWindupDuration: 0.2
+  enemyStrikeDuration: 0.1
+  enemyRecoverDuration: 0.2
+  enemyHollowWindupMultiplier: 1.6
+  enemyAttackAngle: 90
+  enemyLungeDistance: 0.8
   attackMoveDamping: 0.25
   enemyTimePool: 10
   enemyDecayPerSecond: 0.4
@@ -39,6 +51,16 @@ MonoBehaviour:
   enemyHollowHitCost: 1.5
   enemyAttackRange: 1.8
   enemyAttackCooldown: 1.5
+  altarBasePrice: 6
+  altarPriceGrowth: 1.6
+  altarMaxPurchases: 3
+  altarUseRange: 2.5
+  altarHarvestStep: 0.08
+  altarDamageStep: 1.2
+  altarDashStep: 0.08
+  dashAttackDamageMult: 1.6
+  dashAttackAngle: 160
+  dashAttackRangeMult: 1.15
   enemyCount: 5
   arenaRadius: 14
   camYaw: 45

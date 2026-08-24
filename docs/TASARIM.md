@@ -103,20 +103,26 @@ Ayrıca risk sırası da bunu söylüyor: bu projenin en büyük batma riski **d
 
 ### Denge taraması sonucu (2026-08-24, `Tek Can → Denge simülasyonu`)
 
-Kritik sayı artık tahmin değil, ölçüm. Düşman başına **net saniye**:
+Kritik sayı artık tahmin değil, ölçüm. Düşman başına **net saniye** (senkron sonrası
+değerlerle: hasar 3.5, savurma 0.35 sn, drenaj 1/sn, darbe 4 sn):
 
 | hasat | TEMİZ | ORTA | DAĞINIK | |
 |---|---:|---:|---:|---|
-| %20 | −0.4 | −4.7 | −12.0 | temiz bile zarar |
-| **%40** (şu anki) | **+1.5** | −2.8 | −10.1 | ✅ hedef aralıkta |
-| %70 (tavan) | +4.4 | +0.1 | −7.3 | dağınık bile kâra yaklaşıyor |
+| **%20** (şu anki) | **−0.7** | −5.1 | −12.6 | ❌ temiz oyun bile zarar |
+| %30 | +0.2 | −4.1 | −11.7 | en düşük uygun |
+| %40 | +1.2 | −3.2 | −10.8 | ✅ rahat aralık |
+| %70 (tavan) | +4.1 | −0.3 | −8.1 | dağınık bile kâra yaklaşıyor |
 
-**Sonuç: %40 doğru yerde.** En düşük uygun oran %25; tavan %70 zaten fazla cömert.
+> ⚠️ **AÇIK KARAR — şu anki %20 tasarım hedefini tutmuyor.**
+> "Temiz kavga net pozitif" kuralı bozuluyor: tek hedefle ne kadar iyi oynarsan oyna
+> her düşman **−0.7 sn** zarar. Yani kâr etmenin tek yolu kalabalığa vurmak kalıyor —
+> ki bu tam olarak kaçınmak istediğimiz şey.
+>
+> Kaldıraçlar: hasat oranını %30-40'a çek · `enemyFullHitCost`'u (4 sn) düşür ·
+> `enemyTimePool`'u büyüt (kavga uzar ama hasat da artar). Karar Enes'in.
 
-⚠️ **Ama iki şey dikkat istiyor:**
-
-1. **ORTA oyuncu her düşmanda −2.8 sn.** Sadece neredeyse kusursuz oyun kârlı. Roguelike için savunulabilir ama bilinçli seçim olmalı.
-2. **Darbe maliyeti kârı eziyor:** `enemyFullHitCost` 4 sn, düşman başına temiz kâr ~1.5 sn. **Bir hata üç kusursuz öldürmeyi siliyor.** Oyunu istenenden daha savruk hissettiren şey bu olabilir. Kaldıraçlar: darbe maliyetini düşür, ya da hasat oranını yükselt.
+**Ayrıca:** darbe maliyeti (4 sn) düşman başına kârı (en iyi ihtimalle ~1.2 sn) eziyor.
+**Bir hata üç kusursuz öldürmeyi siliyor.** Roguelike için savunulabilir ama bilinçli olmalı.
 
 > ⚠️ **ÇOKLU HEDEF SORUNU (2026-08-24 playtest, Enes yakaladı):** Savurma koni içindeki
 > HERKESE tam hasar veriyor ve her birinden ayrı hasat ediliyor. Sonuç: kalabalık arttıkça

@@ -19,6 +19,20 @@ namespace TekCan.EditorTools
     {
         const string AssetPath = "Assets/_Project/Resources/Tuning.asset";
 
+        /// <summary>
+        /// Her script derlemesinden sonra sessizce kontrol eder. Amaç: Tuning.cs'i
+        /// düzenleyen kişi sapmayı GÜNLER SONRA değil, derleme biter bitmez görsün.
+        /// 2026-08-24'te bir playtest seansı bu sessizlik yüzünden yanlış varsayımla geçti.
+        /// </summary>
+        [InitializeOnLoadMethod]
+        static void HookAutoCheck() => EditorApplication.delayCall += AutoCheck;
+
+        static void AutoCheck()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+            Execute();   // sapma varsa kendi uyarısını basıyor
+        }
+
         [MenuItem("Tek Can/Ayar kaynağı denetimi")]
         public static void Run()
         {
@@ -63,6 +77,60 @@ namespace TekCan.EditorTools
 
             Object.DestroyImmediate(fresh);
             return overridden.Count;
+        }
+
+        /// <summary>
+        /// C# varsayılanlarını asset'e yazar — sapmanın TEK meşru çözüm yolu.
+        ///
+        /// Yönü bilerek tek taraflı: otomatik senkron yapılsaydı Inspector'da ayarlanmış
+        /// his değerleri, biri Tuning.cs'e dokunduğu anda sessizce silinirdi. Bu yüzden
+        /// senkron elle tetikleniyor ve neyin değiştiğini tek tek yazıyor.
+        ///
+        /// Senkrondan sonra asset BÜTÜN alanları içerir; yani bundan sonra .cs
+        /// düzenlemeleri hiç uygulanmaz ve otomatik denetim bunu her derlemede söyler.
+        /// </summary>
+        [MenuItem("Tek Can/Ayarları senkronla (C# → asset)")]
+        public static void SyncFromCode()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<Tuning>(AssetPath);
+            if (asset == null)
+            {
+                Debug.LogError($"[Ayar senkron] {AssetPath} yok.");
+                return;
+            }
+
+            var fresh = ScriptableObject.CreateInstance<Tuning>();
+            var so = new SerializedObject(asset);
+            var changes = new List<string>();
+
+            foreach (var f in typeof(Tuning).GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var prop = so.FindProperty(f.Name);
+                if (prop == null) continue;
+
+                object codeVal = f.GetValue(fresh), assetVal = f.GetValue(asset);
+                if (Equals(codeVal, assetVal)) continue;
+
+                if (f.FieldType == typeof(float)) prop.floatValue = (float)codeVal;
+                else if (f.FieldType == typeof(int)) prop.intValue = (int)codeVal;
+                else continue;
+
+                changes.Add($"  {f.Name,-28} {assetVal} → {codeVal}");
+            }
+
+            Object.DestroyImmediate(fresh);
+
+            if (changes.Count == 0)
+            {
+                Debug.Log("[Ayar senkron] Zaten uyumlu, değişiklik yok.");
+                return;
+            }
+
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+
+            Debug.Log($"[Ayar senkron] ✅ {changes.Count} alan asset'e yazıldı:\n{string.Join("\n", changes)}");
         }
 
         /// <summary>Asset dosyasında gerçekten yazılı olan alan adları.</summary>

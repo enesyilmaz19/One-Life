@@ -23,14 +23,21 @@ Bir özellik bu yasayı bozuyorsa özellik gider, yasa kalır.
 - **Klavye girdisi otomasyondan Unity play-mode'a geçmiyor.** His testini insan yapar; ajan log + ekran görüntüsüyle doğrular. Kanıt: `Logs/Editor.log`.
 - Görsel kimlik **silah ve VFX** üzerine kurulu, karakter sade ve okunur. VFX sanatçı gerektirmeyen tek sanat dalı — kimliği oraya yasla.
 
-## Ayar tuzağı
+## Ayar kaynağı — tek kural
 
-Değerleri **Inspector'dan** düzenle, `Tuning.cs`'ten değil. Çalışma anında `Tuning.asset`
-geçerlidir; asset'te zaten serileşmiş bir alan C# varsayılanını **sessizce ezer**.
-2026-08-24'te Enes'in üç ayarı bu yüzden hiç uygulanmadı ve bütün playtest yanlış
-varsayımla geçti.
+**`Tuning.asset` çalışma anının tek gerçeğidir.** `Tuning.cs`'teki varsayılanlar yalnızca
+asset'te **henüz olmayan** yeni alanların tohumudur; var olan bir alanı .cs'ten değiştirmek
+hiçbir işe yaramaz, asset onu ezer.
 
-Kontrol: `Tek Can → Ayar kaynağı denetimi`.
+- **His/denge değeri değiştireceksen → Inspector.**
+- **C# varsayılanlarını asset'e taşımak istiyorsan → `Tek Can → Ayarları senkronla (C# → asset)`.**
+  Tek yönlü ve elle tetiklenir: otomatik olsaydı biri .cs'e dokunduğu an Inspector'da
+  ayarlanmış bütün his değerleri sessizce silinirdi.
+- **Sessiz sapma imkânsız:** `TuningAudit` her script derlemesinden sonra kendiliğinden
+  çalışır ve ayrışma varsa Console'a uyarı basar. (2026-08-24'te bir playtest seansı
+  bu uyarı olmadığı için yanlış varsayımla geçti.)
+
+2026-08-24'te tam senkron yapıldı; asset artık 55 alanın hepsini içeriyor.
 
 ## Doğrulama — tek komut
 
