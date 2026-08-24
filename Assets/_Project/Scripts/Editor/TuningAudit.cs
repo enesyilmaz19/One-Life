@@ -56,7 +56,7 @@ namespace TekCan.EditorTools
                     "→ Bu değerleri Inspector'dan düzenle, .cs'ten değil.");
 
             Object.DestroyImmediate(fresh);
-            Finish();
+            Finish(overridden.Count);
         }
 
         /// <summary>Asset dosyasında gerçekten yazılı olan alan adları.</summary>
@@ -69,9 +69,10 @@ namespace TekCan.EditorTools
             return names;
         }
 
-        static void Finish()
+        /// <summary>Sapma varsa 1 ile çıkar — Faz1SelfCheck ile aynı sözleşme, kapı olarak kullanılabilsin.</summary>
+        static void Finish(int problems = 0)
         {
-            if (Application.isBatchMode) EditorApplication.Exit(0);
+            if (Application.isBatchMode) EditorApplication.Exit(problems == 0 ? 0 : 1);
         }
     }
 }

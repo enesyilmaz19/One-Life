@@ -23,6 +23,15 @@ Bir özellik bu yasayı bozuyorsa özellik gider, yasa kalır.
 - **Klavye girdisi otomasyondan Unity play-mode'a geçmiyor.** His testini insan yapar; ajan log + ekran görüntüsüyle doğrular. Kanıt: `Logs/Editor.log`.
 - Görsel kimlik **silah ve VFX** üzerine kurulu, karakter sade ve okunur. VFX sanatçı gerektirmeyen tek sanat dalı — kimliği oraya yasla.
 
+## Ayar tuzağı
+
+Değerleri **Inspector'dan** düzenle, `Tuning.cs`'ten değil. Çalışma anında `Tuning.asset`
+geçerlidir; asset'te zaten serileşmiş bir alan C# varsayılanını **sessizce ezer**.
+2026-08-24'te Enes'in üç ayarı bu yüzden hiç uygulanmadı ve bütün playtest yanlış
+varsayımla geçti.
+
+Kontrol: `Tek Can → Ayar kaynağı denetimi` (sapma varsa listeler, batch'te 1 ile çıkar).
+
 ## graphify
 
 Kod yazıldıkça:

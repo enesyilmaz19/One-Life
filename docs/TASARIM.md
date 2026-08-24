@@ -101,6 +101,18 @@ Ayrıca risk sırası da bunu söylüyor: bu projenin en büyük batma riski **d
 > Çok yüksekse dövüş kendi kendini besler, saat anlamsızlaşır, oyun biter. Çok düşükse her kavga net kayıptır, oyuncu kaçmaya başlar — ki tasarımın tam tersi.
 > **Hedef denge: temiz kavga net pozitif, dağınık kavga net negatif.** Bütün oyun bu tek orana asılı. Faz 2'de deterministik simülasyonla taranacak.
 
+> ⚠️ **ÇOKLU HEDEF SORUNU (2026-08-24 playtest, Enes yakaladı):** Savurma koni içindeki
+> HERKESE tam hasar veriyor ve her birinden ayrı hasat ediliyor. Sonuç: kalabalık arttıkça
+> oyun **kolaylaşıyor** — roguelite'ta olmaması gereken şey.
+>
+> Örnek (o günkü çalışan değerlerle): 3.5 hasar × %40 hasat = hedef başına 1.4 sn.
+> Üç düşman koni içindeyse tek savurmada +4.2 sn, saat 1 sn/sn iniyor.
+>
+> **Asıl sonucu:** tek hedefli silahlar bu yapıyla asla rekabet edemez; koni her zaman
+> hedef sayısı kadar üstün olur. Bu bir denge sayısı meselesi değil, **yapısal**:
+> hasat oranı silaha göre değişmeli — "az vurur, hasar başına çok çalar" (tek hedef)
+> ↔ "çok vurur, az çalar" (koni). Faz 3'ün ilk maddesi.
+
 **Özel düşmanlar:** bazılarının özel zaman etkileri olacak (saati hızlandıran, vurunca zaman çalan, öldürücü darbede toplu ödeyen, kaçıp zamanını götüren...). Meta ilerleme olmadığı için **koşu içi çeşitliliğin ana kaynağı burası.**
 
 **Bosslar:** ayrı kural. Daha özel, zamanla ilişkili mekanikler (faz geçişi oyuncunun saatine bağlı, büyük saldırı zaman çalar, süre kapısı vb.). Faz 4+ konusu.
