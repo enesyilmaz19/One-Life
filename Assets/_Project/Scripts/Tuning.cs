@@ -21,7 +21,7 @@ namespace TekCan
 
         [Header("── HASAT (oyunun en kritik sayısı) ──")]
         [Tooltip("Verilen hasarın ne kadarı saate yazılır. Yüksekse dövüş kendini besler, saat anlamsızlaşır.")]
-        [Range(0f, 1f)] public float harvestRate = 0.40f;
+        [Range(0f, 1f)] public float harvestRate = 0.20f;
         [Tooltip("Koşu içi yükseltmelerin çıkabileceği tavan — %100'e yaklaşırsa oyun bozulur")]
         [Range(0f, 1f)] public float harvestRateCap = 0.70f;
 
@@ -30,7 +30,7 @@ namespace TekCan
         public float turnSpeed = 18f;
 
         [Header("── OYUNCU: DASH ──")]
-        public float dashDistance = 4f;
+        public float dashDistance = 2.5f;
         public float dashDuration = 0.15f;
         public float dashCooldown = 0.5f;
         [Tooltip("Dash başından itibaren dokunulmazlık süresi")]
@@ -38,7 +38,7 @@ namespace TekCan
 
         [Header("── OYUNCU: SALDIRI ──")]
         [Tooltip("Kısa tutulacak — uzun taahhüt saldırganlığı cezalandırır")]
-        public float attackDuration = 0.25f;
+        public float attackDuration = 0.35f;
         [Tooltip("Vuruşun isabet ettiği an (saldırı süresinin oranı)")]
         [Range(0f, 1f)] public float attackHitMoment = 0.4f;
         public float attackDamage = 3.5f;
@@ -52,22 +52,22 @@ namespace TekCan
         [Tooltip("Darbe yediğinde kamera sarsıntısı şiddeti")]
         public float hurtShake = 0.30f;
         [Tooltip("İsabet eden düşmanın beyaz parlama süresi")]
-        public float hitFlashDuration = 0.14f;
+        public float hitFlashDuration = 0.20f;
         [Tooltip("Savurma yayının ekranda kalma süresi — vuruşu GÖRMEK için, isabet olmasa da çıkar")]
-        public float swingArcLife = 0.14f;
+        public float swingArcLife = 0.20f;
 
         [Header("── OYUNCU: HASAR TEPKİSİ ──")]
-        public float playerHurtFlashDuration = 0.12f;
+        public float playerHurtFlashDuration = 0.18f;
         [Tooltip("Darbe yiyince ne kadar geri itilirsin — 'yedim' anı okunmalı")]
         public float playerKnockback = 1.2f;
 
         [Header("── DÜŞMAN: SALDIRI EVRELERİ ──")]
         [Tooltip("HAZIRLIK: vuruştan önceki uyarı süresi. Bu olmadan dodge tahmindir.")]
-        public float enemyWindupDuration = 0.55f;
+        public float enemyWindupDuration = 0.20f;
         [Tooltip("VURUŞ: hasarın indiği kısa evre. Yön hazırlık bitince KİLİTLENİR — sonrası kaçılabilir.")]
-        public float enemyStrikeDuration = 0.15f;
+        public float enemyStrikeDuration = 0.10f;
         [Tooltip("TOPARLANMA: vuruştan sonra açık kaldığı süre")]
-        public float enemyRecoverDuration = 0.45f;
+        public float enemyRecoverDuration = 0.20f;
         [Tooltip("Boş düşmanın hazırlığı bu kat daha yavaş — zayıflığı görünür olsun")]
         public float enemyHollowWindupMultiplier = 1.6f;
         [Tooltip("Düşman vuruşunun koni açısı (derece)")]

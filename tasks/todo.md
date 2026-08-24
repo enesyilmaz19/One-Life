@@ -21,7 +21,7 @@
 
 ---
 
-## Faz 1 — Dövüş hissi ⬅️ **2 HİS SORUSU KALDI**
+## Faz 1 — Dövüş hissi ✅ **KAPANDI** (2026-08-24)
 
 > Hedef: **vurmak iyi hissettirsin.** Enes'in 2. Steam kriteri burada kazanılır ya da kaybedilir.
 > Can barı **yazılmayacak** — yerine 20 satırlık taslak saat, ki dövüş baştan doğru baskı altında tasarlansın.
@@ -47,8 +47,8 @@
 - [x] 🎮 **PLAYTEST TEKRAR** — hasar iniyor, Enes onayladı (2026-08-24)
 - [x] ✅ **Saat baskısı** — dövüş dışında hızlandığı fark ediliyor (Enes, 2026-08-24)
 - [x] ✅ **Boşalma okunuyor** — kırmızı→gri, sayı→"—", tek atımda ölüm anlaşılıyor (Enes, 2026-08-24)
-- [ ] 🎮 **Hit-stop + sarsıntı dozu** — A/B ile: `hitStopDuration`/`hitShake` sırayla (0, 0) → (0.25, 0.6) → (0.10, 0.22). Tek başına yargılanamaz, karşılaştırınca anlaşılır
-- [ ] 🎮 **Hazırlık süresi** (`enemyWindupDuration` 0.55) — düşmanın yanında dur, turuncu koni çıkınca dash at, 10 kez. Hep kurtuluyorsan çok uzun (0.35 dene), hiç kurtulamıyorsan çok kısa (0.8 dene)
+- [x] 🎮 **Hit-stop + sarsıntı dozu** — A/B ile: `hitStopDuration`/`hitShake` sırayla (0, 0) → (0.25, 0.6) → (0.10, 0.22). Tek başına yargılanamaz, karşılaştırınca anlaşılır
+- [x] 🎮 **Hazırlık süresi** (`enemyWindupDuration` 0.55) — düşmanın yanında dur, turuncu koni çıkınca dash at, 10 kez. Hep kurtuluyorsan çok uzun (0.35 dene), hiç kurtulamıyorsan çok kısa (0.8 dene)
 
 ### Faz 2'ye devredilenler
 - [ ] **Dash sırasında saldırı (dash-atak)** — Enes istedi. Şu an dash saldırıyı iptal ediyor, dash sırasında saldırı girdisi hiç okunmuyor. Türün klasiği, eklenecek
@@ -64,6 +64,7 @@
 
 ## Faz 3 — Silahlar
 
+- [ ] **TEK HEDEFLİ silahlar** — koni herkese vurup her birinden hasat ettiği için kalabalık oyunu KOLAYLAŞTIRIYOR. Tek hedefli silah ancak **hasar başına daha çok zaman çalarsa** rekabet edebilir → hasat oranı silaha göre değişmeli
 - [ ] 3 silah tohumu prototipi: **Faizli** · **Durgun** · **Vadeli** (bkz. `../../FIKIR_DEFTERI.md`)
 - [ ] Silah başına VFX kimliği
 - [ ] 🎮 Playtest kapısı — hangi silah tutuyor, hangisi çöp
@@ -75,6 +76,14 @@
 - [ ] Koşu sonu / yeniden başlama akışı
 
 ---
+
+## ⚠️ Ayar tuzağı
+
+Değerleri **Inspector'dan** değiştir, `Tuning.cs`'ten değil. Çalışma anında `Tuning.asset` geçerli;
+asset'te zaten kayıtlı bir alan C# varsayılanını **ezer**. 2026-08-24'te Enes'in üç ayarı
+(`harvestRate`, `dashDistance`, `attackDuration`) bu yüzden hiç uygulanmadı.
+
+Kontrol: `Tek Can → Ayar kaynağı denetimi` (C# ile asset'i karşılaştırır).
 
 ## Notlar
 

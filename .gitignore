@@ -56,3 +56,4 @@ cap.log
 probe.log
 api.log
 repro.log
+audit.log
