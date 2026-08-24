@@ -258,10 +258,17 @@ namespace TekCan
 
             // Console'a da yaz: Enes'in hiçbir şey okuyup aktarmasına gerek kalmasın,
             // Logs/Editor.log'dan doğrudan okunabilsin.
+            // Saatin GERÇEKTEN hareket edip etmediği de yazılıyor: hits>0 ama saniye
+            // değişmiyorsa hasar başka bir Clock nesnesine yazılıyor demektir.
+            string clockInfo = Clock.Instance == null
+                ? "YOK"
+                : $"id={Clock.Instance.GetInstanceID()} saniye={Clock.Instance.Seconds:0.00} " +
+                  $"sahnede={(Clock.Instance.gameObject != null && Clock.Instance.isActiveAndEnabled ? "evet" : "HAYIR-ÖLÜ")}";
+
             Debug.Log($"[STRIKE #{StrikesFired}] bakılan={checkedCount} menzilDışı={failedRange} " +
                       $"koniDışı={failedCone} isabet={hits} | enYakınMesafe={nearestDist:0.00} " +
                       $"enYakınAçı={nearestAngle:0.0} | oyuncuPos={transform.position} " +
-                      $"bakış={transform.forward} | clockInstance={(Clock.Instance != null ? "var" : "YOK")}");
+                      $"bakış={transform.forward} | clock: {clockInfo}");
 
             if (hitSomething)
             {

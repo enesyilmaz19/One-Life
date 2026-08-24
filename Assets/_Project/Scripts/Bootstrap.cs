@@ -101,6 +101,8 @@ namespace TekCan
             Enemy.All.Clear();
             HitStop.Reset();
             Arc.Reset();
+            Clock.Reset();        // ← eksikti: ölü saate hasar yazılmasını önler
+            IsoCamera.Reset();    // ← eksikti: aynı gerekçe
             Time.timeScale = 1f;
         }
 

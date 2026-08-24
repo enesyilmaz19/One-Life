@@ -11,6 +11,15 @@ namespace TekCan
     {
         public static Clock Instance { get; private set; }
 
+        /// <summary>
+        /// Play oturumları arası statik kalıntıyı temizler (bkz. Bootstrap.ResetStatics).
+        /// ⚠️ Kritik: domain reload kapalıyken Instance ÖNCEKİ oturumun yok edilmiş
+        /// Clock'unu tutar. `Clock.Instance?.Add(...)` C# null kontrolü yapar ve yok
+        /// edilmiş Unity nesnesi C# tarafında null DEĞİLDİR — yani hasar ölü saate
+        /// yazılır, HUD yeni saati gösterir, hiçbir şey olmuyormuş gibi görünür.
+        /// </summary>
+        public static void Reset() => Instance = null;
+
         Tuning _t;
         Transform _player;
         public float Seconds { get; private set; }

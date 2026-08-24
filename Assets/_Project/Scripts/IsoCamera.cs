@@ -11,6 +11,9 @@ namespace TekCan
     {
         public static IsoCamera Instance { get; private set; }
 
+        /// <summary>Play oturumları arası statik kalıntıyı temizler (bkz. Bootstrap.ResetStatics).</summary>
+        public static void Reset() => Instance = null;
+
         Tuning _t;
         Transform _target;
         Vector3 _offset;

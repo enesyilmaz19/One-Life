@@ -14,6 +14,14 @@ namespace TekCan
         GUIStyle _big, _small;
 
         PlayerController _player;
+        bool _diagnosticsOn = true;
+
+        void Update()
+        {
+            // Panel ekranın bir kısmını kapatıyor; F1 ile kalksın.
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (kb != null && kb.f1Key.wasPressedThisFrame) _diagnosticsOn = !_diagnosticsOn;
+        }
 
         public void Init(Clock clock, PlayerController player)
         {
@@ -27,7 +35,7 @@ namespace TekCan
         /// </summary>
         void DrawDiagnostics()
         {
-            if (_player == null) return;
+            if (_player == null || !_diagnosticsOn) return;
 
             var st = new GUIStyle(GUI.skin.box)
             {
