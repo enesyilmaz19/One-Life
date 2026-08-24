@@ -28,6 +28,12 @@ namespace TekCan.EditorTools
             sb.AppendLine(Line("Faz 2 öz-denetim", f2 == 0, f2 == 0 ? "geçti" : $"{f2} başarısız"));
             problems += f2;
 
+            // Gerçek spawn geometrisiyle hasar regresyonu — düşmanların havada doğduğu
+            // hata buradan geçmişti ve izole testler onu göremiyordu.
+            bool repro = Faz1Repro.Execute();
+            sb.AppendLine(Line("Hasar reprodüksiyonu", repro, repro ? "gerçek geometride iniyor" : "HASAR İNMİYOR"));
+            if (!repro) problems++;
+
             int audit = TuningAudit.Execute();
             sb.AppendLine(audit == 0
                 ? Line("Ayar kaynağı denetimi", true, "C# ↔ asset uyumlu")

@@ -17,6 +17,13 @@ namespace TekCan.EditorTools
         [MenuItem("Tek Can/Faz 1 hasar reprodüksiyonu")]
         public static void Run()
         {
+            bool ok = Execute();
+            if (Application.isBatchMode) EditorApplication.Exit(ok ? 0 : 1);
+        }
+
+        /// <summary>Hasar iniyorsa true. Toplu koşucu bunu kullanıyor.</summary>
+        public static bool Execute()
+        {
             var t = AssetDatabase.LoadAssetAtPath<Tuning>("Assets/_Project/Resources/Tuning.asset")
                     ?? ScriptableObject.CreateInstance<Tuning>();
 
@@ -89,7 +96,7 @@ namespace TekCan.EditorTools
             foreach (var e in Enemy.All.ToArray()) if (e != null) Object.DestroyImmediate(e.gameObject);
             Enemy.All.Clear();
             Object.DestroyImmediate(root);
-            if (Application.isBatchMode) EditorApplication.Exit(ok ? 0 : 1);
+            return ok;
         }
     }
 }

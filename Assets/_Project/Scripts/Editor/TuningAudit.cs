@@ -52,19 +52,19 @@ namespace TekCan.EditorTools
 
             // C# varsayılanları: sınıfın taze bir örneği alan başlatıcılarını taşır.
             var fresh = ScriptableObject.CreateInstance<Tuning>();
-            var serialized = SerializedFieldNames(asset);
 
             var overridden = new List<string>();
             foreach (var f in typeof(Tuning).GetFields(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (f.FieldType != typeof(float) && f.FieldType != typeof(int)) continue;
 
+                // Taze örnek C# başlatıcılarını taşır. Asset'ten yüklenen değer ondan
+                // farklıysa, dosyada onu ezen bir kayıt var demektir. Asset'te HENÜZ
+                // olmayan yeni bir alan zaten C# değeriyle yüklenir, yani fark çıkmaz.
                 object a = f.GetValue(asset), c = f.GetValue(fresh);
                 if (Equals(a, c)) continue;
 
-                // Asset'te kayıtlı DEĞİLSE fark olamaz; kayıtlıysa ve farklıysa C# eziliyor.
-                if (serialized.Contains(f.Name))
-                    overridden.Add($"  {f.Name,-28} C#={c,-10} ÇALIŞAN={a}");
+                overridden.Add($"  {f.Name,-28} C#={c,-10} ÇALIŞAN={a}");
             }
 
             if (overridden.Count == 0)
@@ -131,22 +131,6 @@ namespace TekCan.EditorTools
             AssetDatabase.SaveAssets();
 
             Debug.Log($"[Ayar senkron] ✅ {changes.Count} alan asset'e yazıldı:\n{string.Join("\n", changes)}");
-        }
-
-        /// <summary>Asset dosyasında gerçekten yazılı olan alan adları.</summary>
-        static HashSet<string> SerializedFieldNames(Tuning asset)
-        {
-            var names = new HashSet<string>();
-            var so = new SerializedObject(asset);
-            var it = so.GetIterator();
-            while (it.NextVisible(true)) names.Add(it.name);
-            return names;
-        }
-
-        /// <summary>Sapma varsa 1 ile çıkar — Faz1SelfCheck ile aynı sözleşme, kapı olarak kullanılabilsin.</summary>
-        static void Finish(int problems = 0)
-        {
-            if (Application.isBatchMode) EditorApplication.Exit(problems == 0 ? 0 : 1);
         }
     }
 }
