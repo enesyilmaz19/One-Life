@@ -89,8 +89,42 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "hazırlık evresine girdi", e2.CurrentState == Enemy.State.Windup, (int)e2.CurrentState);
             failed += Check(ref total, "HAZIRLIK hasar VERMEDİ (kaçış penceresi var)", Mathf.Approximately(clock.Seconds, clockBeforeWindup), clock.Seconds - clockBeforeWindup);
 
+            // 7) ⚠️ GERÇEK YOL: Strike() üzerinden hasar iniyor mu?
+            //    Eski testler TakeDamage'i doğrudan çağırıyordu ve bu yüzden oyun
+            //    kırıkken bile yeşil yanıyordu. Artık oyuncunun bastığı yoldan geçiyoruz.
+            pGo.transform.position = Vector3.zero;
+            pGo.transform.rotation = Quaternion.LookRotation(Vector3.forward);
+
+            // Önceki bölümlerden kalan düşmanları sahneden çıkar — yoksa Strike onları da
+            // yakalar ve sayım yanıltır (ilk denemede tam bunu yaşadım).
+            foreach (var leftover in Enemy.All.ToArray()) Object.DestroyImmediate(leftover.gameObject);
+            Enemy.All.Clear();
+
+            var e3Go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            e3Go.transform.position = new Vector3(0f, 0f, 1.6f);   // tam önde, menzil içinde
+            var e3 = e3Go.AddComponent<Enemy>();
+            e3.Init(t, pGo.transform, null);
+
+            float clockBeforeStrike = clock.Seconds;
+            float poolBefore = e3.TimeLeft;
+            typeof(PlayerController).GetMethod("Strike",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(pc, null);
+
+            failed += Check(ref total, "STRIKE önündeki düşmana hasar verdi", e3.TimeLeft < poolBefore, e3.TimeLeft);
+            failed += Check(ref total, "STRIKE saate zaman yazdı", clock.Seconds > clockBeforeStrike, clock.Seconds - clockBeforeStrike);
+
+            // 8) Boş düşman Strike ile TEK ATIMDA ölüyor mu (Enes: "gri olunca ölümsüz")
+            while (!e3.Hollow) e3.TakeDamage(50f);
+            int countBefore = Enemy.All.Count;
+            typeof(PlayerController).GetMethod("Strike",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(pc, null);
+            failed += Check(ref total, "BOŞ düşman Strike ile öldü (ölümsüz değil)", Enemy.All.Count == countBefore - 1, Enemy.All.Count);
+
             foreach (var a in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include)) Object.DestroyImmediate(a.gameObject);
-            Object.DestroyImmediate(e2Go);
+            if (e3Go != null) Object.DestroyImmediate(e3Go);
+            if (e2Go != null) Object.DestroyImmediate(e2Go);
             Object.DestroyImmediate(pGo);
             Object.DestroyImmediate(root);
             Enemy.All.Clear();

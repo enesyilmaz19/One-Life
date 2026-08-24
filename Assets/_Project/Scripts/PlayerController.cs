@@ -11,6 +11,7 @@ namespace TekCan
     {
         Tuning _t;
         Transform _cam;
+        Camera _camera;
 
         Vector3 _dashDir;
         float _dashTimer, _dashCd, _iFrames;
@@ -36,6 +37,7 @@ namespace TekCan
         {
             _t = tuning;
             _cam = cameraTransform;
+            _camera = cameraTransform != null ? cameraTransform.GetComponent<Camera>() : null;
             _renderer = GetComponent<Renderer>();
             if (_renderer != null) _baseColor = _renderer.material.color;
         }
@@ -103,6 +105,37 @@ namespace TekCan
             return gp != null && gp.buttonWest.wasPressedThisFrame;
         }
 
+        /// <summary>
+        /// Saldırının yöneleceği yön. Sıra: fare imleci → gamepad sağ çubuk →
+        /// hareket girdisi → mevcut bakış. İzometrikte imleçle nişan standarttır;
+        /// oyuncu kaçarken bile istediği tarafa vurabilmeli.
+        /// </summary>
+        Vector3 AimDirection(Vector3 moveInput)
+        {
+            var mouse = Mouse.current;
+            if (mouse != null && _camera != null)
+            {
+                var ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
+                var ground = new Plane(Vector3.up, new Vector3(0f, transform.position.y, 0f));
+                if (ground.Raycast(ray, out float dist))
+                {
+                    Vector3 to = ray.GetPoint(dist) - transform.position;
+                    to.y = 0f;
+                    if (to.sqrMagnitude > 0.04f) return to.normalized;
+                }
+            }
+
+            var gp = Gamepad.current;
+            if (gp != null)
+            {
+                Vector2 rs = gp.rightStick.ReadValue();
+                if (rs.sqrMagnitude > 0.09f) return CameraRelative(rs).normalized;
+            }
+
+            if (moveInput.sqrMagnitude > 0.0001f) return moveInput.normalized;
+            return transform.forward;
+        }
+
         /// <summary>Girdiyi kamera düzlemine çevirir — izometrikte şart, yoksa WASD çapraz hisseder.</summary>
         Vector3 CameraRelative(Vector2 v)
         {
@@ -145,7 +178,12 @@ namespace TekCan
         {
             _attackTimer = _t.attackDuration;
             _attackHitDone = false;
-            if (input.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(input);
+
+            // ⚠️ NİŞAN İMLEÇTEN ALINIR, hareket yönünden değil.
+            // Eskiden hareket yönüne dönüyordu: kaçarken vurunca yay boşluğa gidiyordu,
+            // düşman arkanda kalıyordu ve hiçbir şeye isabet etmiyordu.
+            Vector3 aim = AimDirection(input);
+            if (aim.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(aim);
 
             // ⚠️ ISKADA DA ÇIKAR. Faz 1'in ilk playtest'i tam olarak bu eksik olduğu için
             // yürümedi: oyuncu saldırdığını göremeyince hissi yargılayamadı.

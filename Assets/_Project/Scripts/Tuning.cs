@@ -46,13 +46,13 @@ namespace TekCan
         [Tooltip("Öndeki koninin toplam açısı (derece)")]
         public float attackAngle = 100f;
         [Tooltip("İsabette zamanın donma süresi — tokluk hissi buradan gelir")]
-        public float hitStopDuration = 0.06f;
+        public float hitStopDuration = 0.10f;
         [Tooltip("İsabette kamera sarsıntısı şiddeti")]
-        public float hitShake = 0.14f;
+        public float hitShake = 0.22f;
         [Tooltip("Darbe yediğinde kamera sarsıntısı şiddeti")]
         public float hurtShake = 0.30f;
         [Tooltip("İsabet eden düşmanın beyaz parlama süresi")]
-        public float hitFlashDuration = 0.07f;
+        public float hitFlashDuration = 0.14f;
         [Tooltip("Savurma yayının ekranda kalma süresi — vuruşu GÖRMEK için, isabet olmasa da çıkar")]
         public float swingArcLife = 0.14f;
 

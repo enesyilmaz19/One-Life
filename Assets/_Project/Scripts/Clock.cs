@@ -50,11 +50,22 @@ namespace TekCan
             OnDeath?.Invoke();
         }
 
+        /// <summary>Son hasadın miktarı ve ne zaman olduğu — HUD bunu görünür kılıyor.</summary>
+        public float LastGain { get; private set; }
+        public float LastGainAt { get; private set; } = -99f;
+
         /// <summary>Hasat: hasar verdikçe sürekli kazanç. Öldürünce toplu ödeme yoktur.</summary>
         public void Add(float seconds)
         {
             if (Dead) return;
-            Seconds += Mathf.Max(0f, seconds);
+            seconds = Mathf.Max(0f, seconds);
+            if (seconds <= 0f) return;
+
+            Seconds += seconds;
+
+            // Aynı karede birden çok düşmana isabet ederse tek bir toplamda göster.
+            LastGain = (Time.unscaledTime - LastGainAt < 0.05f) ? LastGain + seconds : seconds;
+            LastGainAt = Time.unscaledTime;
         }
 
         /// <summary>Darbe yemek ve satın almak aynı kapıdan geçer — ikisi de saniye götürür.</summary>

@@ -29,7 +29,7 @@ MonoBehaviour:
   attackDamage: 10
   attackRange: 2.2
   attackAngle: 100
-  hitStopDuration: 0.06
+  hitStopDuration: 0.1
   attackMoveDamping: 0.25
   enemyTimePool: 10
   enemyDecayPerSecond: 0.4

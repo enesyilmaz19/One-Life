@@ -26,6 +26,7 @@ namespace TekCan
         float _attackTimer;
         float _flashTimer;
 
+        Vector3 _baseScale;
         State _state = State.Chase;
         float _stateTimer;
         Vector3 _strikeDir;
@@ -50,6 +51,7 @@ namespace TekCan
             _player = player;
             _label = label;
             TimeLeft = tuning.enemyTimePool;
+            _baseScale = transform.localScale;
             _renderer = GetComponentInChildren<Renderer>();
             All.Add(this);
             Paint();
@@ -66,7 +68,12 @@ namespace TekCan
             if (_flashTimer > 0f)
             {
                 _flashTimer -= Time.unscaledDeltaTime;   // hit-stop sırasında da sönsün
-                if (_flashTimer <= 0f) Paint();
+
+                // Ölçek darbesi: isabetin en ucuz ve en okunur işareti. Renk solsa da görünür.
+                float k = Mathf.Clamp01(_flashTimer / Mathf.Max(0.0001f, _t.hitFlashDuration));
+                transform.localScale = _baseScale * (1f + 0.28f * k);
+
+                if (_flashTimer <= 0f) { transform.localScale = _baseScale; Paint(); }
             }
 
             // Havuz kendi kendine akar. Boşalınca daha aşağı inmez.
