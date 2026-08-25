@@ -341,6 +341,26 @@ namespace TekCan
         /// silahların tanımı bu. Geometriyi daraltmak yetmezdi: dar koni de iki
         /// düşmanı birden yakalayabilir.
         /// </summary>
+        /// <summary>
+        /// İsabet kuralının TEK yeri. Menzil düşmanın MERKEZİNE değil YÜZEYİNE ölçülür,
+        /// yoksa büyük düşmanlar (boss) gövdesine değecek kadar yakınken bile ıskalanır.
+        ///
+        /// ⚠️ Bu kural bir ara iki ayrı yere kopyalanmıştı (tek hedef dalı + koni dalı).
+        /// Bu projede tam olarak öyle bir kopyalama iki kez hata üretti; tek yere indirildi.
+        /// </summary>
+        bool InHitCone(Enemy e, float range, float halfAngle, out float surfaceDist)
+        {
+            surfaceDist = float.MaxValue;
+            if (e == null) return false;
+
+            Vector3 to = e.transform.position - transform.position;
+            to.y = 0f;
+
+            surfaceDist = to.magnitude - e.Radius;
+            if (surfaceDist > range) return false;
+            return Vector3.Angle(transform.forward, to) <= halfAngle;
+        }
+
         void StrikeCone(float range, float angleDeg, float damage, float hitStop, float shake,
                         int maxTargets, float harvestMult, out int hits, out int kills)
         {
@@ -354,11 +374,7 @@ namespace TekCan
 
                 foreach (var e in Enemy.All)
                 {
-                    if (e == null) continue;
-                    Vector3 to = e.transform.position - transform.position;
-                    to.y = 0f;
-                    float d = to.magnitude - e.Radius;          // menzil YÜZEYE ölçülüyor
-                    if (d > range || Vector3.Angle(transform.forward, to) > half) continue;
+                    if (!InHitCone(e, range, half, out float d)) continue;
                     if (d < bestDist) { bestDist = d; nearest = e; }
                 }
 
@@ -375,13 +391,7 @@ namespace TekCan
                 for (int i = Enemy.All.Count - 1; i >= 0; i--)
                 {
                     var e = Enemy.All[i];
-                    if (e == null) continue;
-
-                    Vector3 to = e.transform.position - transform.position;
-                    to.y = 0f;
-
-                    if (to.magnitude - e.Radius > range) continue;   // menzil YÜZEYE ölçülüyor
-                    if (Vector3.Angle(transform.forward, to) > half) continue;
+                    if (!InHitCone(e, range, half, out _)) continue;
 
                     bool wasHollow = e.Hollow;
                     e.TakeDamage(damage, harvestMult);

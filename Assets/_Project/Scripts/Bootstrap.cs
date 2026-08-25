@@ -132,7 +132,9 @@ namespace TekCan
                            player.transform, kinds[i]);
             }
 
-            Debug.Log($"[Tek Can] Arena hazır — {t.enemyCount} düşman, {kinds.Length} sunak, {t.startSeconds:0}s saat.");
+            // Başlangıçta düşman YOK — dalgalar çağrılınca doğuyor. Log bunu doğru söylemeli.
+            Debug.Log($"[Tek Can] Arena hazır — {t.waveCount - 1} dalga + boss, " +
+                      $"{kinds.Length} sunak, {t.startSeconds:0}s saat.");
         }
 
         /// <summary>Koşuyu sıfırdan kurar. Ölüm ekranı R'ye basınca burayı çağırıyor.</summary>

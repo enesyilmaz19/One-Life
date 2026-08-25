@@ -156,7 +156,9 @@ namespace TekCan
         public float bossAttackAngleMultiplier = 1.5f;
 
         [Header("── ARENA (greybox test) ──")]
-        [Tooltip("Faz 4 öncesi sabit doğum için kullanılıyordu; dalga sistemi devrede artık kullanılmıyor")]
+        [Tooltip("YALNIZCA ÖZ-DENETİM İÇİN. Oyunda düşman sayısını dalga sistemi belirliyor " +
+                 "(waveBaseCount / waveCountGrowth); bu alan sadece testlerin sabit bir halka " +
+                 "kurmasına yarıyor. Oyun dengesini buradan ayarlama.")]
         public int enemyCount = 5;
         public float arenaRadius = 14f;
 
