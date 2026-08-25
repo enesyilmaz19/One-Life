@@ -64,3 +64,32 @@ Sorular şunlardı: *"hit-stop + sarsıntı dozu az mı çok mu?"* ve *"hazırl�
 
 Bu, `feedback_verify_the_phase_goal` kuralının kardeşi: orada *algılayabiliyor mu* diye sormuştum, burada eksik olan *anlayabiliyor mu*.
 
+---
+
+## 2026-08-24 (4) — Bir silah teslim ettim, hiç vuramıyordu
+
+**Ne oldu:** Faz 3'te DURGUN silahını yazdım. Hasat çarpanı, menzili, tek hedefliliği,
+saat dondurma davranışı hepsi vardı ve 13/13 öz-denetim yeşildi. Ama silah **hiç hasar
+veremiyordu**: basılı tutmayı yakalayan blok erken `return` ediyordu, yani saldırı girdisi
+hiç okunmuyordu, bırakınca da bir şey olmuyordu.
+
+Simülatör ona "düşman başına +4.8 saniye" dedi. Tamamen hayaldi — sıfır hasar veren bir
+silahın kazanç hesabı yapılmıştı.
+
+**Neden testler yakalamadı:** on üç kontrolün hepsi silahın *özelliklerini* doğruluyordu —
+çarpanı doğru mu, tek hedefli mi, dondurur mu, bedeli ne zaman keser. Hiçbiri en temel
+soruyu sormamıştı: **"bu silah bir düşmana hasar verebiliyor mu?"**
+
+**KURAL (4)**
+
+> **Bir şeyin özelliklerini test etmek, o şeyin işe yaradığını test etmek değildir.**
+
+Her yeni oynanış nesnesi için ilk assert en aptalca olan olmalı: *çalışıyor mu?* Silah
+vuruyor mu, düşman ölüyor mu, kapı açılıyor mu. Detay kontrolleri ondan sonra gelir.
+
+Faz 3'e eklenen kontrol tam olarak bu: **bütün silahlar üzerinde döngü kurup her birinin
+gerçekten hasar verdiğini** doğruluyor. Yeni silah eklendiğinde otomatik kapsanıyor.
+
+Bu, `feedback_verify_the_phase_goal` ailesinin üçüncü üyesi:
+① algılayabiliyor mu · ② anlayabiliyor mu · ③ **hiç çalışıyor mu**
+

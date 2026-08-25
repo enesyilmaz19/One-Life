@@ -24,6 +24,7 @@ namespace TekCan
         Vector3 _knockback;
 
         bool _dashAttackQueued;
+        bool _holdCharging;          // DURGUN gerili mi
         int _weaponIndex;
 
         /// <summary>Kuşanılan silah. 1-4 tuşlarıyla değişiyor (Faz 3 test kolaylığı).</summary>
@@ -60,14 +61,25 @@ namespace TekCan
 
             Vector3 input = ReadMove();
 
-            // DURGUN: basılı tutarken saat donuyor ama saldıramıyor, dash atamıyorsun.
-            // Dünya donmadığı için bedeli savunmasız kalmak.
-            if (Weapon.HoldFreezesClock && AttackHeld())
+            // DURGUN: yay gerer gibi. Basılı tutarken saat donuyor ama KIPIRDAYAMIYORSUN —
+            // saldırı, dash, hareket hepsi kapalı. Dünya donmadığı için bedeli çakılı kalmak.
+            // BIRAKINCA vuruş iniyor; yoksa silah hiç hasar veremezdi.
+            if (Weapon.HoldFreezesClock)
             {
-                if (Clock.Instance != null) Clock.Instance.Frozen = true;
-                return;
+                if (AttackHeld())
+                {
+                    if (Clock.Instance != null) Clock.Instance.Frozen = true;
+                    _holdCharging = true;
+                    return;
+                }
+                if (Clock.Instance != null) Clock.Instance.Frozen = false;
+                if (_holdCharging)
+                {
+                    _holdCharging = false;
+                    if (!Attacking) { StartAttack(input); return; }
+                }
             }
-            if (Clock.Instance != null) Clock.Instance.Frozen = false;
+            else if (Clock.Instance != null) Clock.Instance.Frozen = false;
 
             if (Dashing) { TickDash(); return; }        // dash sırasında saldırı girdisi burada okunuyor
 
@@ -140,6 +152,7 @@ namespace TekCan
             if (index < 0 || index >= TekCan.Weapon.All.Length || index == _weaponIndex) return;
             _weaponIndex = index;
             _attackTimer = 0f;                                    // yarım savurma taşınmasın
+            _holdCharging = false;                                // gerili DURGUN taşınmasın
             if (Clock.Instance != null) Clock.Instance.Frozen = false;
             IsoCamera.Shake(_t.hitShake * 0.4f);
         }

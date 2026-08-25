@@ -82,11 +82,15 @@ namespace TekCan
     }
 
     /// <summary>
-    /// DURGUN — çekili tuttuğun sürece saatin donar, ama çekiliyken saldıramaz ve
-    /// dash atamazsın. Dünya donmuyor: düşmanlar gelmeye devam ediyor.
+    /// DURGUN — yay gerer gibi. Çekili tuttuğun sürece saatin donar, ama **hiç
+    /// kıpırdayamazsın**: saldırı, dash, hareket hepsi kapalı. Dünya donmuyor,
+    /// düşmanlar gelmeye devam ediyor. **Bıraktığında vuruş iner.**
     ///
-    /// Yani "nefesini tutma" mekaniği: dövüş dışındaki hızlı akışı durdurabilirsin,
-    /// bedeli savunmasız kalmak. Saf gerilim, hiç hasar vermeden.
+    /// Yani "nefesini tutma" mekaniği: akışı durdurabilirsin, bedeli çakılı kalmak.
+    ///
+    /// ⚠️ İlk teslimde bu silah tamamen kırıktı — basılı tutma bloğu erken `return`
+    /// ediyordu, bırakınca hiçbir şey olmuyordu, yani hiç hasar veremiyordu. Öz-denetim
+    /// yeşildi çünkü hiçbir test "bu silah vurabiliyor mu" diye sormamıştı. Artık soruyor.
     /// </summary>
     public sealed class Durgun : Weapon
     {

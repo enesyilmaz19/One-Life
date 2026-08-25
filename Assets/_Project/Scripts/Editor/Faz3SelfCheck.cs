@@ -127,6 +127,25 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "DURGUN basılı tutunca dondurur", new Durgun().HoldFreezesClock, 1);
             failed += Check(ref total, "KONİ dondurmaz", !new ConeBlade().HoldFreezesClock, 0);
 
+            // ── 7) ⚠️ HER SİLAH GERÇEKTEN HASAR VEREBİLİYOR MU ──
+            //    DURGUN bu kontrol olmadığı için tamamen kırık teslim edilmişti:
+            //    basılı tutma bloğu erken `return` ediyordu, saldırı girdisi hiç okunmuyordu,
+            //    bırakınca da bir şey olmuyordu. Hasat çarpanı vardı ama hasar veremiyordu.
+            //    Öz-denetim yeşildi çünkü hiçbir test "bu silah vurabiliyor mu" diye sormamıştı.
+            for (int wi = 0; wi < Weapon.All.Length; wi++)
+            {
+                ClearEnemies();
+                var target = MakeEnemy(t, pGo.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f);
+                pc.SetWeapon(wi);
+
+                float poolBefore = target.TimeLeft;
+                pc.Weapon.OnSwingStart(clock, t);
+                strike.Invoke(pc, null);
+
+                failed += Check(ref total, $"{pc.Weapon.Name} HASAR VEREBİLİYOR",
+                                target.TimeLeft < poolBefore - 0.001f, poolBefore - target.TimeLeft);
+            }
+
             ClearEnemies();
             Object.DestroyImmediate(poorRoot);
             Object.DestroyImmediate(poorT);
