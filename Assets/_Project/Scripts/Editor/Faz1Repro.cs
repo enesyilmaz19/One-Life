@@ -42,17 +42,16 @@ namespace TekCan.EditorTools
             var pc = player.AddComponent<PlayerController>();
             pc.Init(t, null);
 
-            for (int i = 0; i < t.enemyCount; i++)
-            {
-                var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                go.transform.SetParent(root.transform);
-                go.transform.position = Bootstrap.EnemySpawnPosition(t, i);   // ← tek kaynak
-                go.transform.localScale = Bootstrap.EnemyScale;
-                go.AddComponent<Enemy>().Init(t, player.transform, null);
-            }
+            // ⚠️ Düşmanları OYUNUN kendi yolundan doğur: WaveManager → Bootstrap.SpawnEnemyAt.
+            // Elle doğursaydık, Faz 4'te olduğu gibi oyun kendi formülüne kayınca reprodüksiyon
+            // sessizce ölü bir yolu sınamaya devam ederdi.
+            var wmGo = new GameObject("wave"); wmGo.transform.SetParent(root.transform);
+            var wm = wmGo.AddComponent<WaveManager>();
+            wm.Init(t, player.transform, null);
+            wm.StartNextWave();
 
-            Debug.Log($"[REPRO] kurulum: {Enemy.All.Count} düşman, " +
-                      $"ilk spawn mesafesi {Bootstrap.EnemySpawnPosition(t, 0).magnitude:0.00}");
+            Debug.Log($"[REPRO] kurulum: dalga {wm.Wave}, {Enemy.All.Count} düşman, " +
+                      $"ilk spawn mesafesi {Enemy.All[0].transform.position.magnitude:0.00}");
 
             // ── Kovalamayı simüle et: ChaseMove ile AYNI matematik ──
             foreach (var e in Enemy.All)

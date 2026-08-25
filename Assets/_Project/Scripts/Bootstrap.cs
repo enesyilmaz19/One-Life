@@ -20,18 +20,30 @@ namespace TekCan
         public static readonly Vector3 PlayerSpawn = new Vector3(0f, 1f, 0f);
         public static readonly Vector3 EnemyScale = new Vector3(0.9f, 0.9f, 0.9f);
 
-        public static Vector3 EnemySpawnPosition(Tuning t, int index)
+        /// <summary>Düşmanların doğduğu halkanın arena yarıçapına oranı.</summary>
+        public const float SpawnRingFactor = 0.62f;
+
+        /// <summary>
+        /// Düşman doğum konumunun TEK formülü. WaveManager de testler de buradan okuyor.
+        ///
+        /// ⚠️ İki kez ayrıştı, iki kez canımızı yaktı:
+        /// ① Yükseklik yarıçapla ÇARPILMAMALI. Eski hali `new Vector3(cos, 1f, sin) * radius`
+        ///    idi ve y'yi de çarpıyordu → düşmanlar y=7.7'de, havada doğuyordu. ChaseMove
+        ///    yalnızca yatay hareket ettiği için hiç inmiyorlardı; izometrikte havadaki nesne
+        ///    ekranda kayık görünür, oyuncu gördüğü yere nişan alıp ıskalıyordu.
+        /// ② Faz 4'te WaveManager kendi formülünü yazdı (yarıçap 0.62 vs 0.55) → oyun artık
+        ///    testlerin sınadığı yoldan geçmiyordu. Öz-inceleme yakaladı, tek kaynağa indirildi.
+        /// </summary>
+        public static Vector3 RingPosition(Tuning t, int index, int count, float angleOffsetRad = 0f)
         {
-            // ⚠️ Yükseklik yarıçapla ÇARPILMAMALI. Eski hali
-            //   new Vector3(cos, 1f, sin) * radius
-            // idi ve y'yi de çarpıyordu: düşmanlar y=7.7'de, havada doğuyordu.
-            // ChaseMove yalnızca yatay hareket ettiği için hiç inmiyorlardı.
-            // İzometrikte havadaki nesne ekranda kayık görünür → oyuncu gördüğü
-            // yere nişan alıp ıskalıyordu. "Hasar vurmuyorum" şikâyetinin sebebi buydu.
-            float a = (360f / Mathf.Max(1, t.enemyCount)) * index * Mathf.Deg2Rad;
-            float r = t.arenaRadius * 0.55f;
+            float a = (360f / Mathf.Max(1, count)) * index * Mathf.Deg2Rad + angleOffsetRad;
+            float r = t.arenaRadius * SpawnRingFactor;
             return new Vector3(Mathf.Cos(a) * r, PlayerSpawn.y, Mathf.Sin(a) * r);
         }
+
+        /// <summary>Testler için kısayol — üretim halkasının aynısı.</summary>
+        public static Vector3 EnemySpawnPosition(Tuning t, int index)
+            => RingPosition(t, index, t.enemyCount);
 
         /// <summary>Koşuya ait her şey bunun altında — yeniden başlatma tek Destroy.</summary>
         static GameObject _runRoot;

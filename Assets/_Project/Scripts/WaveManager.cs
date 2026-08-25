@@ -96,16 +96,16 @@ namespace TekCan
 
             for (int i = 0; i < count; i++)
             {
-                float a = (360f / count) * i * Mathf.Deg2Rad + wave * 0.7f;   // her dalga döner
-                float r = _t.arenaRadius * 0.62f;
-                var pos = new Vector3(Mathf.Cos(a) * r, Bootstrap.PlayerSpawn.y, Mathf.Sin(a) * r);
+                // Halka formülü Bootstrap'ta — burada kopyalamak, oyunun testlerin
+                // sınadığı yoldan ayrılması demekti (öz-incelemede yakalandı).
+                var pos = Bootstrap.RingPosition(_t, i, count, wave * 0.7f);   // her dalga döner
                 Bootstrap.SpawnEnemyAt(_t, pos, _player, _cam, poolMult, boss: false);
             }
         }
 
         void SpawnBoss()
         {
-            var pos = new Vector3(0f, Bootstrap.PlayerSpawn.y, _t.arenaRadius * 0.62f);
+            var pos = Bootstrap.RingPosition(_t, 0, 1);
             Bootstrap.SpawnEnemyAt(_t, pos, _player, _cam, _t.bossPoolMultiplier, boss: true);
         }
 

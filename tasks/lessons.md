@@ -93,3 +93,31 @@ gerçekten hasar verdiğini** doğruluyor. Yeni silah eklendiğinde otomatik kap
 Bu, `feedback_verify_the_phase_goal` ailesinin üçüncü üyesi:
 ① algılayabiliyor mu · ② anlayabiliyor mu · ③ **hiç çalışıyor mu**
 
+---
+
+## 2026-08-24 (5) — Aynı ayrışma ikinci kez oldu
+
+**Ne oldu:** Faz 4'te dalga sistemi yazarken `WaveManager` kendi doğum konumu formülünü
+yazdı — yarıçap 0.62, açı böleni dalga sayısı. `Bootstrap.EnemySpawnPosition` ise 0.55 ve
+`enemyCount` kullanıyordu. Yani **oyun artık testlerin sınadığı yoldan geçmiyordu.**
+
+`Faz1Repro`'nun bütün varlık sebebi "gerçek doğum geometrisini sına"maktı. O geometri
+WaveManager'a taşındı, repro ölü bir yolu doğrulamaya devam etti ve yeşil yandı.
+
+**Bu, kural (2)'nin aynısı** — daha önce "test düzeneği yerleşimi ithal eder" diye yazmıştım
+ve o kuralı uygulamıştım. Ama kuralı yalnızca **testin tarafına** uygulamışım: test üretimden
+okuyordu. Yeni üretim kodu geldiğinde o üretim kodu **başka bir yerden** okumaya başladı ve
+tek kaynak sessizce ikiye bölündü.
+
+### KURAL (5)
+
+> **Tek kaynak, yalnızca testin ona bakmasıyla korunmaz — yeni üretim kodunun da ona
+> bakması gerekir.**
+
+Yeni bir sistem, mevcut bir formülü (konum, ölçek, zamanlama) yeniden yazıyorsa ayrışma
+başlamıştır. Doğru refleks: yazmadan önce "bunun bir kaynağı zaten var mı" diye sormak.
+
+**Somut savunma:** repro artık düşmanları elle doğurmuyor, **oyunun kendi yolundan** geçiyor
+(`WaveManager.StartNextWave` → `Bootstrap.SpawnEnemyAt`). Üretim kodu nereye kayarsa repro
+oraya kayar; bir daha ölü yol sınayamaz.
+
