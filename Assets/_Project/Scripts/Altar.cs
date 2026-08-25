@@ -83,6 +83,7 @@ namespace TekCan
                 case Kind.Dash:    clock.UpgradeDash(_t.altarDashStep); break;
             }
 
+            Sfx.Buy();
             IsoCamera.Shake(_t.hitShake * 0.7f);
             Paint();
         }

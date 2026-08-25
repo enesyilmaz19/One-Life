@@ -1,12 +1,14 @@
 ## 📥 ENES'İN MASASI
 
-**Boss'u tekrar dene.** Artık iki saldırıda bir **yere vuruyor**: etrafında kırmızı halka çıkıyor.
+**Ses geldi.** Kulaklık tak, birkaç dalga oyna.
 
-- [ ] **Durup vurmak artık öldürüyor mu?** Simülasyona göre 10. saniyede ölmelisin
-- [ ] **Halkadan kaçmak yetişiyor mu?** Hazırlık süresi adil mi, yoksa çok mu kısa?
-- [ ] **Halka yarıçapı (3.8) doğru mu?** Çıkmak çok mu uzun sürüyor?
-- [ ] **Boss artık zor mu?** Simülasyon "kaçarsan 3.6 saniyeyle kazanırsın" diyor. Gerçekte nasıl?
-- [ ] **Sunaktan keskinlik almak fark ediyor mu?** Boss'un zoru yatırım yapmayanı cezalandırmak için ayarlandı
+- [ ] **Vurmak artık tok mu?** Isabet sesi + hit-stop + sarsıntı birlikte çalışıyor mu?
+- [ ] **Sesler rahatsız mı?** Kalabalıkta üst üste binip gürültü oluyor mu?
+- [ ] **Savurma sesi duyuluyor mu?** Iskaladığında da çıkıyor
+- [ ] **Yere vuruş sesi uyarıyor mu?** Boss halkayı açınca alçak bir gümürtü geliyor
+- [ ] **Hangisi kötü?** Bir ses tırmalıyorsa söyle, o sesi değiştiririm
+
+> **B** tuşu: doğrudan boss dalgasına atlar (test kısayolu, gerçek oyunda kalkacak)
 
 ---
 
@@ -98,6 +100,20 @@
 - [ ] 🎮 **PLAYTEST TURU 2** — masadaki sorular
 - [ ] ⚠️ **ENTER geçici** — gerçek oyunda dalgalar oyuncu tarafından çağrılmayacak, hikâye/mekân akışına bağlanacak
 - [x] ✅ **Düşman çeşitliliği — Faz 5'te çözüldü** (aşağıda)
+
+## Faz 6 — Ses ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+
+> Faz 1'den beri "vuruş hissinin kalan yarısı" diye duruyordu.
+
+- [x] **Sesler koddan üretiliyor** — hiç ses dosyası yok, kütüphane yok, lisans yok.
+      Gürültü + zarf + tek kutuplu filtre. Görsel kimlik gibi ses de sanatçı gerektirmiyor
+- [x] 9 ses: savurma · isabet · hasar · dash · hasat · yere vuruş · alım · ölüm · kazanma
+- [x] **Hafif rastgele perde** — aynı ses üst üste binince makineleşmesin
+- [x] **Hasat sesi yalnızca BÜYÜK kazançta** (KASA'nın toplu ödemesi, FAİZLİ'nin iadesi).
+      Her vuruşta çalsaydı isabet sesiyle üst üste biner, ikisi de duyulmazdı
+- [x] Faz 6 öz-denetimi: 37/37 — ilk kontrol "her ses SESSİZ DEĞİL Mİ"
+- [x] **B tuşu: boss'a atla** — Enes boss'a ulaşamadı, test edilemeyen şey ayarlanamaz
+- [ ] 🎮 **PLAYTEST KAPISI** — masadaki sorular
 
 ## Faz 5 — Düşman türleri ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
 

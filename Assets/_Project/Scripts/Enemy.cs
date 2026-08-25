@@ -239,6 +239,7 @@ namespace TekCan
             EnterState(State.Strike, _t.enemyStrikeDuration);
 
             if (_telegraph != null) { _telegraph.Cancel(); _telegraph = null; }
+            if (_slamming) Sfx.Slam();
             Arc.Spawn(transform.position, transform.rotation,
                 StrikeRadius, StrikeAngle, StrikeColor, _t.enemyStrikeDuration * 1.6f);
             Paint();

@@ -56,6 +56,7 @@ namespace TekCan
                 return;
             }
 
+            if (SkipToBossPressed()) { Wave = _t.waveCount - 1; StartNextWave(); return; }
             if (StartPressed()) StartNextWave();
         }
 
@@ -76,6 +77,18 @@ namespace TekCan
                 return true;
             var gp = Gamepad.current;
             return gp != null && gp.buttonEast.wasPressedThisFrame;
+        }
+
+        /// <summary>
+        /// B — doğrudan boss dalgasına atla. TEST KISAYOLU.
+        ///
+        /// Enes boss'a ulaşamadı, yani boss'u yargılayamadı. Test edilemeyen şey
+        /// ayarlanamaz. ENTER ile birlikte bu tuş da gerçek oyunda kalkacak.
+        /// </summary>
+        static bool SkipToBossPressed()
+        {
+            var kb = Keyboard.current;
+            return kb != null && kb.bKey.wasPressedThisFrame;
         }
 
         public void StartNextWave()

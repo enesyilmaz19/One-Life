@@ -112,6 +112,7 @@ namespace TekCan
             // Sistemler
             var systems = new GameObject("Systems"); systems.transform.SetParent(_runRoot.transform);
             HitStop.Init(systems.AddComponent<HitStop>());
+            Sfx.Init(systems.AddComponent<AudioSource>());
             var clock = systems.AddComponent<Clock>();
             clock.Init(t, player.transform);
             var pc = player.AddComponent<PlayerController>();
@@ -174,6 +175,7 @@ namespace TekCan
             WaveManager.Reset();
             HitStop.Reset();
             Arc.Reset();
+            Sfx.Reset();
             Clock.Reset();        // ← eksikti: ölü saate hasar yazılmasını önler
             IsoCamera.Reset();    // ← eksikti: aynı gerekçe
             Time.timeScale = 1f;

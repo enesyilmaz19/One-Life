@@ -68,7 +68,7 @@ namespace TekCan
             DrawAltarPrompt();
 
             GUI.Label(new Rect(12f, Screen.height - 26f, 900f, 20f),
-                "WASD · Sol tık saldırı · Shift/Space dash · dash+saldırı = DASH-ATAK · E sunak · 1-4 silah · ENTER dalga", _small);
+                "WASD · Sol tık saldırı · Shift/Space dash · dash+saldırı = DASH-ATAK · E sunak · 1-4 silah · ENTER dalga · B boss (test)", _small);
         }
 
         void DrawClock()

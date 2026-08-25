@@ -56,6 +56,7 @@ namespace TekCan
         {
             if (Dead || Won) return;
             Won = true;
+            Sfx.Win();
             OnWin?.Invoke();
         }
 
@@ -92,6 +93,7 @@ namespace TekCan
             if (Dead || Seconds > 0f) return;
             Seconds = 0f;
             Dead = true;
+            Sfx.Die();
             OnDeath?.Invoke();
         }
 
@@ -108,6 +110,10 @@ namespace TekCan
 
             Seconds += seconds;
             TotalHarvested += seconds;
+            // Yalnızca BÜYÜK kazançlarda ses: KASA'nın toplu ödemesi, FAİZLİ'nin iadesi.
+            // Her vuruşta çalsaydı isabet sesiyle üst üste biner ve ikisi de duyulmazdı —
+            // isabet zaten "değdi" diyor, bu ses "kasa doldu" demeli.
+            if (seconds >= 1.5f) Sfx.Harvest();
 
             // Aynı karede birden çok düşmana isabet ederse tek bir toplamda göster.
             LastGain = (Time.unscaledTime - LastGainAt < 0.05f) ? LastGain + seconds : seconds;

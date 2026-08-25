@@ -228,6 +228,7 @@ namespace TekCan
             _dashTimer = _t.dashDuration;
             _dashCd = Clock.Instance != null ? Clock.Instance.DashCooldown : _t.dashCooldown;
             _iFrames = _t.iFrameDuration;
+            Sfx.Dash();
             _attackTimer = 0f;              // dash saldırıyı keser
             _dashAttackQueued = false;      // önceki dash'ten sarkmasın
             transform.rotation = Quaternion.LookRotation(_dashDir);
@@ -268,6 +269,7 @@ namespace TekCan
             Arc.Spawn(transform.position, transform.rotation,
                 range, angle, tint, _t.swingArcLife * 1.3f);
             SwingsSpawned++;
+            Sfx.Swing();
 
             StrikeCone(range, angle, damage, _t.hitStopDuration * 1.4f, _t.hitShake * 1.5f,
                        Weapon.DashTargets, Weapon.HarvestMultiplier, out int hits, out int kills);
@@ -297,6 +299,7 @@ namespace TekCan
             Arc.Spawn(transform.position, transform.rotation,
                 Weapon.Range(_t), Weapon.Angle(_t), Weapon.Tint, _t.swingArcLife);
             SwingsSpawned++;
+            Sfx.Swing();
         }
 
         void TickAttack(Vector3 input)
@@ -402,6 +405,7 @@ namespace TekCan
 
             if (hits > 0)
             {
+                Sfx.Hit();
                 HitStop.Freeze(hitStop);
                 IsoCamera.Shake(shake);
             }
@@ -420,6 +424,7 @@ namespace TekCan
             HitStop.Freeze(_t.hitStopDuration * 1.5f);
             IsoCamera.Shake(_t.hurtShake);
 
+            Sfx.Hurt();
             _hurtFlash = _t.playerHurtFlashDuration;
             Vector3 away = transform.position - fromPosition;
             away.y = 0f;
