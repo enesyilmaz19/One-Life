@@ -207,7 +207,27 @@ karar oldu — Faz 3'ün hedefi buydu.
 > hasat oranı silaha göre değişmeli — "az vurur, hasar başına çok çalar" (tek hedef)
 > ↔ "çok vurur, az çalar" (koni). Faz 3'ün ilk maddesi.
 
-**Özel düşmanlar:** bazılarının özel zaman etkileri olacak (saati hızlandıran, vurunca zaman çalan, öldürücü darbede toplu ödeyen, kaçıp zamanını götüren...). Meta ilerleme olmadığı için **koşu içi çeşitliliğin ana kaynağı burası.**
+### Düşman türleri ✅ (Faz 5, 2026-08-24)
+
+Meta ilerleme olmadığı için tekrar oynanabilirliğin **tamamı** koşunun içinden gelmek
+zorunda. Tek tip düşmanla dövüş iki dakikada tükeniyordu — oyunun en büyük batma riskiydi.
+
+İlke: **yalnızca "daha çok can" veya "daha çok hasar" olan bir tür eklemek çeşitlilik değil,
+dolgudur.** Her tür çekirdek soruyu (*hangi düşmana zaman harcayacağım?*) farklı bir yerden
+vurmalı.
+
+| tür | mekanik | değiştirdiği karar |
+|---|---|---|
+| **TEMEL** | dengenin sıfır noktası | — |
+| **SIZINTI** | yaşadığı sürece saatini emer (0.55/sn); zayıf ve hızlı | **hedef sırası.** Diğerleri "ne kadar kârlı" diye sordururken bu "ne kadar pahalı" diye sordurur — önce onu öldürmezsen bütün kavga zarara geçer |
+| **KASA** | vurarak **hiçbir şey** ödemez; bütün havuzunu öldüğünde tek seferde öder (×1.8). Kalın, yavaş | **taahhüt.** Yarım bırakırsan harcadığın zaman tamamen boşa gider |
+| **KAÇAK** | havuzu %45'in altına inince kaçar; arena kenarına varırsa kaybolur ve zamanını götürür | **kovalamak mı, bırakmak mı.** Kovalamak seni kalabalıktan ayırır ve saat işlemeye devam eder |
+
+**Kademeli açılış:** ilk dalga yalnızca TEMEL, sonra her dalgada bir yeni soru ekleniyor.
+Hepsini birden atmak öğretmez, boğar.
+
+**Deterministik kompozisyon** (rastgele değil): aynı dalga hep aynı karışımı verir, böylece
+*"bu dalga mı zor, ben mi kötü oynadım"* sorusu cevaplanabilir kalıyor.
 
 **Bosslar:** ayrı kural. Daha özel, zamanla ilişkili mekanikler (faz geçişi oyuncunun saatine bağlı, büyük saldırı zaman çalar, süre kapısı vb.). Faz 4+ konusu.
 

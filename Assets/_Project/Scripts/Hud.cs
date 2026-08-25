@@ -166,6 +166,24 @@ namespace TekCan
                           "saat işlemeye devam ediyor — beklemek pahalı", _small);
                 _small.normal.textColor = Color.white;
             }
+            else
+            {
+                // Sahnede hangi türler var — greybox'ta renkler tek başına yetmiyor.
+                var seen = new System.Collections.Generic.HashSet<EnemyKind>();
+                foreach (var e in Enemy.All) if (e != null && !e.IsBoss) seen.Add(e.Kind);
+                if (seen.Count > 0)
+                {
+                    float x = (Screen.width - seen.Count * 130f) * 0.5f;
+                    int i = 0;
+                    foreach (var k in seen)
+                    {
+                        _small.normal.textColor = k.FullColor;
+                        GUI.Label(new Rect(x + i * 130f, Screen.height * 0.30f + 34f, 130f, 24f), k.Name, _small);
+                        i++;
+                    }
+                    _small.normal.textColor = Color.white;
+                }
+            }
             _mid.normal.textColor = Color.white;
         }
 

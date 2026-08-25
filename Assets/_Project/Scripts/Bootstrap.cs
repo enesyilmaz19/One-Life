@@ -185,7 +185,8 @@ namespace TekCan
         /// (düşmanların havada doğduğu hata tam olarak öyle bir ayrışmadan çıkmıştı).
         /// </summary>
         public static void SpawnEnemyAt(Tuning t, Vector3 pos, Transform player, Transform cam,
-                                        float poolMultiplier = 1f, bool boss = false)
+                                        float poolMultiplier = 1f, bool boss = false,
+                                        EnemyKind kind = null)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             go.name = boss ? "Boss" : "Enemy";
@@ -200,7 +201,7 @@ namespace TekCan
             var label = labelGo.AddComponent<TimeLabel>();
             label.Init(cam);
 
-            go.AddComponent<Enemy>().Init(t, player, label, poolMultiplier, boss);
+            go.AddComponent<Enemy>().Init(t, player, label, poolMultiplier, boss, kind);
         }
 
         static void Paint(GameObject go, Color c)

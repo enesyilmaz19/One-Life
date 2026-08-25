@@ -139,6 +139,18 @@ namespace TekCan
         [Tooltip("Her dalgada düşman zaman havuzu bu kat büyür — dalgalar sertleşir")]
         public float wavePoolGrowth = 1.18f;
 
+        [Header("── DÜŞMAN TÜRLERİ (Faz 5) ──")]
+        [Tooltip("SIZINTI: yaşadığı sürece saatinden saniyede bu kadar emer")]
+        public float leakAuraDrain = 0.55f;
+        [Tooltip("KASA: öldüğünde havuzunun hasat oranı × bu kadarını tek seferde öder")]
+        public float vaultKillBonus = 1.8f;
+        [Tooltip("KAÇAK: kaçarken normal hızının bu katı")]
+        public float runnerFleeSpeedMultiplier = 1.8f;
+        [Tooltip("KAÇAK: merkeze bu uzaklığa varırsa kaybolur ve zamanını götürür")]
+        public float runnerEscapeRadius = 17f;
+        [Tooltip("İlk kaç dalga yalnızca temel düşman gelsin — oyuncu önce oyunu öğrensin")]
+        public int plainWaveCount = 1;
+
         [Header("── BOSS ──")]
         [Tooltip("Boss'un zaman havuzu normal düşmanın kaç katı")]
         public float bossPoolMultiplier = 9f;

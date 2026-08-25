@@ -1,12 +1,12 @@
 ## 📥 ENES'İN MASASI
 
-**Faz 4 playtest turu 2** — beş şikâyetin de düzeltildi, tekrar dene:
+**Faz 5 playtest — düşman türleri.** ENTER ile dalga başlat; 2. dalgadan itibaren yeni türler geliyor.
 
-- [ ] **Saldırı gecikmesi geçti mi?** Vuruş artık tıklamadan ~36 ms sonra iniyor (önce 140 ms)
-- [ ] **WASD artık saldırıyı bozmuyor** — savurma sırasında hiç hareket yok. Taahhüt hissi doğru mu, yoksa çok mu katı?
-- [ ] **Boss'a vurma sorunu geçti mi?** Menzil artık gövde yüzeyine ölçülüyor
-- [ ] **Boss yeterince sert mi?** Hızlı (×1.25), az uyarı (×0.85), geniş koni (×1.5), ağır darbe (×2.2)
-- [ ] **Dash-atak silahtan silaha fark ediyor mu?** Koni süpürüyor, tek hedefliler tek dev darbe vuruyor
+- [ ] **SIZINTI** (mor) — yaşadığı sürece saatini emiyor. Onu önce öldürme dürtüsü oluşuyor mu, yoksa fark etmiyor musun?
+- [ ] **KASA** (sarı) — vurdukça hiç zaman gelmiyor, hepsi ölünce geliyor. Yarım bırakma korkusu hissediliyor mu?
+- [ ] **KAÇAK** (turkuaz) — canı azalınca kaçıyor. Kovalamak/bırakmak gerçek bir karar mı, yoksa sinir bozucu mu?
+- [ ] **Karışım okunuyor mu?** Kalabalıkta hangi türün hangisi olduğunu ayırt edebiliyor musun? (renk + HUD'da tür listesi var)
+- [ ] **Dövüş artık iki dakikada tükeniyor mu?** Asıl soru bu — türler gerçekten çeşitlilik getirdi mi?
 
 ---
 
@@ -97,7 +97,24 @@
 - [x] Dash-atak silaha göre değişiyor
 - [ ] 🎮 **PLAYTEST TURU 2** — masadaki sorular
 - [ ] ⚠️ **ENTER geçici** — gerçek oyunda dalgalar oyuncu tarafından çağrılmayacak, hikâye/mekân akışına bağlanacak
-- [ ] Düşman çeşitliliği — tek tip düşmanla dövüş iki dakikada tükeniyor. **En büyük kalan risk**
+- [x] ✅ **Düşman çeşitliliği — Faz 5'te çözüldü** (aşağıda)
+
+## Faz 5 — Düşman türleri ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+
+> **Çözülen risk:** meta ilerleme yok, yani tekrar oynanabilirliğin TAMAMI koşunun
+> içinden gelmek zorunda. Tek tip düşmanla dövüş iki dakikada tükeniyordu.
+> İlke: "daha çok can" olan bir tür eklemek çeşitlilik değil dolgudur — her tür
+> çekirdek soruyu farklı bir yerden vurmalı.
+
+- [x] **`EnemyKind` soyutlaması** — `Weapon` ile aynı desen (veri + davranış kancaları)
+- [x] **SIZINTI** — saatini emer → *hedef sırası* kararını değiştirir
+- [x] **KASA** — vurarak ödemez, ölünce toplu öder → *taahhüt* kararı
+- [x] **KAÇAK** — kaçar, kaçarsa zamanını götürür → *kovala/bırak* kararı
+- [x] **Kademeli açılış** — ilk dalga yalnızca TEMEL; hepsini birden atmak öğretmez, boğar
+- [x] **Deterministik kompozisyon** — aynı dalga hep aynı karışım; "dalga mı zor, ben mi kötü oynadım" cevaplanabilir kalıyor
+- [x] HUD'da sahnedeki tür listesi (greybox'ta renk tek başına yetmiyor)
+- [x] Faz 5 öz-denetimi: 15/15 (her türün gerçekten çalıştığı dâhil)
+- [ ] 🎮 **PLAYTEST KAPISI** — masadaki sorular
 - [ ] Oda zinciri / uzamsal ilerleme — hikâye kararından sonra
 - [ ] Ses — hâlâ yok
 

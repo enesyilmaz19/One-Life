@@ -67,18 +67,29 @@ namespace TekCan
         float AttackAngle => _t.enemyAttackAngle * (IsBoss ? _t.bossAttackAngleMultiplier : 1f);
         float AttackRange => _t.enemyAttackRange + (IsBoss ? Radius : 0f);
         float MoveSpeed => (Hollow ? _t.enemyHollowSpeed : _t.enemyFullSpeed)
-                         * (IsBoss ? _t.bossSpeedMultiplier : 1f);
+                         * (IsBoss ? _t.bossSpeedMultiplier : 1f)
+                         * Kind.SpeedMultiplier
+                         * (Fleeing ? _t.runnerFleeSpeedMultiplier : 1f);
         float HitCost => (Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost)
                        * (IsBoss ? _t.bossHitCostMultiplier : 1f);
 
+        public EnemyKind Kind { get; private set; } = EnemyKind.Basic;
+
+        /// <summary>Kaçak kaçıyor mu — havuzu eşiğin altına inince başlıyor.</summary>
+        public bool Fleeing { get; private set; }
+
+        float _startingPool;
+
         public void Init(Tuning tuning, Transform player, TimeLabel label,
-                         float poolMultiplier = 1f, bool boss = false)
+                         float poolMultiplier = 1f, bool boss = false, EnemyKind kind = null)
         {
             _t = tuning;
             _player = player;
             _label = label;
             IsBoss = boss;
-            TimeLeft = tuning.enemyTimePool * poolMultiplier;
+            Kind = kind ?? EnemyKind.Basic;
+            TimeLeft = tuning.enemyTimePool * poolMultiplier * Kind.PoolMultiplier;
+            _startingPool = TimeLeft;
             _baseScale = transform.localScale;
             _renderer = GetComponentInChildren<Renderer>();
             All.Add(this);
@@ -113,9 +124,28 @@ namespace TekCan
                 if (Hollow && !wasHollow) Paint();
             }
 
-            // Boss yaşadığı sürece saati emiyor — oyalanmak doğrudan cezalandırılıyor.
-            if (IsBoss && !Hollow)
-                Clock.Instance?.Spend(_t.bossAuraDrain * Time.deltaTime);
+            // Aura: yaşadığı sürece saati emen türler (boss, SIZINTI).
+            // Oyalanmak ya da yanlış hedefi seçmek doğrudan cezalandırılıyor.
+            if (!Hollow)
+            {
+                float aura = (IsBoss ? _t.bossAuraDrain : 0f) + Kind.AuraDrain(_t);
+                if (aura > 0f) Clock.Instance?.Spend(aura * Time.deltaTime);
+            }
+
+            // KAÇAK: havuzu eşiğin altına inince kaçmaya başlar.
+            if (!Fleeing && !Hollow && Kind.FleesBelowRatio > 0f &&
+                _startingPool > 0f && TimeLeft / _startingPool <= Kind.FleesBelowRatio)
+            {
+                Fleeing = true;
+                Paint();
+            }
+
+            // Kaçtı ve kaçabildi: zamanını götürüyor, hiçbir şey ödemiyor.
+            if (Fleeing && transform.position.magnitude >= _t.runnerEscapeRadius)
+            {
+                Escape();
+                return;
+            }
 
             TickState();
             if (_label != null) _label.Set(TimeLeft, Hollow);
@@ -225,11 +255,16 @@ namespace TekCan
             float dist = to.magnitude;
             if (dist < 0.01f) return;
 
-            if (dist > AttackRange * 0.9f)
+            // KAÇAK kaçarken oyuncudan UZAKLAŞIYOR — kovalamak senin kararın.
+            if (Fleeing)
             {
-                float speed = MoveSpeed;
-                transform.position += (to / dist) * speed * Time.deltaTime;
+                transform.position -= (to / dist) * MoveSpeed * Time.deltaTime;
+                transform.rotation = Quaternion.LookRotation(-to / dist);
+                return;
             }
+
+            if (dist > AttackRange * 0.9f)
+                transform.position += (to / dist) * MoveSpeed * Time.deltaTime;
             FacePlayer();
         }
 
@@ -251,15 +286,30 @@ namespace TekCan
 
             float drained = Mathf.Min(damage, TimeLeft);
             TimeLeft -= drained;
-            Clock.Instance?.Add(drained * Clock.Instance.HarvestRate * harvestMult);
+            // Kind.HarvestMultiplier 0 olabilir (KASA): vurarak hiçbir şey alamazsın,
+            // bütün ödeme öldürme anında gelir.
+            Clock.Instance?.Add(drained * Clock.Instance.HarvestRate * harvestMult * Kind.HarvestMultiplier);
 
             _flashTimer = _t.hitFlashDuration;
             Paint();
         }
 
+        /// <summary>
+        /// KAÇAK arenadan çıktı: zamanını götürüyor, hiçbir şey ödemiyor, öldürme sayılmıyor.
+        /// Yatırdığın zaman çöpe gitti — kovalamamanın bedeli bu.
+        /// </summary>
+        void Escape()
+        {
+            if (_telegraph != null) _telegraph.Cancel();
+            All.Remove(this);
+            if (Application.isPlaying) Destroy(gameObject);
+            else DestroyImmediate(gameObject);
+        }
+
         void Kill()
         {
             if (_telegraph != null) _telegraph.Cancel();   // ölünce uyarı yayı ortada kalmasın
+            Kind.OnKilled(Clock.Instance, _t, _startingPool);   // KASA bütün ödemesini burada yapar
             Clock.Instance?.ReportKill();
             All.Remove(this);
             if (Application.isPlaying) Destroy(gameObject);
@@ -273,7 +323,9 @@ namespace TekCan
             Color c;
             if (_flashTimer > 0f) c = Color.white;                                  // isabet aldı
             else if (_state == State.Windup || _state == State.Strike) c = WindupColor;  // saldırıyor
-            else c = Hollow ? HollowColor : FullColor;
+            else if (Hollow) c = HollowColor;
+            else if (Fleeing) c = Color.Lerp(Kind.FullColor, Color.white, 0.45f);   // kaçıyor: soluyor
+            else c = Kind.FullColor;                                                // tür rengi
 
             _renderer.material.color = c;
             // ponytail: renk değişimi + beyaz parlama greybox için yeterli isabet işareti.

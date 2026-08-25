@@ -99,8 +99,24 @@ namespace TekCan
                 // Halka formülü Bootstrap'ta — burada kopyalamak, oyunun testlerin
                 // sınadığı yoldan ayrılması demekti (öz-incelemede yakalandı).
                 var pos = Bootstrap.RingPosition(_t, i, count, wave * 0.7f);   // her dalga döner
-                Bootstrap.SpawnEnemyAt(_t, pos, _player, _cam, poolMult, boss: false);
+                Bootstrap.SpawnEnemyAt(_t, pos, _player, _cam, poolMult, boss: false,
+                                       kind: PickKind(wave, i));
             }
+        }
+
+        /// <summary>
+        /// Dalga kompozisyonu. Türler kademeli açılıyor: oyuncu önce temel dövüşü öğrensin,
+        /// sonra her dalgada bir yeni soru eklensin. Hepsini birden atmak öğretmez, boğar.
+        ///
+        /// Deterministik (rastgele değil): aynı dalga hep aynı karışımı verir, böylece
+        /// "bu dalga zor mu, ben mi kötü oynadım" sorusu cevaplanabilir kalıyor.
+        /// </summary>
+        EnemyKind PickKind(int wave, int index)
+        {
+            if (wave <= _t.plainWaveCount) return EnemyKind.Basic;
+
+            int unlocked = Mathf.Min(EnemyKind.All.Length, 2 + (wave - _t.plainWaveCount - 1));
+            return EnemyKind.All[(index + wave) % unlocked];
         }
 
         void SpawnBoss()
