@@ -66,6 +66,13 @@ namespace TekCan
                               * (IsBoss ? _t.bossWindupMultiplier : 1f);
         float AttackAngle => _t.enemyAttackAngle * (IsBoss ? _t.bossAttackAngleMultiplier : 1f);
         float AttackRange => _t.enemyAttackRange + (IsBoss ? Radius : 0f);
+        /// <summary>
+        /// Şu andaki gerçek hızı. Öz-denetim bunu okuyor — formülü kopyalamak yerine.
+        /// Kopyalasaydı `MoveSpeed`'e yeni bir çarpan eklendiğinde test yeşil kalır,
+        /// oyun bozulurdu (bkz. lessons.md: "düzenek kopyalamaz, ithal eder").
+        /// </summary>
+        public float CurrentSpeed => MoveSpeed;
+
         float MoveSpeed => (Hollow ? _t.enemyHollowSpeed : _t.enemyFullSpeed)
                          * (IsBoss ? _t.bossSpeedMultiplier : 1f)
                          * Kind.SpeedMultiplier

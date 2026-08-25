@@ -111,9 +111,11 @@ namespace TekCan.EditorTools
             //    Enes: "ibne çok hızlı kaçıyo". Kaçarken hızı 7.25'ti, oyuncu 6.
             //    Yani hiç yakalanamıyordu. Kovala/bırak bir KARAR olmalı; yakalanamayan
             //    düşmanda karar yok, sadece kayıp var.
-            float kacisHizi = t.enemyFullSpeed
-                            * EnemyKind.Runner.SpeedMultiplier
-                            * t.runnerFleeSpeedMultiplier;
+            //    Hız, düşmanın KENDİSİNDEN okunuyor. Formülü burada kopyalasaydım
+            //    Enemy.MoveSpeed'e yeni bir çarpan eklendiğinde test yeşil kalırdı.
+            float kacisHizi = runner.CurrentSpeed;
+            failed += Check(ref total, "kaçan düşman gerçekten hızlandı",
+                            kacisHizi > EnemyKind.Runner.SpeedMultiplier * t.enemyFullSpeed, kacisHizi);
             failed += Check(ref total, "KAÇAK oyuncudan YAVAŞ kaçıyor (yakalanabilir)",
                             kacisHizi < t.moveSpeed, kacisHizi);
             failed += Check(ref total, "ama yeterince hızlı (kovalamak zaman yiyor)",
