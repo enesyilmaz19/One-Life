@@ -46,6 +46,11 @@ namespace TekCan
         static readonly Color HollowColor = new Color(0.35f, 0.35f, 0.38f);
 
         /// <summary>Boss mu — kendi akışı yavaş, saatini emiyor, beklenerek yenilemiyor.</summary>
+        // ponytail: boss `IsBoss` bayrağıyla, diğer çeşitler `EnemyKind` ile çalışıyor —
+        // aynı iş için iki mekanizma. `BossKind : EnemyKind` yapılabilir ama boss dalga
+        // seviyesinde bir kavram (WaveManager kazanmayı ondan anlıyor), taşımak
+        // WaveManager + Bootstrap + testleri birden dolaşır. Üçüncü bir "özel düşman"
+        // ihtiyacı çıkarsa o zaman birleştir; iki mekanizma için erken.
         public bool IsBoss { get; private set; }
 
         /// <summary>
@@ -207,6 +212,13 @@ namespace TekCan
         /// </summary>
         static readonly Color SlamTint = new Color(1f, 0.3f, 0.1f, 0.28f);
 
+        // Yere vuruş, ölçeklenen boss özellikleriyle aynı deseni kullanıyor:
+        // koşul tek yerde, kullanan yerler sade kalıyor.
+        float StrikeRadius => _slamming ? _t.bossSlamRadius : AttackRange;
+        float StrikeAngle => _slamming ? 360f : AttackAngle;
+        Color StrikeColor => _slamming ? SlamTint : StrikeTint;
+        Color TelegraphColor => _slamming ? SlamTint : TelegraphTint;
+
         void EnterWindup()
         {
             _attackCount++;
@@ -216,11 +228,8 @@ namespace TekCan
             EnterState(State.Windup, dur);
             FacePlayer();
 
-            _telegraph = _slamming
-                ? Arc.Spawn(transform.position, transform.rotation,
-                            _t.bossSlamRadius, 360f, SlamTint, dur, transform)
-                : Arc.Spawn(transform.position, transform.rotation,
-                            AttackRange, AttackAngle, TelegraphTint, dur, transform);
+            _telegraph = Arc.Spawn(transform.position, transform.rotation,
+                                   StrikeRadius, StrikeAngle, TelegraphColor, dur, transform);
             Paint();
         }
 
@@ -231,10 +240,7 @@ namespace TekCan
 
             if (_telegraph != null) { _telegraph.Cancel(); _telegraph = null; }
             Arc.Spawn(transform.position, transform.rotation,
-                _slamming ? _t.bossSlamRadius : AttackRange,
-                _slamming ? 360f : AttackAngle,
-                _slamming ? SlamTint : StrikeTint,
-                _t.enemyStrikeDuration * 1.6f);
+                StrikeRadius, StrikeAngle, StrikeColor, _t.enemyStrikeDuration * 1.6f);
             Paint();
 
             // Hasar yalnızca bu anda, kilitli yöne göre iner. Kaçtıysan ıskalar.
@@ -264,10 +270,10 @@ namespace TekCan
         public bool PlayerInStrikeCone()
         {
             Vector3 to = FlatToPlayer();
-            if (_slamming) return to.magnitude <= _t.bossSlamRadius;
+            if (to.magnitude > StrikeRadius) return false;
 
-            return to.magnitude <= AttackRange &&
-                   Vector3.Angle(_strikeDir, to) <= AttackAngle * 0.5f;
+            // Yere vuruşta yön kontrolü yok: 360° olduğu için her açı zaten içeride.
+            return _slamming || Vector3.Angle(_strikeDir, to) <= StrikeAngle * 0.5f;
         }
 
         /// <summary>Öz-denetim için: şu an yere vuruş yapıyor mu.</summary>
