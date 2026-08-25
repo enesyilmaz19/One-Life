@@ -107,6 +107,18 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "KAÇAK eşiğin altında KAÇMAYA BAŞLADI", runner.Fleeing, 1);
             failed += Check(ref total, "TEMEL hiç kaçmaz", EnemyKind.Basic.FleesBelowRatio == 0f, 0);
 
+            // ── 6a) ⚠️ KAÇAK YAKALANABİLİYOR MU
+            //    Enes: "ibne çok hızlı kaçıyo". Kaçarken hızı 7.25'ti, oyuncu 6.
+            //    Yani hiç yakalanamıyordu. Kovala/bırak bir KARAR olmalı; yakalanamayan
+            //    düşmanda karar yok, sadece kayıp var.
+            float kacisHizi = t.enemyFullSpeed
+                            * EnemyKind.Runner.SpeedMultiplier
+                            * t.runnerFleeSpeedMultiplier;
+            failed += Check(ref total, "KAÇAK oyuncudan YAVAŞ kaçıyor (yakalanabilir)",
+                            kacisHizi < t.moveSpeed, kacisHizi);
+            failed += Check(ref total, "ama yeterince hızlı (kovalamak zaman yiyor)",
+                            kacisHizi > t.moveSpeed * 0.7f, kacisHizi);
+
             // ── 6b) ⚠️ KAÇAK GERÇEKTEN KAÇABİLİYOR MU — ve kaçınca HİÇBİR ŞEY ödemiyor mu
             //    Yine özellik değil etki: "kaçmaya başladı" ile "kaçtı ve zamanını götürdü"
             //    aynı şey değil.

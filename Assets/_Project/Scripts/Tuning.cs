@@ -144,8 +144,8 @@ namespace TekCan
         public float leakAuraDrain = 0.55f;
         [Tooltip("KASA: öldüğünde havuzunun hasat oranı × bu kadarını tek seferde öder")]
         public float vaultKillBonus = 1.8f;
-        [Tooltip("KAÇAK: kaçarken normal hızının bu katı")]
-        public float runnerFleeSpeedMultiplier = 1.8f;
+        [Tooltip("KAÇAK: kaçarken normal hızının bu katı. Oyuncudan YAVAŞ kalmalı, yoksa hiç yakalanamaz.")]
+        public float runnerFleeSpeedMultiplier = 1.3f;
         [Tooltip("KAÇAK: merkeze bu uzaklığa varırsa kaybolur ve zamanını götürür")]
         public float runnerEscapeRadius = 17f;
         [Tooltip("İlk kaç dalga yalnızca temel düşman gelsin — oyuncu önce oyunu öğrensin")]
