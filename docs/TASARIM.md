@@ -140,6 +140,37 @@ Yalnızca "kalın bir düşman" değil: daha hızlı (×1.25), daha az uyarı ve
 daha geniş vurur (koni ×1.5), darbesi çok daha pahalı (×2.2). Menzili gövdesi kadar uzun —
 yoksa dev bir yaratık burnunun dibinden ıskalıyor gibi görünüyordu.
 
+### Boss: yere vuruş ✅ (2026-08-24)
+
+Enes: *"boss baya kolay, dümdüz durup saldırarak kesiyorum."*
+
+Simülasyon doğruladı: boss 7.5 saniyede ölüyordu ve oyuncunun 42.6/60 saati kalıyordu —
+hiç kaçmasa bile. **Sorun sayıda değildi.** Boss'un oyuncuyu yerinden kaldıran bir saldırısı
+yoktu; normal düşmanla aynı yapay zekâyı kullanıyordu, sadece daha büyüktü.
+
+**Yere vuruş:** iki saldırıda bir, 360° halka. Yön yok — yana kaçmak işe yaramıyor,
+halkanın dışına çıkman gerekiyor. Çıkmak da vurmayı kesmek demek, yani dövüş uzuyor.
+Kararın bedeli o. Hazırlığı 3.5 kat uzun: sürpriz değil, karar olmalı.
+
+**Boss'un hasatı düşük (×0.4).** Havuz hem canı hem ödemesi olduğu için, boss'u
+tankileştirmek onu zorlaştırmaz — **ödül yapardı.** Düşük hasat: uzun bir dövüş ama
+seni beslemiyor. Gerçek bir yarış oluyor.
+
+**Ölçüm** (`Tek Can → Denge simülasyonu`, havuz ×20):
+
+| profil | süre | kalan saat | sonuç |
+|---|---:|---:|---|
+| durup vuruyor | 9.9 sn | −12.8 | ❌ ölüyor |
+| yere vuruştan kaçıyor | 19.1 sn | +3.6 | ✅ kazanıyor |
+
+Kaçan oyuncu **3.6 saniyeyle** sıyırıyor. Simülasyon sunak yükseltmelerini saymıyor;
+keskinlik alan rahat kazanır, hiç yatırım yapmayan zor kazanır. **Ekonomiyi ödüllendiren
+ayar bu.**
+
+> ⚠️ Simülasyonu yazarken kaçış maliyetini 1.83 sn saymıştım (bütün yarıçapı koşmak).
+> O modelle kaçan oyuncu durandan KÖTÜ çıkıyordu. Gerçekte bir dash yetiyor — model
+> düzeltilince tablo tersine döndü. **Yanlış model, yanlış ayarın en sinsi kaynağı.**
+
 ### İsabet menzili YÜZEYE ölçülür, merkeze değil
 
 Enes: *"bossa vururken bazen buglanıyor vuramıyorum."* Sebep: menzil merkezden ölçülüyordu.

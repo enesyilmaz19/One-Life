@@ -153,9 +153,9 @@ namespace TekCan
 
         [Header("── BOSS ──")]
         [Tooltip("Boss'un zaman havuzu normal düşmanın kaç katı")]
-        public float bossPoolMultiplier = 9f;
+        public float bossPoolMultiplier = 20f;
         [Tooltip("Boss yaşadığı sürece saatini saniyede bu kadar emer — bekleyerek yenemezsin")]
-        public float bossAuraDrain = 0.8f;
+        public float bossAuraDrain = 1.1f;
         [Tooltip("Boss'un kendi kendine akışı bu kat yavaş — boşalmasını bekleyemezsin")]
         public float bossDecayMultiplier = 0.15f;
         [Tooltip("Boss'un vuruşu normal düşmanın kaç katı saniye götürür")]
@@ -166,6 +166,18 @@ namespace TekCan
         public float bossWindupMultiplier = 0.85f;
         [Tooltip("Boss'un vuruş konisi bu kat geniş — yandan kaçmak zorlaşır")]
         public float bossAttackAngleMultiplier = 1.5f;
+        [Tooltip("Boss'a vurmak normal düşmanın kaç katı zaman kazandırır. DÜŞÜK olmalı: boss uzun bir dövüş, seni beslememeli.")]
+        public float bossHarvestMultiplier = 0.4f;
+
+        [Header("── BOSS: YERE VURUŞ ──")]
+        [Tooltip("Kaç saldırıda bir yere vurur — 2 = bir normal, bir yere vuruş")]
+        public int bossSlamEvery = 2;
+        [Tooltip("Yere vuruşun yarıçapı. Dışına çıkman gerek.")]
+        public float bossSlamRadius = 3.8f;
+        [Tooltip("Yere vuruşun hazırlığı bu kat uzun — kaçmak için adil süre")]
+        public float bossSlamWindupMultiplier = 3.5f;
+        [Tooltip("Yere vuruş kaç saniye götürür (normal darbeye ek çarpan)")]
+        public float bossSlamCostMultiplier = 1.6f;
 
         [Header("── ARENA (greybox test) ──")]
         [Tooltip("YALNIZCA ÖZ-DENETİM İÇİN. Oyunda düşman sayısını dalga sistemi belirliyor " +

@@ -193,14 +193,34 @@ namespace TekCan
             }
         }
 
+        int _attackCount;
+        bool _slamming;
+
+        /// <summary>
+        /// Boss'un yere vuruşu. Enes: "dümdüz durup saldırarak kesiyorum."
+        /// Sorun sayıda değildi — boss'un oyuncuyu YERİNDEN KALDIRAN bir saldırısı yoktu,
+        /// normal düşmanla aynı yapay zekâyı kullanıyordu.
+        ///
+        /// Yere vuruş 360° halka: yanına kaçmak işe yaramıyor, uzaklaşman gerekiyor.
+        /// Uzaklaşmak da vurmayı kesmek demek, yani dövüş uzuyor. Bedeli o.
+        /// Hazırlığı uzun tutuldu — sürpriz değil, karar olmalı.
+        /// </summary>
+        static readonly Color SlamTint = new Color(1f, 0.3f, 0.1f, 0.28f);
+
         void EnterWindup()
         {
-            float dur = WindupDuration;
+            _attackCount++;
+            _slamming = IsBoss && _t.bossSlamEvery > 0 && _attackCount % _t.bossSlamEvery == 0;
+
+            float dur = WindupDuration * (_slamming ? _t.bossSlamWindupMultiplier : 1f);
             EnterState(State.Windup, dur);
             FacePlayer();
 
-            _telegraph = Arc.Spawn(transform.position, transform.rotation,
-                AttackRange, AttackAngle, TelegraphTint, dur, transform);
+            _telegraph = _slamming
+                ? Arc.Spawn(transform.position, transform.rotation,
+                            _t.bossSlamRadius, 360f, SlamTint, dur, transform)
+                : Arc.Spawn(transform.position, transform.rotation,
+                            AttackRange, AttackAngle, TelegraphTint, dur, transform);
             Paint();
         }
 
@@ -211,13 +231,16 @@ namespace TekCan
 
             if (_telegraph != null) { _telegraph.Cancel(); _telegraph = null; }
             Arc.Spawn(transform.position, transform.rotation,
-                AttackRange, AttackAngle, StrikeTint, _t.enemyStrikeDuration * 1.6f);
+                _slamming ? _t.bossSlamRadius : AttackRange,
+                _slamming ? 360f : AttackAngle,
+                _slamming ? SlamTint : StrikeTint,
+                _t.enemyStrikeDuration * 1.6f);
             Paint();
 
             // Hasar yalnızca bu anda, kilitli yöne göre iner. Kaçtıysan ıskalar.
             if (PlayerInStrikeCone())
             {
-                float cost = HitCost;
+                float cost = HitCost * (_slamming ? _t.bossSlamCostMultiplier : 1f);
                 _player.GetComponent<PlayerController>()?.TakeHit(cost, transform.position);
             }
         }
@@ -237,12 +260,18 @@ namespace TekCan
             return to;
         }
 
-        bool PlayerInStrikeCone()
+        /// <summary>Yere vuruşta yön yok, yalnızca mesafe — yana kaçmak işe yaramıyor.</summary>
+        public bool PlayerInStrikeCone()
         {
             Vector3 to = FlatToPlayer();
+            if (_slamming) return to.magnitude <= _t.bossSlamRadius;
+
             return to.magnitude <= AttackRange &&
                    Vector3.Angle(_strikeDir, to) <= AttackAngle * 0.5f;
         }
+
+        /// <summary>Öz-denetim için: şu an yere vuruş yapıyor mu.</summary>
+        public bool Slamming => _slamming;
 
         float FlatDistanceToPlayer() => FlatToPlayer().magnitude;
 
@@ -291,7 +320,11 @@ namespace TekCan
             TimeLeft -= drained;
             // Kind.HarvestMultiplier 0 olabilir (KASA): vurarak hiçbir şey alamazsın,
             // bütün ödeme öldürme anında gelir.
-            Clock.Instance?.Add(drained * Clock.Instance.HarvestRate * harvestMult * Kind.HarvestMultiplier);
+            // Boss'un hasatı düşük: uzun bir dövüş, ama seni beslemiyor. Yoksa tankiliği
+            // onu zorlaştırmaz, ödül yapardı — havuzu hem canı hem ödemesi olduğu için.
+            Clock.Instance?.Add(drained * Clock.Instance.HarvestRate * harvestMult
+                                * Kind.HarvestMultiplier
+                                * (IsBoss ? _t.bossHarvestMultiplier : 1f));
 
             _flashTimer = _t.hitFlashDuration;
             Paint();

@@ -1,12 +1,12 @@
 ## 📥 ENES'İN MASASI
 
-**Faz 5 playtest — düşman türleri.** ENTER ile dalga başlat; 2. dalgadan itibaren yeni türler geliyor.
+**Boss'u tekrar dene.** Artık iki saldırıda bir **yere vuruyor**: etrafında kırmızı halka çıkıyor.
 
-- [ ] **SIZINTI** (mor) — yaşadığı sürece saatini emiyor. Onu önce öldürme dürtüsü oluşuyor mu, yoksa fark etmiyor musun?
-- [ ] **KASA** (sarı) — vurdukça hiç zaman gelmiyor, hepsi ölünce geliyor. Yarım bırakma korkusu hissediliyor mu?
-- [ ] **KAÇAK** (turkuaz) — canı azalınca kaçıyor. Kovalamak/bırakmak gerçek bir karar mı, yoksa sinir bozucu mu?
-- [ ] **Karışım okunuyor mu?** Kalabalıkta hangi türün hangisi olduğunu ayırt edebiliyor musun? (renk + HUD'da tür listesi var)
-- [ ] **Dövüş artık iki dakikada tükeniyor mu?** Asıl soru bu — türler gerçekten çeşitlilik getirdi mi?
+- [ ] **Durup vurmak artık öldürüyor mu?** Simülasyona göre 10. saniyede ölmelisin
+- [ ] **Halkadan kaçmak yetişiyor mu?** Hazırlık süresi adil mi, yoksa çok mu kısa?
+- [ ] **Halka yarıçapı (3.8) doğru mu?** Çıkmak çok mu uzun sürüyor?
+- [ ] **Boss artık zor mu?** Simülasyon "kaçarsan 3.6 saniyeyle kazanırsın" diyor. Gerçekte nasıl?
+- [ ] **Sunaktan keskinlik almak fark ediyor mu?** Boss'un zoru yatırım yapmayanı cezalandırmak için ayarlandı
 
 ---
 

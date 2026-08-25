@@ -80,6 +80,7 @@ namespace TekCan.EditorTools
             sb.AppendLine("   (hedef sayısı arttıkça kâr artıyorsa kalabalık oyunu KOLAYLAŞTIRIYOR)");
 
             WeaponComparison(t, sb);
+            BossFight(t, sb);
 
             Debug.Log(sb.ToString());
             if (Application.isBatchMode) EditorApplication.Exit(0);
@@ -118,6 +119,87 @@ namespace TekCan.EditorTools
 
             sb.AppendLine("  → Tek hedefliler kalabalıkta sabit kalır, koni yükselir.");
             sb.AppendLine("     Kesişim noktası: koninin kaç düşmandan sonra baskın olduğu.");
+        }
+
+        /// <summary>
+        /// Boss dövüşü. Enes: "dümdüz durup saldırarak kesiyorum."
+        /// Sorunun sayıda mı davranışta mı olduğunu görmek için ölçüyoruz:
+        /// hiç kaçmayan oyuncu gerçekten kazanıyor mu?
+        /// </summary>
+        static void BossFight(Tuning t, StringBuilder sb)
+        {
+            sb.AppendLine();
+            sb.AppendLine("[BOSS] iki oyuncu profili");
+            sb.AppendLine("  profil          | süre  | yenen | kalan saat | sonuç");
+            sb.AppendLine("  ----------------+-------+-------+------------+-------");
+            SimBoss(t, sb, "durup vuruyor  ", dodgesSlam: false);
+            SimBoss(t, sb, "yere vuruştan kaç", dodgesSlam: true);
+            sb.AppendLine("  → Hedef: durup vuran ÖLMELİ, kaçan KAZANMALI.");
+        }
+
+        /// <summary>
+        /// Tek bir boss dövüşü. `dodgesSlam` yere vuruştan kaçan oyuncuyu modelliyor:
+        /// hasarı yemiyor ama kaçıp dönerken vuramadığı için dövüş uzuyor.
+        /// Bedava kurtuluş yok — kararin maliyeti bu.
+        /// </summary>
+        static void SimBoss(Tuning t, StringBuilder sb, string ad, bool dodgesSlam)
+        {
+            const float dt = 1f / 60f;
+
+            float pool = t.enemyTimePool * t.bossPoolMultiplier;
+            float clock = t.startSeconds;
+            float elapsed = 0f, swingTimer = 0f, bossTimer = 0f, dodgeLock = 0f;
+            int bossHits = 0, yenen = 0;
+
+            float cycle = t.enemyWindupDuration * t.bossWindupMultiplier
+                        + t.enemyStrikeDuration + t.enemyRecoverDuration + t.enemyAttackCooldown;
+
+            while (pool > 0f && clock > 0f && elapsed < 300f)
+            {
+                elapsed += dt;
+                clock -= (t.drainInCombat + t.bossAuraDrain) * dt;
+                pool -= t.enemyDecayPerSecond * t.bossDecayMultiplier * dt;
+
+                // Kaçarken vuramaz
+                dodgeLock -= dt;
+                if (dodgeLock <= 0f)
+                {
+                    swingTimer -= dt;
+                    if (swingTimer <= 0f)
+                    {
+                        swingTimer = t.attackDuration;
+                        float drained = Mathf.Min(t.attackDamage, pool);
+                        pool -= drained;
+                        clock += drained * t.harvestRate * t.bossHarvestMultiplier;
+                    }
+                }
+
+                bossTimer -= dt;
+                if (bossTimer <= 0f)
+                {
+                    bossTimer = cycle;
+                    bossHits++;
+                    bool slam = t.bossSlamEvery > 0 && bossHits % t.bossSlamEvery == 0;
+
+                    if (slam && dodgesSlam)
+                    {
+                        // Kaçtı: hasar yok ama dash atıp dönerken vuramıyor.
+                        // Bütün yarıçapı koşmuyor — halkanın dışına ÇIKMASI yetiyor,
+                        // ve bir dash zaten 2.5 birim taşıyor.
+                        float cikilacak = Mathf.Max(0f, t.bossSlamRadius - t.enemyAttackRange);
+                        dodgeLock = t.dashDuration + cikilacak / t.moveSpeed;
+                        continue;
+                    }
+
+                    clock -= t.enemyFullHitCost * t.bossHitCostMultiplier
+                           * (slam ? t.bossSlamCostMultiplier : 1f);
+                    yenen++;
+                }
+            }
+
+            bool kazandi = pool <= 0f && clock > 0f;
+            sb.AppendLine($"  {ad} | {elapsed,5:0.0} | {yenen,5} | {clock,10:0.0} | " +
+                          (kazandi ? "✅ KAZANDI" : "❌ öldü"));
         }
 
         /// <summary>Silaha özgü peşin/vadeli bedeller — düşman başına yaklaşık.</summary>

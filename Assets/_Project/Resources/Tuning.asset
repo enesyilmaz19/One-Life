@@ -69,13 +69,23 @@ MonoBehaviour:
   waveBaseCount: 3
   waveCountGrowth: 1.5
   wavePoolGrowth: 1.18
-  bossPoolMultiplier: 9
-  bossAuraDrain: 0.8
+  leakAuraDrain: 0.55
+  vaultKillBonus: 1.8
+  runnerFleeSpeedMultiplier: 1.3
+  runnerEscapeRadius: 17
+  plainWaveCount: 1
+  bossPoolMultiplier: 20
+  bossAuraDrain: 1.1
   bossDecayMultiplier: 0.15
   bossHitCostMultiplier: 2.2
   bossSpeedMultiplier: 1.25
   bossWindupMultiplier: 0.85
   bossAttackAngleMultiplier: 1.5
+  bossHarvestMultiplier: 0.4
+  bossSlamEvery: 2
+  bossSlamRadius: 3.8
+  bossSlamWindupMultiplier: 3.5
+  bossSlamCostMultiplier: 1.6
   enemyCount: 5
   arenaRadius: 14
   camYaw: 45

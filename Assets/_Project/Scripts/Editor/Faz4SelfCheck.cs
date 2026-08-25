@@ -89,6 +89,38 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "kazanma olayı tetiklendi", winFired, winFired ? 1 : 0);
             failed += Check(ref total, "kazanınca ölü sayılmıyor", !clock.Dead, clock.Dead ? 1 : 0);
 
+            // ── ⚠️ YERE VURUŞ GERÇEKTEN ÇALIŞIYOR MU
+            //    Enes: "dümdüz durup saldırarak kesiyorum." Boss'un oyuncuyu yerinden
+            //    kaldıran bir saldırısı yoktu. Yere vuruş 360° — yana kaçmak işe yaramaz,
+            //    UZAKLAŞMAK gerekir. Test: halkanın içi vurulur, dışı vurulmaz.
+            KillAll();
+            wm.StartNextWave();
+            var slamBoss = Enemy.All.Count > 0 ? Enemy.All[0] : null;
+            if (slamBoss != null)
+            {
+                var windup = typeof(Enemy).GetMethod("EnterWindup",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                // İlk saldırı normal, ikincisi yere vuruş (bossSlamEvery = 2)
+                windup.Invoke(slamBoss, null);
+                failed += Check(ref total, "1. saldırı normal", !slamBoss.Slamming, 0);
+                windup.Invoke(slamBoss, null);
+                failed += Check(ref total, "2. saldırı YERE VURUŞ", slamBoss.Slamming, 1);
+
+                // Halkanın İÇİNDE: arkasında dursan bile yakalanıyorsun (yön yok)
+                player.transform.position = slamBoss.transform.position
+                                          - slamBoss.transform.forward * (t.bossSlamRadius * 0.5f);
+                failed += Check(ref total, "yere vuruş ARKADA duranı bile yakalıyor",
+                                slamBoss.PlayerInStrikeCone(), 1);
+
+                // Halkanın DIŞINDA: kurtuluyorsun
+                player.transform.position = slamBoss.transform.position
+                                          + Vector3.right * (t.bossSlamRadius + 1.5f);
+                failed += Check(ref total, "halkanın DIŞINA çıkan kurtuluyor",
+                                !slamBoss.PlayerInStrikeCone(), 0);
+            }
+            else failed += Check(ref total, "yere vuruş testi için boss doğdu", false, 0);
+
             // 6) Boss beklenerek yenilemez: akışı normalden çok yavaş
             failed += Check(ref total, "boss akışı yavaşlatılmış",
                             t.bossDecayMultiplier < 0.5f, t.bossDecayMultiplier);
