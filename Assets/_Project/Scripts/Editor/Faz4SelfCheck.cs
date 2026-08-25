@@ -92,7 +92,19 @@ namespace TekCan.EditorTools
             // 6) Boss beklenerek yenilemez: akışı normalden çok yavaş
             failed += Check(ref total, "boss akışı yavaşlatılmış",
                             t.bossDecayMultiplier < 0.5f, t.bossDecayMultiplier);
-            failed += Check(ref total, "boss saati emiyor", t.bossAuraDrain > 0f, t.bossAuraDrain);
+
+            // ⚠️ ETKİ testi, özellik değil: boss saati GERÇEKTEN emiyor mu?
+            KillAll();
+            wm.StartNextWave();                       // yeni boss
+            var b2 = Enemy.All.Count > 0 ? Enemy.All[0] : null;
+            if (b2 != null)
+            {
+                float auraBefore = clock.Seconds;
+                b2.ApplyAura(1f);
+                failed += Check(ref total, "BOSS SAATİ GERÇEKTEN EMDİ",
+                                clock.Seconds < auraBefore, auraBefore - clock.Seconds);
+            }
+            else failed += Check(ref total, "boss aura testi için boss doğdu", false, 0);
 
             KillAll();
             Object.DestroyImmediate(player);

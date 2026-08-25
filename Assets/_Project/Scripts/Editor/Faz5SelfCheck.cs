@@ -47,11 +47,27 @@ namespace TekCan.EditorTools
                                 e.TimeLeft < before - 0.001f, before - e.TimeLeft);
             }
 
-            // ── 2) SIZINTI saati emiyor ──
-            failed += Check(ref total, "SIZINTI aura emişi tanımlı",
-                            EnemyKind.Leak.AuraDrain(t) > 0f, EnemyKind.Leak.AuraDrain(t));
-            failed += Check(ref total, "TEMEL emmiyor",
-                            EnemyKind.Basic.AuraDrain(t) == 0f, EnemyKind.Basic.AuraDrain(t));
+            // ── 2) ⚠️ SIZINTI SAATİ GERÇEKTEN EMİYOR MU (özelliği değil, ETKİSİ)
+            //    İlk yazdığımda yalnızca `AuraDrain > 0` diye özelliği kontrol etmiştim.
+            //    DURGUN dersi tam buydu: özellik doğru olabilir ama etki hiç olmayabilir.
+            t.drainInCombat = 0f;            // yalnızca aura ölçülsün
+            t.drainOutOfCombat = 0f;
+
+            Clear();
+            var leak = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 6f, EnemyKind.Leak);
+            float leakBefore = clock.Seconds;
+            leak.ApplyAura(1f);                          // bir saniyelik emiş
+            float leakDrained = leakBefore - clock.Seconds;
+
+            Clear();
+            var plain = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 6f, EnemyKind.Basic);
+            float plainBefore = clock.Seconds;
+            plain.ApplyAura(1f);
+            float plainDrained = plainBefore - clock.Seconds;
+
+            failed += Check(ref total, "SIZINTI SAATİ GERÇEKTEN EMDİ", leakDrained > 0f, leakDrained);
+            failed += Check(ref total, "TEMEL hiç emmedi (kıyas)",
+                            Mathf.Abs(plainDrained) < 0.0001f, plainDrained);
 
             // ── 3) KASA vurarak ÖDEMİYOR ──
             Clear();
@@ -90,6 +106,29 @@ namespace TekCan.EditorTools
             Tick(runner);
             failed += Check(ref total, "KAÇAK eşiğin altında KAÇMAYA BAŞLADI", runner.Fleeing, 1);
             failed += Check(ref total, "TEMEL hiç kaçmaz", EnemyKind.Basic.FleesBelowRatio == 0f, 0);
+
+            // ── 6b) ⚠️ KAÇAK GERÇEKTEN KAÇABİLİYOR MU — ve kaçınca HİÇBİR ŞEY ödemiyor mu
+            //    Yine özellik değil etki: "kaçmaya başladı" ile "kaçtı ve zamanını götürdü"
+            //    aynı şey değil.
+            int countBefore = Enemy.All.Count;
+            float escapeClockBefore = clock.Seconds;
+            runner.transform.position = new Vector3(t.runnerEscapeRadius + 2f, Bootstrap.PlayerSpawn.y, 0f);
+            Tick(runner);
+
+            failed += Check(ref total, "KAÇAK kenara varınca KAYBOLDU",
+                            Enemy.All.Count == countBefore - 1, Enemy.All.Count);
+            failed += Check(ref total, "kaçan düşman HİÇBİR ŞEY ödemedi",
+                            Mathf.Approximately(clock.Seconds, escapeClockBefore),
+                            clock.Seconds - escapeClockBefore);
+
+            // Kaçış mesafesi YATAY ölçülmeli — y=1'deki düşman erken kaçmış sayılmamalı
+            Clear();
+            var yTest = Make(t, player.transform,
+                             new Vector3(t.runnerEscapeRadius - 0.5f, Bootstrap.PlayerSpawn.y, 0f), EnemyKind.Runner);
+            yTest.TakeDamage(yTest.TimeLeft * 0.9f);
+            Tick(yTest);
+            failed += Check(ref total, "kaçış mesafesi YATAY ölçülüyor (y karışmıyor)",
+                            Enemy.All.Count == 1, Enemy.All.Count);
 
             // ── 7) Türler kademeli açılıyor ──
             Clear();

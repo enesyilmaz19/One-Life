@@ -124,13 +124,7 @@ namespace TekCan
                 if (Hollow && !wasHollow) Paint();
             }
 
-            // Aura: yaşadığı sürece saati emen türler (boss, SIZINTI).
-            // Oyalanmak ya da yanlış hedefi seçmek doğrudan cezalandırılıyor.
-            if (!Hollow)
-            {
-                float aura = (IsBoss ? _t.bossAuraDrain : 0f) + Kind.AuraDrain(_t);
-                if (aura > 0f) Clock.Instance?.Spend(aura * Time.deltaTime);
-            }
+            ApplyAura(Time.deltaTime);
 
             // KAÇAK: havuzu eşiğin altına inince kaçmaya başlar.
             if (!Fleeing && !Hollow && Kind.FleesBelowRatio > 0f &&
@@ -141,7 +135,9 @@ namespace TekCan
             }
 
             // Kaçtı ve kaçabildi: zamanını götürüyor, hiçbir şey ödemiyor.
-            if (Fleeing && transform.position.magnitude >= _t.runnerEscapeRadius)
+            // ⚠️ YATAY mesafe: `position.magnitude` y'yi de katardı ve düşmanlar y=1'de.
+            // Bu projede y'nin yatay hesaba karışması iki kez hata üretti.
+            if (Fleeing && FlatDistanceFromCenter() >= _t.runnerEscapeRadius)
             {
                 Escape();
                 return;
@@ -298,6 +294,27 @@ namespace TekCan
         /// KAÇAK arenadan çıktı: zamanını götürüyor, hiçbir şey ödemiyor, öldürme sayılmıyor.
         /// Yatırdığın zaman çöpe gitti — kovalamamanın bedeli bu.
         /// </summary>
+        /// <summary>
+        /// Yaşadığı sürece saati emen türler (boss, SIZINTI). Oyalanmak ya da yanlış
+        /// hedefi seçmek doğrudan cezalandırılıyor.
+        ///
+        /// dt dışarıdan alınıyor çünkü öz-denetim `Time.deltaTime`'ı kontrol edemiyor
+        /// (editör modunda 0). Aksi hâlde "aura tanımlı mı" diye ÖZELLİK test edilirdi,
+        /// "saat gerçekten indi mi" diye ETKİ değil — DURGUN dersinin tam tekrarı olurdu.
+        /// </summary>
+        public void ApplyAura(float dt)
+        {
+            if (Hollow || _t == null) return;
+            float aura = (IsBoss ? _t.bossAuraDrain : 0f) + Kind.AuraDrain(_t);
+            if (aura > 0f) Clock.Instance?.Spend(aura * dt);
+        }
+
+        float FlatDistanceFromCenter()
+        {
+            var p = transform.position;
+            return new Vector2(p.x, p.z).magnitude;
+        }
+
         void Escape()
         {
             if (_telegraph != null) _telegraph.Cancel();

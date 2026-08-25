@@ -121,3 +121,29 @@ başlamıştır. Doğru refleks: yazmadan önce "bunun bir kaynağı zaten var m
 (`WaveManager.StartNextWave` → `Bootstrap.SpawnEnemyAt`). Üretim kodu nereye kayarsa repro
 oraya kayar; bir daha ölü yol sınayamaz.
 
+---
+
+## 2026-08-24 (6) — "Özellik değil etki" kuralını yine yarım uyguladım
+
+**Ne oldu:** Faz 5'te DURGUN dersini hatırlayıp her türün *hasar alabildiğini* test ettim.
+Ama SIZINTI için yalnızca `AuraDrain(t) > 0` yazdım — yani **özelliği** kontrol ettim,
+saatin gerçekten indiğini değil. KAÇAK'ta da "kaçmaya başladı"yı kontrol ettim, "kaçtı ve
+zamanını götürdü"yü değil.
+
+Öz-inceleme sırasında etki testlerini yazınca ikinci bir şey ortaya çıktı: **etki testi
+yazılamıyordu**, çünkü `Time.deltaTime` editör modunda 0. Yani aura kodu hiç ölçülemiyordu
+ve ben bunu fark etmeden "özellik testi" ile yetinmiştim.
+
+**Kural (4)'ün eksik yarısı:**
+
+> Etki testi yazılamıyorsa, sorun testte değil **tasarımdadır**. Ölçülebilir hale getir.
+
+`ApplyAura(float dt)` olarak ayrıldı: `Update` `Time.deltaTime` ile çağırıyor, öz-denetim
+1 saniyelik adımla çağırıyor. Artık hem boss hem SIZINTI için "saat GERÇEKTEN indi mi"
+sorulabiliyor.
+
+**Aynı turda yakalanan bug:** kaçış mesafesi `transform.position.magnitude` ile ölçülüyordu
+— y'yi de katıyor ve düşmanlar y=1'de. Bu projede y'nin yatay hesaba karışması **üçüncü**
+kez çıktı (havada doğan düşmanlar, sonra bu). Yatay mesafe için ayrı bir yardımcı kullanılıyor
+artık.
+
