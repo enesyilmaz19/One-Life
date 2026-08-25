@@ -111,6 +111,16 @@ namespace TekCan
         [Tooltip("ÇEVİKLİK sunağı: her alımda dash bekleme süresi bu kadar kısalır")]
         public float altarDashStep = 0.08f;
 
+        [Header("── SİLAHLAR (Faz 3) ──")]
+        [Tooltip("Tek hedefli silahların koni açısı — dar, çünkü tek düşman seçiyor")]
+        public float singleTargetAngle = 45f;
+        [Tooltip("FAİZLİ: her savurmanın peşin bedeli (saniye). Iska pahalı olsun diye var.")]
+        public float faizliSwingCost = 0.5f;
+        [Tooltip("VADELİ: hasar çarpanı")]
+        public float vadeliDamageMult = 2.4f;
+        [Tooltip("VADELİ: vuruş İNDİKTEN sonra kesilen bedel (saniye)")]
+        public float vadeliCost = 1.4f;
+
         [Header("── DASH-ATAK (Faz 2) ──")]
         [Tooltip("Dash sırasında saldırıya basınca dash sonunda inen vuruşun hasar çarpanı")]
         public float dashAttackDamageMult = 1.6f;

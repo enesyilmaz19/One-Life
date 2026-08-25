@@ -24,6 +24,10 @@ namespace TekCan
         Vector3 _knockback;
 
         bool _dashAttackQueued;
+        int _weaponIndex;
+
+        /// <summary>Kuşanılan silah. 1-4 tuşlarıyla değişiyor (Faz 3 test kolaylığı).</summary>
+        public Weapon Weapon => TekCan.Weapon.All[_weaponIndex];
 
         static readonly Color SwingTint = new Color(0.65f, 0.9f, 1f, 0.42f);
         static readonly Color DashSwingTint = new Color(0.55f, 1f, 0.85f, 0.55f);
@@ -52,8 +56,18 @@ namespace TekCan
             _dashCd -= Time.deltaTime;
             _iFrames -= Time.deltaTime;
             TickHurt();
+            ReadWeaponSwap();
 
             Vector3 input = ReadMove();
+
+            // DURGUN: basılı tutarken saat donuyor ama saldıramıyor, dash atamıyorsun.
+            // Dünya donmadığı için bedeli savunmasız kalmak.
+            if (Weapon.HoldFreezesClock && AttackHeld())
+            {
+                if (Clock.Instance != null) Clock.Instance.Frozen = true;
+                return;
+            }
+            if (Clock.Instance != null) Clock.Instance.Frozen = false;
 
             if (Dashing) { TickDash(); return; }        // dash sırasında saldırı girdisi burada okunuyor
 
@@ -98,6 +112,36 @@ namespace TekCan
             if (kb != null && (kb.leftShiftKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame)) return true;
             var gp = Gamepad.current;
             return gp != null && gp.buttonSouth.wasPressedThisFrame;
+        }
+
+        /// <summary>DURGUN için: basılı tutuluyor mu (tek kare değil).</summary>
+        static bool AttackHeld()
+        {
+            var m = Mouse.current;
+            if (m != null && m.leftButton.isPressed) return true;
+            var gp = Gamepad.current;
+            return gp != null && gp.buttonWest.isPressed;
+        }
+
+        void ReadWeaponSwap()
+        {
+            var kb = Keyboard.current;
+            if (kb == null) return;
+
+            if (kb.digit1Key.wasPressedThisFrame) SetWeapon(0);
+            else if (kb.digit2Key.wasPressedThisFrame) SetWeapon(1);
+            else if (kb.digit3Key.wasPressedThisFrame) SetWeapon(2);
+            else if (kb.digit4Key.wasPressedThisFrame) SetWeapon(3);
+        }
+
+        /// <summary>Silah kuşan. Öz-denetim de bu yoldan geçiyor — test kendi yolunu kurmaz.</summary>
+        public void SetWeapon(int index)
+        {
+            if (index < 0 || index >= TekCan.Weapon.All.Length || index == _weaponIndex) return;
+            _weaponIndex = index;
+            _attackTimer = 0f;                                    // yarım savurma taşınmasın
+            if (Clock.Instance != null) Clock.Instance.Frozen = false;
+            IsoCamera.Shake(_t.hitShake * 0.4f);
         }
 
         static bool ReadAttack()
@@ -198,22 +242,30 @@ namespace TekCan
         {
             transform.rotation = Quaternion.LookRotation(_dashDir);
 
-            float range = _t.attackRange * _t.dashAttackRangeMult;
-            float damage = (Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage)
+            float range = Weapon.Range(_t) * _t.dashAttackRangeMult;
+            float damage = Weapon.Damage(_t, Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage)
                            * _t.dashAttackDamageMult;
 
             Arc.Spawn(transform.position, transform.rotation,
                 range, _t.dashAttackAngle, DashSwingTint, _t.swingArcLife * 1.3f);
             SwingsSpawned++;
 
-            StrikeCone(range, _t.dashAttackAngle, damage, _t.hitStopDuration * 1.4f, _t.hitShake * 1.5f);
+            // Dash-atak silahtan bağımsız olarak GENİŞ vurur — dalış hamlesi olduğu için
+            // tek hedefli silahlarda bile kalabalığı süpürmesi kasıtlı, tek AoE çıkışları o.
+            StrikeCone(range, _t.dashAttackAngle, damage, _t.hitStopDuration * 1.4f, _t.hitShake * 1.5f,
+                       int.MaxValue, Weapon.HarvestMultiplier, out int hits, out int kills);
+
+            Weapon.OnStrike(Clock.Instance, _t, hits, kills);
         }
 
         // ── saldırı ──────────────────────────────────────────────────────────
 
         void StartAttack(Vector3 input)
         {
-            _attackTimer = _t.attackDuration;
+            // Silah savurmayı reddedebilir (FAİZLİ: peşin bedeli ödeyemiyorsan susar).
+            if (!Weapon.OnSwingStart(Clock.Instance, _t)) return;
+
+            _attackTimer = Weapon.Duration(_t);
             _attackHitDone = false;
 
             // ⚠️ NİŞAN İMLEÇTEN ALINIR, hareket yönünden değil.
@@ -226,7 +278,7 @@ namespace TekCan
             // yürümedi: oyuncu saldırdığını göremeyince hissi yargılayamadı.
             // Yay, gerçek vuruş alanının kendisi — menzil ve açı Strike() ile aynı kaynaktan.
             Arc.Spawn(transform.position, transform.rotation,
-                _t.attackRange, _t.attackAngle, SwingTint, _t.swingArcLife);
+                Weapon.Range(_t), Weapon.Angle(_t), Weapon.Tint, _t.swingArcLife);
             SwingsSpawned++;
         }
 
@@ -235,8 +287,9 @@ namespace TekCan
             _attackTimer -= Time.deltaTime;
             Move(input, _t.attackMoveDamping, rotate: false);   // savurma yönüne bağlı kal
 
-            float elapsed = _t.attackDuration - _attackTimer;
-            if (!_attackHitDone && elapsed >= _t.attackDuration * _t.attackHitMoment)
+            float duration = Weapon.Duration(_t);
+            float elapsed = duration - _attackTimer;
+            if (!_attackHitDone && elapsed >= duration * _t.attackHitMoment)
             {
                 _attackHitDone = true;
                 Strike();
@@ -247,36 +300,75 @@ namespace TekCan
         {
             // Hasar Clock'tan okunuyor: sunak yükseltmeleri koşu kapsamlı,
             // Tuning asset'i çalışma anında değiştirilmiyor.
-            float damage = Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage;
-            StrikeCone(_t.attackRange, _t.attackAngle, damage, _t.hitStopDuration, _t.hitShake);
+            float baseDamage = Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage;
+
+            StrikeCone(Weapon.Range(_t), Weapon.Angle(_t), Weapon.Damage(_t, baseDamage),
+                       _t.hitStopDuration, _t.hitShake,
+                       Weapon.MaxTargets, Weapon.HarvestMultiplier,
+                       out int hits, out int kills);
+
+            Weapon.OnStrike(Clock.Instance, _t, hits, kills);
         }
 
         /// <summary>
         /// Tek isabet yolu — normal saldırı da dash-atak da buradan geçiyor.
         /// İki ayrı kopya olsaydı biri düzeltilip diğeri unutulurdu; savurma yayı
         /// da aynı menzil/açıdan çiziliyor, yani görsel ile isabet asla ayrışmaz.
+        ///
+        /// `maxTargets` 1 ise koni içindeki EN YAKIN düşman seçilir — tek hedefli
+        /// silahların tanımı bu. Geometriyi daraltmak yetmezdi: dar koni de iki
+        /// düşmanı birden yakalayabilir.
         /// </summary>
-        void StrikeCone(float range, float angleDeg, float damage, float hitStop, float shake)
+        void StrikeCone(float range, float angleDeg, float damage, float hitStop, float shake,
+                        int maxTargets, float harvestMult, out int hits, out int kills)
         {
-            bool hitSomething = false;
+            hits = 0; kills = 0;
             float half = angleDeg * 0.5f;
 
-            for (int i = Enemy.All.Count - 1; i >= 0; i--)
+            if (maxTargets == 1)
             {
-                var e = Enemy.All[i];
-                if (e == null) continue;
+                Enemy nearest = null;
+                float bestDist = float.MaxValue;
 
-                Vector3 to = e.transform.position - transform.position;
-                to.y = 0f;
+                foreach (var e in Enemy.All)
+                {
+                    if (e == null) continue;
+                    Vector3 to = e.transform.position - transform.position;
+                    to.y = 0f;
+                    float d = to.magnitude;
+                    if (d > range || Vector3.Angle(transform.forward, to) > half) continue;
+                    if (d < bestDist) { bestDist = d; nearest = e; }
+                }
 
-                if (to.magnitude > range) continue;
-                if (Vector3.Angle(transform.forward, to) > half) continue;
+                if (nearest != null)
+                {
+                    bool wasHollow = nearest.Hollow;
+                    nearest.TakeDamage(damage, harvestMult);
+                    hits = 1;
+                    if (wasHollow) kills = 1;          // boş düşmana vuruş öldürür
+                }
+            }
+            else
+            {
+                for (int i = Enemy.All.Count - 1; i >= 0; i--)
+                {
+                    var e = Enemy.All[i];
+                    if (e == null) continue;
 
-                e.TakeDamage(damage);
-                hitSomething = true;
+                    Vector3 to = e.transform.position - transform.position;
+                    to.y = 0f;
+
+                    if (to.magnitude > range) continue;
+                    if (Vector3.Angle(transform.forward, to) > half) continue;
+
+                    bool wasHollow = e.Hollow;
+                    e.TakeDamage(damage, harvestMult);
+                    hits++;
+                    if (wasHollow) kills++;
+                }
             }
 
-            if (hitSomething)
+            if (hits > 0)
             {
                 HitStop.Freeze(hitStop);
                 IsoCamera.Shake(shake);

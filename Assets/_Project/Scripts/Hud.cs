@@ -13,11 +13,13 @@ namespace TekCan
     public class Hud : MonoBehaviour
     {
         Clock _clock;
+        PlayerController _player;
         GUIStyle _big, _small, _mid;
 
-        public void Init(Clock clock)
+        public void Init(Clock clock, PlayerController player)
         {
             _clock = clock;
+            _player = player;
             // Ölü kod değil artık: koşu bitiş ekranı bu olaya bağlı.
             clock.OnDeath += OnRunEnded;
         }
@@ -61,7 +63,7 @@ namespace TekCan
             DrawAltarPrompt();
 
             GUI.Label(new Rect(12f, Screen.height - 26f, 900f, 20f),
-                "WASD hareket · Sol tık saldırı · Shift/Space dash · dash sırasında saldırı = DASH-ATAK · E sunak", _small);
+                "WASD · Sol tık saldırı · Shift/Space dash · dash+saldırı = DASH-ATAK · E sunak · 1-4 silah", _small);
         }
 
         void DrawClock()
@@ -95,6 +97,45 @@ namespace TekCan
 
             r.y += 24f;
             GUI.Label(r, $"hasat %{_clock.HarvestRate * 100f:0}   ·   hasar {_clock.AttackDamage:0.0}", _small);
+
+            DrawWeaponBar();
+        }
+
+        /// <summary>
+        /// Kuşanılan silah + hasat çarpanı. Çarpanı göstermek şart: tek hedefli
+        /// silahların koniyle nasıl rekabet ettiği ancak o sayıyla anlaşılıyor.
+        /// </summary>
+        void DrawWeaponBar()
+        {
+            var pc = _player;
+            if (pc == null) return;
+
+            var weapons = Weapon.All;
+            float w = 150f, total = weapons.Length * w;
+            float x = (Screen.width - total) * 0.5f;
+            float y = Screen.height - 62f;
+
+            for (int i = 0; i < weapons.Length; i++)
+            {
+                bool equipped = weapons[i] == pc.Weapon;
+                var c = weapons[i].Tint; c.a = equipped ? 1f : 0.35f;
+                _small.normal.textColor = c;
+
+                string mult = weapons[i].HarvestMultiplier > 1.001f
+                    ? $"×{weapons[i].HarvestMultiplier:0.0}" : "";
+                string tek = weapons[i].MaxTargets == 1 ? "tek" : "koni";
+
+                GUI.Label(new Rect(x + i * w, y, w, 40f),
+                          $"{i + 1}  {weapons[i].Name}\n{tek} {mult}", _small);
+            }
+            _small.normal.textColor = Color.white;
+
+            if (_clock.Frozen)
+            {
+                _mid.normal.textColor = new Color(0.6f, 0.8f, 1f);
+                GUI.Label(new Rect(0f, Screen.height * 0.42f, Screen.width, 40f), "SAAT DURDU", _mid);
+                _mid.normal.textColor = Color.white;
+            }
         }
 
         /// <summary>Sunağa yaklaşınca ne aldığını ve kaça aldığını söyler.</summary>

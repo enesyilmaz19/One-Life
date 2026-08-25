@@ -122,6 +122,39 @@ Marj bilerek dar — tek hedefli oyun kârlı ama zengin etmiyor, kâr beceriyle
 **Darbe maliyeti bilinçli olarak sert bırakıldı:** 4 sn, düşman başına kârın ~6 katı.
 Bir hata altı temiz öldürmeyi siliyor. Roguelike'ta bu seçim savunulabilir; kazara değil.
 
+## Silahlar — Faz 3 ✅ (2026-08-24)
+
+**Yapısal çözüm: `HarvestMultiplier`.** Koni, içindeki her düşmandan ayrı hasat ettiği
+için hedef sayısı kadar üstün. Tek hedefli silahlar bunu **hasar başına daha çok zaman
+çalarak** kapatıyor.
+
+| silah | hedef | çarpan | özellik |
+|---|---|---:|---|
+| **KONİ** | koni | ×1.0 | Kıyas noktası. Geniş, herkese vurur |
+| **FAİZLİ** | tek | ×2.6 | Savurmak saniye götürür, öldürünce iki katı geri verir. Iska pahalı |
+| **DURGUN** | tek | ×2.2 | Basılı tutunca saat donar; saldıramaz, dash atamazsın. Dünya donmaz |
+| **VADELİ** | tek | ×2.0 | ×2.4 hasar, bedel vuruştan SONRA kesilir — savurmanın ortasında ölebilirsin |
+
+### Denge ölçümü — kesişim 3 düşmanda
+
+`Tek Can → Denge simülasyonu`, düşman başına net saniye (TEMİZ oyuncu):
+
+| silah | 1 düşman | 2 | 3 | 4 |
+|---|---:|---:|---:|---:|
+| KONİ | +0.7 | +4.1 | **+7.5** | **+10.9** |
+| FAİZLİ | **+5.7** | **+5.7** | +5.7 | +5.7 |
+| DURGUN | +4.8 | +4.8 | +4.8 | +4.8 |
+| VADELİ | +2.6 | +2.6 | +2.6 | +2.6 |
+
+**Sonuç: hiçbiri baskın değil.** Tek hedefliler yalnız/düello kavgalarında üstün (1 düşmanda
+FAİZLİ koninin 8 katı), koni 3 düşmandan sonra devralıyor. Silah seçimi duruma bağlı bir
+karar oldu — Faz 3'ün hedefi buydu.
+
+> ⚠️ **Simülatörün dürüst sınırı:** DURGUN'un asıl değeri saati durdurabilmesi ve simülasyon
+> bunu hiç modellemiyor. +4.8 rakamı onun yalnızca hasar tarafı. Gerçek değeri playtest'te
+> ölçülecek. VADELİ de en zayıf görünüyor (+2.6) ama risk profili farklı — tek vuruşta
+> büyük parça koparıyor, simülasyon ortalama alıyor.
+
 > ⚠️ **ÇOKLU HEDEF SORUNU (2026-08-24 playtest, Enes yakaladı):** Savurma koni içindeki
 > HERKESE tam hasar veriyor ve her birinden ayrı hasat ediliyor. Sonuç: kalabalık arttıkça
 > oyun **kolaylaşıyor** — roguelite'ta olmaması gereken şey.

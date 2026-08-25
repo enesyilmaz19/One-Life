@@ -34,6 +34,10 @@ namespace TekCan.EditorTools
             sb.AppendLine(Line("Hasar reprodüksiyonu", repro, repro ? "gerçek geometride iniyor" : "HASAR İNMİYOR"));
             if (!repro) problems++;
 
+            int f3 = Faz3SelfCheck.Execute();
+            sb.AppendLine(Line("Faz 3 öz-denetim", f3 == 0, f3 == 0 ? "geçti" : $"{f3} başarısız"));
+            problems += f3;
+
             int audit = TuningAudit.Execute();
             sb.AppendLine(audit == 0
                 ? Line("Ayar kaynağı denetimi", true, "C# ↔ asset uyumlu")

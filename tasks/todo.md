@@ -1,6 +1,14 @@
 ## 📥 ENES'İN MASASI
 
-*Şu an sende bekleyen iş yok.* Faz 2 kapandı, Faz 3'e geçilmedi — Enes "kal burda" dedi.
+**Faz 3 playtest — silahlar.** Play'e bas, `1-4` ile silah değiştir, hepsini dene.
+
+- [ ] **FAİZLİ ıskalayınca acıtıyor mu?** Her savurma peşin 0.5 sn. Iska cezası hissediliyor mu, yoksa fark edilmiyor mu?
+- [ ] **DURGUN'un saat durdurması işe yarıyor mu?** Sol tıkı basılı tut → saat donar ama savunmasızsın. Gerçekten kullanıyor musun, yoksa süs mü?
+- [ ] **VADELİ'nin gecikmeli bedeli gerilim yaratıyor mu?** Vuruştan sonra kesiliyor — düşük saatte savurmak korkutucu mu?
+- [ ] **Kalabalıkta koniye, tek düşmanda tek hedefliye geçiyor musun?** Tasarım bunu bekliyor (kesişim 3 düşman). Doğal geliyor mu, yoksa hep aynı silahta mı kalıyorsun?
+- [ ] **Hangisi çöp?** Biri hiç kullanılmıyorsa söyle, ya düzeltiriz ya atarız.
+
+> Not: bunlar his soruları, otomasyondan ölçülemiyor — cevap sende.
 
 ---
 
@@ -57,12 +65,18 @@
 - [ ] Saat göstergesi gerçek tipografi/animasyon — UI geçişine ertelendi, greybox okunuyor
 - [ ] Ses — hâlâ yok, vuruş hissinin kalan yarısı
 
-## Faz 3 — Silahlar
+## Faz 3 — Silahlar ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
 
-- [ ] **TEK HEDEFLİ silahlar** — koni herkese vurup her birinden hasat ettiği için kalabalık oyunu KOLAYLAŞTIRIYOR. Tek hedefli silah ancak **hasar başına daha çok zaman çalarsa** rekabet edebilir → hasat oranı silaha göre değişmeli
-- [ ] 3 silah tohumu prototipi: **Faizli** · **Durgun** · **Vadeli** (bkz. `../../FIKIR_DEFTERI.md`)
-- [ ] Silah başına VFX kimliği
-- [ ] 🎮 Playtest kapısı — hangi silah tutuyor, hangisi çöp
+- [x] **`Weapon` soyutlaması** — menzil, açı, süre, hasar, hedef sayısı, hasat çarpanı ve özel davranış silahtan geliyor
+- [x] **TEK HEDEFLİ sorunu çözüldü** — `HarvestMultiplier`. Koni içinde üç düşman varken tek hedefli **en yakınını** seçiyor (test korumalı)
+- [x] **FAİZLİ** ×2.6 — peşin bedel, öldürünce iki katı iade, parasızken savurmuyor
+- [x] **DURGUN** ×2.2 — basılı tutunca saat donuyor; saldırı/dash kapalı, dünya donmuyor
+- [x] **VADELİ** ×2.0 — ×2.4 hasar, bedel vuruştan SONRA; savurmanın ortasında ölebilirsin
+- [x] **Silah başına VFX kimliği** — yay rengi + şekli, ekran görüntüsüyle doğrulandı
+- [x] **1-4 tuşlarıyla silah değiştirme** (test kolaylığı)
+- [x] **Denge ölçümü** — kesişim **3 düşmanda**; tek hedefliler yalnız kavgada, koni kalabalıkta üstün
+- [x] Faz 3 öz-denetimi: 13/13
+- [ ] 🎮 **PLAYTEST KAPISI** — aşağıdaki sorular
 
 ## Faz 4 — Koşu yapısı
 

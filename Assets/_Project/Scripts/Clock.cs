@@ -26,6 +26,9 @@ namespace TekCan
         public bool Dead { get; private set; }
         public bool InCombat { get; private set; }
 
+        /// <summary>Akış durdurulmuş mu — DURGUN silahı basılı tutulurken.</summary>
+        public bool Frozen { get; set; }
+
         // ── koşu boyunca yükseltilebilen değerler ────────────────────────────
         // ⚠️ Bunlar Tuning'den KOPYALANIR, Tuning'e YAZILMAZ. ScriptableObject
         // çalışma anında değiştirilirse editörde kalıcı olur ve bir sonraki koşu
@@ -63,6 +66,11 @@ namespace TekCan
 
             RunTime += Time.deltaTime;
             InCombat = AnyLivingEnemyNear();
+
+            // DURGUN silahı akışı durdurabiliyor. Dünya donmuyor — düşmanlar gelmeye
+            // devam ediyor — yani bedeli savunmasız kalmak.
+            if (Frozen) return;
+
             Seconds -= (InCombat ? _t.drainInCombat : _t.drainOutOfCombat) * Time.deltaTime;
             CheckDeath();
         }

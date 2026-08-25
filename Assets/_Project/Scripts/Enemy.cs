@@ -203,7 +203,11 @@ namespace TekCan
         /// Hasar verildiğinde havuzdan düşer ve düşen miktarın hasat oranı kadarı
         /// oyuncunun saatine yazılır. Boş düşmana vurmak hiçbir şey ödemez ve öldürür.
         /// </summary>
-        public void TakeDamage(float damage)
+        /// <param name="harvestMult">
+        /// Silaha göre değişen hasat çarpanı. Tek hedefli silahlar koniyle ancak bu
+        /// sayede rekabet edebiliyor — koni, hedef sayısı kadar hasat ediyor.
+        /// </param>
+        public void TakeDamage(float damage, float harvestMult = 1f)
         {
             if (Hollow)
             {
@@ -213,7 +217,7 @@ namespace TekCan
 
             float drained = Mathf.Min(damage, TimeLeft);
             TimeLeft -= drained;
-            Clock.Instance?.Add(drained * Clock.Instance.HarvestRate);
+            Clock.Instance?.Add(drained * Clock.Instance.HarvestRate * harvestMult);
 
             _flashTimer = _t.hitFlashDuration;
             Paint();

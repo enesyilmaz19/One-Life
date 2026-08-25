@@ -95,6 +95,16 @@ namespace TekCan.EditorTools
                 Tint(alt, altarColors[i]);
             }
 
+            // Faz 3: dört silahın yayı yan yana — şekilleri gerçekten ayrışıyor mu?
+            // (KONİ geniş, tek hedefliler dar; DURGUN uzun namlulu)
+            for (int i = 0; i < Weapon.All.Length; i++)
+            {
+                var w = Weapon.All[i];
+                var origin = new Vector3(-6f + i * 3.2f, 1f, -6.5f);
+                Arc.Spawn(origin, Quaternion.Euler(0f, -35f, 0f),
+                          w.Range(t), w.Angle(t), w.Tint, 999f);
+            }
+
             // İzometrik kamera
             var camGo = new GameObject("cap-cam"); camGo.transform.SetParent(root.transform);
             var cam = camGo.AddComponent<Camera>();

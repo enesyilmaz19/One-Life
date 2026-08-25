@@ -79,8 +79,57 @@ namespace TekCan.EditorTools
             }
             sb.AppendLine("   (hedef sayısı arttıkça kâr artıyorsa kalabalık oyunu KOLAYLAŞTIRIYOR)");
 
+            WeaponComparison(t, sb);
+
             Debug.Log(sb.ToString());
             if (Application.isBatchMode) EditorApplication.Exit(0);
+        }
+
+        /// <summary>
+        /// FAZ 3'ÜN ÇEKİRDEK SORUSU: tek hedefli silahlar koniyle rekabet edebiliyor mu?
+        ///
+        /// Koni, içindeki her düşmandan ayrı hasat ettiği için hedef sayısı kadar üstün.
+        /// Tek hedefli silahlar bunu yalnızca hasat çarpanıyla kapatabilir. Burada
+        /// çarpanların gerçekten yettiği ölçülüyor — iddia edilmiyor.
+        /// </summary>
+        static void WeaponComparison(Tuning t, StringBuilder sb)
+        {
+            sb.AppendLine();
+            sb.AppendLine("[SİLAHLAR] düşman başına net saniye · TEMİZ oyuncu");
+            sb.AppendLine("  silah    | 1 düşman | 2 düşman | 3 düşman | 4 düşman");
+            sb.AppendLine("  ---------+----------+----------+----------+---------");
+
+            foreach (var w in Weapon.All)
+            {
+                var row = new StringBuilder($"  {w.Name,-8} |");
+                for (int crowd = 1; crowd <= 4; crowd++)
+                {
+                    var s = Skills[0];
+                    // Tek hedefli silah kalabalıktan etkilenmiyor: hep 1 hedef.
+                    s.TargetsPerSwing = w.MaxTargets == 1 ? 1 : crowd;
+
+                    float net = NetPerEnemy(t, s, t.harvestRate * w.HarvestMultiplier,
+                                            w.Damage(t, t.attackDamage), w.Duration(t));
+                    net -= SwingCosts(t, w);
+                    row.Append($" {net,8:+0.0;-0.0} |");
+                }
+                sb.AppendLine(row.ToString().TrimEnd('|'));
+            }
+
+            sb.AppendLine("  → Tek hedefliler kalabalıkta sabit kalır, koni yükselir.");
+            sb.AppendLine("     Kesişim noktası: koninin kaç düşmandan sonra baskın olduğu.");
+        }
+
+        /// <summary>Silaha özgü peşin/vadeli bedeller — düşman başına yaklaşık.</summary>
+        static float SwingCosts(Tuning t, Weapon w)
+        {
+            float swingsPerEnemy = t.enemyTimePool / Mathf.Max(0.01f, w.Damage(t, t.attackDamage));
+            return w switch
+            {
+                Faizli => t.faizliSwingCost * swingsPerEnemy - t.faizliSwingCost * 2f,  // öldürme iadesi
+                Vadeli => t.vadeliCost * swingsPerEnemy,
+                _ => 0f,
+            };
         }
 
         /// <summary>
@@ -89,6 +138,9 @@ namespace TekCan.EditorTools
         /// eriyor — kapalı formül yazmak kolayca yanlış olur.
         /// </summary>
         static float NetPerEnemy(Tuning t, Skill skill, float harvestRate)
+            => NetPerEnemy(t, skill, harvestRate, t.attackDamage, t.attackDuration);
+
+        static float NetPerEnemy(Tuning t, Skill skill, float harvestRate, float damage, float swingDuration)
         {
             const float dt = 1f / 60f;
             var rng = new System.Random(12345);              // deterministik
@@ -104,10 +156,10 @@ namespace TekCan.EditorTools
                 swingTimer -= dt;
                 if (swingTimer <= 0f)
                 {
-                    swingTimer = t.attackDuration;
+                    swingTimer = swingDuration;
                     if (rng.NextDouble() < skill.HitChance)
                     {
-                        float drained = Mathf.Min(t.attackDamage, pool);
+                        float drained = Mathf.Min(damage, pool);
                         pool -= drained;
                         // Koni birden çok düşmanı yakalarsa her biri ayrı ödüyor.
                         harvested += drained * harvestRate * skill.TargetsPerSwing;
@@ -115,7 +167,7 @@ namespace TekCan.EditorTools
                 }
             }
 
-            elapsed += t.attackDuration;                     // boşalanı bitiren vuruş
+            elapsed += swingDuration;                        // boşalanı bitiren vuruş
             float drained_ = t.drainInCombat * elapsed;      // saat akışı
             float taken = skill.HitsTaken * t.enemyFullHitCost;
 
