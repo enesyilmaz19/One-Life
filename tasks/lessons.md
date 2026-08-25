@@ -147,3 +147,35 @@ sorulabiliyor.
 kez çıktı (havada doğan düşmanlar, sonra bu). Yatay mesafe için ayrı bir yardımcı kullanılıyor
 artık.
 
+
+---
+
+## 2026-08-25 (7) — Sesin verisini test ettim, duyulup duyulmadığını değil
+
+**Ne oldu:** Faz 6'da 9 ses koddan üretildi, 37/37 kontrol yeşil yandı, "Faz 6 bitti" dedim.
+Sahnede **hiç `AudioListener` yoktu.** Yani oyunda tek bir ses çıkmıyordu.
+
+Sebep: `Bootstrap.Build` sahnedeki bütün kameraları siliyor. Şablonun kamerası dinleyiciyi
+taşıyordu, o da gitti. Yerine kurulan kamerada yalnızca `Camera` + `IsoCamera` var.
+
+Testler neden görmedi: hepsi `AudioClip`'in **içine** bakıyordu — üretildi mi, sessiz mi,
+kırpılmış mı, süresi makul mü. Hiçbiri "bu ses oyuncunun kulağına ulaşıyor mu" diye sormadı.
+Ses yolunun son halkası test edilen bölgenin dışındaydı.
+
+**Bu, kural (4)'ün üçüncü tekrarı.** DURGUN'da, SIZINTI'da, şimdi seste. Ortak kalıp:
+*üretilen şeyi* ölçüyorum, *ulaştığı yeri* değil. Zincirin son halkası hep testin dışında
+kalıyor.
+
+**Kuralın genişlemiş hali:**
+
+> Bir sistemin testi, o sistemin **çıktısında** değil, çıktının **vardığı yerde** biter.
+> Ses için: kulak. Hasar için: düşmanın zamanı. Aura için: saatin sayısı.
+> "Zincirin son halkası testin içinde mi?" — teslimden önceki son soru.
+
+**Somut savunma:** dinleyiciyi artık ses sisteminin kendisi garantiliyor (`Sfx.EnsureListener`),
+kamerayı kuran kodun hatırlamasına bırakılmadı. Sesin duyulabilir olması ses sisteminin işi.
+Faz 6 denetiminin **ilk** kontrolü de bu — diğer 38'i geçse bile bu düşerse ses yok demektir.
+
+**Aynı turda yakalanan ikinci bug:** tek `AudioSource` kullanılıyordu ve `pitch` o kaynakta
+**çalmakta olan** sesleri de büküyor. Kalabalıkta her yeni vuruş, hâlâ duyulan öncekini
+perdeden kaydırıyordu. 6 kanallı havuza geçildi.

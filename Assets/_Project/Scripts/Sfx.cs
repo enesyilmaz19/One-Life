@@ -19,15 +19,31 @@ namespace TekCan
     {
         const int SampleRate = 44100;
 
-        static AudioSource _src;
+        // ⚠️ TEK kaynak yetmiyor: `AudioSource.pitch` o kaynakta ÇALMAKTA OLAN bütün
+        // sesleri birden büker. Kalabalıkta her yeni vuruş, hâlâ duyulan öncekini
+        // perdeden kaydırıyordu. Küçük bir havuz, her ses kendi perdesini korusun.
+        const int Voices = 6;
+        static AudioSource[] _pool;
+        static int _next;
+
         static AudioClip _swing, _hit, _hurt, _dash, _harvest, _slam, _buy, _die, _win;
 
-        public static void Reset() { _src = null; _swing = _hit = _hurt = _dash = _harvest = _slam = _buy = _die = _win = null; }
+        public static void Reset()
+        {
+            _pool = null; _next = 0;
+            _swing = _hit = _hurt = _dash = _harvest = _slam = _buy = _die = _win = null;
+        }
 
         public static void Init(AudioSource source)
         {
-            _src = source;
-            _src.playOnAwake = false;
+            var host = source.gameObject;
+            EnsureListener(host);
+
+            _pool = new AudioSource[Voices];
+            _pool[0] = source;
+            for (int i = 1; i < Voices; i++) _pool[i] = host.AddComponent<AudioSource>();
+            foreach (var s in _pool) s.playOnAwake = false;
+            _next = 0;
 
             _swing   = Whoosh("swing", 0.16f, 1400f, 380f, 0.95f);
             _dash    = Whoosh("dash", 0.20f, 2200f, 500f, 0.85f);
@@ -50,12 +66,37 @@ namespace TekCan
         public static void Die()    => Play(_die, 1f, 1f);
         public static void Win()    => Play(_win, 1f, 1f);
 
+        /// <summary>
+        /// ⚠️ AudioListener olmadan Unity HİÇBİR ses çalmaz.
+        ///
+        /// Bootstrap sahnedeki bütün kameraları siliyor — şablonun kamerası dinleyiciyi
+        /// taşıyordu, o da gitti. Ses sistemi kurulduğunda 9 sesin dokuzu da doluydu,
+        /// 37/37 test geçiyordu, ve oyunda TEK SES ÇIKMIYORDU. Testler sesin verisini
+        /// ölçüyordu, duyulup duyulmadığını değil.
+        ///
+        /// Bu yüzden dinleyiciyi ses sisteminin kendisi garantiliyor: sesin duyulabilir
+        /// olması ses sisteminin işi, kamerayı kuran kodun hatırlaması gereken bir şey değil.
+        /// </summary>
+        public static void EnsureListener(GameObject fallback)
+        {
+            if (UnityEngine.Object.FindFirstObjectByType<AudioListener>() != null) return;
+            if (fallback != null) fallback.AddComponent<AudioListener>();
+        }
+
+        public static bool HasListener => UnityEngine.Object.FindFirstObjectByType<AudioListener>() != null;
+
         static void Play(AudioClip clip, float pitchMin, float pitchMax)
         {
-            if (_src == null || clip == null) return;
+            if (_pool == null || clip == null) return;
+
+            // Sırayla dolaşan kaynak: her ses kendi perdesiyle çalıyor.
+            var src = _pool[_next];
+            _next = (_next + 1) % _pool.Length;
+            if (src == null) return;
+
             // Hafif rastgele perde: aynı ses üst üste binince makineleşmesin.
-            _src.pitch = UnityEngine.Random.Range(pitchMin, pitchMax);
-            _src.PlayOneShot(clip);
+            src.pitch = UnityEngine.Random.Range(pitchMin, pitchMax);
+            src.PlayOneShot(clip);
         }
 
         // ── sentez ───────────────────────────────────────────────────────────

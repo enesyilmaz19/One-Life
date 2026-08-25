@@ -32,6 +32,19 @@ namespace TekCan.EditorTools
             var clips = Sfx.AllClips;
             var names = Sfx.AllNames;
 
+            // ── 0) ⚠️ SES DUYULABİLİR Mİ ──
+            //    Bu kontrol en başta olmalı çünkü diğerlerinin hepsi geçse bile
+            //    dinleyici yoksa oyuncu HİÇBİR ŞEY duymaz. Aşağıdaki 30 küsur kontrol
+            //    tam olarak bu durumda yeşil yanıyordu: sesin verisi doğruydu,
+            //    yolun ucunda kulak yoktu.
+            failed += Check(ref total, "⚠️ AudioListener VAR (yoksa hiçbir ses çıkmaz)",
+                            Sfx.HasListener, Sfx.HasListener ? 1 : 0);
+
+            // Perde havuzu: tek kaynakta pitch, çalmakta olan sesleri de büküyordu.
+            failed += Check(ref total, "birden fazla ses kanalı var (perde çakışmasın)",
+                            go.GetComponents<AudioSource>().Length > 1,
+                            go.GetComponents<AudioSource>().Length);
+
             // ── 1) ⚠️ HER SES ÜRETİLDİ Mİ ve İÇİ DOLU MU ──
             for (int i = 0; i < clips.Length; i++)
             {
