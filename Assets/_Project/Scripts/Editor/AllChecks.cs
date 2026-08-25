@@ -38,6 +38,10 @@ namespace TekCan.EditorTools
             sb.AppendLine(Line("Faz 3 öz-denetim", f3 == 0, f3 == 0 ? "geçti" : $"{f3} başarısız"));
             problems += f3;
 
+            int f4 = Faz4SelfCheck.Execute();
+            sb.AppendLine(Line("Faz 4 öz-denetim", f4 == 0, f4 == 0 ? "geçti" : $"{f4} başarısız"));
+            problems += f4;
+
             int audit = TuningAudit.Execute();
             sb.AppendLine(audit == 0
                 ? Line("Ayar kaynağı denetimi", true, "C# ↔ asset uyumlu")

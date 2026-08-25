@@ -1,14 +1,12 @@
 ## 📥 ENES'İN MASASI
 
-**Faz 3 playtest — silahlar.** Play'e bas, `1-4` ile silah değiştir, hepsini dene.
+**Faz 4 playtest — koşu artık kazanılabiliyor.** ENTER ile dalga başlat, boss'a kadar git.
 
-- [ ] **FAİZLİ ıskalayınca acıtıyor mu?** Her savurma peşin 0.5 sn. Iska cezası hissediliyor mu, yoksa fark edilmiyor mu?
-- [ ] **DURGUN'un saat durdurması işe yarıyor mu?** Sol tıkı basılı tut → saat donar ama savunmasızsın. Gerçekten kullanıyor musun, yoksa süs mü?
-- [ ] **VADELİ'nin gecikmeli bedeli gerilim yaratıyor mu?** Vuruştan sonra kesiliyor — düşük saatte savurmak korkutucu mu?
-- [ ] **Kalabalıkta koniye, tek düşmanda tek hedefliye geçiyor musun?** Tasarım bunu bekliyor (kesişim 3 düşman). Doğal geliyor mu, yoksa hep aynı silahta mı kalıyorsun?
-- [ ] **Hangisi çöp?** Biri hiç kullanılmıyorsa söyle, ya düzeltiriz ya atarız.
-
-> Not: bunlar his soruları, otomasyondan ölçülemiyor — cevap sende.
+- [ ] **Dalga arası baskı doğru mu?** Sayacı yok, saat işlemeye devam ediyor — sunaklara bakmak seni yiyor. Gergin mi, sinir bozucu mu?
+- [ ] **Dalga sayısı (6) ve sertleşme hızı doğru mu?** Çok mu uzun, çok mu kısa?
+- [ ] **Boss bir boss gibi mi?** 9 kat havuz, saatini emiyor, beklenerek yenilemiyor. Yeterince tehditkar mı?
+- [ ] **Kazanma hissi var mı?** Boss düşünce "KOŞU KAZANILDI" görüyorsun — tatmin ediyor mu?
+- [ ] **Sunaklar artık anlamlı mı?** Aldığın gücün gideceği bir hedef var artık (boss). Alım kararı değişti mi?
 
 ---
 
@@ -65,7 +63,7 @@
 - [ ] Saat göstergesi gerçek tipografi/animasyon — UI geçişine ertelendi, greybox okunuyor
 - [ ] Ses — hâlâ yok, vuruş hissinin kalan yarısı
 
-## Faz 3 — Silahlar ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+## Faz 3 — Silahlar ✅ **KAPANDI** (2026-08-24)
 
 - [x] **`Weapon` soyutlaması** — menzil, açı, süre, hasar, hedef sayısı, hasat çarpanı ve özel davranış silahtan geliyor
 - [x] **TEK HEDEFLİ sorunu çözüldü** — `HarvestMultiplier`. Koni içinde üç düşman varken tek hedefli **en yakınını** seçiyor (test korumalı)
@@ -75,14 +73,26 @@
 - [x] **Silah başına VFX kimliği** — yay rengi + şekli, ekran görüntüsüyle doğrulandı
 - [x] **1-4 tuşlarıyla silah değiştirme** (test kolaylığı)
 - [x] **Denge ölçümü** — kesişim **3 düşmanda**; tek hedefliler yalnız kavgada, koni kalabalıkta üstün
-- [x] Faz 3 öz-denetimi: 13/13
-- [ ] 🎮 **PLAYTEST KAPISI** — aşağıdaki sorular
+- [x] Faz 3 öz-denetimi: 17/17 (her silahın gerçekten hasar verdiği dâhil)
+- [x] 🎮 **PLAYTEST KAPISI GEÇİLDİ** — Enes: *"hepsi çalıştı"* (2026-08-24). Silahlar test için donduruldu, değişim ileride
 
-## Faz 4 — Koşu yapısı
+## Faz 4 — Koşu yapısı ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
 
-- [ ] Oda zinciri + oda başına "girer miyim" risk kararı
-- [ ] Düşman çeşitliliği (meta ilerleme yok → tekrar oynanabilirlik tamamen buradan gelir)
-- [ ] Koşu sonu / yeniden başlama akışı
+> **Çözülen sorun:** öncesinde 5 düşman bir kez doğuyordu ve koşunun tek çıkışı ölümdü.
+> Yani **arenayı temizlemek kaybetmek demekti** — dövüş dışı kalıyordun, saat hızlı iniyordu,
+> hasat edecek bir şey kalmıyordu. Ekonomi de anlamsızdı: gücü ne için alıyordun?
+
+- [x] **Dalga sistemi** — ENTER ile başlatılır, her dalga daha kalabalık ve daha dayanıklı
+- [x] **Dalga arası SAYAÇ YOK** — saat zaten sayaç; oyalanmak, sunaklara bakmak, düşünmek doğrudan ömürden kesiliyor
+- [x] **BOSS** — 9 kat havuz, akışı %15'e düşük (beklenerek yenilemez), yaşadığı sürece saati emiyor
+- [x] **KAZANMA** — boss düşünce koşu kazanılıyor. Ölümden başka bir son var artık
+- [x] `Bootstrap.SpawnEnemyAt` tek doğum yolu — iki ayrı doğum kodu olsaydı biri düzeltilip diğeri unutulurdu
+- [x] ENTER kullanıldı, SPACE değil — Space dash, aynı tuşa bağlasaydık çakışırdı
+- [x] Faz 4 öz-denetimi: 15/15 ("BOSS ÖLÜNCE KOŞU KAZANILDI" dâhil)
+- [ ] 🎮 **PLAYTEST KAPISI** — masadaki sorular
+- [ ] Düşman çeşitliliği — tek tip düşmanla dövüş iki dakikada tükeniyor. **En büyük kalan risk**
+- [ ] Oda zinciri / uzamsal ilerleme — hikâye kararından sonra
+- [ ] Ses — hâlâ yok
 
 ---
 

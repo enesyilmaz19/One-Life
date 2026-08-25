@@ -129,7 +129,26 @@ namespace TekCan
         [Tooltip("Dash-atak menzil çarpanı")]
         public float dashAttackRangeMult = 1.15f;
 
+        [Header("── DALGALAR / KOŞU YAPISI (Faz 4) ──")]
+        [Tooltip("Kaçıncı dalgada boss çıkar — koşu o dalga yenilince KAZANILIR")]
+        public int waveCount = 6;
+        [Tooltip("İlk dalgadaki düşman sayısı")]
+        public float waveBaseCount = 3f;
+        [Tooltip("Her dalgada kaç düşman eklenir")]
+        public float waveCountGrowth = 1.5f;
+        [Tooltip("Her dalgada düşman zaman havuzu bu kat büyür — dalgalar sertleşir")]
+        public float wavePoolGrowth = 1.18f;
+
+        [Header("── BOSS ──")]
+        [Tooltip("Boss'un zaman havuzu normal düşmanın kaç katı")]
+        public float bossPoolMultiplier = 9f;
+        [Tooltip("Boss yaşadığı sürece saatini saniyede bu kadar emer — bekleyerek yenemezsin")]
+        public float bossAuraDrain = 0.8f;
+        [Tooltip("Boss'un kendi kendine akışı bu kat yavaş — boşalmasını bekleyemezsin")]
+        public float bossDecayMultiplier = 0.15f;
+
         [Header("── ARENA (greybox test) ──")]
+        [Tooltip("Faz 4 öncesi sabit doğum için kullanılıyordu; dalga sistemi devrede artık kullanılmıyor")]
         public int enemyCount = 5;
         public float arenaRadius = 14f;
 

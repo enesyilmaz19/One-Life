@@ -45,12 +45,17 @@ namespace TekCan
         static readonly Color FullColor = new Color(0.85f, 0.25f, 0.25f);
         static readonly Color HollowColor = new Color(0.35f, 0.35f, 0.38f);
 
-        public void Init(Tuning tuning, Transform player, TimeLabel label)
+        /// <summary>Boss mu — kendi akışı yavaş, saatini emiyor, beklenerek yenilemiyor.</summary>
+        public bool IsBoss { get; private set; }
+
+        public void Init(Tuning tuning, Transform player, TimeLabel label,
+                         float poolMultiplier = 1f, bool boss = false)
         {
             _t = tuning;
             _player = player;
             _label = label;
-            TimeLeft = tuning.enemyTimePool;
+            IsBoss = boss;
+            TimeLeft = tuning.enemyTimePool * poolMultiplier;
             _baseScale = transform.localScale;
             _renderer = GetComponentInChildren<Renderer>();
             All.Add(this);
@@ -79,9 +84,15 @@ namespace TekCan
             // Havuz kendi kendine akar. Boşalınca daha aşağı inmez.
             if (!Hollow)
             {
-                TimeLeft = Mathf.Max(0f, TimeLeft - _t.enemyDecayPerSecond * Time.deltaTime);
+                // Boss'un kendi akışı çok yavaş: boşalmasını bekleyerek yenemezsin.
+                float decay = _t.enemyDecayPerSecond * (IsBoss ? _t.bossDecayMultiplier : 1f);
+                TimeLeft = Mathf.Max(0f, TimeLeft - decay * Time.deltaTime);
                 if (Hollow && !wasHollow) Paint();
             }
+
+            // Boss yaşadığı sürece saati emiyor — oyalanmak doğrudan cezalandırılıyor.
+            if (IsBoss && !Hollow)
+                Clock.Instance?.Spend(_t.bossAuraDrain * Time.deltaTime);
 
             TickState();
             if (_label != null) _label.Set(TimeLeft, Hollow);

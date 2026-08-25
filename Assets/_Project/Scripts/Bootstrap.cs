@@ -106,9 +106,9 @@ namespace TekCan
             pc.Init(t, camGo.transform);
             systems.AddComponent<Hud>().Init(clock, pc);
 
-            // Düşmanlar
-            for (int i = 0; i < t.enemyCount; i++)
-                SpawnEnemy(t, EnemySpawnPosition(t, i), player.transform, camGo.transform);
+            // Dalga yöneticisi — düşmanlar artık sabit doğmuyor, dalga dalga geliyor.
+            // Koşu boss dalgasıyla bitiyor: yenersen KAZANIYORSUN.
+            systems.AddComponent<WaveManager>().Init(t, player.transform, camGo.transform);
 
             // Sunaklar — saniyeyle satın alma (Faz 2)
             var kinds = new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash };
@@ -157,6 +157,7 @@ namespace TekCan
         {
             Enemy.All.Clear();
             Altar.ResetAll();
+            WaveManager.Reset();
             HitStop.Reset();
             Arc.Reset();
             Clock.Reset();        // ← eksikti: ölü saate hasar yazılmasını önler
@@ -164,21 +165,28 @@ namespace TekCan
             Time.timeScale = 1f;
         }
 
-        static void SpawnEnemy(Tuning t, Vector3 pos, Transform player, Transform cam)
+        /// <summary>
+        /// Düşman doğurmanın TEK yolu — WaveManager da buradan geçiyor.
+        /// İki ayrı doğum kodu olsaydı biri düzeltilip diğeri unutulurdu
+        /// (düşmanların havada doğduğu hata tam olarak öyle bir ayrışmadan çıkmıştı).
+        /// </summary>
+        public static void SpawnEnemyAt(Tuning t, Vector3 pos, Transform player, Transform cam,
+                                        float poolMultiplier = 1f, bool boss = false)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            go.name = "Enemy"; go.transform.SetParent(_runRoot.transform);
+            go.name = boss ? "Boss" : "Enemy";
+            if (_runRoot != null) go.transform.SetParent(_runRoot.transform);
             go.transform.position = pos;
-            go.transform.localScale = EnemyScale;
+            go.transform.localScale = boss ? EnemyScale * 1.9f : EnemyScale;
             Object.Destroy(go.GetComponent<Collider>());
 
             var labelGo = new GameObject("TimeLabel");
             labelGo.transform.SetParent(go.transform, false);
-            labelGo.transform.localPosition = new Vector3(0f, 1.6f, 0f);
+            labelGo.transform.localPosition = new Vector3(0f, boss ? 1.1f : 1.6f, 0f);
             var label = labelGo.AddComponent<TimeLabel>();
             label.Init(cam);
 
-            go.AddComponent<Enemy>().Init(t, player, label);
+            go.AddComponent<Enemy>().Init(t, player, label, poolMultiplier, boss);
         }
 
         static void Paint(GameObject go, Color c)

@@ -39,7 +39,10 @@ Altın yok. Ruh yok. Ayrı para birimi yok. Tek sayı oyunun tamamını çevirir
 
 ## Açık kararlar
 
-- [ ] ⚠️ **HİKÂYE — kapsam değişikliği.** 2026-08-24'te Enes "hikâye olacağı için haritayı ileride konuşuruz" dedi. Ama bu belge "hikâye yükü yok, özgünlük mekanikte" varsayımıyla ve **3-4 ay** tahminiyle kuruldu. Hikâye eklenirse: ① süre uzar ② Kaos'un ayırt edici özelliği hikâyeydi, iki oyun birbirine yaklaşır. **Faz 4 (harita/koşu yapısı) başlamadan netleşmeli** — Faz 1-3 dövüş odaklı olduğu için hikâyeden bağımsız, engel değil.
+- [x] ✅ **HİKÂYE VAR — karar verildi** (2026-08-24, Enes: *"oyunun genel yapısı tek can ve hikâye üzerinden kurulacak"*).
+  Sonuçları: ① **3-4 ay tahmini geçersiz**, hikâye içeriği kadar uzar ② Kaos'un ayırt edici özelliği hikâyeydi;
+  iki oyun birbirine yaklaşıyor, Kaos seçilirse teması sıfırdan kurulmalı ③ sıra: önce temel mekanik,
+  sonra görsellik ve oynanış, sonra hikâye dokusu.
 - [ ] Harita / bölge tasarımı — hikâye kararından sonra
 - [ ] Nihai silah seti (tohumlar `../../FIKIR_DEFTERI.md` içinde, nihai değil)
 - [ ] Koşu uzunluğu hedefi

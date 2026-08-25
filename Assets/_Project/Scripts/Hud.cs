@@ -20,20 +20,24 @@ namespace TekCan
         {
             _clock = clock;
             _player = player;
-            // Ölü kod değil artık: koşu bitiş ekranı bu olaya bağlı.
+            // Ölü kod değil: koşu bitiş ekranı bu olaylara bağlı.
             clock.OnDeath += OnRunEnded;
+            clock.OnWin += OnRunWon;
         }
 
         void OnDestroy()
         {
-            if (_clock != null) _clock.OnDeath -= OnRunEnded;
+            if (_clock == null) return;
+            _clock.OnDeath -= OnRunEnded;
+            _clock.OnWin -= OnRunWon;
         }
 
         void OnRunEnded() => IsoCamera.Shake(0.5f);
+        void OnRunWon() => IsoCamera.Shake(0.8f);
 
         void Update()
         {
-            if (_clock != null && _clock.Dead && RestartPressed()) Bootstrap.Restart();
+            if (_clock != null && (_clock.Dead || _clock.Won) && RestartPressed()) Bootstrap.Restart();
         }
 
         static bool RestartPressed()
@@ -57,13 +61,14 @@ namespace TekCan
             if (_clock == null) return;
             EnsureStyles();
 
-            if (_clock.Dead) { DrawRunEnd(); return; }
+            if (_clock.Dead || _clock.Won) { DrawRunEnd(); return; }
 
             DrawClock();
+            DrawWavePrompt();
             DrawAltarPrompt();
 
             GUI.Label(new Rect(12f, Screen.height - 26f, 900f, 20f),
-                "WASD · Sol tık saldırı · Shift/Space dash · dash+saldırı = DASH-ATAK · E sunak · 1-4 silah", _small);
+                "WASD · Sol tık saldırı · Shift/Space dash · dash+saldırı = DASH-ATAK · E sunak · 1-4 silah · ENTER dalga", _small);
         }
 
         void DrawClock()
@@ -138,6 +143,32 @@ namespace TekCan
             }
         }
 
+        /// <summary>
+        /// Dalga durumu. Ara verildiğinde SAYAÇ YOK — saat zaten sayaç, oyalanmak
+        /// doğrudan ömürden kesiliyor. Oyuncunun bunu görmesi lazım.
+        /// </summary>
+        void DrawWavePrompt()
+        {
+            var wm = WaveManager.Instance;
+            if (wm == null) return;
+
+            bool ara = wm.Current == WaveManager.Phase.Intermission;
+            _mid.normal.textColor = ara
+                ? (wm.NextIsBoss ? new Color(1f, 0.45f, 0.4f) : new Color(0.55f, 1f, 0.65f))
+                : (wm.IsBossWave ? new Color(1f, 0.45f, 0.4f) : new Color(0.75f, 0.75f, 0.8f));
+
+            GUI.Label(new Rect(0f, Screen.height * 0.30f, Screen.width, 40f), wm.Prompt(), _mid);
+
+            if (ara)
+            {
+                _small.normal.textColor = new Color(1f, 0.75f, 0.5f);
+                GUI.Label(new Rect(0f, Screen.height * 0.30f + 34f, Screen.width, 24f),
+                          "saat işlemeye devam ediyor — beklemek pahalı", _small);
+                _small.normal.textColor = Color.white;
+            }
+            _mid.normal.textColor = Color.white;
+        }
+
         /// <summary>Sunağa yaklaşınca ne aldığını ve kaça aldığını söyler.</summary>
         void DrawAltarPrompt()
         {
@@ -158,13 +189,21 @@ namespace TekCan
 
         void DrawRunEnd()
         {
+            bool won = _clock.Won;
             _big.fontSize = 64;
-            _big.normal.textColor = new Color(1f, 0.35f, 0.35f);
-            GUI.Label(new Rect(0f, Screen.height * 0.22f, Screen.width, 90f), "KOŞU BİTTİ", _big);
+            _big.normal.textColor = won ? new Color(0.45f, 1f, 0.6f) : new Color(1f, 0.35f, 0.35f);
+            GUI.Label(new Rect(0f, Screen.height * 0.22f, Screen.width, 90f),
+                      won ? "KOŞU KAZANILDI" : "KOŞU BİTTİ", _big);
 
             _mid.normal.textColor = Color.white;
             float net = _clock.TotalHarvested - _clock.TotalSpent;
+            var wm = WaveManager.Instance;
+            string dalga = wm == null ? ""
+                : won ? "BOSS DEVRİLDİ\n"
+                      : $"ulaşılan dalga   {wm.Wave}\n";
+
             string özet =
+                dalga +
                 $"hayatta kalınan süre   {_clock.RunTime:0.0} sn\n" +
                 $"öldürülen düşman   {_clock.EnemiesKilled}\n" +
                 $"hasat edilen   {_clock.TotalHarvested:0.0} sn\n" +

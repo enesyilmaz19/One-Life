@@ -46,7 +46,18 @@ namespace TekCan
         public int EnemiesKilled { get; private set; }
         public int Purchases { get; private set; }
 
+        /// <summary>Boss yenildi mi — koşunun ölümden başka bir sonu var artık.</summary>
+        public bool Won { get; private set; }
+
         public event Action OnDeath;
+        public event Action OnWin;
+
+        public void Win()
+        {
+            if (Dead || Won) return;
+            Won = true;
+            OnWin?.Invoke();
+        }
 
         public void Init(Tuning tuning, Transform player)
         {
@@ -62,7 +73,7 @@ namespace TekCan
 
         void Update()
         {
-            if (Dead || _t == null) return;
+            if (Dead || Won || _t == null) return;
 
             RunTime += Time.deltaTime;
             InCombat = AnyLivingEnemyNear();
