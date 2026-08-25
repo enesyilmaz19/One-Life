@@ -48,6 +48,29 @@ namespace TekCan
         /// <summary>Boss mu — kendi akışı yavaş, saatini emiyor, beklenerek yenilemiyor.</summary>
         public bool IsBoss { get; private set; }
 
+        /// <summary>
+        /// Gövde yarıçapı. İsabet hesabı bunu düşüyor: menzil MERKEZE değil YÜZEYE ölçülüyor.
+        ///
+        /// ⚠️ Bu olmadan büyük düşmanlar "bazen vurulamıyor" oluyordu: boss 1.9 kat büyük,
+        /// gövdesine değecek kadar yakınken merkezler arası mesafe hâlâ menzilin dışında
+        /// kalabiliyordu. Oyuncu gördüğü şeye vuramıyordu — görsel ile isabet ayrışmıştı.
+        /// </summary>
+        public float Radius => transform.localScale.x * 0.5f;
+
+        // ── boss ölçekleri ───────────────────────────────────────────────────
+        // Boss yalnızca "kalın bir düşman" olmasın: daha hızlı, daha az uyarı verir,
+        // daha geniş vurur ve darbesi çok daha pahalıdır. Menzili de gövdesi kadar uzun,
+        // yoksa dev bir yaratık burnunun dibinden ıskalıyor gibi görünür.
+        float WindupDuration => _t.enemyWindupDuration
+                              * (Hollow ? _t.enemyHollowWindupMultiplier : 1f)
+                              * (IsBoss ? _t.bossWindupMultiplier : 1f);
+        float AttackAngle => _t.enemyAttackAngle * (IsBoss ? _t.bossAttackAngleMultiplier : 1f);
+        float AttackRange => _t.enemyAttackRange + (IsBoss ? Radius : 0f);
+        float MoveSpeed => (Hollow ? _t.enemyHollowSpeed : _t.enemyFullSpeed)
+                         * (IsBoss ? _t.bossSpeedMultiplier : 1f);
+        float HitCost => (Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost)
+                       * (IsBoss ? _t.bossHitCostMultiplier : 1f);
+
         public void Init(Tuning tuning, Transform player, TimeLabel label,
                          float poolMultiplier = 1f, bool boss = false)
         {
@@ -112,7 +135,7 @@ namespace TekCan
                 case State.Chase:
                     _attackTimer -= Time.deltaTime;
                     ChaseMove();
-                    if (_attackTimer <= 0f && FlatDistanceToPlayer() <= _t.enemyAttackRange)
+                    if (_attackTimer <= 0f && FlatDistanceToPlayer() <= AttackRange)
                         EnterWindup();
                     break;
 
@@ -139,12 +162,12 @@ namespace TekCan
 
         void EnterWindup()
         {
-            float dur = _t.enemyWindupDuration * (Hollow ? _t.enemyHollowWindupMultiplier : 1f);
+            float dur = WindupDuration;
             EnterState(State.Windup, dur);
             FacePlayer();
 
             _telegraph = Arc.Spawn(transform.position, transform.rotation,
-                _t.enemyAttackRange, _t.enemyAttackAngle, TelegraphTint, dur, transform);
+                AttackRange, AttackAngle, TelegraphTint, dur, transform);
             Paint();
         }
 
@@ -155,13 +178,13 @@ namespace TekCan
 
             if (_telegraph != null) { _telegraph.Cancel(); _telegraph = null; }
             Arc.Spawn(transform.position, transform.rotation,
-                _t.enemyAttackRange, _t.enemyAttackAngle, StrikeTint, _t.enemyStrikeDuration * 1.6f);
+                AttackRange, AttackAngle, StrikeTint, _t.enemyStrikeDuration * 1.6f);
             Paint();
 
             // Hasar yalnızca bu anda, kilitli yöne göre iner. Kaçtıysan ıskalar.
             if (PlayerInStrikeCone())
             {
-                float cost = Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost;
+                float cost = HitCost;
                 _player.GetComponent<PlayerController>()?.TakeHit(cost, transform.position);
             }
         }
@@ -184,8 +207,8 @@ namespace TekCan
         bool PlayerInStrikeCone()
         {
             Vector3 to = FlatToPlayer();
-            return to.magnitude <= _t.enemyAttackRange &&
-                   Vector3.Angle(_strikeDir, to) <= _t.enemyAttackAngle * 0.5f;
+            return to.magnitude <= AttackRange &&
+                   Vector3.Angle(_strikeDir, to) <= AttackAngle * 0.5f;
         }
 
         float FlatDistanceToPlayer() => FlatToPlayer().magnitude;
@@ -202,9 +225,9 @@ namespace TekCan
             float dist = to.magnitude;
             if (dist < 0.01f) return;
 
-            if (dist > _t.enemyAttackRange * 0.9f)
+            if (dist > AttackRange * 0.9f)
             {
-                float speed = Hollow ? _t.enemyHollowSpeed : _t.enemyFullSpeed;
+                float speed = MoveSpeed;
                 transform.position += (to / dist) * speed * Time.deltaTime;
             }
             FacePlayer();

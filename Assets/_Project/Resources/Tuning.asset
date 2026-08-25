@@ -24,8 +24,8 @@ MonoBehaviour:
   dashDuration: 0.15
   dashCooldown: 0.5
   iFrameDuration: 0.2
-  attackDuration: 0.35
-  attackHitMoment: 0.4
+  attackDuration: 0.3
+  attackHitMoment: 0.12
   attackDamage: 3.5
   attackRange: 2.2
   attackAngle: 100
@@ -42,7 +42,7 @@ MonoBehaviour:
   enemyHollowWindupMultiplier: 1.6
   enemyAttackAngle: 90
   enemyLungeDistance: 0.8
-  attackMoveDamping: 0.25
+  attackMoveDamping: 0
   enemyTimePool: 10
   enemyDecayPerSecond: 0.4
   enemyFullSpeed: 3.5
@@ -58,9 +58,24 @@ MonoBehaviour:
   altarHarvestStep: 0.08
   altarDamageStep: 1.2
   altarDashStep: 0.08
+  singleTargetAngle: 45
+  faizliSwingCost: 0.5
+  vadeliDamageMult: 2.4
+  vadeliCost: 1.4
   dashAttackDamageMult: 1.6
   dashAttackAngle: 160
   dashAttackRangeMult: 1.15
+  waveCount: 6
+  waveBaseCount: 3
+  waveCountGrowth: 1.5
+  wavePoolGrowth: 1.18
+  bossPoolMultiplier: 9
+  bossAuraDrain: 0.8
+  bossDecayMultiplier: 0.15
+  bossHitCostMultiplier: 2.2
+  bossSpeedMultiplier: 1.25
+  bossWindupMultiplier: 0.85
+  bossAttackAngleMultiplier: 1.5
   enemyCount: 5
   arenaRadius: 14
   camYaw: 45

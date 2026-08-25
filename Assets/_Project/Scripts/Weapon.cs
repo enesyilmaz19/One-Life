@@ -38,6 +38,19 @@ namespace TekCan
         /// <summary>Basılı tutulunca saati dondurur mu (Durgun).</summary>
         public virtual bool HoldFreezesClock => false;
 
+        // ── DASH-ATAK: silaha göre değişir ────────────────────────────────────
+        // Eskiden her silahta aynı geniş alan vuruşuydu; tek hedefli bir silahın
+        // dash'te aniden koni olması silahın kimliğini siliyordu.
+        // Kural: silah tek hedefliyse dash-atağı da tek hedefli kalır ama ÇOK sert vurur;
+        // koni silahın dash-atağı süpürür ama vuruş başına daha az.
+
+        public virtual int DashTargets => MaxTargets;
+        public virtual float DashAngle(Tuning t) => MaxTargets == 1 ? t.singleTargetAngle * 1.6f
+                                                                   : t.dashAttackAngle;
+        public virtual float DashDamageMultiplier(Tuning t) => MaxTargets == 1
+            ? t.dashAttackDamageMult * 1.8f      // tek hedefli: tek isabet, ağır darbe
+            : t.dashAttackDamageMult;            // koni: çok isabet, hafif darbe
+
         public static Weapon[] All => _all ??= new Weapon[]
         {
             new ConeBlade(), new Faizli(), new Durgun(), new Vadeli()

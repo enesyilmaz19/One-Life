@@ -1,12 +1,12 @@
 ## 📥 ENES'İN MASASI
 
-**Faz 4 playtest — koşu artık kazanılabiliyor.** ENTER ile dalga başlat, boss'a kadar git.
+**Faz 4 playtest turu 2** — beş şikâyetin de düzeltildi, tekrar dene:
 
-- [ ] **Dalga arası baskı doğru mu?** Sayacı yok, saat işlemeye devam ediyor — sunaklara bakmak seni yiyor. Gergin mi, sinir bozucu mu?
-- [ ] **Dalga sayısı (6) ve sertleşme hızı doğru mu?** Çok mu uzun, çok mu kısa?
-- [ ] **Boss bir boss gibi mi?** 9 kat havuz, saatini emiyor, beklenerek yenilemiyor. Yeterince tehditkar mı?
-- [ ] **Kazanma hissi var mı?** Boss düşünce "KOŞU KAZANILDI" görüyorsun — tatmin ediyor mu?
-- [ ] **Sunaklar artık anlamlı mı?** Aldığın gücün gideceği bir hedef var artık (boss). Alım kararı değişti mi?
+- [ ] **Saldırı gecikmesi geçti mi?** Vuruş artık tıklamadan ~36 ms sonra iniyor (önce 140 ms)
+- [ ] **WASD artık saldırıyı bozmuyor** — savurma sırasında hiç hareket yok. Taahhüt hissi doğru mu, yoksa çok mu katı?
+- [ ] **Boss'a vurma sorunu geçti mi?** Menzil artık gövde yüzeyine ölçülüyor
+- [ ] **Boss yeterince sert mi?** Hızlı (×1.25), az uyarı (×0.85), geniş koni (×1.5), ağır darbe (×2.2)
+- [ ] **Dash-atak silahtan silaha fark ediyor mu?** Koni süpürüyor, tek hedefliler tek dev darbe vuruyor
 
 ---
 
@@ -89,7 +89,14 @@
 - [x] `Bootstrap.SpawnEnemyAt` tek doğum yolu — iki ayrı doğum kodu olsaydı biri düzeltilip diğeri unutulurdu
 - [x] ENTER kullanıldı, SPACE değil — Space dash, aynı tuşa bağlasaydık çakışırdı
 - [x] Faz 4 öz-denetimi: 15/15 ("BOSS ÖLÜNCE KOŞU KAZANILDI" dâhil)
-- [ ] 🎮 **PLAYTEST KAPISI** — masadaki sorular
+- [x] 🎮 **Playtest turu 1** — dalga sistemi onaylandı (test için)
+- [x] İsabet menzili YÜZEYE ölçülüyor — "bossa vururken buglanıyor" çözüldü
+- [x] Saldırı taahhüt oldu (`attackMoveDamping` 0) — WASD artık bozmuyor, yalnızca dash bozar
+- [x] Girdi gecikmesi 140 ms → ~36 ms
+- [x] Boss sertleştirildi: hız ×1.25 · hazırlık ×0.85 · koni ×1.5 · darbe ×2.2
+- [x] Dash-atak silaha göre değişiyor
+- [ ] 🎮 **PLAYTEST TURU 2** — masadaki sorular
+- [ ] ⚠️ **ENTER geçici** — gerçek oyunda dalgalar oyuncu tarafından çağrılmayacak, hikâye/mekân akışına bağlanacak
 - [ ] Düşman çeşitliliği — tek tip düşmanla dövüş iki dakikada tükeniyor. **En büyük kalan risk**
 - [ ] Oda zinciri / uzamsal ilerleme — hikâye kararından sonra
 - [ ] Ses — hâlâ yok

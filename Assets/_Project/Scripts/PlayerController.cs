@@ -255,18 +255,22 @@ namespace TekCan
         {
             transform.rotation = Quaternion.LookRotation(_dashDir);
 
+            // Dash-atak artık SİLAHA GÖRE değişiyor: tek hedefli silah dash'te de tek
+            // hedefli kalır ama çok sert vurur; koni süpürür ama vuruş başına daha az.
+            // Eskiden hepsi aynı geniş alan vuruşuydu ve silahın kimliğini siliyordu.
             float range = Weapon.Range(_t) * _t.dashAttackRangeMult;
+            float angle = Weapon.DashAngle(_t);
             float damage = Weapon.Damage(_t, Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage)
-                           * _t.dashAttackDamageMult;
+                           * Weapon.DashDamageMultiplier(_t);
 
+            // Silahın kendi rengi ama daha parlak — dash-atak olduğu okunsun.
+            var tint = Weapon.Tint; tint.a = Mathf.Min(1f, tint.a * 1.5f);
             Arc.Spawn(transform.position, transform.rotation,
-                range, _t.dashAttackAngle, DashSwingTint, _t.swingArcLife * 1.3f);
+                range, angle, tint, _t.swingArcLife * 1.3f);
             SwingsSpawned++;
 
-            // Dash-atak silahtan bağımsız olarak GENİŞ vurur — dalış hamlesi olduğu için
-            // tek hedefli silahlarda bile kalabalığı süpürmesi kasıtlı, tek AoE çıkışları o.
-            StrikeCone(range, _t.dashAttackAngle, damage, _t.hitStopDuration * 1.4f, _t.hitShake * 1.5f,
-                       int.MaxValue, Weapon.HarvestMultiplier, out int hits, out int kills);
+            StrikeCone(range, angle, damage, _t.hitStopDuration * 1.4f, _t.hitShake * 1.5f,
+                       Weapon.DashTargets, Weapon.HarvestMultiplier, out int hits, out int kills);
 
             Weapon.OnStrike(Clock.Instance, _t, hits, kills);
         }
@@ -298,7 +302,12 @@ namespace TekCan
         void TickAttack(Vector3 input)
         {
             _attackTimer -= Time.deltaTime;
-            Move(input, _t.attackMoveDamping, rotate: false);   // savurma yönüne bağlı kal
+
+            // ⚠️ SALDIRI TAAHHÜTTÜR. Eskiden savurma sırasında %25 hızla hareket
+            // edilebiliyordu; geri çekilince düşman menzilden çıkıyordu ve vuruş
+            // ıskalıyordu — Enes'in "hareket tuşlarıyla bozuluyor" dediği şey buydu.
+            // Saldırıyı bozan tek şey DASH olmalı, WASD değil.
+            Move(input, _t.attackMoveDamping, rotate: false);
 
             float duration = Weapon.Duration(_t);
             float elapsed = duration - _attackTimer;
@@ -348,7 +357,7 @@ namespace TekCan
                     if (e == null) continue;
                     Vector3 to = e.transform.position - transform.position;
                     to.y = 0f;
-                    float d = to.magnitude;
+                    float d = to.magnitude - e.Radius;          // menzil YÜZEYE ölçülüyor
                     if (d > range || Vector3.Angle(transform.forward, to) > half) continue;
                     if (d < bestDist) { bestDist = d; nearest = e; }
                 }
@@ -371,7 +380,7 @@ namespace TekCan
                     Vector3 to = e.transform.position - transform.position;
                     to.y = 0f;
 
-                    if (to.magnitude > range) continue;
+                    if (to.magnitude - e.Radius > range) continue;   // menzil YÜZEYE ölçülüyor
                     if (Vector3.Angle(transform.forward, to) > half) continue;
 
                     bool wasHollow = e.Hollow;

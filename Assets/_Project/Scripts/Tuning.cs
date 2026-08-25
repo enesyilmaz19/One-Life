@@ -42,9 +42,9 @@ namespace TekCan
 
         [Header("── OYUNCU: SALDIRI ──")]
         [Tooltip("Kısa tutulacak — uzun taahhüt saldırganlığı cezalandırır")]
-        public float attackDuration = 0.35f;
+        public float attackDuration = 0.30f;
         [Tooltip("Vuruşun isabet ettiği an (saldırı süresinin oranı)")]
-        [Range(0f, 1f)] public float attackHitMoment = 0.4f;
+        [Range(0f, 1f)] public float attackHitMoment = 0.12f;
         public float attackDamage = 3.5f;
         public float attackRange = 2.2f;
         [Tooltip("Öndeki koninin toplam açısı (derece)")]
@@ -79,7 +79,7 @@ namespace TekCan
         [Tooltip("Vuruş anında öne atılma mesafesi")]
         public float enemyLungeDistance = 0.8f;
         [Tooltip("Saldırı sırasında hareket hızı çarpanı")]
-        [Range(0f, 1f)] public float attackMoveDamping = 0.25f;
+        [Range(0f, 1f)] public float attackMoveDamping = 0f;
 
         [Header("── DÜŞMAN ──")]
         [Tooltip("Bedende kaç saniye var — hem canı hem ödemesi")]
@@ -146,6 +146,14 @@ namespace TekCan
         public float bossAuraDrain = 0.8f;
         [Tooltip("Boss'un kendi kendine akışı bu kat yavaş — boşalmasını bekleyemezsin")]
         public float bossDecayMultiplier = 0.15f;
+        [Tooltip("Boss'un vuruşu normal düşmanın kaç katı saniye götürür")]
+        public float bossHitCostMultiplier = 2.2f;
+        [Tooltip("Boss bu kat hızlı hareket eder — kaçmak yetmiyor olmalı")]
+        public float bossSpeedMultiplier = 1.25f;
+        [Tooltip("Boss'un hazırlık süresi bu kat — 1'in altı daha az uyarı demek")]
+        public float bossWindupMultiplier = 0.85f;
+        [Tooltip("Boss'un vuruş konisi bu kat geniş — yandan kaçmak zorlaşır")]
+        public float bossAttackAngleMultiplier = 1.5f;
 
         [Header("── ARENA (greybox test) ──")]
         [Tooltip("Faz 4 öncesi sabit doğum için kullanılıyordu; dalga sistemi devrede artık kullanılmıyor")]

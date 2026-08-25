@@ -125,6 +125,43 @@ Marj bilerek dar — tek hedefli oyun kârlı ama zengin etmiyor, kâr beceriyle
 **Darbe maliyeti bilinçli olarak sert bırakıldı:** 4 sn, düşman başına kârın ~6 katı.
 Bir hata altı temiz öldürmeyi siliyor. Roguelike'ta bu seçim savunulabilir; kazara değil.
 
+## Koşu yapısı — Faz 4
+
+### ⚠️ ENTER GEÇİCİ (Enes, 2026-08-24)
+
+Dalgaları `ENTER` ile çağırmak **yalnızca mekanik testi için**. Gerçek oyunda dalgalar
+oyuncu tarafından çağrılmayacak — hikâye/mekân akışına bağlanacak (oda geçişi, kapı,
+tetikleyici, ne olacaksa). `WaveManager.StartNextWave()` zaten dışarıdan çağrılabilir;
+tuş bağı kaldırılıp yerine o akış konacak.
+
+### Boss
+
+Yalnızca "kalın bir düşman" değil: daha hızlı (×1.25), daha az uyarı verir (hazırlık ×0.85),
+daha geniş vurur (koni ×1.5), darbesi çok daha pahalı (×2.2). Menzili gövdesi kadar uzun —
+yoksa dev bir yaratık burnunun dibinden ıskalıyor gibi görünüyordu.
+
+### İsabet menzili YÜZEYE ölçülür, merkeze değil
+
+Enes: *"bossa vururken bazen buglanıyor vuramıyorum."* Sebep: menzil merkezden ölçülüyordu.
+Boss 1.9 kat büyük olduğu için gövdesine değecek kadar yakınken bile merkezler arası mesafe
+menzilin dışında kalabiliyordu — **oyuncu gördüğü şeye vuramıyordu.** Artık `Enemy.Radius`
+düşülüyor. Test korumalı.
+
+### Saldırı TAAHHÜTTÜR
+
+Enes: *"saldırıya başlayınca hareket tuşları ile bozuluyor, dashin bozması lazım."*
+`attackMoveDamping` 0.25 → **0**. Savurma sırasında hiç hareket yok; geri çekilince düşman
+menzilden çıkıp vuruş ıskalıyordu. Saldırıyı bozan tek şey **dash**.
+
+Ayrıca girdi gecikmesi: `attackHitMoment` 0.4 → **0.12**, `attackDuration` 0.35 → **0.30**.
+Vuruş tıklamadan ~36 ms sonra iniyor (önce 140 ms'ti).
+
+### Dash-atak silaha göre
+
+Eskiden her silahta aynı geniş alan vuruşuydu ve silahın kimliğini siliyordu.
+Artık: **tek hedefli silah dash'te de tek hedefli kalır ama çok sert vurur** (×1.8 ek çarpan),
+**koni süpürür ama vuruş başına daha az.** Yay da silahın kendi rengiyle çıkıyor.
+
 ## Silahlar — Faz 3 ✅ (2026-08-24)
 
 **Yapısal çözüm: `HarvestMultiplier`.** Koni, içindeki her düşmandan ayrı hasat ettiği

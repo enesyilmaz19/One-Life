@@ -146,6 +146,34 @@ namespace TekCan.EditorTools
                                 target.TimeLeft < poolBefore - 0.001f, poolBefore - target.TimeLeft);
             }
 
+            // ── 8) ⚠️ BÜYÜK DÜŞMAN YÜZEYİNDEN VURULABİLİYOR MU (Enes: "bossa vururken buglanıyor")
+            //    Menzil merkeze ölçülseydi dev bir yaratık gövdesine değecek kadar yakınken
+            //    bile menzil dışında kalırdı — oyuncu GÖRDÜĞÜ şeye vuramazdı.
+            ClearEnemies();
+            pc.SetWeapon(0);
+            var big = MakeEnemy(t, pGo.transform, Bootstrap.PlayerSpawn + Vector3.forward * 3.0f);
+            big.transform.localScale = Bootstrap.EnemyScale * 1.9f;   // boss ölçeği
+
+            float centerDist = 3.0f;
+            failed += Check(ref total, "test kurgusu: merkez mesafesi menzilin DIŞINDA",
+                            centerDist > t.attackRange, centerDist - t.attackRange);
+            failed += Check(ref total, "ama yüzeyi menzilin İÇİNDE",
+                            centerDist - big.Radius <= t.attackRange, centerDist - big.Radius);
+
+            float bigPoolBefore = big.TimeLeft;
+            strike.Invoke(pc, null);
+            failed += Check(ref total, "BÜYÜK DÜŞMAN YÜZEYİNDEN VURULDU",
+                            big.TimeLeft < bigPoolBefore - 0.001f, bigPoolBefore - big.TimeLeft);
+
+            // ── 9) Dash-atak silaha göre değişiyor mu ──
+            failed += Check(ref total, "KONİ dash-atağı süpürüyor",
+                            new ConeBlade().DashTargets > 1, new ConeBlade().DashTargets);
+            failed += Check(ref total, "FAİZLİ dash-atağı TEK hedefli kalıyor",
+                            new Faizli().DashTargets == 1, new Faizli().DashTargets);
+            failed += Check(ref total, "tek hedefli dash-atak daha sert vuruyor",
+                            new Faizli().DashDamageMultiplier(t) > new ConeBlade().DashDamageMultiplier(t),
+                            new Faizli().DashDamageMultiplier(t));
+
             ClearEnemies();
             Object.DestroyImmediate(poorRoot);
             Object.DestroyImmediate(poorT);
