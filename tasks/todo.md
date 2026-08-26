@@ -4,16 +4,25 @@
       yavaş"* hissi GEÇMİŞ. Enes: *"genel zorluğa göre kolay değil. Taze Hades 2 bitirdim
       ama yine de hiçbir şeysiz bu kadar düşman zorladı."*
       → Oda testleri kirlenmeyecek, yapıya geçilebilir. Ayar ileride
-- [ ] 🎯 **HİKÂYE / MEKÂN KONUŞMASI — sürüyor.** Kalan HER ŞEY buna bağlı:
-      oda zinciri · ENTER'ın kalkması · düşman kadrosunun kesinleşmesi · **asset alımı**
-      **Enes'in koyduğu hedef: 8-10 saatlik hikâye, belki daha fazla**
-- [ ] **Referans topla**
-
-### Kalan yol (asset'e giden sıra)
+- [x] ✅ **HİKÂYE / MEKÂN KONUŞMASI TAMAM** (2026-08-25) — bütün 🔴 sorular cevaplandı.
+      Kararlar `docs/TASARIM.md`'de: ölüm yapısı · 3 diriliş eşyası · checkpoint ·
+      3 perde · 7 düşman + 4 boss · 5 silah · kurgu · EA kapsamı
+- [ ] **Ad koyma** — kahramanın adı, diriliş eşyalarının adları, bölge adları *(sende)*
+- [ ] **Referans topla** — asset fazını hızlandırır
+### Kalan yol
 
 ```
-hikâye/mekân kararı → oda yapısı → kadro kesinleşir → zamanlama kilidi → animasyon + asset
-``` *(bedava, hiç çöpe gitmez, asset işini erken açar)*
+✅ hikâye/mekân kararı
+→ Faz 8: oda zinciri        ← ŞİMDİ BURADAYIZ
+→ Faz 9: checkpoint + diriliş sistemi
+→ Faz 10: zamanlama kilidi
+→ animasyon + asset
+→ erken erişim (giriş + gelişme perdeleri)
+```
+
+**Neden bu sıra:** diriliş checkpoint'e bağlı, checkpoint odalara bağlı. Zamanlama
+kilidi odalardan sonra çünkü mekân hissi değiştiriyor. Asset en sonda çünkü kadro
+ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gitmez, asset işini erken açar)*
       Beğendiğin izometrik oyunlardan ekran görüntüsü biriktir. Hades, Death's Door,
       Moonlighter, Hyper Light Drifter... Neyi beğendiğini bilmek, model alırken
       "şuna benzesin" diyebilmek demek. Şimdiden başlarsan asset fazı hızlanır
@@ -34,7 +43,31 @@ hikâye/mekân kararı → oda yapısı → kadro kesinleşir → zamanlama kili
 
 ---
 
-## Faz 8 — Zamanlama kilitleme ⏸️ **ERTELENDİ — odalardan sonra** (2026-08-25)
+## Faz 8 — Oda zinciri ⬅️ **PLAN, ONAY BEKLİYOR**
+
+> Artık tek arena yok. Odadan odaya yürüyorsun, her odada duran düşmanlar var,
+> bölgenin sonunda boss. **ENTER kalkıyor** — dalgayı sen çağırmıyorsun.
+
+**İyi haber:** sıfırdan başlamıyoruz. Şu anki arena zaten bir oda —
+alan + yerleştirilmiş düşmanlar + bir dövüş. Eksik olan **zincir.**
+
+- [ ] **① Oda = alan + yerleştirilmiş düşmanlar + çıkış(lar)**
+      Düşmanlar odada DURUYOR (doğurma yok). Odayı tasarlamak = dövüşü tasarlamak
+- [ ] **② Odalar arası geçiş** — kapıdan gir, sonraki oda kurulur, eskisi yıkılır
+      *(`Bootstrap.Restart` deseni zaten var, oradan türer)*
+- [ ] **③ Bölge = oda dizisi + sonunda boss**
+- [ ] **④ ENTER kalkar** — odaya girince dövüş zaten başlamıştır
+- [ ] **⑤ Birkaç oda şablonu** — perde başına birkaç default, tek kullanımlıklar ayrı
+- [ ] **⑥ Boss odası özel** — doğurma YALNIZCA burada (ikinci faz, yardımcı çağırma)
+- [ ] Faz 8 öz-denetimi
+- [ ] 🎮 **PLAYTEST KAPISI**
+
+**Bu fazda YAPILMAYACAK** *(sonraki fazlar)*: checkpoint, diriliş eşyaları, kayıt
+sistemi, gerçek harita/görsel bölge kimliği.
+
+---
+
+## Faz 10 — Zamanlama kilitleme ⏸️ **ERTELENDİ — odalardan sonra** (2026-08-25)
 
 > **Enes sordu:** *"bunu şimdi kurmak mı yoksa animasyon ve asset gelmeden önce
 > kurmak mı daha mantıklı"* — sezgisi "animasyon/asset öncesi" idi ve doğruydu.

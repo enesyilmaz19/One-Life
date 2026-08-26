@@ -421,14 +421,109 @@ kararının üstüne ikinci bir katman biniyor.
 kazanılıyor. Yani "tek bir sayı var: saniye" yasası duruyor. ⚠️ Eşya satın alınabilir
 hâle gelirse ikinci bir para birimi doğar ve yasa çatlar. *(Açık karar.)*
 
-### ⚠️ Açık kararlar — yapıyı bunlar belirleyecek
+### Üç çeşit diriliş eşyası ✅ (2026-08-25)
 
-1. **Kaç tane?** 8-10 saatte kaç diriliş eşyası? Oyunun zorluk kadranının TAMAMI bu.
-   Bol olursa gerilim ölür; kıt olursa oyuncu 8 saatini kaybedip oyunu bırakır.
-2. **Checkpoint ne kadar geriye atıyor?** Asıl gerilim kadranı bu olabilir — sayıdan
-   daha çok. Yakınsa ölüm ucuzlar ve "tek can" hafifler; uzaksa gerçekten acıtır.
-3. **"Ölümle şekillenmiş dünya" NE demek?** Somutlaşması gereken en ilginç kısım.
-   Seni öldüren şey güçlenir mi? Bıraktığın şey orada kalır mı? Oda değişir mi?
-4. **⚠️ Kayıt ne zaman yazılıyor?** Oyuncular ölmeden oyunu kapatır. Ölüm diske ANINDA
-   yazılmazsa kalıcı ölüm diye bir şey kalmaz. Kalıcı ölümlü oyunları bozan tuzak budur.
-5. **Diriliş anında saat kaça ayarlanıyor?** 60 saniyeyle dönersen anında yine ölürsün.
+Hepsi **hikâyeden** kazanılır — satın alınmaz, yani ikinci para birimi doğmaz, yasa durur.
+Birden fazla taşınabilir ve **kullanılmışlar tamir edilebilir.**
+
+| # | Eşya | Ne yapar | Saat |
+|---|------|----------|------|
+| 1 | **Ölüm aldatma** | Yerinde dirilirsin, dövüş devam eder | Checkpoint'teki zamanın **küçük bir kısmı** |
+| 2 | **Geçici dönüş** | Ayakta tutar; o süre içinde yenemezsen checkpoint'e atar | **10 saniye** |
+| 3 | **Checkpoint** | Son checkpoint'e döner | Checkpoint'e kaydedilmiş zaman |
+
+**⚠️ Kullanım sırası oyuncuya SORULMAZ, tasarıma gömülüdür.** Menü yok, öncelik ayarı yok —
+sıra zaten doğal: *önce devam etmeyi dene (1) → sonra kazanmayı dene (2) → sonra kaybet (3).*
+Oyunun tüm HUD'ı tek bir sayı; üstüne envanter + öncelik ekranı binerse minimalizm çöker.
+Saatin yanında birkaç ikon yeter.
+
+**Tamir ZAMANLA yapılır.** Ayrı malzemeyle olsaydı ikinci para birimi doğar ve yasa
+çatlardı. Zamanla olunca oyunun en güzel kararı doğuyor:
+*"90 saniyemi verip güvenlik ağımı mı tamir edeyim, yoksa o 90 saniyeyle ilerleyeyim mi?"*
+Kendi ömrünü verip ikinci şans satın alıyorsun — temanın tam kalbi.
+
+### Checkpoint ✅
+
+- **Aralık: 30 dk – 1 saat.** *(C5'teki "3 bölüm" anlatısal perdeler; buradaki "bölüm"
+  o değil, daha küçük kesit.)*
+- Checkpoint'e ulaşınca **o andaki zaman kaydedilir**; diriliş o değeri geri yükler.
+  Böylece "3 saniyeyle ölüp 3 saniyeyle dirilip anında tekrar ölme" sorunu doğmuyor.
+- **⚠️ Ölüm diske ANINDA yazılmalı.** Yazılmazsa oyuncu ölmeden oyunu kapatır ve kalıcı
+  ölüm diye bir şey kalmaz. Kalıcı ölümlü oyunları bozan tuzak birebir budur.
+- ⚪ 30 dk mı 1 saat mi — oynayarak. Gerilim kadranı eşya sayısından çok BU.
+
+### Ölümle şekillenmiş dünya ✅ — (a) + (c) birlikte
+
+**(a) Seni öldüren güçlenir.** Çaldığı zaman bir yere gitti, artık onda.
+**⚠️ Sadece boss ve isimli düşmanlar** — tam nemesis sistemi (Shadow of Mordor) çok pahalı;
+sıradan düşman seni öldürünce yalnızca o odaya iz kalır. Boss ise ad alır, çaldığı zamanı
+havuzuna ekler, tekrar karşına çıktığında gözle görülür şekilde değişmiş olur. Az iş, çok etki.
+
+**(c) Sen ölüyken dünya ilerledi.** ⚠️ **Betikle yazılır, simüle EDİLMEZ.** Checkpoint başına
+elle yazılmış varyasyon: bir kapı kapanmış, biri gitmiş, bir diyalog değişmiş. Gerçek dünya
+simülasyonu tek kişilik ekiple bitmez.
+
+### Game over = oyunun tamamı biter ✅
+
+Elinde eşya kalmadıysa ölüm gerçekten sondur.
+
+**⚠️ Gerçek tehlike sertlik değil, SÜRPRİZ.** 7 saat oynayıp son eşyasının bittiğini
+fark etmeden ölen oyuncu iade de edemez (Steam penceresi 2 saat). Son eşyaya düşünce
+oyun bunu **bağırmalı** — ekran, ses, saatin görünümü değişsin. Oyuncu *"bittiğimi
+biliyordum, kendi hatam"* demeli; o zaman aynı sertlik övgüye döner.
+
+---
+
+## Dünya, hikâye ve kadro ✅ (2026-08-25, Enes)
+
+**Evren:** Kitap serisiyle **aynı evren**, ama kitapla ilgisi olmayan bir konu.
+
+**Kahraman:** Bir erkek *(ad henüz yok)*. Ailesini ve kendisini zamandan kurtarmaya çalışıyor.
+
+**Kurgu — zaman neden tek kaynak:** Zamanda yolculuk deneyi sırasında bir patlama oluyor.
+Sonucunda **zaman tek korunan büyüklük hâline geliyor** — madde, enerji, değer, hepsi
+süreye çöküyor. Bu yüzden yaşamak, almak ve dövüşmek aynı şeyi harcamak zorunda; mekanik
+keyfi değil **kaçınılmaz.** Sonradan bazı insanlar zamanı manipüle etmeyi öğreniyor ve
+başımıza gelenlere sebep oluyorlar. Biz intikam + kurtarma peşindeyiz.
+
+**⚠️ Hikâye BOĞMAYACAK.** Girişte geçmişin yalnızca bir kısmı anlatılır, gerisi ilerledikçe
+şekillenir. Hem oyuncu boğulmaz hem yazım yükü öne yığılmaz.
+
+### Yapı: 3 perde
+
+| Perde | Düşman türü | Boss |
+|-------|-------------|------|
+| **Giriş** | 2 ile başlar, 3'e çıkar | 1 |
+| **Gelişme** | +3 yeni (aşamalı) → 6 | 1 |
+| **Sonuç** | +1 yeni → 7 | 2 |
+
+**Toplam: 7 düşman türü, 4 boss.** *(Şu an 4 tür + 1 boss var.)*
+
+**Bölgeler:** en az 3, kurala ve hikâyeye göre ayrılıyor.
+
+**Odalar:** karışık — her büyük perdede **birkaç basit şablon** tekrar kullanılır,
+tek kullanımlık set-piece'ler ayrı yapılır. Tamamı el yapımı olsaydı bitmezdi.
+
+**⚠️ Düşmanlar odada DURUYOR olur.** Doğurma yalnızca **boss dövüşlerine özel** —
+ikinci faz, yardımcı çağırma, arena değişimi. Böylece doğurma bir kural değil
+**boss'un imzası** oluyor; sıradan dövüş adil kalıyor (kalıcı ölümde pusu ucuz hissettirir),
+boss doğurunca "bu farklı" diye okunuyor. Ayrıca en az iş çıkaran seçenek bu:
+odayı tasarlamak = dövüşü tasarlamak.
+
+### Silahlar ✅ — 5 tane
+
+4+4 yuva fikri **elendi**: 8-10 saatlik oyun için gereksiz. **5 silah yeter**, eldekiler
+ayarlanır/değiştirilir. *(Şu an 4 var: KONİ · FAİZLİ · DURGUN · VADELİ.)*
+
+Silahlar **yolda bulunur.** ⚠️ 1-4 tuşlarıyla anında değiştirme **test kısayolu** —
+ENTER ve B gibi gerçek oyunda kalkacak.
+
+**Karakter:** tek, seçilemez.
+
+### Erken erişim ✅ — en az 2 perde
+
+Enes'in kararı: EA için **giriş + gelişme** hazır olmalı, sonuç saklanır.
+
+Bu doğru: perde 3 ödemenin kendisi, EA'da finali vermek istemezsin. Tek eklemem —
+gelişme perdesi **parça parça** da gelebilir; EA güncellemeleriyle doldurmak standart
+pratik ve piyasaya daha erken çıkarır.
