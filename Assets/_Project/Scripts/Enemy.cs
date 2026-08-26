@@ -479,8 +479,12 @@ namespace TekCan
             else c = Kind.FullColor;                                                // tür rengi
 
             _renderer.material.color = c;
-            // ponytail: renk değişimi + beyaz parlama greybox için yeterli isabet işareti.
-            // Gerçek VFX (parçacık, iz, boşalma efekti) Faz 3'te silahlarla birlikte.
+            // ⚠️ Bu renkler TAŞIYICI, süs değil: dövüş kararları bunlara bakıyor.
+            // Faz 7'de efektler eklenirken kural buydu — efekt bu renkleri örterse
+            // efekt gider, okunurluk kalır. Playtest'te doğrulandı ("okunuyor").
+            //
+            // Efektler renge EK olarak çalışıyor, yerine değil:
+            // isabet halkası (TakeDamage) · boşalma halkası (OnWentHollow) · ölüm halkası (Kill).
         }
     }
 }
