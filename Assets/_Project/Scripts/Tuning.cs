@@ -129,15 +129,15 @@ namespace TekCan
         [Tooltip("Dash-atak menzil çarpanı")]
         public float dashAttackRangeMult = 1.15f;
 
-        [Header("── DALGALAR / KOŞU YAPISI (Faz 4) ──")]
-        [Tooltip("Kaçıncı dalgada boss çıkar — koşu o dalga yenilince KAZANILIR")]
-        public int waveCount = 6;
-        [Tooltip("İlk dalgadaki düşman sayısı")]
-        public float waveBaseCount = 3f;
-        [Tooltip("Her dalgada kaç düşman eklenir")]
-        public float waveCountGrowth = 1.5f;
-        [Tooltip("Her dalgada düşman zaman havuzu bu kat büyür — dalgalar sertleşir")]
-        public float wavePoolGrowth = 1.18f;
+        [Header("── ODALAR / BÖLGE YAPISI (Faz 8) ──")]
+        [Tooltip("Bölgenin kaçıncı odasında boss var — o oda temizlenince KAZANILIR")]
+        public int roomsPerRegion = 6;
+        [Tooltip("İlk odadaki düşman sayısı")]
+        public float roomBaseCount = 3f;
+        [Tooltip("Her odada kaç düşman eklenir")]
+        public float roomCountGrowth = 1.5f;
+        [Tooltip("Her odada düşman zaman havuzu bu kat büyür — odalar sertleşir")]
+        public float roomPoolGrowth = 1.18f;
 
         [Header("── DÜŞMAN TÜRLERİ (Faz 5) ──")]
         [Tooltip("SIZINTI: yaşadığı sürece saatinden saniyede bu kadar emer")]
@@ -148,8 +148,8 @@ namespace TekCan
         public float runnerFleeSpeedMultiplier = 1.3f;
         [Tooltip("KAÇAK: merkeze bu uzaklığa varırsa kaybolur ve zamanını götürür")]
         public float runnerEscapeRadius = 17f;
-        [Tooltip("İlk kaç dalga yalnızca temel düşman gelsin — oyuncu önce oyunu öğrensin")]
-        public int plainWaveCount = 1;
+        [Tooltip("İlk kaç odada yalnızca temel düşman olsun — oyuncu önce oyunu öğrensin")]
+        public int plainRoomCount = 1;
 
         [Header("── BOSS ──")]
         [Tooltip("Boss'un zaman havuzu normal düşmanın kaç katı")]
@@ -180,8 +180,8 @@ namespace TekCan
         public float bossSlamCostMultiplier = 1.6f;
 
         [Header("── ARENA (greybox test) ──")]
-        [Tooltip("YALNIZCA ÖZ-DENETİM İÇİN. Oyunda düşman sayısını dalga sistemi belirliyor " +
-                 "(waveBaseCount / waveCountGrowth); bu alan sadece testlerin sabit bir halka " +
+        [Tooltip("YALNIZCA ÖZ-DENETİM İÇİN. Oyunda düşman sayısını oda sistemi belirliyor " +
+                 "(roomBaseCount / roomCountGrowth); bu alan sadece testlerin sabit bir halka " +
                  "kurmasına yarıyor. Oyun dengesini buradan ayarlama.")]
         public int enemyCount = 5;
         public float arenaRadius = 14f;

@@ -7,6 +7,17 @@
 - [x] ✅ **HİKÂYE / MEKÂN KONUŞMASI TAMAM** (2026-08-25) — bütün 🔴 sorular cevaplandı.
       Kararlar `docs/TASARIM.md`'de: ölüm yapısı · 3 diriliş eşyası · checkpoint ·
       3 perde · 7 düşman + 4 boss · 5 silah · kurgu · EA kapsamı
+**Faz 8 hazır — oda zinciri playtest'i bekliyor.** ENTER kalktı.
+
+- [ ] **Odadan odaya geçiş çalışıyor mu?** Temizle → yeşil disk açılır → üstüne yürü
+- [ ] **Oda bir YOL gibi hissettiriyor mu?** Girişten çıkışa gidiyorsun, düşmanlar arada
+- [ ] **Beş yerleşim ayrışıyor mu?** HALKA · DUVAR · YUMAK · KANAT · DAĞINIK —
+      farklı sorular soruyorlar mı, yoksa hepsi aynı dövüş mü
+- [ ] **Arena çok mu büyük?** Boş odada girişten çıkışa yürümek ~4 saniye.
+      Saat işlediği için bu bedava değil — doğru bedel mi, fazla mı
+- [ ] **Çıkış diski görünüyor mu?** Kapalıyken koyu gri, açılınca yeşil + halka + ses
+- [ ] **Sunaklar iki odada bir geliyor** — sıklık doğru mu
+
 - [ ] **Ad koyma** — kahramanın adı, diriliş eşyalarının adları, bölge adları *(sende)*
 - [ ] **Referans topla** — asset fazını hızlandırır
 ### Kalan yol
@@ -43,7 +54,7 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 
 ---
 
-## Faz 8 — Oda zinciri ⬅️ **PLAN, ONAY BEKLİYOR**
+## Faz 8 — Oda zinciri ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
 
 > Artık tek arena yok. Odadan odaya yürüyorsun, her odada duran düşmanlar var,
 > bölgenin sonunda boss. **ENTER kalkıyor** — dalgayı sen çağırmıyorsun.
@@ -51,16 +62,31 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 **İyi haber:** sıfırdan başlamıyoruz. Şu anki arena zaten bir oda —
 alan + yerleştirilmiş düşmanlar + bir dövüş. Eksik olan **zincir.**
 
-- [ ] **① Oda = alan + yerleştirilmiş düşmanlar + çıkış(lar)**
-      Düşmanlar odada DURUYOR (doğurma yok). Odayı tasarlamak = dövüşü tasarlamak
-- [ ] **② Odalar arası geçiş** — kapıdan gir, sonraki oda kurulur, eskisi yıkılır
-      *(`Bootstrap.Restart` deseni zaten var, oradan türer)*
-- [ ] **③ Bölge = oda dizisi + sonunda boss**
-- [ ] **④ ENTER kalkar** — odaya girince dövüş zaten başlamıştır
-- [ ] **⑤ Birkaç oda şablonu** — perde başına birkaç default, tek kullanımlıklar ayrı
-- [ ] **⑥ Boss odası özel** — doğurma YALNIZCA burada (ikinci faz, yardımcı çağırma)
-- [ ] Faz 8 öz-denetimi
+- [x] **① Oda = alan + yerleştirilmiş düşmanlar + çıkış** (`RoomManager`)
+      Düşmanlar odada DURUYOR. Oyuncu girişe konuluyor, oda bir YOL oldu
+- [x] **② Odalar arası geçiş** — `ExitGate`. Temizleyince açılır, YÜRÜYEREK geçersin.
+      Otomatik değil: saat işlemeye devam ediyor, oyalanma kararı oyuncunun
+- [x] **③ Bölge = oda dizisi + sonunda boss** — boss odasının çıkışı yok, bölge orada biter
+- [x] **④ ENTER KALKTI** — dalga çağırmak yok, odaya girince dövüş başlamış
+- [x] **⑤ Beş oda şablonu** (`RoomLayout`) — HALKA · DUVAR · YUMAK · KANAT · DAĞINIK.
+      `Weapon`/`EnemyKind` ile aynı desen. Deterministik
+- [x] **⑥ Doğurma yalnızca boss odasına ayrıldı** — sıradan odalarda hiç doğurma yok
+- [x] `Tuning` alanları odaya çevrildi (`waveCount` → `roomsPerRegion` vb.)
+- [x] Faz 8 öz-denetimi: **22/22** · Faz 4 öz-denetimi odaya göre yeniden yazıldı (25)
+- [x] **`RoomCapture`** — beş yerleşimi GERÇEK `RoomManager` ile kurup PNG'ye çeker
 - [ ] 🎮 **PLAYTEST KAPISI**
+
+### ⚠️ Bu fazda YAPILMADI — dürüst kayıt
+
+**Boss yardımcı çağırmıyor.** Karar "doğurma yalnızca boss dövüşüne özel" idi; bu fazda
+yalnızca **negatif** tarafı yapıldı (hiçbir sıradan oda doğurmuyor). Boss'un ikinci fazı /
+yardımcı çağırması bir BOSS tasarımı işi ve henüz yok. Boss dövüşü fazına kaldı.
+
+### Ölü kod uyarısı
+
+`Bootstrap.RingPosition` ve `enemyCount` artık yalnızca testlerin sabit halka kurması için
+duruyor — oyun `RoomLayout` kullanıyor. Silinmedi çünkü `Faz1SelfCheck`/`Faz2SelfCheck`
+onlara dayanıyor.
 
 **Bu fazda YAPILMAYACAK** *(sonraki fazlar)*: checkpoint, diriliş eşyaları, kayıt
 sistemi, gerçek harita/görsel bölge kimliği.

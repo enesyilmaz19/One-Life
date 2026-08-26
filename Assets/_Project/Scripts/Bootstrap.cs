@@ -24,7 +24,8 @@ namespace TekCan
         public const float SpawnRingFactor = 0.62f;
 
         /// <summary>
-        /// Düşman doğum konumunun TEK formülü. WaveManager de testler de buradan okuyor.
+        /// Halka doğum formülü. Faz 8'de oda yerleşimleri `RoomLayout`'a taşındı;
+        /// bu formül testlerin sabit halka kurması için duruyor.
         ///
         /// ⚠️ İki kez ayrıştı, iki kez canımızı yaktı:
         /// ① Yükseklik yarıçapla ÇARPILMAMALI. Eski hali `new Vector3(cos, 1f, sin) * radius`
@@ -44,6 +45,19 @@ namespace TekCan
         /// <summary>Testler için kısayol — üretim halkasının aynısı.</summary>
         public static Vector3 EnemySpawnPosition(Tuning t, int index)
             => RingPosition(t, index, t.enemyCount);
+
+        /// <summary>
+        /// Odanın girişi ve çıkışı — zıt kenarlarda.
+        ///
+        /// ⚠️ Oda artık BİR YOL. Tek arenada her yer aynıydı ve mekânın hiçbir anlamı
+        /// yoktu; şimdi girdiğin yerden çıkacağın yere gitmen gerekiyor ve düşmanlar
+        /// aradaki bandı tutuyor. `RoomLayout` yerleşimleri bu eksene göre kuruluyor.
+        /// </summary>
+        public static Vector3 Entrance(Tuning t)
+            => new Vector3(0f, PlayerSpawn.y, -t.arenaRadius * 0.82f);
+
+        public static Vector3 Exit(Tuning t)
+            => new Vector3(0f, PlayerSpawn.y, t.arenaRadius * 0.82f);
 
         /// <summary>Koşuya ait her şey bunun altında — yeniden başlatma tek Destroy.</summary>
         static GameObject _runRoot;
@@ -133,23 +147,13 @@ namespace TekCan
             pc.Init(t, camGo.transform);
             systems.AddComponent<Hud>().Init(clock, pc);
 
-            // Dalga yöneticisi — düşmanlar artık sabit doğmuyor, dalga dalga geliyor.
-            // Koşu boss dalgasıyla bitiyor: yenersen KAZANIYORSUN.
-            systems.AddComponent<WaveManager>().Init(t, player.transform, camGo.transform);
+            // Oda yöneticisi — ilk odayı kendisi kuruyor: düşmanları yerleştiriyor,
+            // oyuncuyu girişe koyuyor, çıkışı açıyor. Sunaklar da odaya ait artık,
+            // arenaya değil (bkz. RoomManager.PlaceAltars).
+            systems.AddComponent<RoomManager>().Init(t, player.transform, camGo.transform);
 
-            // Sunaklar — saniyeyle satın alma (Faz 2)
-            var kinds = new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash };
-            for (int i = 0; i < kinds.Length; i++)
-            {
-                float a = (360f / kinds.Length) * i * Mathf.Deg2Rad + Mathf.PI * 0.25f;
-                float r = t.arenaRadius * 0.28f;
-                SpawnAltar(t, new Vector3(Mathf.Cos(a) * r, PlayerSpawn.y, Mathf.Sin(a) * r),
-                           player.transform, kinds[i]);
-            }
-
-            // Başlangıçta düşman YOK — dalgalar çağrılınca doğuyor. Log bunu doğru söylemeli.
-            Debug.Log($"[Tek Can] Arena hazır — {t.waveCount - 1} dalga + boss, " +
-                      $"{kinds.Length} sunak, {t.startSeconds:0}s saat.");
+            Debug.Log($"[Tek Can] Arena hazır — {t.roomsPerRegion - 1} oda + boss, " +
+                      $"{t.startSeconds:0}s saat.");
         }
 
         /// <summary>Koşuyu sıfırdan kurar. Ölüm ekranı R'ye basınca burayı çağırıyor.</summary>
@@ -166,11 +170,28 @@ namespace TekCan
             Build();
         }
 
-        static void SpawnAltar(Tuning t, Vector3 pos, Transform player, Altar.Kind kind)
+        /// <summary>
+        /// Üç sunağı odanın ortasına halka hâlinde koyar. Yerleşimin TEK kaynağı —
+        /// `RoomManager` de testler de buradan geçiyor.
+        /// </summary>
+        public static void SpawnAltarRing(Tuning t, Transform player, Transform parent)
+        {
+            var kinds = new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash };
+            for (int i = 0; i < kinds.Length; i++)
+            {
+                float a = (360f / kinds.Length) * i * Mathf.Deg2Rad + Mathf.PI * 0.25f;
+                float r = t.arenaRadius * 0.28f;
+                SpawnAltar(t, new Vector3(Mathf.Cos(a) * r, PlayerSpawn.y, Mathf.Sin(a) * r),
+                           player, kinds[i], parent);
+            }
+        }
+
+        static void SpawnAltar(Tuning t, Vector3 pos, Transform player, Altar.Kind kind,
+                               Transform parent = null)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = "Altar_" + kind;
-            go.transform.SetParent(_runRoot.transform);
+            go.transform.SetParent(parent != null ? parent : _runRoot.transform);
             go.transform.position = pos + Vector3.up * 0.2f;
             go.transform.localScale = new Vector3(0.7f, 1.1f, 0.7f);
             Object.Destroy(go.GetComponent<Collider>());
@@ -186,7 +207,7 @@ namespace TekCan
         {
             Enemy.All.Clear();
             Altar.ResetAll();
-            WaveManager.Reset();
+            RoomManager.Reset();
             HitStop.Reset();
             Arc.Reset();
             Mote.Reset();
@@ -204,11 +225,13 @@ namespace TekCan
         /// </summary>
         public static void SpawnEnemyAt(Tuning t, Vector3 pos, Transform player, Transform cam,
                                         float poolMultiplier = 1f, bool boss = false,
-                                        EnemyKind kind = null)
+                                        EnemyKind kind = null, Transform parent = null)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             go.name = boss ? "Boss" : "Enemy";
-            if (_runRoot != null) go.transform.SetParent(_runRoot.transform);
+            // Oda kökü verildiyse oraya: oda sökülünce içindekiler onunla gider.
+            if (parent != null) go.transform.SetParent(parent);
+            else if (_runRoot != null) go.transform.SetParent(_runRoot.transform);
             go.transform.position = pos;
             go.transform.localScale = boss ? EnemyScale * 1.9f : EnemyScale;
             Object.Destroy(go.GetComponent<Collider>());

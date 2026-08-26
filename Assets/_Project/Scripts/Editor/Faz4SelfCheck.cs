@@ -28,9 +28,9 @@ namespace TekCan.EditorTools
 
             var t = ScriptableObject.CreateInstance<Tuning>();
             t.startSeconds = 500f;
-            t.waveCount = 3;                 // kısa koşu: 1, 2, sonra boss
-            t.waveBaseCount = 2f;
-            t.waveCountGrowth = 1f;
+            t.roomsPerRegion = 3;            // kısa bölge: oda 1, 2, sonra boss odası
+            t.roomBaseCount = 2f;
+            t.roomCountGrowth = 1f;
             t.enemyTimePool = 10f;
 
             var root = new GameObject("faz4-check");
@@ -41,34 +41,56 @@ namespace TekCan.EditorTools
             clock.Init(t, player.transform);
 
             Enemy.All.Clear();
-            var wm = root.AddComponent<WaveManager>();
+            var wm = root.AddComponent<RoomManager>();
             wm.Init(t, player.transform, null);
 
-            // 1) Başlangıç: ara evresinde, hiç düşman yok
-            failed += Check(ref total, "koşu ARA evresinde başlıyor",
-                            wm.Current == WaveManager.Phase.Intermission, (int)wm.Current);
-            failed += Check(ref total, "başlangıçta düşman yok", Enemy.All.Count == 0, Enemy.All.Count);
-
-            // 2) İlk dalga doğuyor
-            wm.StartNextWave();
+            // 1) ⚠️ ODAYA GİRİNCE DÖVÜŞ ZATEN BAŞLAMIŞ
+            //    Faz 8'in özü bu: ENTER kalktı, dalga çağırmıyorsun. Eskiden koşu
+            //    "ara evresinde, hiç düşman yok" diye başlıyordu — o bir test düzeneğiydi.
             int w1 = Enemy.All.Count;
-            failed += Check(ref total, "dalga 1 düşman doğurdu", w1 > 0, w1);
-            failed += Check(ref total, "dövüş evresine geçti",
-                            wm.Current == WaveManager.Phase.Fighting, (int)wm.Current);
+            failed += Check(ref total, "⚠️ oda 1'de düşmanlar ZATEN duruyor", w1 > 0, w1);
+            failed += Check(ref total, "oda 1 boss odası değil", !wm.IsBossRoom, wm.Room);
+            failed += Check(ref total, "oda temizlenmemiş sayılıyor", !wm.Cleared, 0);
             float pool1 = Enemy.All[0].TimeLeft;
 
-            // 3) Dalgalar sertleşiyor
+            // 2) Oyuncu GİRİŞE konuluyor — oda bir yol
+            failed += Check(ref total, "oyuncu odanın girişinde",
+                            Vector3.Distance(player.transform.position, Bootstrap.Entrance(t)) < 0.01f,
+                            Vector3.Distance(player.transform.position, Bootstrap.Entrance(t)));
+
+            // 3) ⚠️ ÇIKIŞ ODA TEMİZLENENE KADAR KAPALI
+            var gate = Object.FindFirstObjectByType<ExitGate>();
+            failed += Check(ref total, "çıkış kapısı var", gate != null, gate != null ? 1 : 0);
+            failed += Check(ref total, "⚠️ çıkış başta KAPALI",
+                            gate != null && !gate.IsOpen, 0);
+
+            // 4) Oda temizlenince çıkış açılıyor
             KillAll();
-            wm.StartNextWave();
+            Tick(wm);
+            failed += Check(ref total, "oda temizlendi olarak işaretlendi", wm.Cleared, 1);
+            failed += Check(ref total, "⚠️ temizlenince çıkış AÇILIYOR",
+                            gate != null && gate.IsOpen, 1);
+
+            // 5) Odalar sertleşiyor
+            wm.NextRoom();
             int w2 = Enemy.All.Count;
             float pool2 = Enemy.All[0].TimeLeft;
-            failed += Check(ref total, "dalga 2 daha kalabalık", w2 > w1, w2 - w1);
-            failed += Check(ref total, "dalga 2 düşmanı daha dayanıklı", pool2 > pool1, pool2 - pool1);
+            failed += Check(ref total, "oda 2 daha kalabalık", w2 > w1, w2 - w1);
+            failed += Check(ref total, "oda 2 düşmanı daha dayanıklı", pool2 > pool1, pool2 - pool1);
 
-            // 4) Boss dalgası
+            // 6) ⚠️ ESKİ ODA SÖKÜLDÜ MÜ
+            //    `Enemy.All` statik: nesneyi yok etmek listeden düşürmüyor. Temizlemezsek
+            //    yeni oda "hâlâ düşman var" sanır ve çıkış hiç açılmaz.
+            int hayalet = 0;
+            foreach (var e in Enemy.All) if (e == null) hayalet++;
+            failed += Check(ref total, "⚠️ eski odadan hayalet düşman kalmadı", hayalet == 0, hayalet);
+
+            // 7) Boss odası
             KillAll();
-            wm.StartNextWave();
-            failed += Check(ref total, "3. dalga BOSS dalgası", wm.IsBossWave, wm.Wave);
+            wm.NextRoom();
+            failed += Check(ref total, "3. oda BOSS odası", wm.IsBossRoom, wm.Room);
+            failed += Check(ref total, "⚠️ boss odasında çıkış YOK (bölge orada bitiyor)",
+                            Object.FindFirstObjectByType<ExitGate>() == null, 0);
             var boss = Enemy.All.Count > 0 ? Enemy.All[0] : null;
             failed += Check(ref total, "boss doğdu", boss != null && boss.IsBoss, Enemy.All.Count);
             failed += Check(ref total, "boss çok daha dayanıklı",
@@ -81,9 +103,7 @@ namespace TekCan.EditorTools
             clock.OnWin += () => winFired = true;
 
             KillAll();
-            typeof(WaveManager).GetMethod("Update",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.Invoke(wm, null);
+            Tick(wm);
 
             failed += Check(ref total, "BOSS ÖLÜNCE KOŞU KAZANILDI", clock.Won, clock.Won ? 1 : 0);
             failed += Check(ref total, "kazanma olayı tetiklendi", winFired, winFired ? 1 : 0);
@@ -94,7 +114,7 @@ namespace TekCan.EditorTools
             //    kaldıran bir saldırısı yoktu. Yere vuruş 360° — yana kaçmak işe yaramaz,
             //    UZAKLAŞMAK gerekir. Test: halkanın içi vurulur, dışı vurulmaz.
             KillAll();
-            wm.StartNextWave();
+            wm.NextRoom();          // bölge sonrası oda da boss odası (Room >= roomsPerRegion)
             var slamBoss = Enemy.All.Count > 0 ? Enemy.All[0] : null;
             if (slamBoss != null)
             {
@@ -127,7 +147,7 @@ namespace TekCan.EditorTools
 
             // ⚠️ ETKİ testi, özellik değil: boss saati GERÇEKTEN emiyor mu?
             KillAll();
-            wm.StartNextWave();                       // yeni boss
+            wm.NextRoom();                            // yeni boss odası
             var b2 = Enemy.All.Count > 0 ? Enemy.All[0] : null;
             if (b2 != null)
             {
@@ -147,6 +167,12 @@ namespace TekCan.EditorTools
             else Debug.LogError($"[Faz 4 öz-denetim] ❌ {total} kontrolden {failed} tanesi BAŞARISIZ");
             return failed;
         }
+
+        /// <summary>RoomManager.Update'i bir kez elle çevir — temizlenme kararı orada veriliyor.</summary>
+        static void Tick(RoomManager rm) =>
+            typeof(RoomManager).GetMethod("Update",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.Invoke(rm, null);
 
         static void KillAll()
         {

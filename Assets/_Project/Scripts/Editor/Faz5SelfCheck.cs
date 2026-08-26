@@ -146,9 +146,10 @@ namespace TekCan.EditorTools
 
             // ── 7) Türler kademeli açılıyor ──
             Clear();
-            var wm = root.AddComponent<WaveManager>();
+            var wm = root.AddComponent<RoomManager>();
             wm.Init(t, player.transform, null);
-            var pick = typeof(WaveManager).GetMethod("PickKind",
+            Clear();      // Init ilk odayı kuruyor; tür seçimini sınayacağız, düşmanları değil
+            var pick = typeof(RoomManager).GetMethod("PickKind",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
             bool ilkDalgaHepTemel = true;

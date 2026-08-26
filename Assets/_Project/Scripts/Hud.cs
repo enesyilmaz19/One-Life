@@ -68,7 +68,7 @@ namespace TekCan
             DrawAltarPrompt();
 
             GUI.Label(new Rect(12f, Screen.height - 26f, 900f, 20f),
-                "WASD · Sol tık saldırı · Shift/Space dash · dash+saldırı = DASH-ATAK · E sunak · 1-4 silah · ENTER dalga · B boss (test)", _small);
+                "WASD · Sol tık saldırı · Shift/Space dash · dash+saldırı = DASH-ATAK · E sunak · 1-4 silah · B boss (test)", _small);
         }
 
         void DrawClock()
@@ -144,26 +144,25 @@ namespace TekCan
         }
 
         /// <summary>
-        /// Dalga durumu. Ara verildiğinde SAYAÇ YOK — saat zaten sayaç, oyalanmak
+        /// Oda durumu. Çıkış açıldığında SAYAÇ YOK — saat zaten sayaç, oyalanmak
         /// doğrudan ömürden kesiliyor. Oyuncunun bunu görmesi lazım.
         /// </summary>
         void DrawWavePrompt()
         {
-            var wm = WaveManager.Instance;
+            var wm = RoomManager.Instance;
             if (wm == null) return;
 
-            bool ara = wm.Current == WaveManager.Phase.Intermission;
-            _mid.normal.textColor = ara
-                ? (wm.NextIsBoss ? new Color(1f, 0.45f, 0.4f) : new Color(0.55f, 1f, 0.65f))
-                : (wm.IsBossWave ? new Color(1f, 0.45f, 0.4f) : new Color(0.75f, 0.75f, 0.8f));
+            _mid.normal.textColor = wm.Cleared
+                ? new Color(0.55f, 1f, 0.65f)
+                : (wm.IsBossRoom ? new Color(1f, 0.45f, 0.4f) : new Color(0.75f, 0.75f, 0.8f));
 
             GUI.Label(new Rect(0f, Screen.height * 0.30f, Screen.width, 40f), wm.Prompt(), _mid);
 
-            if (ara)
+            if (wm.Cleared)
             {
                 _small.normal.textColor = new Color(1f, 0.75f, 0.5f);
                 GUI.Label(new Rect(0f, Screen.height * 0.30f + 34f, Screen.width, 24f),
-                          "saat işlemeye devam ediyor — beklemek pahalı", _small);
+                          "yeşil diske yürü — beklemek pahalı", _small);
                 _small.normal.textColor = Color.white;
             }
             else
@@ -215,10 +214,10 @@ namespace TekCan
 
             _mid.normal.textColor = Color.white;
             float net = _clock.TotalHarvested - _clock.TotalSpent;
-            var wm = WaveManager.Instance;
+            var wm = RoomManager.Instance;
             string dalga = wm == null ? ""
                 : won ? "BOSS DEVRİLDİ\n"
-                      : $"ulaşılan dalga   {wm.Wave}\n";
+                      : $"ulaşılan oda   {wm.Room}\n";
 
             string özet =
                 dalga +
