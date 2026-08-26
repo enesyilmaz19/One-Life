@@ -287,3 +287,34 @@ Parlaklık fikri reddedildi (Enes: saçma kaçar). Düşmanın üstünde **geri 
 | **İçerik çeşitliliği** | Meta ilerleme yok → tekrar oynanabilirliğin tamamı koşunun *içindeki* çeşitlilikten gelmeli. Bu türün asıl batma sebebi. |
 | **Dövüş hissi** | Sistemler özgünlüğü taşımıyorsa yükü vuruş hissi taşır. Enes'in 2. Steam kriteri zaten bu. |
 | **Denge** | Saniye ekonomisi tek sayı olduğu için hassas; kazanç/kayıp oranları erken kalibre edilmeli. Deterministik simülasyonla test edilebilir. |
+
+## Ses — Faz 6 ✅ (2026-08-25)
+
+Sesler **koddan üretiliyor**: gürültü + zarf + tek kutuplu alçak geçiren filtre.
+Ses dosyası yok, kütüphane yok, lisans yok. Görsel kimlik için verilen kararın aynısı —
+sanatçı gerektirmeyen yere yaslan.
+
+9 ses: savurma · isabet · hasar · dash · hasat · yere vuruş · alım · ölüm · kazanma.
+
+### Sesler GEÇİCİ — Enes kararı (2026-08-25)
+
+> *"seslerin hepsi kötü ama en azından ne olduğunu ayırt edebiliyoruz o açıdan okey.
+> değiştirene kadar dursun test için"*
+
+Şu anki sesler **test kalitesinde**: amaçları "ne oldu" sorusunu ayırt edilebilir
+kılmak, his vermek değil. Silahlarda verilen kararın aynısı — yapı dursun, içerik sonra.
+
+`Sfx.Hit()` gibi çağrı yüzeyi sabit; gerçek ses tasarımı gelince yalnızca üretim
+tarafı değişecek, çağıran hiçbir kod dokunulmayacak.
+
+### ⚠️ Sesin duyulması ses sisteminin işi
+
+İki tur boyunca sesler doğru üretildi ve **hiç duyulmadı** — sahnede `AudioListener`
+yoktu. Dersin kalıcı hali:
+
+> Unity'de "var mı?" diye SORUP karar verme. `Object.Destroy` ertelenir; silinmekte
+> olan nesne o kare boyunca bulunmaya devam eder, yani cevap yalan olabilir.
+> Sahip olman gereken şeyi **koşulsuz KUR.**
+
+Şablon temizliği artık `DestroyImmediate` (kaynak), `Sfx` dinleyiciyi kendi nesnesine
+koşulsuz takıyor (yeniden başlatma için).

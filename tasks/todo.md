@@ -1,14 +1,9 @@
 ## 📥 ENES'İN MASASI
 
-**Ses geldi.** Kulaklık tak, birkaç dalga oyna.
-
-- [ ] **Vurmak artık tok mu?** Isabet sesi + hit-stop + sarsıntı birlikte çalışıyor mu?
-- [ ] **Sesler rahatsız mı?** Kalabalıkta üst üste binip gürültü oluyor mu?
-- [ ] **Savurma sesi duyuluyor mu?** Iskaladığında da çıkıyor
-- [ ] **Yere vuruş sesi uyarıyor mu?** Boss halkayı açınca alçak bir gümürtü geliyor
-- [ ] **Hangisi kötü?** Bir ses tırmalıyorsa söyle, o sesi değiştiririm
+**Şu an masanda iş yok.** Faz 7'nin ne olacağına karar verilecek.
 
 > **B** tuşu: doğrudan boss dalgasına atlar (test kısayolu, gerçek oyunda kalkacak)
+> **ENTER**: dalga çağırır (test kısayolu, gerçek oyunda kalkacak)
 
 ---
 
@@ -78,7 +73,7 @@
 - [x] Faz 3 öz-denetimi: 17/17 (her silahın gerçekten hasar verdiği dâhil)
 - [x] 🎮 **PLAYTEST KAPISI GEÇİLDİ** — Enes: *"hepsi çalıştı"* (2026-08-24). Silahlar test için donduruldu, değişim ileride
 
-## Faz 4 — Koşu yapısı ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+## Faz 4 — Koşu yapısı ✅ **KAPANDI** (2026-08-25)
 
 > **Çözülen sorun:** öncesinde 5 düşman bir kez doğuyordu ve koşunun tek çıkışı ölümdü.
 > Yani **arenayı temizlemek kaybetmek demekti** — dövüş dışı kalıyordun, saat hızlı iniyordu,
@@ -97,11 +92,11 @@
 - [x] Girdi gecikmesi 140 ms → ~36 ms
 - [x] Boss sertleştirildi: hız ×1.25 · hazırlık ×0.85 · koni ×1.5 · darbe ×2.2
 - [x] Dash-atak silaha göre değişiyor
-- [ ] 🎮 **PLAYTEST TURU 2** — masadaki sorular
+- [x] 🎮 **Playtest turu 2** — "hepsi düzeldi". Boss: *"böyle kalsın, şikayetim olursa söylerim"*
 - [ ] ⚠️ **ENTER geçici** — gerçek oyunda dalgalar oyuncu tarafından çağrılmayacak, hikâye/mekân akışına bağlanacak
 - [x] ✅ **Düşman çeşitliliği — Faz 5'te çözüldü** (aşağıda)
 
-## Faz 6 — Ses ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+## Faz 6 — Ses ✅ **KAPANDI** (2026-08-25)
 
 > Faz 1'den beri "vuruş hissinin kalan yarısı" diye duruyordu.
 
@@ -111,11 +106,37 @@
 - [x] **Hafif rastgele perde** — aynı ses üst üste binince makineleşmesin
 - [x] **Hasat sesi yalnızca BÜYÜK kazançta** (KASA'nın toplu ödemesi, FAİZLİ'nin iadesi).
       Her vuruşta çalsaydı isabet sesiyle üst üste biner, ikisi de duyulmazdı
-- [x] Faz 6 öz-denetimi: 37/37 — ilk kontrol "her ses SESSİZ DEĞİL Mİ"
+- [x] Faz 6 öz-denetimi: 40/40 — **ilk** kontrol "dinleyici yaşayan nesnede mi"
 - [x] **B tuşu: boss'a atla** — Enes boss'a ulaşamadı, test edilemeyen şey ayarlanamaz
-- [ ] 🎮 **PLAYTEST KAPISI** — masadaki sorular
+- [x] 🎮 **Playtest kapısı** — *"aga sesler geliyor"*
 
-## Faz 5 — Düşman türleri ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+### ⚠️ İki tur sessizlik — `Object.Destroy` ertelenir (2026-08-25)
+
+İlk teslimde 9 sesin dokuzu da doğruydu, 37/37 test yeşildi ve oyunda **tek ses
+çıkmıyordu**: sahnede hiç `AudioListener` yoktu. İkinci teslimde de çıkmadı, çünkü
+düzeltme "dinleyici var mı?" diye soruyordu — `Object.Destroy` ERTELENDİĞİ için
+silinmekte olan şablon kamerasının dinleyicisi hâlâ bulunuyordu.
+
+- [x] `Sfx.EnsureListener` artık sormuyor, **koşulsuz kuruyor**
+- [x] **Kök neden:** `Bootstrap` şablon temizliği `DestroyImmediate` — `Restart()` bu
+      tuzağı zaten biliyordu, `Build()` bilmiyordu
+- [x] 6 kanallı `AudioSource` havuzu — tek kaynakta `pitch`, çalmakta olan sesleri de büküyordu
+- [x] `Sfx.Init` her koşuda Console'a dinleyici durumunu basıyor
+- [x] Denetim artık sahneye **yem dinleyici** bırakıyor — eski kod bu yemi yutup geçerdi
+- [x] `lessons.md` (7): *zincirin son halkası testin içinde mi* + *ertelenmiş Destroy'a sorma, kur*
+
+### 🔊 Sesler GEÇİCİ (Enes, 2026-08-25)
+
+> *"seslerin hepsi kötü ama en azından ne olduğunu ayırt edebiliyoruz o açıdan okey.
+> değiştirene kadar dursun test için"*
+
+Sentezlenmiş sesler **test kalitesinde tutuluyor** — ayırt edilebilirlik yeterli,
+his değil. Silahlarda verilen kararın aynısı: yapı dursun, içerik sonra.
+
+- [ ] Seslerin gerçek tasarımı — `Sfx` çağrı yüzeyi (`Sfx.Hit()` vb.) aynı kalacak,
+      yalnızca üretim değişecek
+
+## Faz 5 — Düşman türleri ✅ **KAPANDI** (2026-08-25)
 
 > **Çözülen risk:** meta ilerleme yok, yani tekrar oynanabilirliğin TAMAMI koşunun
 > içinden gelmek zorunda. Tek tip düşmanla dövüş iki dakikada tükeniyordu.
@@ -130,9 +151,9 @@
 - [x] **Deterministik kompozisyon** — aynı dalga hep aynı karışım; "dalga mı zor, ben mi kötü oynadım" cevaplanabilir kalıyor
 - [x] HUD'da sahnedeki tür listesi (greybox'ta renk tek başına yetmiyor)
 - [x] Faz 5 öz-denetimi: 15/15 (her türün gerçekten çalıştığı dâhil)
-- [ ] 🎮 **PLAYTEST KAPISI** — masadaki sorular
+- [x] 🎮 **Playtest kapısı** — *"test süreci gayet okey şuanda"*
+- [x] KAÇAK çok hızlı kaçıyordu (7.25 vs oyuncu 6) → çarpan 1.3 (5.23), testle korundu
 - [ ] Oda zinciri / uzamsal ilerleme — hikâye kararından sonra
-- [ ] Ses — hâlâ yok
 
 ---
 
