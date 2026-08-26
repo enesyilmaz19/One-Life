@@ -71,11 +71,14 @@ namespace TekCan
         ///
         /// ⚠️⚠️ "Var mı?" diye SORMAK YETMEZ — `Object.Destroy` ERTELENİR.
         ///
-        /// Bootstrap şablondan gelen kameraları siliyor; `SampleScene`'in Main Camera'sı
-        /// dinleyiciyi taşıyor. `Destroy` çağrıldıktan sonra o nesne kare SONUNA kadar
-        /// yaşamaya devam eder ve `FindFirstObjectByType` onu hâlâ bulur. Burada
-        /// "dinleyici var" deyip geçtiğimizde, kare bitince o dinleyici de kamerayla
-        /// birlikte ölüyordu → sahnede sıfır dinleyici → tek ses çıkmıyordu.
+        /// Yok edilmeye işaretlenen nesne kare SONUNA kadar yaşar ve `FindObjectsByType`
+        /// onu bulmaya devam eder. Bir zamanlar burada "dinleyici var" deyip geçiyorduk;
+        /// bulunan dinleyici şablonun silinmekte olan kamerasınınkiydi, kare bitince o da
+        /// ölüyordu → sahnede sıfır dinleyici → oyunda tek ses çıkmıyordu.
+        ///
+        /// Kaynağı `Bootstrap` düzeltildi (şablon temizliği artık `DestroyImmediate`).
+        /// Ama tuzak bitmedi: `Restart` eski koşuyu hâlâ ertelemeli siliyor, yani yeni
+        /// koşu kurulurken ESKİ dinleyici canlı görünüyor.
         ///
         /// Bu yüzden dinleyici SORULMAZ, KURULUR: ölecek olanlar hemen alınır, yenisi
         /// bizim nesnemize takılır. Bizim nesnemiz koşu boyunca yaşıyor, yani dinleyici de.

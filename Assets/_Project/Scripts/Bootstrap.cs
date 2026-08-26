@@ -61,9 +61,22 @@ namespace TekCan
                 t = ScriptableObject.CreateInstance<Tuning>();
             }
 
-            // Şablondan gelen sahne içeriğini temizle
+            // Şablondan gelen sahne içeriğini temizle.
+            //
+            // ⚠️ `Destroy` DEĞİL, `DestroyImmediate`. `Object.Destroy` yok etmeyi kare
+            // SONUNA erteler; işaretlenen nesne o kare boyunca yaşamaya ve `FindObjectsByType`
+            // tarafından BULUNMAYA devam eder. Aşağıda kurulan sistemler "sahnede X var mı?"
+            // diye sorduğunda ölmekte olan şablon nesnesini görüp yanlış karar veriyorlar.
+            //
+            // Bu tam olarak sesi öldüren şeydi: şablonun Main Camera'sı AudioListener
+            // taşıyor; `Sfx.Init` "dinleyici var" diye onu buluyor, yenisini eklemiyordu;
+            // kare bitince o dinleyici de kamerayla gidiyordu → oyunda hiç ses yok.
+            // (`Restart` bu tuzağı zaten biliyordu ve SetActive(false) ile korunuyordu;
+            //  burada aynı bilgi uygulanmamıştı.)
+            //
+            // Şablon içeriği bizim değil ve hiçbir şey henüz kurulmadı — hemen silmek güvenli.
             foreach (var c in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include))
-                Object.Destroy(c.gameObject);
+                Object.DestroyImmediate(c.gameObject);
 
             // Aydınlatma okunabilirliğin parçası: düşman durumları RENKLE ayrışıyor
             // (kırmızı dolu / turuncu hazırlık / beyaz isabet / gri boş). Ortam ışığı
@@ -71,8 +84,9 @@ namespace TekCan
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
             RenderSettings.ambientLight = new Color(0.42f, 0.42f, 0.48f);
 
+            // Yukarıdaki gerekçe: şablon temizliği ertelenmez.
             foreach (var old in Object.FindObjectsByType<Light>(FindObjectsInactive.Include))
-                Object.Destroy(old.gameObject);
+                Object.DestroyImmediate(old.gameObject);
 
             var lightGo = new GameObject("Sun"); lightGo.transform.SetParent(_runRoot.transform);
             var l = lightGo.AddComponent<Light>();
