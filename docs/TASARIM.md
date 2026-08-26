@@ -356,3 +356,28 @@ değil, *"doğru mahalleye otursun ki germe payı içinde kalsın."*
 
 Animasyonlar beklenen ayar aralığının **ortasına** göre yapılır, o anki değere göre değil —
 iki yöne de pay kalsın.
+
+### Kilitleme sırası: odalardan SONRA, animasyondan ÖNCE (2026-08-25)
+
+Zamanlama kilidi başta "hemen sırada" diye planlanmıştı; Enes *"animasyon ve asset
+gelmeden önce daha mantıklı değil mi"* diye sordu ve haklıydı.
+
+**Gerekçe:** mekân, zamanlamanın hissini değiştiriyor. `dashDistance 2.5` geniş arenada
+kısa bir sıçrama, dar bir odada odayı baştan başa geçmek demek — `attackRange` de öyle.
+Oda yapısı oturmadan kilitlenen sayılar, odalar gelince kırılmak zorunda kalır.
+
+**Sıra:**
+
+```
+hikâye/mekân kararı → oda yapısı → düşman kadrosu kesinleşir
+→ zamanlama kilidi → animasyon + asset
+```
+
+**İkinci gerekçe:** ortada çözülecek somut bir his sorusu yok. Tek açık şikâyet Faz 1'den
+kalma ("biz çok hızlı, düşmanlar yavaş vuruyor") ve o gözlem attack-commitment
+düzeltmesinden, tek hedefli silahlardan ve boss sertleştirmesinden ÖNCE yapıldı.
+Var olmayabilecek bir soru için alet kurmak aletin kendisini israf eder.
+
+**⚠️ Ertelemenin riski:** dövüş zamanlaması gerçekten bozuksa bundan sonraki her
+playtest kirlenir — oda tasarımı yargılanırken aslında dövüş yargılanır ve yanlış yer
+düzeltilir. Bu yüzden odalara başlamadan önce tek soruluk kontrol yapılıyor.

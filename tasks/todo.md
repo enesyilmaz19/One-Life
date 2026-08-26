@@ -1,7 +1,20 @@
 ## 📥 ENES'İN MASASI
 
-- [ ] **Faz 8 planına onay** — zamanlama kilitleme. Aracı kurayım mı
-- [ ] **Referans topla** *(bedava, hiç çöpe gitmez, asset işini erken açar)*
+- [ ] **⚠️ Bir koşu oyna — eski his duruyor mu?**
+      Faz 1'de *"biz çok hızlı düşmanlar çok yavaş vuruyormuş gibi geldi"* demiştin.
+      O gözlem attack-commitment, tek hedefli silahlar ve boss sertleştirmesinden
+      ÖNCEYDİ. Hâlâ öyle mi? **Duruyorsa** şimdi düzeltiriz (alet gerekmez, tek değişken).
+      **Geçmişse** yapıya geçeriz. Bu cevap gelmeden odalara başlamak riskli —
+      dövüş bozuksa oda testleri de kirlenir
+- [ ] **Hikâye / mekân konuşması** — asıl tıkanma burası. Kalan HER ŞEY buna bağlı:
+      oda zinciri · ENTER'ın kalkması · düşman kadrosunun kesinleşmesi · **asset alımı**
+- [ ] **Referans topla**
+
+### Kalan yol (asset'e giden sıra)
+
+```
+hikâye/mekân kararı → oda yapısı → kadro kesinleşir → zamanlama kilidi → animasyon + asset
+``` *(bedava, hiç çöpe gitmez, asset işini erken açar)*
       Beğendiğin izometrik oyunlardan ekran görüntüsü biriktir. Hades, Death's Door,
       Moonlighter, Hyper Light Drifter... Neyi beğendiğini bilmek, model alırken
       "şuna benzesin" diyebilmek demek. Şimdiden başlarsan asset fazı hızlanır
@@ -22,7 +35,31 @@
 
 ---
 
-## Faz 8 — Zamanlama kilitleme ⬅️ **PLAN, ONAY BEKLİYOR**
+## Faz 8 — Zamanlama kilitleme ⏸️ **ERTELENDİ — odalardan sonra** (2026-08-25)
+
+> **Enes sordu:** *"bunu şimdi kurmak mı yoksa animasyon ve asset gelmeden önce
+> kurmak mı daha mantıklı"* — sezgisi "animasyon/asset öncesi" idi ve doğruydu.
+
+**Neden ertelendi:**
+
+1. **Mekân yapısı zamanlama hissini değiştiriyor.** `dashDistance` 2.5, geniş arenada
+   kısa bir sıçrama, dar odada odayı baştan başa geçmek demek. `attackRange` de öyle.
+   Odalar gelmeden kilitlenen sayılar, odalar gelince kırılır.
+2. **Ortada çözülecek somut soru yok.** Tek açık şikâyet Faz 1'den kalma
+   ("biz çok hızlı, düşmanlar yavaş vuruyor") ve **bayat** — attack-commitment
+   düzeltmesinden, tek hedefli silahlardan ve boss sertleştirmesinden ÖNCE söylendi.
+
+**Yeni yeri:** oda yapısı oturduktan SONRA, animasyondan ÖNCE.
+
+**⚠️ Ertelemenin riski ve ucuz sigortası:** dövüş zamanlaması gerçekten bozuksa
+bundan sonraki her playtest kirlenir — odaları test ederken "oda kötü" dersin ama
+dövüş kötüdür, yanlış yeri düzeltirsin. Sigorta: Enes bir koşu oynayıp eski hissin
+durup durmadığını söyler *(masada)*. Duruyorsa alet beklemeden, tek değişken olarak
+şimdi düzeltilir.
+
+---
+
+## Faz 8 planı (ertelendi, içerik duruyor)
 
 > **Enes istedi (2026-08-25):** *"dövüş zamanlamaları kilitli, animasyon eklemeden
 > değişiklik yapıp en uyguna oturtmaya çalışalım"*
