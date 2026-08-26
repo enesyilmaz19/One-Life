@@ -58,16 +58,23 @@ namespace TekCan
             return arc;
         }
 
-        void LateUpdate()
+        // unscaled: hit-stop sırasında da sönsün, yoksa donan karede takılı kalır
+        void LateUpdate() => Step(Time.unscaledDeltaTime);
+
+        /// <summary>
+        /// ⚠️ dt DIŞARIDAN alınıyor — `Enemy.ApplyAura` ile aynı gerekçe. Editör modunda
+        /// `Time.unscaledDeltaTime` 0; yay gerçekten büyüyor mu, ömrü bitince gidiyor mu
+        /// diye ETKİ sorulamazdı, yalnızca "başlangıç ölçeği doğru mu" diye ÖZELLİK.
+        /// </summary>
+        public void Step(float dt)
         {
-            // unscaled: hit-stop sırasında da sönsün, yoksa donan karede takılı kalır
-            _age += Time.unscaledDeltaTime;
+            _age += dt;
 
             if (_follow != null)
                 transform.SetPositionAndRotation(_follow.position + Vector3.up * 0.06f, _follow.rotation);
 
             float k = 1f - Mathf.Clamp01(_age / _life);
-            if (k <= 0f) { Destroy(gameObject); return; }
+            if (k <= 0f) { Kill(); return; }
 
             // Ölçek `follow`'dan SONRA yazılır: SetPositionAndRotation ölçeğe dokunmuyor,
             // ama sıralamayı bozarsak takip eden yaylar ölçeksiz kalır.
@@ -78,7 +85,14 @@ namespace TekCan
         }
 
         /// <summary>Hazırlık işaretini erken kaldırmak için (düşman ölürse yay ortada kalmasın).</summary>
-        public void Cancel() { if (this != null) Destroy(gameObject); }
+        public void Cancel() { if (this != null) Kill(); }
+
+        /// <summary>`Enemy` ile aynı ayrım: editör modunda `Destroy` hata basar.</summary>
+        void Kill()
+        {
+            if (Application.isPlaying) Destroy(gameObject);
+            else DestroyImmediate(gameObject);
+        }
 
         void Apply(float alpha)
         {

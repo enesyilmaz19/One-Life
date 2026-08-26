@@ -117,14 +117,41 @@ namespace TekCan.EditorTools
                 }
             }
 
-            // ── 7) Büyüyen yay gerçekten büyüyor mu ──
-            //    Hazırlık işaretinin "ne zaman" demesi buna bağlı.
+            // ── 7) ⚠️ YAY GERÇEKTEN BÜYÜYOR MU ──
+            //    "scaleFrom uygulandı" ÖZELLİK; "zamanla büyüdü" ETKİ. Hazırlık işaretinin
+            //    "ne zaman" demesi ikincisine bağlı — ilki doğru olup ikincisi bozuk olabilir.
             ClearVfx();
             var grow = Arc.Spawn(Vector3.zero, Quaternion.identity, 1f, 90f,
                                  Color.white, 1f, null, scaleFrom: 0.2f, scaleTo: 1f);
-            failed += Check(ref total, "yay küçük başlıyor (scaleFrom uygulandı)",
-                            grow != null && Mathf.Abs(grow.transform.localScale.x - 0.2f) < 0.01f,
-                            grow != null ? grow.transform.localScale.x : -1f);
+            float s0 = grow.transform.localScale.x;
+            grow.Step(0.5f);
+            float sMid = grow.transform.localScale.x;
+            failed += Check(ref total, "yay küçük başlıyor", Mathf.Abs(s0 - 0.2f) < 0.01f, s0);
+            failed += Check(ref total, "⚠️ yay zamanla BÜYÜYOR", sMid > s0 + 0.1f, sMid - s0);
+
+            // ── 8) ⚠️ YAY ÖMRÜ BİTİNCE GİDİYOR MU ──
+            //    Gitmezse sahnede birikir. Hiçbir "doğdu mu" testi bunu göremez.
+            grow.Step(0.6f);
+            failed += Check(ref total, "⚠️ yay ömrü bitince YOK OLUYOR", ArcCount() == 0, ArcCount());
+
+            // ── 9) ⚠️ ZERRE HEDEFE VARIYOR VE YOK OLUYOR MU ──
+            //    Kimlik anının tamamı buna bağlı: zerre yola çıkıp yolda kalırsa
+            //    "zaman bana aktı" değil "ortalıkta yeşil toplar var" olur.
+            ClearVfx();
+            var hedef = new GameObject("hedef");
+            hedef.transform.position = new Vector3(6f, 0f, 0f);
+            var mote = Mote.Spawn(Vector3.zero, hedef.transform, Mote.HarvestColor, life: 0.30f);
+
+            float uzakBaslangic = Vector3.Distance(mote.transform.position, hedef.transform.position);
+            mote.Step(0.15f);
+            float uzakOrta = Vector3.Distance(mote.transform.position, hedef.transform.position);
+            failed += Check(ref total, "⚠️ zerre HEDEFE DOĞRU ilerliyor", uzakOrta < uzakBaslangic,
+                            uzakOrta - uzakBaslangic);
+
+            mote.Step(0.20f);
+            failed += Check(ref total, "⚠️ zerre varınca YOK OLUYOR (birikmiyor)",
+                            MoteCount() == 0, MoteCount());
+            Object.DestroyImmediate(hedef);
 
             // ── temizlik ──
             ClearVfx(); ClearEnemies();

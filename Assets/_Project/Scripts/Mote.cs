@@ -70,14 +70,22 @@ namespace TekCan
             return m;
         }
 
-        void LateUpdate()
+        // unscaled: hit-stop 0.10 sn donuyor; zerre de donarsa akış kesik görünür.
+        // Arc da aynı gerekçeyle unscaled.
+        void LateUpdate() => Step(Time.unscaledDeltaTime);
+
+        /// <summary>
+        /// ⚠️ dt DIŞARIDAN alınıyor — `Enemy.ApplyAura` ile aynı gerekçe.
+        /// Editör modunda `Time.unscaledDeltaTime` 0 olduğu için hareket hiç ölçülemezdi
+        /// ve öz-denetim yalnızca "zerre doğdu mu" diye ÖZELLİK sorabilirdi;
+        /// "hedefe vardı mı, kendini yok etti mi" diye ETKİ soramazdı.
+        /// </summary>
+        public void Step(float dt)
         {
-            // unscaled: hit-stop 0.10 sn donuyor; zerre de donarsa akış kesik görünür.
-            // Arc da aynı gerekçeyle unscaled.
-            _age += Time.unscaledDeltaTime;
+            _age += dt;
             float t = Mathf.Clamp01(_age / _life);
 
-            if (t >= 1f) { Destroy(gameObject); return; }
+            if (t >= 1f) { Kill(); return; }
 
             if (_target != null) _fallbackTarget = _target.position;
 
@@ -93,6 +101,13 @@ namespace TekCan
             // Varışa doğru küçülür: emiliyor.
             transform.localScale = Vector3.one * _size * (1f - 0.55f * t);
             Apply(1f - t * t);          // son anda hızlı sön
+        }
+
+        /// <summary>`Enemy` ile aynı ayrım: editör modunda `Destroy` hata basar.</summary>
+        void Kill()
+        {
+            if (Application.isPlaying) Destroy(gameObject);
+            else DestroyImmediate(gameObject);
         }
 
         void Apply(float alpha)

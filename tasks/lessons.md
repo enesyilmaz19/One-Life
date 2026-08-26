@@ -205,3 +205,35 @@ tam olarak bu hatayı yakalıyor.
 **Kabul edilen sınır:** play mode otomasyondan sürülemedi (batchmode `EnterPlaymode`
 takılıyor). Bunun yerine `Sfx.Init` her koşuda Console'a dinleyici durumunu basıyor —
 bir daha sessizlik olursa "ses gelmiyor" değil, Console satırı geliyor.
+
+---
+
+## 2026-08-25 (8) — Efekti test ettim sandım, yine doğuşu test etmişim
+
+**Ne oldu:** Faz 7'de VFX yazdım ve öz-denetimi "zerre doğdu mu / halka doğdu mu" diye
+kurdum. 10/10 yeşil yandı. Öz-incelemede fark ettim: **hiçbiri hareketi ölçmüyordu.**
+
+Ölçülmeyenler: zerre hedefe varıyor mu · yay gerçekten büyüyor mu · ömrü bitince
+kendini yok ediyor mu. Sonuncusu ciddi — yok etmezse sahnede birikirler ve "doğdu mu"
+testi bunu asla göremez.
+
+**Neden yine oldu:** `LateUpdate` editör modunda çalışmıyor, `Time.unscaledDeltaTime` 0.
+Yani hareket ölçülemiyordu. Kayıt (6)'da bu tam olarak yaşanmış ve çözümü yazılmıştı:
+
+> Etki testi yazılamıyorsa, sorun testte değil tasarımdadır. Ölçülebilir hale getir.
+
+`Enemy.ApplyAura(float dt)` bu dersin ürünüydü. Ama yeni sınıf yazarken **kendi
+kod tabanımdaki çözümü uygulamadım** — dersi biliyordum, deseni kullanmadım.
+
+**Kural (yeni yarı):**
+
+> Yeni bir zaman güdümlü sınıf yazarken, ilk soru: *bu kod tabanında bu problem
+> daha önce çözüldü mü?* Ders hatırlamak yetmiyor, **deseni aramak** gerekiyor.
+
+`Arc.Step(dt)` ve `Mote.Step(dt)` ayrıldı; `LateUpdate` yalnızca dt'yi geçiriyor.
+Denetim 10 → 14, eklenen dördü de hareket ve yok olma.
+
+**Aynı turda yakalanan ikinci tutarsızlık:** `Enemy` yok etmeyi
+`Application.isPlaying ? Destroy : DestroyImmediate` diye ayırıyordu, `Arc`/`Mote`
+ayırmıyordu. Editör modunda sürülünce `Destroy` hata basar — testi imkânsız kılan
+şeylerden biri de buydu. İkisi de `Enemy`'nin desenine getirildi.
