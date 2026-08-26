@@ -44,7 +44,7 @@ hiçbir işe yaramaz, asset onu ezer.
 `Tek Can → TÜM kapıları çalıştır`, ya da batch'ten:
 `-executeMethod TekCan.EditorTools.AllChecks.Run`
 
-Faz 1 + Faz 2 öz-denetimleri, **hasar reprodüksiyonu** ve ayar denetimini **tek Unity
+Faz 1–6 öz-denetimleri, **hasar reprodüksiyonu** ve ayar denetimini **tek Unity
 açılışında** çalıştırır; bir kontrol düşerse 1 ile çıkar. (Ayar sapması yalnızca uyarı —
 hangi değerin doğru olduğu Enes'in kararı.)
 

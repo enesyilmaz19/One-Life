@@ -71,7 +71,7 @@ efekt gider, okunurluk kalır. (Yasanın VFX'teki karşılığı.)
 - [x] Hareket + dash + i-frame (his burada başlar)
 - [x] `Clock` taslağı — azalır, darbe düşürür. **Dengesiz, ayarsız, sadece var**
 - [x] Temel saldırı: kısa, dash ile iptal edilebilir, hit-stop + kamera sarsıntısı + isabet parlaması
-- [ ] Gerçek VFX (parçacık, iz, boşalma efekti) — Faz 3te silahlarla birlikte
+- [→] Gerçek VFX (parçacık, iz, boşalma efekti) — **Faz 7'ye taşındı** (Faz 3'te yalnızca silah yayı yapıldı)
 - [x] Düşman: düz can havuzu, üstünde **geri sayan saniye sayısı** (uçuşan hasar sayısı YOK)
 - [x] **Zaman hasadı** — hasar verdikçe sürekli zaman çalma (oranı ayarlanabilir alan)
 - [x] Tek düşman tipi + saldırgan oynamayı ödüllendiren basit YZ (state machine, ECS yok)
@@ -103,7 +103,7 @@ efekt gider, okunurluk kalır. (Yasanın VFX'teki karşılığı.)
 - [x] 🎮 **PLAYTEST KAPISI GEÇİLDİ** — Enes: sunak, HASAT alımı, dash-atak, yeniden başlama hepsi çalışıyor (2026-08-24)
 - [x] **Denge kararı:** hasat %20 → **%35** (temiz +0.7 / dağınık −11.3). Darbe maliyeti 4 sn bilerek kaldı
 - [ ] Saat göstergesi gerçek tipografi/animasyon — UI geçişine ertelendi, greybox okunuyor
-- [ ] Ses — hâlâ yok, vuruş hissinin kalan yarısı
+- [x] Ses — **Faz 6'da yapıldı**, vuruş hissinin kalan yarısı kapandı
 
 ## Faz 3 — Silahlar ✅ **KAPANDI** (2026-08-24)
 
