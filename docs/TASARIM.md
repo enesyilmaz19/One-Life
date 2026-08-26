@@ -381,3 +381,54 @@ Var olmayabilecek bir soru için alet kurmak aletin kendisini israf eder.
 **⚠️ Ertelemenin riski:** dövüş zamanlaması gerçekten bozuksa bundan sonraki her
 playtest kirlenir — oda tasarımı yargılanırken aslında dövüş yargılanır ve yanlış yer
 düzeltilir. Bu yüzden odalara başlamadan önce tek soruluk kontrol yapılıyor.
+
+**Kontrol yapıldı ve GEÇTİ** (2026-08-25). Enes: *"genel zorluğa göre kolay değil.
+Taze Hades 2 bitirdim ama yine de hiçbir şeysiz bu kadar düşman zorladı."* Faz 1'deki
+"biz çok hızlı, düşmanlar yavaş" hissi geçmiş. Oda testleri kirlenmeyecek.
+
+---
+
+## Ölüm ve hikâye yapısı ✅ (2026-08-25, Enes)
+
+**Hedef: 8-10 saatlik hikâye, belki daha fazla.** Tek koşu, tek can.
+
+### Karar
+
+> *"Saf tek can gibi olsun ama kullanıcı hikayede ilerledikçe bir şey kazansın.
+> Öldükçe onu geri getirecek ve checkpoint'ten devam etmesini sağlayacak bir eşya.
+> Eğer yoksa ve ölürse game over. Eşya kullanıldığında senin ölümünle şekillenmiş
+> bir dünyada oynuyorsun."*
+
+- **Varsayılan hâl: TEK CAN.** Elinde bir şey yoksa ölüm gerçekten sondur.
+- **Diriliş eşyası** *(isim Enes'in — çalışma adı)*: hikâyede ilerledikçe kazanılır.
+  Sayılı, görünür, biriktirilebilir.
+- **Kullanıldığında** checkpoint'ten devam edersin — ama **dünya senin ölümünle
+  şekillenmiştir.** Ölüm geri sarma değil, anlatısal bir olay.
+- Eşya yoksa + ölüm = **game over.** *(Enes: "burayı başka bir şey de yapabiliriz,
+  kafamda güzel fikirler var" — açık.)*
+
+### Neden bu yapı tutuyor
+
+**İsim yalan söylemiyor.** Ekstra canlar bağışlanmıyor, KAZANILIYOR. Tek can varsayılan
+hâlin; fazlası senin emeğin. "Tek can" bir zorluk ayarı değil, oyunun kimliği olarak
+kalıyor.
+
+**Oyunun en değerli nesnesi oluyor.** Hiçbir silahtan, hiçbir sunak yükseltmesinden
+kıymetli. Her risk kararı "hâlâ var mı?" sorusundan geçiyor — sunaktaki zaman harcama
+kararının üstüne ikinci bir katman biniyor.
+
+**Yasayı bozmuyor.** Diriliş eşyası PARA BİRİMİ DEĞİL — satın alınmıyor, hikâyeyle
+kazanılıyor. Yani "tek bir sayı var: saniye" yasası duruyor. ⚠️ Eşya satın alınabilir
+hâle gelirse ikinci bir para birimi doğar ve yasa çatlar. *(Açık karar.)*
+
+### ⚠️ Açık kararlar — yapıyı bunlar belirleyecek
+
+1. **Kaç tane?** 8-10 saatte kaç diriliş eşyası? Oyunun zorluk kadranının TAMAMI bu.
+   Bol olursa gerilim ölür; kıt olursa oyuncu 8 saatini kaybedip oyunu bırakır.
+2. **Checkpoint ne kadar geriye atıyor?** Asıl gerilim kadranı bu olabilir — sayıdan
+   daha çok. Yakınsa ölüm ucuzlar ve "tek can" hafifler; uzaksa gerçekten acıtır.
+3. **"Ölümle şekillenmiş dünya" NE demek?** Somutlaşması gereken en ilginç kısım.
+   Seni öldüren şey güçlenir mi? Bıraktığın şey orada kalır mı? Oda değişir mi?
+4. **⚠️ Kayıt ne zaman yazılıyor?** Oyuncular ölmeden oyunu kapatır. Ölüm diske ANINDA
+   yazılmazsa kalıcı ölüm diye bir şey kalmaz. Kalıcı ölümlü oyunları bozan tuzak budur.
+5. **Diriliş anında saat kaça ayarlanıyor?** 60 saniyeyle dönersen anında yine ölürsün.

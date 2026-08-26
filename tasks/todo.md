@@ -1,13 +1,12 @@
 ## 📥 ENES'İN MASASI
 
-- [ ] **⚠️ Bir koşu oyna — eski his duruyor mu?**
-      Faz 1'de *"biz çok hızlı düşmanlar çok yavaş vuruyormuş gibi geldi"* demiştin.
-      O gözlem attack-commitment, tek hedefli silahlar ve boss sertleştirmesinden
-      ÖNCEYDİ. Hâlâ öyle mi? **Duruyorsa** şimdi düzeltiriz (alet gerekmez, tek değişken).
-      **Geçmişse** yapıya geçeriz. Bu cevap gelmeden odalara başlamak riskli —
-      dövüş bozuksa oda testleri de kirlenir
-- [ ] **Hikâye / mekân konuşması** — asıl tıkanma burası. Kalan HER ŞEY buna bağlı:
+- [x] ✅ **Zorluk kontrolü geçti** (2026-08-25) — Faz 1'deki *"biz çok hızlı düşmanlar
+      yavaş"* hissi GEÇMİŞ. Enes: *"genel zorluğa göre kolay değil. Taze Hades 2 bitirdim
+      ama yine de hiçbir şeysiz bu kadar düşman zorladı."*
+      → Oda testleri kirlenmeyecek, yapıya geçilebilir. Ayar ileride
+- [ ] 🎯 **HİKÂYE / MEKÂN KONUŞMASI — sürüyor.** Kalan HER ŞEY buna bağlı:
       oda zinciri · ENTER'ın kalkması · düşman kadrosunun kesinleşmesi · **asset alımı**
+      **Enes'in koyduğu hedef: 8-10 saatlik hikâye, belki daha fazla**
 - [ ] **Referans topla**
 
 ### Kalan yol (asset'e giden sıra)
