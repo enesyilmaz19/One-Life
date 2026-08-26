@@ -1,9 +1,54 @@
 ## 📥 ENES'İN MASASI
 
-**Şu an masanda iş yok.** Faz 7'nin ne olacağına karar verilecek.
+- [ ] **Faz 7 planına onay** — görsel kimlik (VFX). Aşağıda 6 madde
+- [ ] **Referans topla** *(bedava, hiç çöpe gitmez, asset işini erken açar)*
+      Beğendiğin izometrik oyunlardan ekran görüntüsü biriktir. Hades, Death's Door,
+      Moonlighter, Hyper Light Drifter... Neyi beğendiğini bilmek, model alırken
+      "şuna benzesin" diyebilmek demek. Şimdiden başlarsan asset fazı hızlanır
+
+### Asset (karakter/silah/mekân) ne zaman?
+
+Şu dördü kilitlenmeden **başlamaz** — yoksa para ve zaman çöpe gider:
+
+1. Düşman kadrosu kesin *(şu an açık — oda yapısı değiştirebilir)*
+2. Silah seti kesin *(şu an açık — "ileride değişim yapılır" dedin)*
+3. Dövüş zamanlamaları kilitli *(animasyon bunlara göre yapılır)*
+4. Kamera açısı/mesafesi kilitli *(izometrikte ne kadar detay görünüyor)*
+
+**Mekân tasarımı daha da sonra** — hikâye kararına bağlı.
 
 > **B** tuşu: doğrudan boss dalgasına atlar (test kısayolu, gerçek oyunda kalkacak)
 > **ENTER**: dalga çağırır (test kısayolu, gerçek oyunda kalkacak)
+
+---
+
+## Faz 7 — Görsel kimlik (VFX) ⬅️ **PLAN, ONAY BEKLİYOR**
+
+> **Neden şimdi:** oyunun en özgün mekaniği — zamanın tek kaynak olması — şu an
+> GÖRÜNMÜYOR. Hasat sadece sayının büyümesi. Özgünlük şartı buydu.
+>
+> **Neden asset'ten önce:** VFX asset değil, kod. Modeller gelince çöpe gitmiyor —
+> alttaki mesh değişir, efekt katmanı yaşar. Ayrıca asset alma brief'ini bu netleştirir.
+
+**Yöntem:** `Arc.cs`'in kanıtladığı desen — koddan üretilen mesh + URP shader.
+Dosya yok, kütüphane yok, lisans yok. `Sfx` ile aynı felsefe.
+
+- [ ] **① ZAMANIN AKIŞI** *(en önemlisi — kimlik anı)*
+      Vurunca düşmandan sana akan zaman izi. Saatteki yeşil punch zaten var, ona bağlanır.
+      KASA ölünce toplu akış · SIZINTI'da ters yön (senden ona)
+- [ ] **② Silah izleri** — her silahın kendi rengi ve şekli. Koni geniş yay, tek hedefli ince keskin
+- [ ] **③ İsabet patlaması** — hit-stop ile senkron, kısa ve sert
+- [ ] **④ Düşman boşalması / ölümü** — şu an sadece renk değişimi; çökme veya dağılma
+- [ ] **⑤ Dash izi** — sesi var, görseli yok
+- [ ] **⑥ Boss telegraph** — slam öncesi yerde büyüyen halka (şu an ses + hazırlık rengi)
+- [ ] Faz 7 öz-denetimi
+- [ ] 🎮 **PLAYTEST KAPISI**
+
+### ⚠️ VFX okunurluğu BOĞMAYACAK
+
+Düşman durum renkleri taşıyıcı: kırmızı dolu · turuncu hazırlık · beyaz isabet · gri boş.
+Dövüş kararları buna bakıyor. Efekt bunları örtemez — güzelleşip okunmaz hale gelirse
+efekt gider, okunurluk kalır. (Yasanın VFX'teki karşılığı.)
 
 ---
 
