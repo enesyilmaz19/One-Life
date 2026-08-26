@@ -15,7 +15,6 @@ namespace TekCan
     /// </summary>
     public class Arc : MonoBehaviour
     {
-        static Material _shared;
         // Yay geometrisi yalnızca menzil+açıya bağlı ve bunlar Tuning'den geliyor,
         // yani pratikte iki üç çeşit var. Her savurmada yeni Mesh üretmek boşuna çöp.
         static readonly Dictionary<long, Mesh> _meshCache = new Dictionary<long, Mesh>();
@@ -25,9 +24,15 @@ namespace TekCan
         MaterialPropertyBlock _mpb;      // her karede yenisini kurmak GC baskısı yapıyordu
         Color _color;
         float _life, _age;
+        float _scaleFrom = 1f, _scaleTo = 1f;
 
+        /// <param name="scaleFrom">Ömrün başındaki ölçek. <paramref name="scaleTo"/> ile
+        /// birlikte yayı BÜYÜTÜR: isabet patlaması dışa açılır, hazırlık işareti vuruş
+        /// anına doğru dolar. Sabit yay "ne zaman" sorusunu cevaplamıyordu, büyüyen yay
+        /// cevaplıyor.</param>
         public static Arc Spawn(Vector3 pos, Quaternion rot, float radius, float angleDeg,
-                                Color color, float life, Transform follow = null)
+                                Color color, float life, Transform follow = null,
+                                float scaleFrom = 1f, float scaleTo = 1f)
         {
             var go = new GameObject("Arc");
             go.transform.SetPositionAndRotation(pos + Vector3.up * 0.06f, rot);
@@ -36,7 +41,7 @@ namespace TekCan
             mf.sharedMesh = BuildFan(radius, angleDeg);
 
             var mr = go.AddComponent<MeshRenderer>();
-            mr.sharedMaterial = SharedMaterial();
+            mr.sharedMaterial = UnlitMat.Alpha;
             mr.shadowCastingMode = ShadowCastingMode.Off;
             mr.receiveShadows = false;
 
@@ -46,6 +51,9 @@ namespace TekCan
             arc._color = color;
             arc._life = Mathf.Max(0.01f, life);
             arc._follow = follow;
+            arc._scaleFrom = scaleFrom;
+            arc._scaleTo = scaleTo;
+            go.transform.localScale = Vector3.one * scaleFrom;
             arc.Apply(1f);
             return arc;
         }
@@ -60,6 +68,12 @@ namespace TekCan
 
             float k = 1f - Mathf.Clamp01(_age / _life);
             if (k <= 0f) { Destroy(gameObject); return; }
+
+            // Ölçek `follow`'dan SONRA yazılır: SetPositionAndRotation ölçeğe dokunmuyor,
+            // ama sıralamayı bozarsak takip eden yaylar ölçeksiz kalır.
+            if (_scaleFrom != _scaleTo)
+                transform.localScale = Vector3.one * Mathf.Lerp(_scaleFrom, _scaleTo, 1f - k);
+
             Apply(k);
         }
 
@@ -108,28 +122,7 @@ namespace TekCan
             return m;
         }
 
-        static Material SharedMaterial()
-        {
-            if (_shared != null) return _shared;
-
-            var sh = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
-            _shared = new Material(sh);
-
-            if (_shared.HasProperty("_Surface")) _shared.SetFloat("_Surface", 1f);   // 1 = transparent
-            _shared.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
-            _shared.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-            _shared.SetInt("_ZWrite", 0);
-            _shared.DisableKeyword("_ALPHATEST_ON");
-            _shared.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            _shared.renderQueue = (int)RenderQueue.Transparent;
-            return _shared;
-        }
-
         /// <summary>Play oturumları arası statik kalıntıyı temizler (bkz. Bootstrap.ResetStatics).</summary>
-        public static void Reset()
-        {
-            _shared = null;
-            _meshCache.Clear();
-        }
+        public static void Reset() => _meshCache.Clear();
     }
 }

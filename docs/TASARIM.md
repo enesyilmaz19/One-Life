@@ -318,3 +318,41 @@ yoktu. Dersin kalıcı hali:
 
 Şablon temizliği artık `DestroyImmediate` (kaynak), `Sfx` dinleyiciyi kendi nesnesine
 koşulsuz takıyor (yeniden başlatma için).
+
+## Zamanlama animasyondan ÖNCE kilitlenir ✅ (2026-08-25, Enes)
+
+> *"test için dövüş zamanlamaları kilitli animasyon eklemeden değişiklik yapıp
+> en uyguna oturtmaya çalışalım"*
+
+Hazırlık/vuruş/toparlanma süreleri **kapsüllerle** oturtulur. Animasyon sonra gelir ve
+oturmuş sayılara uyar. Tersi yapılırsa — önce animasyon, sonra ayar — her his denemesi
+bir sanat işine dönüşür ve tek kişilik ekip orada durur.
+
+### Kural: zamanı `Tuning` sahiplenir, animasyon uyar
+
+Animasyon klibi sabit bir **referans uzunlukta** yapılır, çalışma anında gerilir:
+
+```csharp
+animator.SetFloat("WindupSpeed", 1f / t.enemyWindupDuration);
+```
+
+Ayar değişince klibe dokunulmaz. Erken erişimde gelecek ayar değişikliklerinin tamamı
+bu yolla emilir. Süre animasyonun içine **gömülmez** — gömülürse her denge yaması bir
+animasyon işi olur.
+
+### ⚠️ `attackHitMoment` animasyonla birlikte ORANA döner
+
+Şu an saniye cinsinden (0.12 / 0.30 = vuruşun %40'ı). Süre 0.40'a çıkarsa hasar %30'a
+kayar, ama animasyondaki "silah hedefte" pozu %40'ta kalır → **görüntü ile hasar ayrışır.**
+
+Animasyon geldiğinde: `attackHitMoment` oran olur (0.4), saniye
+`attackDuration × hitFraction` diye hesaplanır. Tek sayı ikisini birden yönetir.
+
+### Germe sınırı: ±%40
+
+O aralıkta gerilme göze görünmez. Ötesinde (0.20 → 0.60) animasyon sünük veya bulanık
+görünür, yeniden yapılması gerekir. **Kilitlemenin amacı bu:** "bir daha değişmeyecek"
+değil, *"doğru mahalleye otursun ki germe payı içinde kalsın."*
+
+Animasyonlar beklenen ayar aralığının **ortasına** göre yapılır, o anki değere göre değil —
+iki yöne de pay kalsın.

@@ -189,6 +189,8 @@ namespace TekCan
             WaveManager.Reset();
             HitStop.Reset();
             Arc.Reset();
+            Mote.Reset();
+            UnlitMat.Reset();
             Sfx.Reset();
             Clock.Reset();        // ← eksikti: ölü saate hasar yazılmasını önler
             IsoCamera.Reset();    // ← eksikti: aynı gerekçe

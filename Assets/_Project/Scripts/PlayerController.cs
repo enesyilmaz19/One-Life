@@ -23,6 +23,7 @@ namespace TekCan
         float _hurtFlash;
         Vector3 _knockback;
 
+        TrailRenderer _dashTrail;    // yalnızca dash boyunca çizer, bkz. BuildDashTrail
         bool _dashAttackQueued;
         bool _holdCharging;          // DURGUN gerili mi
         int _weaponIndex;
@@ -48,6 +49,36 @@ namespace TekCan
             _camera = cameraTransform != null ? cameraTransform.GetComponent<Camera>() : null;
             _renderer = GetComponent<Renderer>();
             if (_renderer != null) _baseColor = _renderer.material.color;
+            BuildDashTrail();
+        }
+
+        /// <summary>
+        /// Dash izi. Kendi iz kodumuzu yazmıyoruz — `TrailRenderer` Unity'nin hazır
+        /// özelliği ve tam bu iş için var.
+        ///
+        /// Dash'in sesi Faz 6'da geldi ama görseli yoktu: hızlı hareket ettiğinde
+        /// kapsül sadece ışınlanıyormuş gibi duruyordu. İz, kat edilen mesafeyi
+        /// gösteriyor — i-frame penceresinin nereden nereye taşındığı okunur oluyor.
+        /// </summary>
+        void BuildDashTrail()
+        {
+            _dashTrail = gameObject.AddComponent<TrailRenderer>();
+            _dashTrail.material = UnlitMat.Additive;
+            _dashTrail.time = 0.20f;                  // dashDuration'dan uzun: dash bitince biraz sarksın
+            _dashTrail.widthCurve = AnimationCurve.Linear(0f, 0.55f, 1f, 0f);
+            _dashTrail.numCapVertices = 4;
+            _dashTrail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            _dashTrail.receiveShadows = false;
+            _dashTrail.colorGradient = new Gradient
+            {
+                colorKeys = new[]
+                {
+                    new GradientColorKey(new Color(0.55f, 0.85f, 1f), 0f),
+                    new GradientColorKey(new Color(0.20f, 0.45f, 0.9f), 1f)
+                },
+                alphaKeys = new[] { new GradientAlphaKey(0.75f, 0f), new GradientAlphaKey(0f, 1f) }
+            };
+            _dashTrail.emitting = false;   // yalnızca dash sırasında
         }
 
         void Update()
@@ -232,6 +263,7 @@ namespace TekCan
             _attackTimer = 0f;              // dash saldırıyı keser
             _dashAttackQueued = false;      // önceki dash'ten sarkmasın
             transform.rotation = Quaternion.LookRotation(_dashDir);
+            if (_dashTrail != null) { _dashTrail.Clear(); _dashTrail.emitting = true; }
         }
 
         void TickDash()
@@ -245,7 +277,14 @@ namespace TekCan
             float speed = _t.dashDistance / Mathf.Max(0.0001f, _t.dashDuration);
             transform.position += _dashDir * speed * Time.deltaTime;
 
-            if (_dashTimer <= 0f && _dashAttackQueued)
+            if (_dashTimer > 0f) return;
+
+            // İz yalnızca dash boyunca ÇİZİLİR; var olan kuyruk kendi kendine sönüyor.
+            // Kapatmasaydık normal yürürken de arkamızda mavi bir şerit kalırdı ve
+            // dash'in "bu farklı bir hareket" okunurluğu yok olurdu.
+            if (_dashTrail != null) _dashTrail.emitting = false;
+
+            if (_dashAttackQueued)
             {
                 _dashAttackQueued = false;
                 DashStrike();

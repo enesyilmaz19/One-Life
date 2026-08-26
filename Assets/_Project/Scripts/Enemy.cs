@@ -21,6 +21,10 @@ namespace TekCan
 
         Tuning _t;
         Transform _player;
+
+        /// <summary>Aura zerresi kısma sayacı — gerekçe `ApplyAura` içinde.</summary>
+        const float AuraMoteInterval = 0.16f;
+        float _auraMoteTimer;
         Renderer _renderer;
         TimeLabel _label;
         float _attackTimer;
@@ -133,7 +137,7 @@ namespace TekCan
                 // Boss'un kendi akışı çok yavaş: boşalmasını bekleyerek yenemezsin.
                 float decay = _t.enemyDecayPerSecond * (IsBoss ? _t.bossDecayMultiplier : 1f);
                 TimeLeft = Mathf.Max(0f, TimeLeft - decay * Time.deltaTime);
-                if (Hollow && !wasHollow) Paint();
+                if (Hollow && !wasHollow) { Paint(); OnWentHollow(); }
             }
 
             ApplyAura(Time.deltaTime);
@@ -228,8 +232,13 @@ namespace TekCan
             EnterState(State.Windup, dur);
             FacePlayer();
 
+            // ⚠️ Hazırlık işareti artık DOLUYOR (0.25 → 1.0). Sabit yay "vuracağım" diyordu
+            // ama "ne zaman" demiyordu — kaçma anını gözle kestiremiyordun. Dolan yay
+            // kalan süreyi doğrudan gösteriyor: yay tamamlanınca darbe iniyor.
+            // Boss'un yere vuruşunda bu daha da kritik, çünkü halka 360° ve kaçacak yer yok.
             _telegraph = Arc.Spawn(transform.position, transform.rotation,
-                                   StrikeRadius, StrikeAngle, TelegraphColor, dur, transform);
+                                   StrikeRadius, StrikeAngle, TelegraphColor, dur, transform,
+                                   scaleFrom: 0.25f, scaleTo: 1f);
             Paint();
         }
 
@@ -325,15 +334,34 @@ namespace TekCan
 
             float drained = Mathf.Min(damage, TimeLeft);
             TimeLeft -= drained;
-            // Kind.HarvestMultiplier 0 olabilir (KASA): vurarak hiçbir şey alamazsın,
-            // bütün ödeme öldürme anında gelir.
-            // Boss'un hasatı düşük: uzun bir dövüş, ama seni beslemiyor. Yoksa tankiliği
-            // onu zorlaştırmaz, ödül yapardı — havuzu hem canı hem ödemesi olduğu için.
-            Clock.Instance?.Add(drained * Clock.Instance.HarvestRate * harvestMult
-                                * Kind.HarvestMultiplier
-                                * (IsBoss ? _t.bossHarvestMultiplier : 1f));
+
+            var clock = Clock.Instance;
+            if (clock != null)
+            {
+                // Kind.HarvestMultiplier 0 olabilir (KASA): vurarak hiçbir şey alamazsın,
+                // bütün ödeme öldürme anında gelir.
+                // Boss'un hasatı düşük: uzun bir dövüş, ama seni beslemiyor. Yoksa tankiliği
+                // onu zorlaştırmaz, ödül yapardı — havuzu hem canı hem ödemesi olduğu için.
+                float gain = drained * clock.HarvestRate * harvestMult
+                             * Kind.HarvestMultiplier
+                             * (IsBoss ? _t.bossHarvestMultiplier : 1f);
+                clock.Add(gain);
+
+                // Zaman ondan sana AKIYOR — kazanç sıfırsa (KASA) hiçbir şey akmaz,
+                // ve bu doğru: KASA'ya vurmak gerçekten hiçbir şey vermiyor.
+                if (gain > 0f)
+                    Mote.Spawn(MoteOrigin(), _player, Mote.HarvestColor,
+                               size: 0.16f + Mathf.Min(gain, 3f) * 0.05f);   // çok çaldıysan büyük görün
+            }
 
             _flashTimer = _t.hitFlashDuration;
+
+            // İsabet patlaması: dışa açılan kısa halka. Beyaz parlama "değdi" diyor,
+            // bu "SERT değdi" diyor — hit-stop ve sarsıntıyla aynı anda.
+            Arc.Spawn(transform.position, transform.rotation, 0.55f, 360f,
+                      new Color(1f, 0.95f, 0.8f, 0.75f), 0.13f,
+                      scaleFrom: 0.35f, scaleTo: 1.7f);
+
             Paint();
         }
 
@@ -353,7 +381,20 @@ namespace TekCan
         {
             if (Hollow || _t == null) return;
             float aura = (IsBoss ? _t.bossAuraDrain : 0f) + Kind.AuraDrain(_t);
-            if (aura > 0f) Clock.Instance?.Spend(aura * dt);
+            if (aura <= 0f) return;
+
+            Clock.Instance?.Spend(aura * dt);
+
+            // ⚠️ Zerreyi KISARAK çıkarıyoruz. Aura her karede işliyor; her karede zerre
+            // doğursaydık saniyede ~60 nesne olurdu — hem çöp hem ekran karmaşası.
+            // Kısılmış akış "sürekli emiliyor" hissini zaten veriyor.
+            _auraMoteTimer -= dt;
+            if (_auraMoteTimer > 0f || _player == null) return;
+            _auraMoteTimer = AuraMoteInterval;
+
+            // Yön TERS: zaman SENDEN ona gidiyor. Rengi de ters (kırmızı).
+            Mote.Spawn(_player.position + Vector3.up * 0.6f, transform, Mote.DrainColor,
+                       size: 0.18f, life: 0.45f);
         }
 
         float FlatDistanceFromCenter()
@@ -370,10 +411,56 @@ namespace TekCan
             else DestroyImmediate(gameObject);
         }
 
+        /// <summary>Zerrenin çıktığı nokta — kapsülün gövde ortası, ayağı değil.</summary>
+        Vector3 MoteOrigin() => transform.position + Vector3.up * 0.5f;
+
+        /// <summary>
+        /// Havuz bitti: artık tek atımlık. Bu, dövüşün en önemli durum değişimi —
+        /// "bunu bırak, sıradakine geç" ya da "bir vuruşluk iş kaldı" kararı buna bağlı.
+        ///
+        /// Renk değişimi tek başına sessizdi: bakmıyorsan kaçırıyordun. Halka gözü
+        /// çekiyor, çünkü hareket renkten daha görünür.
+        /// </summary>
+        void OnWentHollow()
+        {
+            Arc.Spawn(transform.position, transform.rotation, Radius * 2.2f, 360f,
+                      new Color(0.75f, 0.75f, 0.82f, 0.55f), 0.30f,
+                      scaleFrom: 0.5f, scaleTo: 1.35f);
+        }
+
         void Kill()
         {
             if (_telegraph != null) _telegraph.Cancel();   // ölünce uyarı yayı ortada kalmasın
+
+            // Ölüm halkası TÜRÜN renginde: kalabalıkta neyi devirdiğin okunuyor.
+            // Boss daha geniş — devrilişi olay olmalı, sıradan bir düşman gibi sönmemeli.
+            Arc.Spawn(transform.position, transform.rotation,
+                      Radius * (IsBoss ? 5f : 2.6f), 360f,
+                      new Color(Kind.FullColor.r, Kind.FullColor.g, Kind.FullColor.b, 0.7f),
+                      IsBoss ? 0.65f : 0.28f,
+                      scaleFrom: 0.35f, scaleTo: IsBoss ? 2.2f : 1.6f);
+
+            // ⚠️ Ödemeyi TÜRE SORMUYORUZ, saati ölçüyoruz. KASA toplu öder, TEMEL hiç
+            // ödemez, ileride başka tür başka türlü ödeyebilir — ölçüm hepsinde çalışır,
+            // `EnemyKind`'a tek satır eklemeden. (Silah/tür deseninin bozulmaması için.)
+            float before = Clock.Instance != null ? Clock.Instance.Seconds : 0f;
             Kind.OnKilled(Clock.Instance, _t, _startingPool);   // KASA bütün ödemesini burada yapar
+            float paid = (Clock.Instance != null ? Clock.Instance.Seconds : 0f) - before;
+
+            if (paid > 0f && _player != null)
+            {
+                // Toplu ödeme toplu görünmeli: tek zerre "kasa patladı" demiyor.
+                int n = Mathf.Clamp(Mathf.RoundToInt(paid), 3, 9);
+                for (int i = 0; i < n; i++)
+                {
+                    var jitter = new Vector3(Random.Range(-0.45f, 0.45f), Random.Range(-0.3f, 0.5f),
+                                             Random.Range(-0.45f, 0.45f));
+                    Mote.Spawn(MoteOrigin() + jitter, _player, Mote.HarvestColor,
+                               size: 0.20f, life: Random.Range(0.30f, 0.52f),   // dağınık varış = patlama
+                               arcHeight: Random.Range(0.6f, 1.5f));
+                }
+            }
+
             Clock.Instance?.ReportKill();
             All.Remove(this);
             if (Application.isPlaying) Destroy(gameObject);

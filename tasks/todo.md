@@ -1,6 +1,13 @@
 ## 📥 ENES'İN MASASI
 
-- [ ] **Faz 7 planına onay** — görsel kimlik (VFX). Aşağıda 6 madde
+**Faz 7 kodu hazır — VFX playtest'i bekliyor.**
+
+- [ ] **Zamanın aktığını GÖRÜYOR musun?** Vurunca düşmandan sana yeşil zerre akıyor
+- [ ] **SIZINTI'nın kırmızı zerresi anlaşılıyor mu?** Ters yön = o senden çalıyor
+- [ ] **KASA ölünce patlama tatmin edici mi?** Vururken hiçbir şey gelmiyor, ölünce toplu
+- [ ] **Boss hazırlık yayı artık "ne zaman" diyor mu?** Yay dolunca darbe iniyor
+- [ ] **Dash izi iyi mi?** Çok mu uzun/kısa, rengi tuttu mu
+- [ ] **Ekran karıştı mı?** Kalabalıkta düşman renklerini (kırmızı dolu/gri boş) hâlâ okuyabiliyor musun
 - [ ] **Referans topla** *(bedava, hiç çöpe gitmez, asset işini erken açar)*
       Beğendiğin izometrik oyunlardan ekran görüntüsü biriktir. Hades, Death's Door,
       Moonlighter, Hyper Light Drifter... Neyi beğendiğini bilmek, model alırken
@@ -22,7 +29,7 @@
 
 ---
 
-## Faz 7 — Görsel kimlik (VFX) ⬅️ **PLAN, ONAY BEKLİYOR**
+## Faz 7 — Görsel kimlik (VFX) ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
 
 > **Neden şimdi:** oyunun en özgün mekaniği — zamanın tek kaynak olması — şu an
 > GÖRÜNMÜYOR. Hasat sadece sayının büyümesi. Özgünlük şartı buydu.
@@ -33,15 +40,21 @@
 **Yöntem:** `Arc.cs`'in kanıtladığı desen — koddan üretilen mesh + URP shader.
 Dosya yok, kütüphane yok, lisans yok. `Sfx` ile aynı felsefe.
 
-- [ ] **① ZAMANIN AKIŞI** *(en önemlisi — kimlik anı)*
-      Vurunca düşmandan sana akan zaman izi. Saatteki yeşil punch zaten var, ona bağlanır.
-      KASA ölünce toplu akış · SIZINTI'da ters yön (senden ona)
-- [ ] **② Silah izleri** — her silahın kendi rengi ve şekli. Koni geniş yay, tek hedefli ince keskin
-- [ ] **③ İsabet patlaması** — hit-stop ile senkron, kısa ve sert
-- [ ] **④ Düşman boşalması / ölümü** — şu an sadece renk değişimi; çökme veya dağılma
-- [ ] **⑤ Dash izi** — sesi var, görseli yok
-- [ ] **⑥ Boss telegraph** — slam öncesi yerde büyüyen halka (şu an ses + hazırlık rengi)
-- [ ] Faz 7 öz-denetimi
+- [x] **① ZAMANIN AKIŞI** — `Mote.cs`. Vurunca düşmandan sana akan zaman zerresi.
+      **Hızlanarak** varır (t²), yavaşlayarak değil — çekiliyor gibi okunsun, bırakılmış gibi değil.
+      Çaldığın miktar zerrenin BOYUNU belirliyor · KASA ölünce toplu patlama
+      · SIZINTI/boss aurasında **ters yön, kırmızı** (senden ona)
+- [x] **② Silah izleri** — **zaten yapılmış**: savurma yayı `Weapon.Tint` + `Weapon.Range`
+      + `Weapon.DashAngle` kullanıyor. Faz 3'ten geliyor, yeniden yazılmadı
+- [x] **③ İsabet patlaması** — dışa açılan kısa halka, hit-stop ile aynı anda
+- [x] **④ Düşman boşalması / ölümü** — boşalınca gri halka *(en kritik durum değişimi,
+      renk tek başına sessizdi)* · ölünce **türün renginde** halka, boss'unki çok daha geniş
+- [x] **⑤ Dash izi** — `TrailRenderer` (Unity'nin kendi özelliği, iz kodu yazılmadı).
+      Yalnızca dash boyunca çizer; sürekli açık kalsa dash'in ayırt ediciliği kaybolurdu
+- [x] **⑥ Boss telegraph** — hazırlık yayı artık **doluyor** (0.25 → 1.0).
+      Sabit yay "vuracağım" diyordu ama "ne zaman" demiyordu
+- [x] **`UnlitMat`** — `Arc` + `Mote` + dash izi aynı shader kurulumunu istiyordu, tek kaynağa indi
+- [x] Faz 7 öz-denetimi: **10/10** — aura kısması ÖLÇÜLDÜ (1 sn → 6 zerre, 60 değil)
 - [ ] 🎮 **PLAYTEST KAPISI**
 
 ### ⚠️ VFX okunurluğu BOĞMAYACAK
