@@ -179,3 +179,29 @@ Faz 6 denetiminin **ilk** kontrolü de bu — diğer 38'i geçse bile bu düşer
 **Aynı turda yakalanan ikinci bug:** tek `AudioSource` kullanılıyordu ve `pitch` o kaynakta
 **çalmakta olan** sesleri de büküyor. Kalabalıkta her yeni vuruş, hâlâ duyulan öncekini
 perdeden kaydırıyordu. 6 kanallı havuza geçildi.
+
+**Devam (aynı gün, ikinci tur):** Yukarıdaki düzeltmeyi yaptım, 39/39 yeşil yandı,
+Enes yine "ses gelmiyor" dedi. Gerçek sebep daha derindeydi:
+
+> **`Object.Destroy` ERTELENİR.** Yok edilmeye işaretlenen nesne kare SONUNA kadar
+> yaşar ve `FindFirstObjectByType` onu bulmaya devam eder.
+
+Bootstrap şablonun Main Camera'sını (dinleyiciyi taşıyan) siliyor. `EnsureListener`
+aynı karede "dinleyici var" diye buluyor ve hiçbir şey eklemiyordu. Kare bitince o
+dinleyici de ölüyordu → sıfır dinleyici → sessizlik.
+
+Denetimim boş batch sahnesinde çalıştığı için tuzağı hiç kurmamıştı: **kolay durumu
+ölçtüm, oyunun durumunu değil.** Bu, "test düzeneği üretim koşullarını kurmalı"
+kuralının dördüncü tekrarı.
+
+**Kural:** Unity'de "var mı?" diye SORUP karar verme — ertelenmiş yok etme yüzünden
+cevap yalan olabilir. Sahip olman gereken şeyi **koşulsuz KUR.** `EnsureListener`
+artık hiç sormuyor: ölüleri hemen alıyor, yenisini kendi nesnesine takıyor.
+
+**Denetim düzeltmesi:** Faz 6'da artık sahnede bir "yem dinleyici" bırakılıyor. Eski
+kod bu yemi yutup geçerdi; yeni kod kendi nesnesine kurmak zorunda. Yani test artık
+tam olarak bu hatayı yakalıyor.
+
+**Kabul edilen sınır:** play mode otomasyondan sürülemedi (batchmode `EnterPlaymode`
+takılıyor). Bunun yerine `Sfx.Init` her koşuda Console'a dinleyici durumunu basıyor —
+bir daha sessizlik olursa "ses gelmiyor" değil, Console satırı geliyor.

@@ -69,21 +69,39 @@ namespace TekCan
         /// <summary>
         /// ⚠️ AudioListener olmadan Unity HİÇBİR ses çalmaz.
         ///
-        /// Bootstrap sahnedeki bütün kameraları siliyor — şablonun kamerası dinleyiciyi
-        /// taşıyordu, o da gitti. Ses sistemi kurulduğunda 9 sesin dokuzu da doluydu,
-        /// 37/37 test geçiyordu, ve oyunda TEK SES ÇIKMIYORDU. Testler sesin verisini
-        /// ölçüyordu, duyulup duyulmadığını değil.
+        /// ⚠️⚠️ "Var mı?" diye SORMAK YETMEZ — `Object.Destroy` ERTELENİR.
         ///
-        /// Bu yüzden dinleyiciyi ses sisteminin kendisi garantiliyor: sesin duyulabilir
-        /// olması ses sisteminin işi, kamerayı kuran kodun hatırlaması gereken bir şey değil.
+        /// Bootstrap şablondan gelen kameraları siliyor; `SampleScene`'in Main Camera'sı
+        /// dinleyiciyi taşıyor. `Destroy` çağrıldıktan sonra o nesne kare SONUNA kadar
+        /// yaşamaya devam eder ve `FindFirstObjectByType` onu hâlâ bulur. Burada
+        /// "dinleyici var" deyip geçtiğimizde, kare bitince o dinleyici de kamerayla
+        /// birlikte ölüyordu → sahnede sıfır dinleyici → tek ses çıkmıyordu.
+        ///
+        /// Bu yüzden dinleyici SORULMAZ, KURULUR: ölecek olanlar hemen alınır, yenisi
+        /// bizim nesnemize takılır. Bizim nesnemiz koşu boyunca yaşıyor, yani dinleyici de.
         /// </summary>
-        public static void EnsureListener(GameObject fallback)
+        public static void EnsureListener(GameObject host)
         {
-            if (UnityEngine.Object.FindFirstObjectByType<AudioListener>() != null) return;
-            if (fallback != null) fallback.AddComponent<AudioListener>();
+            if (host == null) return;
+
+            // Ertelenmiş Destroy'a güvenilmez: elde HEMEN alıyoruz.
+            foreach (var stale in UnityEngine.Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Include))
+                UnityEngine.Object.DestroyImmediate(stale);
+
+            host.AddComponent<AudioListener>();
+
+            // Otomasyon play-mode'a giremiyor (bkz. CLAUDE.md). Ses bir daha sessiz
+            // kalırsa Console'da sebebi yazsın — "ses gelmiyor" yerine veri gelsin.
+            Debug.Log($"[Tek Can] ses hazır · dinleyici: {host.name} · kanal: {Voices}");
         }
 
-        public static bool HasListener => UnityEngine.Object.FindFirstObjectByType<AudioListener>() != null;
+        /// <summary>
+        /// Dinleyici var mı — VE yaşayacak mı. `_pool`'un nesnesinde olması şart:
+        /// başka bir yerdeki dinleyici yok edilmeye işaretlenmiş olabilir.
+        /// </summary>
+        public static bool HasListener
+            => _pool != null && _pool.Length > 0 && _pool[0] != null
+               && _pool[0].GetComponent<AudioListener>() != null;
 
         static void Play(AudioClip clip, float pitchMin, float pitchMax)
         {

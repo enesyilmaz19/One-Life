@@ -25,6 +25,17 @@ namespace TekCan.EditorTools
         {
             int failed = 0, total = 0;
 
+            // ⚠️ OYUNUN DURUMUNU KUR, kolay durumu değil.
+            //    İlk yazdığım denetim boş sahnede çalışıyordu ve geçiyordu; oyunda ise
+            //    şablonun Main Camera'sı dinleyiciyi taşıyor ve Bootstrap onu siliyor.
+            //    `Object.Destroy` ERTELENDİĞİ için ölmeye mahkûm dinleyici hâlâ bulunuyordu.
+            //    Denetim o tuzağı kurmadığı için ses sistemi "geçti" damgasıyla sessiz kaldı.
+            //    Yem: sahnede BAŞKA bir dinleyici. Oyunda bu, Bootstrap'ın silmek üzere
+            //    işaretlediği Main Camera. "Buldum, geçtim" diyen kod bu yemi yutar ve
+            //    kare sonunda dinleyicisiz kalır. Doğru kod kendi nesnesine kurar.
+            var yem = new GameObject("baska-dinleyici");
+            yem.AddComponent<AudioListener>();
+
             var go = new GameObject("faz6-check");
             Sfx.Reset();
             Sfx.Init(go.AddComponent<AudioSource>());
@@ -33,12 +44,15 @@ namespace TekCan.EditorTools
             var names = Sfx.AllNames;
 
             // ── 0) ⚠️ SES DUYULABİLİR Mİ ──
-            //    Bu kontrol en başta olmalı çünkü diğerlerinin hepsi geçse bile
-            //    dinleyici yoksa oyuncu HİÇBİR ŞEY duymaz. Aşağıdaki 30 küsur kontrol
-            //    tam olarak bu durumda yeşil yanıyordu: sesin verisi doğruydu,
-            //    yolun ucunda kulak yoktu.
-            failed += Check(ref total, "⚠️ AudioListener VAR (yoksa hiçbir ses çıkmaz)",
+            //    Diğer 37 kontrolün hepsi geçse bile dinleyici yoksa oyuncu hiçbir şey
+            //    duymaz. Sorulan şey "bir yerlerde dinleyici var mı" DEĞİL — "koşu boyunca
+            //    yaşayacak bir dinleyici var mı".
+            failed += Check(ref total, "⚠️ AudioListener YAŞAYAN nesnede (yoksa hiç ses çıkmaz)",
                             Sfx.HasListener, Sfx.HasListener ? 1 : 0);
+
+            failed += Check(ref total, "başkasının dinleyicisine güvenilmedi",
+                            go.GetComponent<AudioListener>() != null,
+                            go.GetComponent<AudioListener>() != null ? 1 : 0);
 
             // Perde havuzu: tek kaynakta pitch, çalmakta olan sesleri de büküyordu.
             failed += Check(ref total, "birden fazla ses kanalı var (perde çakışmasın)",
@@ -73,6 +87,7 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "sesler birbirinin aynısı değil", ayni == 0, ayni);
 
             Object.DestroyImmediate(go);
+            Object.DestroyImmediate(yem);
             Sfx.Reset();
 
             if (failed == 0) Debug.Log($"[Faz 6 öz-denetim] ✅ {total}/{total} GEÇTİ");
