@@ -12,7 +12,7 @@ namespace TekCan.EditorTools
     ///   • VADELİ bedeli vuruştan SONRA keser
     ///   • DURGUN basılı tutulunca saati dondurur
     ///
-    /// Test düzeneği üretim yerleşimini ithal ediyor (Bootstrap.PlayerSpawn) — lessons.md.
+    /// Test düzeneği üretim yerleşimini ithal ediyor (Bootstrap.ArenaCenter) — lessons.md.
     /// </summary>
     public static class Faz3SelfCheck
     {
@@ -38,7 +38,7 @@ namespace TekCan.EditorTools
             clock.Init(t, root.transform);
 
             var pGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            pGo.transform.position = Bootstrap.PlayerSpawn;
+            pGo.transform.position = Bootstrap.ArenaCenter;
             pGo.transform.rotation = Quaternion.LookRotation(Vector3.forward);
             var pc = pGo.AddComponent<PlayerController>();
             pc.Init(t, null);
@@ -71,7 +71,7 @@ namespace TekCan.EditorTools
             // ── 3) Hasat çarpanı gerçekten çarpıyor ──
             //    Tek hedeflinin koniyle rekabet edebilmesinin TEK sebebi bu.
             ClearEnemies();
-            var solo = MakeEnemy(t, pGo.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f);
+            var solo = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f);
 
             pc.SetWeapon(0);                                   // KONİ, çarpan 1.0
             float before = clock.Seconds;
@@ -79,7 +79,7 @@ namespace TekCan.EditorTools
             float coneGain = clock.Seconds - before;
 
             ClearEnemies();
-            solo = MakeEnemy(t, pGo.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f);
+            solo = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f);
             pc.SetWeapon(1);                                   // FAİZLİ, çarpan 2.6
             before = clock.Seconds;
             strike.Invoke(pc, null);
@@ -135,7 +135,7 @@ namespace TekCan.EditorTools
             for (int wi = 0; wi < Weapon.All.Length; wi++)
             {
                 ClearEnemies();
-                var target = MakeEnemy(t, pGo.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f);
+                var target = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f);
                 pc.SetWeapon(wi);
 
                 float poolBefore = target.TimeLeft;
@@ -151,7 +151,7 @@ namespace TekCan.EditorTools
             //    bile menzil dışında kalırdı — oyuncu GÖRDÜĞÜ şeye vuramazdı.
             ClearEnemies();
             pc.SetWeapon(0);
-            var big = MakeEnemy(t, pGo.transform, Bootstrap.PlayerSpawn + Vector3.forward * 3.0f);
+            var big = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 3.0f);
             big.transform.localScale = Bootstrap.EnemyScale * 1.9f;   // boss ölçeği
 
             float centerDist = 3.0f;
@@ -207,9 +207,9 @@ namespace TekCan.EditorTools
         {
             // Üçü de dar koninin İÇİNDE: tek hedefli silahın gerçekten seçim yaptığını
             // görmek için geometri onu zorlamamalı.
-            MakeEnemy(t, player, Bootstrap.PlayerSpawn + new Vector3(-0.25f, 0f, 1.1f));
-            MakeEnemy(t, player, Bootstrap.PlayerSpawn + new Vector3(0f, 0f, 1.4f));
-            MakeEnemy(t, player, Bootstrap.PlayerSpawn + new Vector3(0.25f, 0f, 1.7f));
+            MakeEnemy(t, player, Bootstrap.ArenaCenter + new Vector3(-0.25f, 0f, 1.1f));
+            MakeEnemy(t, player, Bootstrap.ArenaCenter + new Vector3(0f, 0f, 1.4f));
+            MakeEnemy(t, player, Bootstrap.ArenaCenter + new Vector3(0.25f, 0f, 1.7f));
         }
 
         static Enemy MakeEnemy(Tuning t, Transform player, Vector3 pos)

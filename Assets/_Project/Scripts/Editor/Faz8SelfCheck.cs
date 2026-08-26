@@ -52,7 +52,7 @@ namespace TekCan.EditorTools
                         var p = layout.Position(t, i, n);
 
                         enUzak = Mathf.Max(enUzak, new Vector2(p.x, p.z).magnitude);
-                        ySapma = Mathf.Max(ySapma, Mathf.Abs(p.y - Bootstrap.PlayerSpawn.y));
+                        ySapma = Mathf.Max(ySapma, Mathf.Abs(p.y - Bootstrap.ArenaCenter.y));
 
                         // ⚠️ YATAY mesafe — y'yi katarsak yine aynı hataya düşeriz.
                         var d = new Vector2(p.x - giris.x, p.z - giris.z).magnitude;

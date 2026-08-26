@@ -44,11 +44,27 @@ hiçbir işe yaramaz, asset onu ezer.
 `Tek Can → TÜM kapıları çalıştır`, ya da batch'ten:
 `-executeMethod TekCan.EditorTools.AllChecks.Run`
 
-Faz 1–6 öz-denetimleri, **hasar reprodüksiyonu** ve ayar denetimini **tek Unity
+Faz 1–8 öz-denetimleri, **hasar reprodüksiyonu** ve ayar denetimini **tek Unity
 açılışında** çalıştırır; bir kontrol düşerse 1 ile çıkar. (Ayar sapması yalnızca uyarı —
 hangi değerin doğru olduğu Enes'in kararı.)
 
-Ayrı araçlar: `Denge simülasyonu` (hasat oranı taraması) · `Geri bildirim ekran görüntüsü al`.
+Ayrı araçlar: `Denge simülasyonu` (hasat oranı taraması) · `Geri bildirim ekran görüntüsü al`
+· `Oda yerleşimlerini çek` (beş yerleşimi **gerçek `RoomManager` ile** kurup PNG'ye çeker).
+
+## Tekrar eden tuzaklar — yeni kod yazmadan önce oku
+
+Bu üç hata sınıfı projede defalarca çıktı. Yeni kod yazarken önce bunları sor:
+
+1. **`Object.Destroy` ERTELENİR.** Yok edilmeye işaretlenen nesne kare SONUNA kadar yaşar
+   ve `FindObjectsByType` onu bulmaya devam eder, `Update`'i bir tur daha çalışır.
+   *"Var mı?"* diye sorup karar verme — sahip olman gerekeni **koşulsuz kur**, ya da
+   `SetActive(false)` + `DestroyImmediate` ile hemen al. (Sessiz ses, atlanmış oda.)
+2. **y yatay hesaba karışıyor.** Mesafe ölçerken `Vector2(x, z)` kullan, `magnitude` değil.
+   (Havada doğan düşmanlar, kaçış mesafesi, çıkış kapısı.)
+3. **Özellik değil ETKİ test et.** Zincirin son halkası testin içinde mi? Ses üretildi mi
+   değil, DUYULUYOR mu. Efekt doğdu mu değil, hedefe VARDI mı. Zaman güdümlü sınıf
+   yazıyorsan `dt`'yi dışarıdan al (`Enemy.ApplyAura`, `Arc.Step`, `Mote.Step`) —
+   yoksa editör modunda `Time.deltaTime` 0 olduğu için etki ölçülemez.
 
 ## graphify
 

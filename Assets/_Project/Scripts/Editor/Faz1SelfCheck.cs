@@ -102,7 +102,7 @@ namespace TekCan.EditorTools
             // ⚠️ Üretim yüksekliğinde çalış — lessons.md'deki kural: test düzeneği
             // yerleşimi KOPYALAMAZ, ithal eder. Düşmanların havada doğduğu hatayı
             // testlerin görememesinin sebebi tam olarak y=0'da çalışmalarıydı.
-            pGo.transform.position = Bootstrap.PlayerSpawn;
+            pGo.transform.position = Bootstrap.ArenaCenter;
             pGo.transform.rotation = Quaternion.LookRotation(Vector3.forward);
 
             // Önceki bölümlerden kalan düşmanları sahneden çıkar — yoksa Strike onları da
@@ -111,7 +111,7 @@ namespace TekCan.EditorTools
             Enemy.All.Clear();
 
             var e3Go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            e3Go.transform.position = Bootstrap.PlayerSpawn + new Vector3(0f, 0f, 1.6f);  // tam önde, üretim yüksekliğinde
+            e3Go.transform.position = Bootstrap.ArenaCenter + new Vector3(0f, 0f, 1.6f);  // tam önde, üretim yüksekliğinde
             e3Go.transform.localScale = Bootstrap.EnemyScale;
             var e3 = e3Go.AddComponent<Enemy>();
             e3.Init(t, pGo.transform, null);
@@ -149,7 +149,7 @@ namespace TekCan.EditorTools
             {
                 var sp = Bootstrap.EnemySpawnPosition(t, i);
                 failed += Check(ref total, $"düşman {i} oyuncu yüksekliğinde doğuyor",
-                    Mathf.Abs(sp.y - Bootstrap.PlayerSpawn.y) < 0.001f, sp.y);
+                    Mathf.Abs(sp.y - Bootstrap.ArenaCenter.y) < 0.001f, sp.y);
             }
 
             failed += Check(ref total, "saldırıda hareket DÖNDÜRMÜYOR",

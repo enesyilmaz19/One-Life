@@ -35,7 +35,7 @@ namespace TekCan.EditorTools
 
             var root = new GameObject("faz4-check");
             var player = new GameObject("player");
-            player.transform.position = Bootstrap.PlayerSpawn;
+            player.transform.position = Bootstrap.ArenaCenter;
 
             var clock = root.AddComponent<Clock>();
             clock.Init(t, player.transform);

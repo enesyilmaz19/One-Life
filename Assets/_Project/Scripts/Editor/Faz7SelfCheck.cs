@@ -34,7 +34,7 @@ namespace TekCan.EditorTools
 
             var root = new GameObject("faz7-check");
             var player = new GameObject("player");
-            player.transform.position = Bootstrap.PlayerSpawn;
+            player.transform.position = Bootstrap.ArenaCenter;
             var clock = root.AddComponent<Clock>();
             clock.Init(t, player.transform);
 
@@ -51,7 +51,7 @@ namespace TekCan.EditorTools
 
             // ── 2) ⚠️ HASAT ZERRESİ DOĞUYOR MU ──
             ClearVfx(); ClearEnemies();
-            var basic = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f,
+            var basic = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f,
                              EnemyKind.Basic);
             int motesBefore = MoteCount();
             basic.TakeDamage(3f);
@@ -61,7 +61,7 @@ namespace TekCan.EditorTools
 
             // ── 3) İsabet patlaması ──
             ClearVfx(); ClearEnemies();
-            var b2 = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f,
+            var b2 = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f,
                           EnemyKind.Basic);
             int arcsBefore = ArcCount();
             b2.TakeDamage(3f);
@@ -75,7 +75,7 @@ namespace TekCan.EditorTools
             if (vault != null)
             {
                 ClearVfx(); ClearEnemies();
-                var v = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f, vault);
+                var v = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f, vault);
                 int before = MoteCount();
                 v.TakeDamage(3f);
                 failed += Check(ref total, "⚠️ KASA'ya vuruş zerre üretmiyor (hasat 0)",
@@ -84,7 +84,7 @@ namespace TekCan.EditorTools
 
             // ── 5) Ölüm halkası ──
             ClearVfx(); ClearEnemies();
-            var dying = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f,
+            var dying = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f,
                              EnemyKind.Basic);
             dying.TakeDamage(999f);          // havuzu boşalt
             ClearVfx();                      // isabet efektlerini say(ma)
@@ -99,7 +99,7 @@ namespace TekCan.EditorTools
             if (leak != null)
             {
                 ClearVfx(); ClearEnemies();
-                var l = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 2f, leak);
+                var l = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 2f, leak);
                 for (int i = 0; i < 60; i++) l.ApplyAura(1f / 60f);
                 int n = MoteCount();
                 failed += Check(ref total, $"⚠️ aura zerresi kısılı (1 sn → {n} zerre, 60 değil)",

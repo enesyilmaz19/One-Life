@@ -32,7 +32,7 @@ namespace TekCan.EditorTools
 
             var root = new GameObject("faz5-check");
             var player = new GameObject("player");
-            player.transform.position = Bootstrap.PlayerSpawn;
+            player.transform.position = Bootstrap.ArenaCenter;
             var clock = root.AddComponent<Clock>();
             clock.Init(t, player.transform);
 
@@ -40,7 +40,7 @@ namespace TekCan.EditorTools
             foreach (var kind in EnemyKind.All)
             {
                 Clear();
-                var e = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f, kind);
+                var e = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f, kind);
                 float before = e.TimeLeft;
                 e.TakeDamage(3f);
                 failed += Check(ref total, $"{kind.Name} hasar alabiliyor",
@@ -54,13 +54,13 @@ namespace TekCan.EditorTools
             t.drainOutOfCombat = 0f;
 
             Clear();
-            var leak = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 6f, EnemyKind.Leak);
+            var leak = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 6f, EnemyKind.Leak);
             float leakBefore = clock.Seconds;
             leak.ApplyAura(1f);                          // bir saniyelik emiş
             float leakDrained = leakBefore - clock.Seconds;
 
             Clear();
-            var plain = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 6f, EnemyKind.Basic);
+            var plain = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 6f, EnemyKind.Basic);
             float plainBefore = clock.Seconds;
             plain.ApplyAura(1f);
             float plainDrained = plainBefore - clock.Seconds;
@@ -71,7 +71,7 @@ namespace TekCan.EditorTools
 
             // ── 3) KASA vurarak ÖDEMİYOR ──
             Clear();
-            var vault = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f, EnemyKind.Vault);
+            var vault = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f, EnemyKind.Vault);
             float clockBefore = clock.Seconds;
             vault.TakeDamage(5f);
             failed += Check(ref total, "KASA vurarak HİÇBİR ŞEY ödemedi",
@@ -90,7 +90,7 @@ namespace TekCan.EditorTools
 
             // ── 5) Temel düşman tam tersi: vurarak öder ──
             Clear();
-            var basic = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f, EnemyKind.Basic);
+            var basic = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f, EnemyKind.Basic);
             clockBefore = clock.Seconds;
             basic.TakeDamage(5f);
             failed += Check(ref total, "TEMEL vurarak ödüyor (kıyas)",
@@ -98,7 +98,7 @@ namespace TekCan.EditorTools
 
             // ── 6) KAÇAK eşiğin altında kaçmaya başlıyor ──
             Clear();
-            var runner = Make(t, player.transform, Bootstrap.PlayerSpawn + Vector3.forward * 1.2f, EnemyKind.Runner);
+            var runner = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f, EnemyKind.Runner);
             failed += Check(ref total, "KAÇAK başta kaçmıyor", !runner.Fleeing, 0);
 
             float threshold = runner.TimeLeft * (1f - EnemyKind.Runner.FleesBelowRatio) + 0.2f;
@@ -126,7 +126,7 @@ namespace TekCan.EditorTools
             //    aynı şey değil.
             int countBefore = Enemy.All.Count;
             float escapeClockBefore = clock.Seconds;
-            runner.transform.position = new Vector3(t.runnerEscapeRadius + 2f, Bootstrap.PlayerSpawn.y, 0f);
+            runner.transform.position = new Vector3(t.runnerEscapeRadius + 2f, Bootstrap.ArenaCenter.y, 0f);
             Tick(runner);
 
             failed += Check(ref total, "KAÇAK kenara varınca KAYBOLDU",
@@ -138,7 +138,7 @@ namespace TekCan.EditorTools
             // Kaçış mesafesi YATAY ölçülmeli — y=1'deki düşman erken kaçmış sayılmamalı
             Clear();
             var yTest = Make(t, player.transform,
-                             new Vector3(t.runnerEscapeRadius - 0.5f, Bootstrap.PlayerSpawn.y, 0f), EnemyKind.Runner);
+                             new Vector3(t.runnerEscapeRadius - 0.5f, Bootstrap.ArenaCenter.y, 0f), EnemyKind.Runner);
             yTest.TakeDamage(yTest.TimeLeft * 0.9f);
             Tick(yTest);
             failed += Check(ref total, "kaçış mesafesi YATAY ölçülüyor (y karışmıyor)",

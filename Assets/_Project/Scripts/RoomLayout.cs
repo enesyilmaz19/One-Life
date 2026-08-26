@@ -32,7 +32,7 @@ namespace TekCan
         protected static float Band(Tuning t, float k) => t.arenaRadius * k;
 
         static Vector3 At(Tuning t, float x, float z) =>
-            new Vector3(Band(t, x), Bootstrap.PlayerSpawn.y, Band(t, z));
+            new Vector3(Band(t, x), Bootstrap.ArenaCenter.y, Band(t, z));
 
         // ── varyantlar ───────────────────────────────────────────────────────
 

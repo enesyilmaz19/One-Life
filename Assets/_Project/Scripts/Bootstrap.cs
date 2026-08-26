@@ -14,10 +14,15 @@ namespace TekCan
     public static class Bootstrap
     {
         /// <summary>
-        /// Arena yerleşiminin TEK kaynağı. Faz1Repro da buradan okuyor —
-        /// yoksa reprodüksiyon oyundan sessizce ayrışır ve yanlış sonuç verir.
+        /// Arenanın merkezi, duruş yüksekliğinde. Yerleşim matematiğinin TEK kaynağı:
+        /// `RoomLayout`, `Entrance`, `Exit` ve testler `.y`'sini buradan alıyor.
+        /// Faz1Repro da buradan okuyor — yoksa reprodüksiyon oyundan sessizce ayrışır.
+        ///
+        /// ⚠️ Faz 8'e kadar adı `PlayerSpawn`'dı ve o ad ARTIK YALANDI: oyuncu burada
+        /// değil, `Entrance(t)`'de başlıyor. Konum için iki gerçek kaynağı bu projede
+        /// defalarca hata üretti; ismin doğruyu söylemesi o hatanın panzehiri.
         /// </summary>
-        public static readonly Vector3 PlayerSpawn = new Vector3(0f, 1f, 0f);
+        public static readonly Vector3 ArenaCenter = new Vector3(0f, 1f, 0f);
         public static readonly Vector3 EnemyScale = new Vector3(0.9f, 0.9f, 0.9f);
 
         /// <summary>Düşmanların doğduğu halkanın arena yarıçapına oranı.</summary>
@@ -39,7 +44,7 @@ namespace TekCan
         {
             float a = (360f / Mathf.Max(1, count)) * index * Mathf.Deg2Rad + angleOffsetRad;
             float r = t.arenaRadius * SpawnRingFactor;
-            return new Vector3(Mathf.Cos(a) * r, PlayerSpawn.y, Mathf.Sin(a) * r);
+            return new Vector3(Mathf.Cos(a) * r, ArenaCenter.y, Mathf.Sin(a) * r);
         }
 
         /// <summary>Testler için kısayol — üretim halkasının aynısı.</summary>
@@ -54,10 +59,10 @@ namespace TekCan
         /// aradaki bandı tutuyor. `RoomLayout` yerleşimleri bu eksene göre kuruluyor.
         /// </summary>
         public static Vector3 Entrance(Tuning t)
-            => new Vector3(0f, PlayerSpawn.y, -t.arenaRadius * 0.82f);
+            => new Vector3(0f, ArenaCenter.y, -t.arenaRadius * 0.82f);
 
         public static Vector3 Exit(Tuning t)
-            => new Vector3(0f, PlayerSpawn.y, t.arenaRadius * 0.82f);
+            => new Vector3(0f, ArenaCenter.y, t.arenaRadius * 0.82f);
 
         /// <summary>Koşuya ait her şey bunun altında — yeniden başlatma tek Destroy.</summary>
         static GameObject _runRoot;
@@ -118,7 +123,7 @@ namespace TekCan
             // Oyuncu
             var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             player.name = "Player"; player.transform.SetParent(_runRoot.transform);
-            player.transform.position = PlayerSpawn;
+            player.transform.position = ArenaCenter;
             Object.Destroy(player.GetComponent<Collider>());
             Paint(player, new Color(0.9f, 0.9f, 0.95f));
 
@@ -181,7 +186,7 @@ namespace TekCan
             {
                 float a = (360f / kinds.Length) * i * Mathf.Deg2Rad + Mathf.PI * 0.25f;
                 float r = t.arenaRadius * 0.28f;
-                SpawnAltar(t, new Vector3(Mathf.Cos(a) * r, PlayerSpawn.y, Mathf.Sin(a) * r),
+                SpawnAltar(t, new Vector3(Mathf.Cos(a) * r, ArenaCenter.y, Mathf.Sin(a) * r),
                            player, kinds[i], parent);
             }
         }

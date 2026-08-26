@@ -126,7 +126,7 @@ namespace TekCan
 
         void PlaceBoss()
         {
-            Bootstrap.SpawnEnemyAt(_t, new Vector3(0f, Bootstrap.PlayerSpawn.y, _t.arenaRadius * 0.35f),
+            Bootstrap.SpawnEnemyAt(_t, new Vector3(0f, Bootstrap.ArenaCenter.y, _t.arenaRadius * 0.35f),
                                    _player, _cam, _t.bossPoolMultiplier, boss: true,
                                    parent: _roomRoot.transform);
         }

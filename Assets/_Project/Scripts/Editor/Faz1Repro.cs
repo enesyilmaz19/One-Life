@@ -33,7 +33,7 @@ namespace TekCan.EditorTools
             // ── Bootstrap ile BİREBİR aynı kurulum ──
             var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             player.transform.SetParent(root.transform);
-            player.transform.position = Bootstrap.PlayerSpawn;        // ← oyunun kendi yerleşiminden
+            player.transform.position = Bootstrap.ArenaCenter;        // ← oyunun kendi yerleşiminden
 
             var clockGo = new GameObject("clock"); clockGo.transform.SetParent(root.transform);
             var clock = clockGo.AddComponent<Clock>();
