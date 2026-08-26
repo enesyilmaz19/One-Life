@@ -1,13 +1,6 @@
 ## 📥 ENES'İN MASASI
 
-**Faz 7 kodu hazır — VFX playtest'i bekliyor.**
-
-- [ ] **Zamanın aktığını GÖRÜYOR musun?** Vurunca düşmandan sana yeşil zerre akıyor
-- [ ] **SIZINTI'nın kırmızı zerresi anlaşılıyor mu?** Ters yön = o senden çalıyor
-- [ ] **KASA ölünce patlama tatmin edici mi?** Vururken hiçbir şey gelmiyor, ölünce toplu
-- [ ] **Boss hazırlık yayı artık "ne zaman" diyor mu?** Yay dolunca darbe iniyor
-- [ ] **Dash izi iyi mi?** Çok mu uzun/kısa, rengi tuttu mu
-- [ ] **Ekran karıştı mı?** Kalabalıkta düşman renklerini (kırmızı dolu/gri boş) hâlâ okuyabiliyor musun
+- [ ] **Faz 8 planına onay** — zamanlama kilitleme. Aracı kurayım mı
 - [ ] **Referans topla** *(bedava, hiç çöpe gitmez, asset işini erken açar)*
       Beğendiğin izometrik oyunlardan ekran görüntüsü biriktir. Hades, Death's Door,
       Moonlighter, Hyper Light Drifter... Neyi beğendiğini bilmek, model alırken
@@ -29,7 +22,41 @@
 
 ---
 
-## Faz 7 — Görsel kimlik (VFX) ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+## Faz 8 — Zamanlama kilitleme ⬅️ **PLAN, ONAY BEKLİYOR**
+
+> **Enes istedi (2026-08-25):** *"dövüş zamanlamaları kilitli, animasyon eklemeden
+> değişiklik yapıp en uyguna oturtmaya çalışalım"*
+>
+> Asset kapısının 3. maddesi. Zamanlamalar oturmadan animasyon yapılamaz —
+> yapılırsa her denge yaması bir sanat işine döner.
+
+### ⚠️ Asıl sorun ayarlamak değil, KARŞILAŞTIRMAK
+
+Şu an: sayıyı değiştir → Play → oyna → Stop → değiştir → Play. İki değeri
+**hafızadan** karşılaştırıyorsun. His hafızası saniyeler içinde bozuluyor;
+0.30 ile 0.26 arasındaki farkı iki ayrı oturumda ayırt etmek imkânsız.
+
+**Bu yüzden Faz 8'in birinci işi ölçüm değil, ARAÇ.**
+
+- [ ] **① A/B profil değiştirici** *(fazın kalbi)*
+      Oyun içinde tuşla iki-üç zamanlama profili arasında **anında** geçiş.
+      Durmadan, yeniden başlamadan. Aynı dalgada A'yı hisset, tuşa bas, B'yi hisset.
+      Ekranda hangi profilde olduğun yazar
+- [ ] **② Hangi sayılar önemli — envanter**
+      Her zamanlama değerinin neyi kontrol ettiği tek yerde. Şu an 55 alan var ve
+      hangisinin *hisse* dokunduğu belli değil
+- [ ] **③ Ölçülebilirleri ÖLÇ, hissettirmeye bırakma**
+      · girdi gecikmesi · dash i-frame'i gerçekten darbeyi yiyor mu (kaç kare pay var)
+      · saldırı taahhüt penceresi adil mi (basınca ne kadar kilitleniyorsun)
+      · düşman hazırlığı kaçmaya yetiyor mu
+- [ ] **④ KİLİTLE** — karar verilen değerler `Tuning.asset`'e, `TASARIM.md`'ye
+      *"kilitli"* damgası, animasyon germe payı (±%40) yazılır
+- [ ] Faz 8 öz-denetimi
+- [ ] 🎮 **PLAYTEST KAPISI** — bu fazın playtest'i uzun, çünkü faz **zaten** playtest
+
+---
+
+## Faz 7 — Görsel kimlik (VFX) ✅ **KAPANDI** (2026-08-25)
 
 > **Neden şimdi:** oyunun en özgün mekaniği — zamanın tek kaynak olması — şu an
 > GÖRÜNMÜYOR. Hasat sadece sayının büyümesi. Özgünlük şartı buydu.
@@ -55,7 +82,17 @@ Dosya yok, kütüphane yok, lisans yok. `Sfx` ile aynı felsefe.
       Sabit yay "vuracağım" diyordu ama "ne zaman" demiyordu
 - [x] **`UnlitMat`** — `Arc` + `Mote` + dash izi aynı shader kurulumunu istiyordu, tek kaynağa indi
 - [x] Faz 7 öz-denetimi: **10/10** — aura kısması ÖLÇÜLDÜ (1 sn → 6 zerre, 60 değil)
-- [ ] 🎮 **PLAYTEST KAPISI**
+- [x] 🎮 **Playtest kapısı** — hepsi geçti. **"okunuyor"** (6. soru: kalabalıkta düşman
+      renkleri hâlâ ayırt ediliyor) — kural tuttu
+
+### 🎞️ Akış ve dash animasyonları GEÇİCİ (Enes, 2026-08-25)
+
+> *"evet test için durabilir ileride akış animasyonunu değiştireceğiz"* (zerre akışı,
+> sızıntı yönü) · *"ileride dash animasyonunu değiştireceğiz"* (iz)
+
+Zerre akışı ve dash izi **doğru bilgiyi veriyor** ama nihai animasyon değil. Silahlar
+ve seslerle aynı karar: yapı dursun, içerik sonra. Değişecek olan **görünüş**;
+ne zaman/hangi yönde aktığı bilgisi kalıcı.
 
 ### ⚠️ VFX okunurluğu BOĞMAYACAK
 
