@@ -60,12 +60,25 @@ namespace TekCan
             OnWin?.Invoke();
         }
 
-        public void Init(Tuning tuning, Transform player)
+        /// <summary>
+        /// Diriliş: ölümü geri alır. YALNIZCA `RevivalSystem` çağırır — ölümün geri
+        /// alınabilir olması bir eşyaya bağlı, keyfî değil.
+        /// </summary>
+        public void Revive(float seconds)
+        {
+            Dead = false;
+            Seconds = Mathf.Max(0.5f, seconds);   // 0 ile dirilmek anında tekrar ölmek demek
+            LastGainAt = -99f;
+        }
+
+        /// <param name="startSeconds">Checkpoint'ten dönülüyorsa oradaki zaman;
+        /// 0'dan küçükse koşu başlangıcı (`startSeconds`).</param>
+        public void Init(Tuning tuning, Transform player, float startSeconds = -1f)
         {
             Instance = this;
             _t = tuning;
             _player = player;
-            Seconds = tuning.startSeconds;
+            Seconds = startSeconds > 0f ? startSeconds : tuning.startSeconds;
             HarvestRate = tuning.harvestRate;
             AttackDamage = tuning.attackDamage;
             DashCooldown = tuning.dashCooldown;

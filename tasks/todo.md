@@ -7,16 +7,23 @@
 - [x] ✅ **HİKÂYE / MEKÂN KONUŞMASI TAMAM** (2026-08-25) — bütün 🔴 sorular cevaplandı.
       Kararlar `docs/TASARIM.md`'de: ölüm yapısı · 3 diriliş eşyası · checkpoint ·
       3 perde · 7 düşman + 4 boss · 5 silah · kurgu · EA kapsamı
-**Faz 8 hazır — oda zinciri playtest'i bekliyor.** ENTER kalktı.
+**Faz 8 + 9 hazır — oda zinciri ve diriliş sistemi playtest bekliyor.**
 
+Faz 8 (oda zinciri):
 - [ ] **Odadan odaya geçiş çalışıyor mu?** Temizle → yeşil disk açılır → üstüne yürü
 - [ ] **Oda bir YOL gibi hissettiriyor mu?** Girişten çıkışa gidiyorsun, düşmanlar arada
-- [ ] **Beş yerleşim ayrışıyor mu?** HALKA · DUVAR · YUMAK · KANAT · DAĞINIK —
-      farklı sorular soruyorlar mı, yoksa hepsi aynı dövüş mü
-- [ ] **Arena çok mu büyük?** Boş odada girişten çıkışa yürümek ~4 saniye.
-      Saat işlediği için bu bedava değil — doğru bedel mi, fazla mı
-- [ ] **Çıkış diski görünüyor mu?** Kapalıyken koyu gri, açılınca yeşil + halka + ses
-- [ ] **Sunaklar iki odada bir geliyor** — sıklık doğru mu
+- [ ] **Beş yerleşim ayrışıyor mu?** HALKA · DUVAR · YUMAK · KANAT · DAĞINIK
+- [ ] **Arena çok mu büyük?** Boş odada yürümek ~4 saniye, saat işliyor
+- [ ] **Sunaklar iki odada bir** — sıklık doğru mu
+
+Faz 9 (diriliş):
+- [ ] **Boss'a vuruş düzeldi mi?** *(önceki fazdan kalan)*
+- [ ] **Öl ve bak: ÖLÜM ALDATMA yerinde kaldırıyor mu?** Düşmanlar duruyor, az zamanın var
+- [ ] **GEÇİCİ DÖNÜŞ gergin mi?** 10 saniye, odayı temizlemek zorundasın
+- [ ] **Son eşyada uyarı yeterince BAĞIRIYOR mu?** Ölürsen oyun biter, bunu bilmelisin
+- [ ] **ONARIM bedeli doğru mu?** 45 saniye — çok ucuz mu, çok pahalı mı
+- [ ] **Checkpoint sıklığı?** 3 odada bir
+- [ ] ⚠️ **"Yenmek = odayı temizlemek" yorumum doğru mu?** *(Faz 9 bölümünde yazılı)*
 
 - [ ] **Ad koyma** — kahramanın adı, diriliş eşyalarının adları, bölge adları *(sende)*
 - [ ] **Referans topla** — asset fazını hızlandırır
@@ -54,7 +61,41 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 
 ---
 
-## Faz 8 — Oda zinciri ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+## Faz 9 — Checkpoint + diriliş ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+
+- [x] **`SaveFile`** — diske JSON. ⚠️ **Ölüm anında YAZILIYOR**, gecikmesiz, UI'dan önce.
+      Sıra kutsal: **eşya düşülür → diske yazılır → sonra diriliş uygulanır**
+- [x] **Üç diriliş eşyası** (`RevivalKind`), kullanım sırası **tasarıma gömülü**:
+      ① ÖLÜM ALDATMA (yerinde kalk, checkpoint zamanının %35'i)
+      ② GEÇİCİ DÖNÜŞ (10 sn — odayı temizle ya da checkpoint'e düş)
+      ③ ÇAĞRI (checkpoint'e dön)
+- [x] **Eşya yoksa OYUN BİTER** — gerçekten. Checkpoint de eşyalar da gider
+- [x] **Son eşyada HUD bağırıyor** — "SON CAN · ölürsen biter", yanıp sönerek.
+      Gerçek tehlike sertlik değil SÜRPRİZ
+- [x] **ONARIM sunağı** — checkpoint odasında, bedeli **ZAMAN**.
+      Ayrı malzeme yok → ikinci para birimi doğmuyor → yasa duruyor
+- [x] **Checkpoint** — `checkpointEveryRooms` (3) odada bir, odaya GİRERKEN yazılıyor
+- [x] Faz 9 öz-denetimi: **20/20** — en kritik test diske GERÇEKTEN yazıp GERİ OKUYOR
+
+### ⚠️ Yorumladığım yer — onayla ya da düzelt
+
+Enes: *"geçici olarak geri getirip eğer yenemezsen o süre içinde checkpointe atacak."*
+
+**"Yenmek" = odayı temizlemek** diye yorumladım. Başarırsan checkpoint zamanına
+kavuşuyorsun (eşya boşa gitmedi). Başaramazsan checkpoint'e düşüyorsun ve **bunun için
+ikinci bir eşya harcanmıyor.**
+
+### ⚠️ Bu fazda YAPILMADI
+
+- **Eşyalar hikâyeden gelmiyor** — hikâye yok. Şimdilik `Tuning`'deki test sayıları
+  (`testDefianceCount` vb.). Gerçek oyunda o alanlar kalkacak
+- **Nemesis (a)** — seni öldüren boss güçlenmiyor henüz
+- **Dünya ilerledi (c)** — betikli varyasyon yok, içerik gerektiriyor
+- **Checkpoint aralığı oda cinsinden** — gerçek ölçü 30dk-1sa olacak
+
+---
+
+## Faz 8 — Oda zinciri ✅ **KAPANDI** (2026-08-26)
 
 > Artık tek arena yok. Odadan odaya yürüyorsun, her odada duran düşmanlar var,
 > bölgenin sonunda boss. **ENTER kalkıyor** — dalgayı sen çağırmıyorsun.

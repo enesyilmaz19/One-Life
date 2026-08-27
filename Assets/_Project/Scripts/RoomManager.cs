@@ -34,13 +34,34 @@ namespace TekCan
         public bool Cleared { get; private set; }
         public RoomLayout Layout { get; private set; }
 
-        public void Init(Tuning tuning, Transform player, Transform cam)
+        public void Init(Tuning tuning, Transform player, Transform cam, int startRoom = 1)
         {
             Instance = this;
             _t = tuning;
             _player = player;
             _cam = cam;
-            EnterRoom(1);
+            EnterRoom(startRoom);
+        }
+
+        /// <summary>
+        /// Bu oda bir checkpoint mi. Greybox'ta ölçü ODA; gerçek oyunda 30dk-1sa'lik
+        /// kesitler olacak (bkz. TASARIM.md).
+        /// </summary>
+        public bool IsCheckpointRoom => (Room - 1) % Mathf.Max(1, _t.checkpointEveryRooms) == 0;
+
+        /// <summary>
+        /// ⚠️ Checkpoint HEMEN diske yazılır. Ölüm anında yazmak yetmiyor — checkpoint
+        /// de yazılmazsa oyuncu ilerlemesini kaybeder ve kalıcı ölüm "haksızlık" olur.
+        /// </summary>
+        void SaveCheckpoint()
+        {
+            var s = SaveFile.Current;
+            if (s == null || Clock.Instance == null) return;
+
+            s.checkpointRoom = Room;
+            s.checkpointSeconds = Clock.Instance.Seconds;
+            SaveFile.Flush();
+            Debug.Log($"[Tek Can] CHECKPOINT — oda {Room}, {s.checkpointSeconds:0.0}s");
         }
 
         void Update()
@@ -82,6 +103,10 @@ namespace TekCan
 
             if (IsBossRoom) PlaceBoss();
             else { PlaceEnemies(); PlaceExit(); PlaceAltars(); }
+
+            // Checkpoint odaya GİRERKEN yazılır, temizlenince değil: checkpoint'in anlamı
+            // "buraya kadar geldin", "burayı da bitirdin" değil.
+            if (IsCheckpointRoom) SaveCheckpoint();
 
             IsoCamera.Shake(_t.hitShake * 0.6f);
         }
@@ -143,6 +168,12 @@ namespace TekCan
         /// </summary>
         void PlaceAltars()
         {
+            // ONARIM yalnızca checkpoint odasında: güvenli noktada soluklanıp
+            // ömründen verip güvenlik ağını tamir ediyorsun. Her odada olsaydı karar
+            // olmaktan çıkar, rutine dönerdi.
+            if (IsCheckpointRoom)
+                Bootstrap.SpawnRepairAltar(_t, _player, _roomRoot.transform);
+
             if (Room % 2 != 0) return;
             Bootstrap.SpawnAltarRing(_t, _player, _roomRoot.transform);
         }

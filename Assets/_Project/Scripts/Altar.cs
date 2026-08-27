@@ -15,7 +15,7 @@ namespace TekCan
     /// </summary>
     public class Altar : MonoBehaviour
     {
-        public enum Kind { Harvest, Damage, Dash }
+        public enum Kind { Harvest, Damage, Dash, Repair }
 
         public static readonly List<Altar> All = new List<Altar>();
         public static void ResetAll() => All.Clear();
@@ -26,13 +26,28 @@ namespace TekCan
         int _bought;
 
         public Kind Type { get; private set; }
-        public bool SoldOut => _bought >= _t.altarMaxPurchases;
-        public float Price => _t.altarBasePrice * Mathf.Pow(_t.altarPriceGrowth, _bought);
+        // ONARIM tükenmez ve fiyatı sabittir: yükseltme değil, ONARIM. Her ölümden sonra
+        // aynı bedelle yeniden karşına çıkması gerekiyor.
+        public bool SoldOut => Type != Kind.Repair && _bought >= _t.altarMaxPurchases;
+        public float Price => Type == Kind.Repair
+            ? _t.revivalRepairPrice
+            : _t.altarBasePrice * Mathf.Pow(_t.altarPriceGrowth, _bought);
+
+        /// <summary>Onarım sırası: `RevivalKind.All` sırasıyla ilk kırık eşya.</summary>
+        static RevivalKind FirstBroken()
+        {
+            var s = SaveFile.Current;
+            if (s == null) return null;
+            foreach (var k in RevivalKind.All)
+                if (k.Index < s.broken.Length && s.broken[k.Index] > 0) return k;
+            return null;
+        }
         public bool PlayerInRange { get; private set; }
 
         static readonly Color HarvestColor = new Color(0.35f, 0.85f, 0.55f);
         static readonly Color DamageColor = new Color(0.9f, 0.55f, 0.35f);
         static readonly Color DashColor = new Color(0.45f, 0.65f, 1f);
+        static readonly Color RepairColor = new Color(1f, 0.85f, 0.35f);   // diriliş eşyalarının sarısı
         static readonly Color SoldOutColor = new Color(0.3f, 0.3f, 0.33f);
 
         public void Init(Tuning tuning, Transform player, Kind kind)
@@ -71,6 +86,28 @@ namespace TekCan
         void Buy()
         {
             var clock = Clock.Instance;
+
+            // ⚠️ ONARIM ZAMANLA yapılır — ayrı malzeme YOK. Ayrı malzeme olsaydı ikinci
+            // bir para birimi doğar ve "tek bir sayı var: saniye" yasası çatlardı.
+            // Bedeli budur ve oyunun en güzel kararını doğurur: kendi ömrünü verip
+            // ikinci bir şans satın alıyorsun.
+            if (Type == Kind.Repair)
+            {
+                var kırık = FirstBroken();
+                if (kırık == null || clock == null || !clock.TryBuy(Price)) return;
+
+                var s = SaveFile.Current;
+                s.broken[kırık.Index]--;
+                s.intact[kırık.Index]++;
+                SaveFile.Flush();          // kazanım da hemen yazılır, ölüm gibi
+
+                Sfx.Buy();
+                IsoCamera.Shake(_t.hitShake * 0.7f);
+                Paint();
+                Debug.Log($"[Tek Can] ONARILDI: {kırık.Name} — {Price:0.0} saniye ödendi");
+                return;
+            }
+
             if (clock == null || !clock.TryBuy(Price)) return;
 
             _bought++;
@@ -90,6 +127,13 @@ namespace TekCan
 
         public string Label()
         {
+            if (Type == Kind.Repair)
+            {
+                var kırık = FirstBroken();
+                if (kırık == null) return "ONARIM   [tamir edilecek eşya yok]";
+                return $"ONARIM  {kırık.Name}   —   {Price:0.0} saniye   [E]";
+            }
+
             string what = Type switch
             {
                 Kind.Harvest => $"HASAT  +%{_t.altarHarvestStep * 100f:0}",
@@ -106,6 +150,7 @@ namespace TekCan
             {
                 Kind.Harvest => HarvestColor,
                 Kind.Damage => DamageColor,
+                Kind.Repair => FirstBroken() != null ? RepairColor : SoldOutColor,
                 _ => DashColor,
             };
         }

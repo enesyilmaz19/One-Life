@@ -37,7 +37,12 @@ namespace TekCan
 
         void Update()
         {
-            if (_clock != null && (_clock.Dead || _clock.Won) && RestartPressed()) Bootstrap.Restart();
+            if (_clock == null || !(_clock.Dead || _clock.Won) || !RestartPressed()) return;
+
+            // Oyun bittiyse R SIFIRDAN başlatır — checkpoint de eşyalar da gider.
+            // Ölüm eşyayla karşılandıysa buraya zaten gelinmiyor (RevivalSystem hallediyor).
+            bool bitti = SaveFile.Current != null && SaveFile.Current.gameOver;
+            if (bitti) Bootstrap.NewRun(); else Bootstrap.Restart();
         }
 
         static bool RestartPressed()
@@ -103,7 +108,66 @@ namespace TekCan
             r.y += 24f;
             GUI.Label(r, $"hasat %{_clock.HarvestRate * 100f:0}   ·   hasar {_clock.AttackDamage:0.0}", _small);
 
+            DrawRevivals();
             DrawWeaponBar();
+        }
+
+        /// <summary>
+        /// Diriliş eşyaları — saatin hemen altında, birkaç satır.
+        ///
+        /// ⚠️ ENVANTER EKRANI DEĞİL. Oyunun tüm HUD'ı tek bir sayı; buraya bir menü
+        /// koyarsak minimalizm çöker. Oyuncu YALNIZCA elinde ne kaldığını görüyor —
+        /// hangisinin kullanılacağı tasarıma gömülü, ona sorulmuyor.
+        ///
+        /// ⚠️ Son eşyaya düşünce BAĞIRIYOR. Gerçek tehlike sertlik değil SÜRPRİZ:
+        /// 7 saat oynayıp son eşyasının bittiğini fark etmeden ölen oyuncu iade bile
+        /// edemez. "Bittiğimi biliyordum" demeli.
+        /// </summary>
+        void DrawRevivals()
+        {
+            var s = SaveFile.Current;
+            if (s == null) return;
+
+            int toplam = RevivalKind.IntactCount(s);
+            float y = 150f;
+
+            if (toplam == 0)
+            {
+                _mid.normal.textColor = Color.Lerp(new Color(1f, 0.25f, 0.25f), Color.white,
+                                                   Mathf.PingPong(Time.unscaledTime * 3f, 1f));
+                GUI.Label(new Rect(0f, y, Screen.width, 30f), "SON CAN  ·  ölürsen biter", _mid);
+                _mid.normal.textColor = Color.white;
+                return;
+            }
+
+            float w = 170f, total = RevivalKind.All.Length * w;
+            float x = (Screen.width - total) * 0.5f;
+
+            for (int i = 0; i < RevivalKind.All.Length; i++)
+            {
+                var k = RevivalKind.All[i];
+                int sağlam = s.intact[k.Index];
+                int kırık = s.broken[k.Index];
+                if (sağlam == 0 && kırık == 0) continue;
+
+                var c = k.Tint;
+                c.a = sağlam > 0 ? 1f : 0.30f;      // yalnızca kırığı kalmışsa soluk
+                _small.normal.textColor = c;
+
+                string satır = $"{k.Name}\n{sağlam}" + (kırık > 0 ? $"  (kırık {kırık})" : "");
+                GUI.Label(new Rect(x + i * w, y, w, 40f), satır, _small);
+            }
+            _small.normal.textColor = Color.white;
+
+            // Son şans sayacı açıkken oyuncu bunu BİLMELİ — saat 10'dan geri sayıyor
+            // ama neden saydığını söylemezsek panik değil kafa karışıklığı olur.
+            if (RevivalSystem.Instance != null && RevivalSystem.Instance.LastStandArmed)
+            {
+                _mid.normal.textColor = new Color(1f, 0.45f, 0.40f);
+                GUI.Label(new Rect(0f, Screen.height * 0.38f, Screen.width, 30f),
+                          "GEÇİCİ DÖNÜŞ  ·  ODAYI TEMİZLE", _mid);
+                _mid.normal.textColor = Color.white;
+            }
         }
 
         /// <summary>
@@ -207,10 +271,22 @@ namespace TekCan
         void DrawRunEnd()
         {
             bool won = _clock.Won;
+            bool bitti = SaveFile.Current != null && SaveFile.Current.gameOver;
+
             _big.fontSize = 64;
             _big.normal.textColor = won ? new Color(0.45f, 1f, 0.6f) : new Color(1f, 0.35f, 0.35f);
             GUI.Label(new Rect(0f, Screen.height * 0.22f, Screen.width, 90f),
-                      won ? "KOŞU KAZANILDI" : "KOŞU BİTTİ", _big);
+                      won ? "KOŞU KAZANILDI" : "OYUN BİTTİ", _big);
+
+            // ⚠️ Bu ekran "tekrar dene" demiyor. Diriliş eşyası kalmadıysa gerçekten
+            // bitti: checkpoint de eşyalar da gitti. Oyuncu ne kaybettiğini bilmeli.
+            if (bitti)
+            {
+                _small.normal.textColor = new Color(1f, 0.55f, 0.5f);
+                GUI.Label(new Rect(0f, Screen.height * 0.22f + 74f, Screen.width, 24f),
+                          "diriliş eşyası kalmadı  ·  checkpoint silindi", _small);
+                _small.normal.textColor = Color.white;
+            }
 
             _mid.normal.textColor = Color.white;
             float net = _clock.TotalHarvested - _clock.TotalSpent;
@@ -231,7 +307,7 @@ namespace TekCan
 
             _small.normal.textColor = new Color(0.8f, 0.8f, 0.85f);
             GUI.Label(new Rect(0f, Screen.height * 0.72f, Screen.width, 30f),
-                      "R  ·  yeniden başla", _small);
+                      bitti ? "R  ·  SIFIRDAN başla" : "R  ·  yeniden başla", _small);
             _small.normal.textColor = Color.white;
         }
     }

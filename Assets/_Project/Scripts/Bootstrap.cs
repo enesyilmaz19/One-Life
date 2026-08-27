@@ -146,8 +146,15 @@ namespace TekCan
             var systems = new GameObject("Systems"); systems.transform.SetParent(_runRoot.transform);
             HitStop.Init(systems.AddComponent<HitStop>());
             Sfx.Init(systems.AddComponent<AudioSource>());
+
+            // Kayıt her şeyden ÖNCE: checkpoint odası ve oradaki zaman buradan geliyor.
+            if (SaveFile.Current == null) SaveFile.Load();
+            if (SaveFile.Current.gameOver) SaveFile.NewRun(t);   // önceki koşu bitmişti
+            var save = SaveFile.Current;
+
             var clock = systems.AddComponent<Clock>();
-            clock.Init(t, player.transform);
+            clock.Init(t, player.transform, save.checkpointSeconds);
+            systems.AddComponent<RevivalSystem>().Init(t, clock);
             var pc = player.AddComponent<PlayerController>();
             pc.Init(t, camGo.transform);
             systems.AddComponent<Hud>().Init(clock, pc);
@@ -155,13 +162,25 @@ namespace TekCan
             // Oda yöneticisi — ilk odayı kendisi kuruyor: düşmanları yerleştiriyor,
             // oyuncuyu girişe koyuyor, çıkışı açıyor. Sunaklar da odaya ait artık,
             // arenaya değil (bkz. RoomManager.PlaceAltars).
-            systems.AddComponent<RoomManager>().Init(t, player.transform, camGo.transform);
+            systems.AddComponent<RoomManager>().Init(t, player.transform, camGo.transform,
+                                                     save.checkpointRoom);
 
-            Debug.Log($"[Tek Can] Arena hazır — {t.roomsPerRegion - 1} oda + boss, " +
-                      $"{t.startSeconds:0}s saat.");
+            Debug.Log($"[Tek Can] Arena hazır — oda {save.checkpointRoom}/{t.roomsPerRegion}, " +
+                      $"{clock.Seconds:0}s saat, {RevivalKind.IntactCount(save)} diriliş eşyası.");
         }
 
-        /// <summary>Koşuyu sıfırdan kurar. Ölüm ekranı R'ye basınca burayı çağırıyor.</summary>
+        /// <summary>
+        /// Oyun bittikten sonra SIFIRDAN yeni oyun. Checkpoint, eşyalar, her şey gider —
+        /// "tek can" bunu söylüyor. `Restart` ile karıştırma: o checkpoint'e döner.
+        /// </summary>
+        public static void NewRun()
+        {
+            var t = Resources.Load<Tuning>("Tuning") ?? ScriptableObject.CreateInstance<Tuning>();
+            SaveFile.NewRun(t);
+            Restart();
+        }
+
+        /// <summary>Sahneyi yeniden kurar — checkpoint'ten devam. Kaydı SIFIRLAMAZ.</summary>
         public static void Restart()
         {
             if (_runRoot != null)
@@ -191,6 +210,16 @@ namespace TekCan
             }
         }
 
+        /// <summary>
+        /// ONARIM sunağı — girişe yakın, oyuncunun yolunun üstünde. Checkpoint odasında
+        /// duruyor: soluklanma noktasında ömründen verip güvenlik ağını tamir ediyorsun.
+        /// </summary>
+        public static void SpawnRepairAltar(Tuning t, Transform player, Transform parent)
+        {
+            var pos = new Vector3(t.arenaRadius * 0.22f, ArenaCenter.y, -t.arenaRadius * 0.55f);
+            SpawnAltar(t, pos, player, Altar.Kind.Repair, parent);
+        }
+
         static void SpawnAltar(Tuning t, Vector3 pos, Transform player, Altar.Kind kind,
                                Transform parent = null)
         {
@@ -213,6 +242,7 @@ namespace TekCan
             Enemy.All.Clear();
             Altar.ResetAll();
             RoomManager.Reset();
+            RevivalSystem.Reset();
             HitStop.Reset();
             Arc.Reset();
             Mote.Reset();

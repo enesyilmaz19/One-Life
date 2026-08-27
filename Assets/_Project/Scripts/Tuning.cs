@@ -139,6 +139,26 @@ namespace TekCan
         [Tooltip("Her odada düşman zaman havuzu bu kat büyür — odalar sertleşir")]
         public float roomPoolGrowth = 1.18f;
 
+        [Header("── DİRİLİŞ / CHECKPOINT (Faz 9) ──")]
+        [Tooltip("Kaç odada bir checkpoint. Gerçek oyunda 30dk-1sa'lik kesitler olacak; " +
+                 "greybox'ta oda sayısı o kesitin yerini tutuyor.")]
+        public int checkpointEveryRooms = 3;
+        [Tooltip("ÖLÜM ALDATMA: checkpoint'teki zamanın bu kadarıyla yerinde kalkarsın")]
+        public float defianceFraction = 0.35f;
+        [Tooltip("GEÇİCİ DÖNÜŞ: bu kadar saniyen olur. Odayı temizlersen kurtulursun, " +
+                 "temizleyemezsen checkpoint'e düşersin.")]
+        public float lastStandSeconds = 10f;
+        [Tooltip("Kırık diriliş eşyasını tamir etmenin SANİYE bedeli. " +
+                 "⚠️ Ayrı malzeme YOK — tamir zamanla yapılır, yoksa ikinci para birimi doğar.")]
+        public float revivalRepairPrice = 45f;
+
+        [Tooltip("TEST: başlangıçtaki ÖLÜM ALDATMA sayısı. Gerçek oyunda eşyalar hikâyeden gelecek.")]
+        public int testDefianceCount = 1;
+        [Tooltip("TEST: başlangıçtaki GEÇİCİ DÖNÜŞ sayısı")]
+        public int testLastStandCount = 1;
+        [Tooltip("TEST: başlangıçtaki ÇAĞRI sayısı")]
+        public int testRecallCount = 1;
+
         [Header("── DÜŞMAN TÜRLERİ (Faz 5) ──")]
         [Tooltip("SIZINTI: yaşadığı sürece saatinden saniyede bu kadar emer")]
         public float leakAuraDrain = 0.55f;
