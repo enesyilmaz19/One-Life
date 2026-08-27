@@ -149,7 +149,9 @@ namespace TekCan
 
             // Kayıt her şeyden ÖNCE: checkpoint odası ve oradaki zaman buradan geliyor.
             if (SaveFile.Current == null) SaveFile.Load();
-            if (SaveFile.Current.gameOver) SaveFile.NewRun(t);   // önceki koşu bitmişti
+            // ⚠️ Hiç kayıt yoksa DA yeni koşu kurulmalı — yoksa oyunu ilk kez açan
+            // oyuncu sıfır diriliş eşyasıyla başlar ve ilk ölümde oyun biter.
+            if (SaveFile.NeedsNewRun) SaveFile.NewRun(t);
             var save = SaveFile.Current;
 
             var clock = systems.AddComponent<Clock>();

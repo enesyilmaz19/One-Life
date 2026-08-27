@@ -119,7 +119,42 @@ namespace TekCan.EditorTools
                             DisktenOku().intact[0]);
             Object.DestroyImmediate(root6);
 
-            // ── 7) Checkpoint aralığı ──
+            // ── 7) ⚠️ İLK KEZ AÇILIŞ: eşyasız başlanmıyor ──
+            //    Öz-denetimlerin hepsi `NewRun`/bellek kurulumuyla başlıyordu, yani
+            //    "hiç kayıt yok" durumunu hiç kurmamışlardı. O durumda oyuncu SIFIR
+            //    eşyayla başlıyor ve ilk ölümde oyun bitiyordu.
+            SaveFile.UseInMemory(null);
+            typeof(SaveFile).GetProperty("LoadedFromDisk")
+                ?.SetValue(null, false);                  // taze kurulum taklidi
+            failed += Check(ref total, "⚠️ kayıt yokken 'yeni koşu gerekli' deniyor",
+                            SaveFile.NeedsNewRun, 1);
+
+            SaveFile.NewRun(t);
+            failed += Check(ref total, "⚠️ yeni koşu eşyasız BAŞLAMIYOR",
+                            RevivalKind.IntactCount(SaveFile.Current) > 0,
+                            RevivalKind.IntactCount(SaveFile.Current));
+
+            // ── 8) ⚠️ TEMİZ ODADA GEÇİCİ DÖNÜŞ bedava kazanç vermiyor ──
+            //    Dövüş dışı akıştan temizlenmiş odada ölürsen, sayaç kurulur kurulmaz
+            //    oda zaten temiz olduğu için "başardın" sayılabilirdi — bedava zaman.
+            s = Bellek(defiance: 0, lastStand: 1, recall: 1, checkpointSeconds: 80f);
+            var (root8, clock8, rev8) = Kur(t, 100f);
+            var rmGo = new GameObject("rooms"); rmGo.transform.SetParent(root8.transform);
+            var rm = rmGo.AddComponent<RoomManager>();
+            rm.Init(t, clock8.transform, null);
+            KillAll();
+            Tick(rm);                                     // oda temizlendi
+            clock8.Spend(999f);                           // TEMİZ odada öl → GEÇİCİ DÖNÜŞ
+
+            Tick(rev8);
+            failed += Check(ref total, "⚠️ temiz odada GEÇİCİ DÖNÜŞ bedava kazanç VERMİYOR",
+                            rev8.LastStandArmed, 1);
+            failed += Check(ref total, "saat hâlâ 10 saniyede (checkpoint'e sıçramadı)",
+                            clock8.Seconds <= t.lastStandSeconds + 0.1f, clock8.Seconds);
+            Object.DestroyImmediate(root8);
+            Enemy.All.Clear();
+
+            // ── 9) Checkpoint aralığı ──
             failed += Check(ref total, "checkpoint aralığı en az 1", t.checkpointEveryRooms >= 1,
                             t.checkpointEveryRooms);
 
@@ -167,6 +202,19 @@ namespace TekCan.EditorTools
             rev.Init(t, clock);
             return (root, clock, rev);
         }
+
+        static void KillAll()
+        {
+            foreach (var e in Enemy.All.ToArray())
+                if (e != null) Object.DestroyImmediate(e.gameObject);
+            Enemy.All.Clear();
+        }
+
+        /// <summary>Private Update'i elle çevir — kod tabanının öz-denetim deseni.</summary>
+        static void Tick(MonoBehaviour mb) =>
+            mb.GetType().GetMethod("Update",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.Invoke(mb, null);
 
         static int Check(ref int total, string name, bool ok, float actual)
         {

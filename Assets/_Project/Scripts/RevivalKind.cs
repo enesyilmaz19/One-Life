@@ -64,9 +64,17 @@ namespace TekCan
             public override float SecondsOnUse(Tuning t, SaveData s) => CheckpointSeconds(t, s);
         }
 
-        /// <summary>Checkpoint'e kaydedilmiş zaman; hiç checkpoint yoksa koşu başlangıcı.</summary>
-        protected static float CheckpointSeconds(Tuning t, SaveData s)
-            => s != null && s.checkpointSeconds > 0f ? s.checkpointSeconds : t.startSeconds;
+        /// <summary>Tek kaynak `SaveFile`'da — iki yerde ayrı ayrı hesaplanıyordu.</summary>
+        protected static float CheckpointSeconds(Tuning t, SaveData s) => SaveFile.CheckpointSeconds(t);
+
+        /// <summary>Onarım sırası: `All` sırasıyla ilk KIRIK eşya. `FirstAvailable`ın eşi.</summary>
+        public static RevivalKind FirstBroken(SaveData s)
+        {
+            if (s == null) return null;
+            foreach (var k in All)
+                if (k.Index < s.broken.Length && s.broken[k.Index] > 0) return k;
+            return null;
+        }
 
         public static readonly RevivalKind DefianceKind = new Defiance();
         public static readonly RevivalKind LastStandKind = new LastStand();

@@ -35,6 +35,16 @@ namespace TekCan
     {
         public static SaveData Current { get; private set; }
 
+        /// <summary>
+        /// Diskte gerçek bir kayıt var mıydı. ⚠️ Bu bayrak olmadan oyunu İLK KEZ açan
+        /// oyuncu SIFIR diriliş eşyasıyla başlıyordu ve ilk ölümde "oyun bitti" görüyordu.
+        /// Öz-denetimler hep `NewRun` çağırdığı için bu durumu hiç kurmamışlardı.
+        /// </summary>
+        public static bool LoadedFromDisk { get; private set; }
+
+        /// <summary>Hiç oynanmamış ya da bitmiş koşu — yeni stok verilmeli.</summary>
+        public static bool NeedsNewRun => Current == null || !LoadedFromDisk || Current.gameOver;
+
         static string Path => System.IO.Path.Combine(Application.persistentDataPath, "tekcan_run.json");
 
         public static void Load()
@@ -44,7 +54,7 @@ namespace TekCan
                 if (File.Exists(Path))
                 {
                     Current = JsonUtility.FromJson<SaveData>(File.ReadAllText(Path));
-                    if (Current != null) { Normalize(); return; }
+                    if (Current != null) { LoadedFromDisk = true; Normalize(); return; }
                 }
             }
             catch (Exception e)
@@ -53,6 +63,7 @@ namespace TekCan
                 Debug.LogWarning($"[Tek Can] Kayıt okunamadı, yeni koşu: {e.Message}");
             }
             Current = new SaveData();
+            LoadedFromDisk = false;
             Normalize();
         }
 
@@ -65,9 +76,20 @@ namespace TekCan
         }
 
         /// <summary>Yeni oyun — game over sonrası ya da elle sıfırlama.</summary>
+        /// <summary>
+        /// Checkpoint'e kaydedilmiş zaman — hiç checkpoint yoksa koşu başlangıcı.
+        /// ⚠️ TEK KAYNAK: hem `RevivalKind` hem `RevivalSystem` bunu ayrı ayrı
+        /// hesaplıyordu. Aynı kavramın iki ölçümü, `lessons.md` (9)'un tam konusu.
+        /// </summary>
+        public static float CheckpointSeconds(Tuning t)
+            => Current != null && Current.checkpointSeconds > 0f
+                ? Current.checkpointSeconds
+                : t.startSeconds;
+
         public static void NewRun(Tuning t)
         {
             Current = new SaveData();
+            LoadedFromDisk = true;      // artık gerçek bir koşu var
             Normalize();
             // ponytail: hikâye yok, eşyalar hikâyeden geliyor olacak. Test için başlangıç
             // stoğu Tuning'den; gerçek oyunda burası kalkacak ve eşyalar hikâyeden gelecek.
@@ -97,6 +119,7 @@ namespace TekCan
         public static void UseInMemory(SaveData data)
         {
             Current = data ?? new SaveData();
+            LoadedFromDisk = true;      // öz-denetim durumu kendi kuruyor, taze sayılmaz
             Normalize();
         }
     }

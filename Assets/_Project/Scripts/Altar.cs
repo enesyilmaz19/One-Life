@@ -33,15 +33,7 @@ namespace TekCan
             ? _t.revivalRepairPrice
             : _t.altarBasePrice * Mathf.Pow(_t.altarPriceGrowth, _bought);
 
-        /// <summary>Onarım sırası: `RevivalKind.All` sırasıyla ilk kırık eşya.</summary>
-        static RevivalKind FirstBroken()
-        {
-            var s = SaveFile.Current;
-            if (s == null) return null;
-            foreach (var k in RevivalKind.All)
-                if (k.Index < s.broken.Length && s.broken[k.Index] > 0) return k;
-            return null;
-        }
+        static RevivalKind FirstBroken() => RevivalKind.FirstBroken(SaveFile.Current);
         public bool PlayerInRange { get; private set; }
 
         static readonly Color HarvestColor = new Color(0.35f, 0.85f, 0.55f);

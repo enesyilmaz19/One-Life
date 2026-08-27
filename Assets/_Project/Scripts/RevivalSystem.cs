@@ -22,6 +22,13 @@ namespace TekCan
         /// <summary>GEÇİCİ DÖNÜŞ kuruldu mu — bu sayaç doluyken ölmek checkpoint'e atar.</summary>
         public bool LastStandArmed { get; private set; }
 
+        // ⚠️ Kurulduğu ANDAKİ oda durumu. Olmasaydı şu açık doğardı: temizlenmiş odada
+        // (dövüş dışı akıştan) ölürsen GEÇİCİ DÖNÜŞ kurulur kurulmaz `Update` odayı
+        // zaten temiz görür ve ANINDA "başardın" der — bedava checkpoint zamanı.
+        // Kazanmak için temizlik ARMDAN SONRA gerçekleşmeli.
+        int _armRoom;
+        bool _armCleared;
+
         /// <summary>HUD ve öz-denetim için: son kullanılan eşya.</summary>
         public RevivalKind LastUsed { get; private set; }
 
@@ -48,6 +55,9 @@ namespace TekCan
             //  yenersen atmayacak. Kazanmanın karşılığı budur.)
             var rm = RoomManager.Instance;
             if (rm == null || !rm.Cleared) return;
+
+            // Aynı oda zaten temizken kurulduysa, o temizlik SENİN eserin değil — saymaz.
+            if (rm.Room == _armRoom && _armCleared) return;
 
             LastStandArmed = false;
             _clock.Revive(CheckpointSeconds());
@@ -83,6 +93,12 @@ namespace TekCan
 
             LastUsed = kind;
             LastStandArmed = kind.ArmsLastStand;
+            if (LastStandArmed)
+            {
+                var rm = RoomManager.Instance;
+                _armRoom = rm != null ? rm.Room : -1;
+                _armCleared = rm != null && rm.Cleared;
+            }
 
             Debug.Log($"[Tek Can] {kind.Name} kullanıldı — kalan sağlam: {RevivalKind.IntactCount(save)}");
 
@@ -112,10 +128,6 @@ namespace TekCan
             if (Application.isPlaying) Bootstrap.Restart();
         }
 
-        float CheckpointSeconds()
-        {
-            var s = SaveFile.Current;
-            return s != null && s.checkpointSeconds > 0f ? s.checkpointSeconds : _t.startSeconds;
-        }
+        float CheckpointSeconds() => SaveFile.CheckpointSeconds(_t);
     }
 }
