@@ -276,7 +276,23 @@ namespace TekCan
             return to;
         }
 
-        /// <summary>Yere vuruşta yön yok, yalnızca mesafe — yana kaçmak işe yaramıyor.</summary>
+        /// <summary>
+        /// Yere vuruşta yön yok, yalnızca mesafe — yana kaçmak işe yaramıyor.
+        ///
+        /// ⚠️ KASITLI ASİMETRİ — kaza değil, karar (2026-08-26):
+        /// Burada hem menzil hem açı oyuncunun MERKEZİNE ölçülüyor. Oyuncunun kendi
+        /// vuruşu ise düşmanın YÜZEYİNE ölçülüyor (`PlayerController.InHitCone`).
+        ///
+        /// Yani oyuncunun vuruş kutusu cömert, hasar alma kutusu dar. Aksiyon
+        /// oyunlarında standart pratik budur. Ölçülen pay: normal düşmanda 0.5 birim
+        /// (menzilin %28'i) + 1.5 birim mesafede 19.5° açı.
+        ///
+        /// Turuncu yay bu kuralla DÜRÜST kalıyor: "merkezin buraya girmesin" diyor,
+        /// izometrikte oyuncu zaten ayak noktasını okuyor.
+        ///
+        /// Faz 10'da (zamanlama/zorluk kilidi) yeniden bakılacak; simetrik yapılırsa
+        /// düşmanlar belirgin şekilde daha çok vurur.
+        /// </summary>
         public bool PlayerInStrikeCone()
         {
             Vector3 to = FlatToPlayer();

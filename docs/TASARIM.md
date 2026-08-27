@@ -171,6 +171,22 @@ ayar bu.**
 > O modelle kaçan oyuncu durandan KÖTÜ çıkıyordu. Gerçekte bir dash yetiyor — model
 > düzeltilince tablo tersine döndü. **Yanlış model, yanlış ayarın en sinsi kaynağı.**
 
+### İsabet kutusu asimetrik — KASITLI (2026-08-26)
+
+| Yön | Nasıl ölçülüyor | Sonuç |
+|-----|-----------------|-------|
+| **Oyuncu → düşman** | menzil **ve açı** düşmanın YÜZEYİNE | cömert: gövdesi yaydaysa vuruyorsun |
+| **Düşman → oyuncu** | menzil ve açı oyuncunun MERKEZİNE | dar: merkezin dışarıdaysa yemiyorsun |
+
+Aksiyon oyunlarının standart pratiği — oyuncuya cömert vuruş kutusu, dar hasar kutusu.
+Ölçülen pay: normal düşmanda **0.5 birim** (menzilin %28'i) + 1.5 birim mesafede **19.5°**.
+
+Turuncu hazırlık yayı bu kuralla dürüst kalıyor: *"merkezin buraya girmesin"* diyor ve
+izometrikte oyuncu zaten karakterinin ayak noktasını okuyor.
+
+⚠️ Bu bir KARAR, kaza değil. Faz 10'da (zorluk kilidi) yeniden bakılacak — simetrik
+yapılırsa düşmanlar belirgin şekilde daha çok vurur.
+
 ### İsabet menzili YÜZEYE ölçülür, merkeze değil
 
 Enes: *"bossa vururken bazen buglanıyor vuramıyorum."* Sebep: menzil merkezden ölçülüyordu.
