@@ -12,6 +12,11 @@ namespace TekCan
     /// ⚠️ Yay, gerçek vuruş alanının kendisidir: menzil ve açı doğrudan Tuning'den
     /// geliyor. Yani ayarı çevirdiğinde gördüğün şey tam olarak isabet eden şey.
     /// Görsel yalan söylemezse ayar dürüst olur.
+    ///
+    /// Kural tam olarak şu: **gövdesi yayla örtüşen düşman vurulur.** Düşman bir nokta
+    /// değil; `PlayerController.InHitCone` hem menzili hem açıyı YÜZEYE ölçüyor.
+    /// Bir ara açı MERKEZE ölçülüyordu: boss'un gövdesi yayın içinde apaçık dururken
+    /// vuruş düşüyordu — yay doğru çiziliyor, isabet ona uymuyordu (bkz. `BossHitRepro`).
     /// </summary>
     public class Arc : MonoBehaviour
     {

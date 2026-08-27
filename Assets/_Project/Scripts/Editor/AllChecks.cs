@@ -34,6 +34,14 @@ namespace TekCan.EditorTools
             sb.AppendLine(Line("Hasar reprodüksiyonu", repro, repro ? "gerçek geometride iniyor" : "HASAR İNMİYOR"));
             if (!repro) problems++;
 
+            // Enes "bossa bazen vuramıyorum" dedi İKİ KEZ. İlk düzeltme kök nedenin
+            // yarısıydı (menzil yüzeye çevrildi, açı merkezde kaldı). Bu kapı ikinci
+            // yarıyı koruyor: gövde yayla örtüşüyorsa vuruş İNMEK ZORUNDA.
+            bool bossHit = BossHitRepro.Execute();
+            sb.AppendLine(Line("Boss isabet reprodüksiyonu", bossHit,
+                               bossHit ? "gövde yaydaysa vuruş iniyor" : "ÖLÜ BANT VAR"));
+            if (!bossHit) problems++;
+
             int f3 = Faz3SelfCheck.Execute();
             sb.AppendLine(Line("Faz 3 öz-denetim", f3 == 0, f3 == 0 ? "geçti" : $"{f3} başarısız"));
             problems += f3;

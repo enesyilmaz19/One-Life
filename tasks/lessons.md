@@ -237,3 +237,41 @@ Denetim 10 → 14, eklenen dördü de hareket ve yok olma.
 `Application.isPlaying ? Destroy : DestroyImmediate` diye ayırıyordu, `Arc`/`Mote`
 ayırmıyordu. Editör modunda sürülünce `Destroy` hata basar — testi imkânsız kılan
 şeylerden biri de buydu. İkisi de `Enemy`'nin desenine getirildi.
+
+---
+
+## 2026-08-26 (9) — Kök nedenin YARISINI düzeltip "çözüldü" dedim
+
+**Ne oldu:** Enes "bossa vururken bazen buglanıyor, vuramıyorum" dedi. Menzilin
+düşmanın MERKEZİNE ölçüldüğünü buldum, YÜZEYE çevirdim, kapattım.
+
+Şikâyet geri geldi. Çünkü isabet testinde İKİ ölçüm var ve ben birini düzeltmiştim:
+
+```csharp
+surfaceDist = to.magnitude - e.Radius;                        // YÜZEYE  ✅ düzeltmiştim
+if (surfaceDist > range) return false;
+return Vector3.Angle(transform.forward, to) <= halfAngle;     // MERKEZE ❌ dokunmamıştım
+```
+
+Boss'un yarıçapı 0.855. Yakınken gövdesi yayın içinde apaçık duruyor ama merkezi
+yaydan çıkabiliyor. Reprodüksiyon ölçtü: **1.2 birim mesafede 41 DERECELİK ölü bant.**
+Hepsi tam 50°'de başlıyordu — yani koninin yarım açısında.
+
+**En kötü tarafı:** yay da aynı açıyla çizildiği için **görsel yalan söylüyordu.**
+Gövdeyi yayın içinde görüyor, hiçbir şey alamıyordun. "Bug" hissinin kaynağı buydu.
+
+**Kural:**
+
+> Aynı kavramın (burada "düşmanın yeri") birden çok ölçümü varsa, düzeltmeyi
+> HEPSİNE uygula. Birini düzeltip diğerini bırakmak hatayı yok etmez, **daha nadir**
+> yapar — ve nadir hata "bazen buglanıyor" diye geri gelir, teşhisi daha zor olur.
+>
+> Teslimden önceki soru: *"bu kavram başka nerede ölçülüyor?"*
+
+**Somut savunma:** `BossHitRepro` yazıldı ve `AllChecks`'e bağlandı. Boss'u beş mesafeye
+koyup oyuncuyu 0-90° döndürüyor, 455 durumu sınıyor. Ölçüm **BAĞIMSIZ**: üretimin
+formülünü tekrar çalıştırmıyor, gövde çemberinden nokta örnekliyor. Aynı formülü iki
+yere yazsaydık aynı hatayı iki kez yapar ve test yeşil yanardı.
+
+**Çift yönlü:** hem "örtüşüyorsa vurmalı" hem "açıkça dışarıdaysa vurmamalı" sınanıyor.
+Yalnızca ilkini yazsaydım `return true;` yazmak testi geçerdi.

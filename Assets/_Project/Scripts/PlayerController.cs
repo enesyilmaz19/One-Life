@@ -384,11 +384,20 @@ namespace TekCan
         /// düşmanı birden yakalayabilir.
         /// </summary>
         /// <summary>
-        /// İsabet kuralının TEK yeri. Menzil düşmanın MERKEZİNE değil YÜZEYİNE ölçülür,
-        /// yoksa büyük düşmanlar (boss) gövdesine değecek kadar yakınken bile ıskalanır.
+        /// İsabet kuralının TEK yeri. Hem MENZİL hem AÇI düşmanın MERKEZİNE değil
+        /// YÜZEYİNE ölçülür — düşman bir nokta değil, gövdesi olan bir şey.
         ///
-        /// ⚠️ Bu kural bir ara iki ayrı yere kopyalanmıştı (tek hedef dalı + koni dalı).
-        /// Bu projede tam olarak öyle bir kopyalama iki kez hata üretti; tek yere indirildi.
+        /// ⚠️ Enes "bossa bazen vuramıyorum" dedi ve İKİ KEZ bildirdi. İlkinde yalnızca
+        /// MENZİL yüzeye çevrildi, AÇI merkezde bırakıldı — yani kök nedenin yarısı
+        /// düzeltildi ve şikâyet geri geldi. Reprodüksiyon (`BossHitRepro`) ölçtü:
+        /// boss 1.2 birim yakındayken 41 DERECELİK ölü bant vardı; gövde yayın içinde
+        /// apaçık duruyor, merkezi dışarıda kalıyor, vuruş düşüyordu.
+        ///
+        /// Yay da aynı açıyla çizildiği için GÖRSEL YALAN SÖYLÜYORDU: gövdeyi yayın
+        /// içinde görüyor, hiçbir şey alamıyordun.
+        ///
+        /// Pay = gövdenin açısal yarıçapı: `asin(r / d)`. Oyuncu gövdenin içindeyse
+        /// (d ≤ r) pay 90° olur, yani her yönden vurulur — doğrusu da bu.
         /// </summary>
         bool InHitCone(Enemy e, float range, float halfAngle, out float surfaceDist)
         {
@@ -398,9 +407,14 @@ namespace TekCan
             Vector3 to = e.transform.position - transform.position;
             to.y = 0f;
 
-            surfaceDist = to.magnitude - e.Radius;
+            float dist = to.magnitude;
+            surfaceDist = dist - e.Radius;
             if (surfaceDist > range) return false;
-            return Vector3.Angle(transform.forward, to) <= halfAngle;
+
+            float acisalYaricap = dist > e.Radius
+                ? Mathf.Asin(Mathf.Clamp01(e.Radius / dist)) * Mathf.Rad2Deg
+                : 90f;                                    // içindeysen her yön geçerli
+            return Vector3.Angle(transform.forward, to) <= halfAngle + acisalYaricap;
         }
 
         void StrikeCone(float range, float angleDeg, float damage, float hitStop, float shake,
