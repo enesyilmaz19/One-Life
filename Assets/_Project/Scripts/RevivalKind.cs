@@ -23,7 +23,7 @@ namespace TekCan
         public abstract Color Tint { get; }
 
         /// <summary>Kullanıldığında saat kaça ayarlanır.</summary>
-        public abstract float SecondsOnUse(Tuning t, SaveData s);
+        public abstract float SecondsOnUse(Tuning t);
 
         /// <summary>Checkpoint'e döndürüyor mu (sahne yeniden kurulur) yoksa yerinde mi kalıyor.</summary>
         public virtual bool SendsToCheckpoint => false;
@@ -42,8 +42,8 @@ namespace TekCan
             public override Color Tint => new Color(1f, 0.85f, 0.35f);
             // Checkpoint'teki zamanın küçük bir kısmı (Enes kararı). Yerinde kalkıyorsun,
             // düşmanlar da yerinde — yani ucuz değil, dövüşün ortasında az zamanla kalıyorsun.
-            public override float SecondsOnUse(Tuning t, SaveData s)
-                => CheckpointSeconds(t, s) * t.defianceFraction;
+            public override float SecondsOnUse(Tuning t)
+                => SaveFile.CheckpointSeconds(t) * t.defianceFraction;
         }
 
         sealed class LastStand : RevivalKind
@@ -53,7 +53,7 @@ namespace TekCan
             public override bool ArmsLastStand => true;
             // ⚠️ SABİT 10 saniye (Enes kararı) — checkpoint'e bağlı değil.
             // Kısa ve okunur: saat zaten ekranda, geri sayımı görüyorsun.
-            public override float SecondsOnUse(Tuning t, SaveData s) => t.lastStandSeconds;
+            public override float SecondsOnUse(Tuning t) => t.lastStandSeconds;
         }
 
         sealed class Recall : RevivalKind
@@ -61,11 +61,8 @@ namespace TekCan
             public override string Name => "ÇAĞRI";
             public override Color Tint => new Color(0.55f, 0.75f, 1f);
             public override bool SendsToCheckpoint => true;
-            public override float SecondsOnUse(Tuning t, SaveData s) => CheckpointSeconds(t, s);
+            public override float SecondsOnUse(Tuning t) => SaveFile.CheckpointSeconds(t);
         }
-
-        /// <summary>Tek kaynak `SaveFile`'da — iki yerde ayrı ayrı hesaplanıyordu.</summary>
-        protected static float CheckpointSeconds(Tuning t, SaveData s) => SaveFile.CheckpointSeconds(t);
 
         /// <summary>Onarım sırası: `All` sırasıyla ilk KIRIK eşya. `FirstAvailable`ın eşi.</summary>
         public static RevivalKind FirstBroken(SaveData s)

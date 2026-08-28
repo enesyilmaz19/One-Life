@@ -174,6 +174,11 @@ namespace TekCan
         /// bedava gibi hissettirir. Oda çeşitleri (dükkân, nefes odası, bulmaca)
         /// ayrı bir konuşma; o gelene kadar tek satırlık kural yeterli.
         /// </summary>
+        // ponytail: checkpoint'e dönünce bu odanın sunakları SIFIRDAN geliyor (taban
+        // fiyatla, tükenmemiş). Yani bir diriliş eşyası harcayıp aynı odanın stoğunu
+        // yeniden alabilirsin. Tavan: eşyalar sonlu ve pahalı olduğu için bedeli var,
+        // ama bedava değil de UCUZ kalırsa satın alma sayaçları da checkpoint'e yazılır.
+        // Playtest kararı — şimdiden makine kurmak erken.
         void PlaceAltars()
         {
             // ONARIM yalnızca checkpoint odasında: güvenli noktada soluklanıp

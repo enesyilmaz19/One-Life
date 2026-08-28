@@ -104,7 +104,7 @@ namespace TekCan
 
             if (kind.SendsToCheckpoint) { Recall(); return; }
 
-            _clock.Revive(kind.SecondsOnUse(_t, save));
+            _clock.Revive(kind.SecondsOnUse(_t));
             IsoCamera.Shake(_t.hurtShake * 1.5f);
         }
 
