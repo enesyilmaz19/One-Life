@@ -27,6 +27,11 @@ namespace TekCan.EditorTools
         {
             int failed = 0, total = 0;
 
+            // ⚠️ Denetim diske GERÇEKTEN yazıyor (kalıcı ölümün kanıtı bu) — ama
+            // OYUNCUNUN kaydına değil. Geçici dosyaya yönlendiriliyor.
+            SaveFile.PathOverride = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(), "tekcan_faz9_check.json");
+
             var t = ScriptableObject.CreateInstance<Tuning>();
             t.startSeconds = 100f;
             t.lastStandSeconds = 10f;
@@ -205,13 +210,27 @@ namespace TekCan.EditorTools
             Object.DestroyImmediate(root10);
             Enemy.All.Clear();
 
-            // ── 11) Checkpoint aralığı ──
+            // ── 11) ⚠️ ARAÇLAR OYUNCUNUN KAYDINI EZMİYOR ──
+            //    Bu denetim diske gerçekten yazıyor; yazdığı yer OYUNCUNUN dosyası
+            //    olsaydı `AllChecks`'i her çalıştırmak koşuyu silerdi. Sessiz ve
+            //    yıkıcı bir hataydı — canlıydı, öz-incelemede yakalandı.
+            failed += Check(ref total, "⚠️ denetim GEÇİCİ dosyaya yazıyor",
+                            !string.IsNullOrEmpty(SaveFile.PathOverride), 1);
+            failed += Check(ref total, "geçici yol oyuncunun kaydı DEĞİL",
+                            SaveFile.PathOverride != null &&
+                            !SaveFile.PathOverride.Contains("tekcan_run.json"), 1);
+
+            // ── 12) Checkpoint aralığı ──
             failed += Check(ref total, "checkpoint aralığı en az 1", t.checkpointEveryRooms >= 1,
                             t.checkpointEveryRooms);
 
             Object.DestroyImmediate(t);
             Clock.Reset();
             RevivalSystem.Reset();
+
+            try { if (System.IO.File.Exists(SaveFile.PathOverride)) System.IO.File.Delete(SaveFile.PathOverride); }
+            catch { /* geçici dosya silinemedi, önemsiz */ }
+            SaveFile.PathOverride = null;      // oyuncunun kaydına dönülüyor
 
             if (failed == 0) Debug.Log($"[Faz 9 öz-denetim] ✅ {total}/{total} GEÇTİ");
             else Debug.LogError($"[Faz 9 öz-denetim] ❌ {total} kontrolden {failed} tanesi BAŞARISIZ");

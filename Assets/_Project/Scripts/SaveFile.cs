@@ -57,7 +57,18 @@ namespace TekCan
         /// <summary>Hiç oynanmamış ya da bitmiş koşu — yeni stok verilmeli.</summary>
         public static bool NeedsNewRun => Current == null || !LoadedFromDisk || Current.gameOver;
 
-        static string Path => System.IO.Path.Combine(Application.persistentDataPath, "tekcan_run.json");
+        /// <summary>
+        /// ⚠️ Öz-denetimler ve raporlar OYUNCUNUN GERÇEK KAYDINI EZMEMELİ.
+        ///
+        /// `Faz9SelfCheck` diske gerçekten yazıp geri okuyor (kalıcı ölümün kanıtı bu),
+        /// `Faz10SelfCheck` ve `ZorlukEgrisi` de checkpoint yazdırıyor. Hepsi varsayılan
+        /// yola yazıyordu — yani `AllChecks`'i her çalıştırmak Enes'in koşusunu siliyordu.
+        /// Araçlar burayı geçici bir dosyaya çevirip iş bitince geri bırakıyor.
+        /// </summary>
+        public static string PathOverride { get; set; }
+
+        static string Path => PathOverride
+            ?? System.IO.Path.Combine(Application.persistentDataPath, "tekcan_run.json");
 
         public static void Load()
         {

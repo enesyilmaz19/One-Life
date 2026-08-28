@@ -42,6 +42,11 @@ namespace TekCan.EditorTools
             var t = AssetDatabase.LoadAssetAtPath<Tuning>("Assets/_Project/Resources/Tuning.asset")
                     ?? ScriptableObject.CreateInstance<Tuning>();
 
+            // ⚠️ 30 oda ölçerken her biri checkpoint yazdırıyor. Oyuncunun kaydına
+            // DEĞİL — rapor almak koşuyu silmemeli.
+            SaveFile.PathOverride = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(), "tekcan_zorluk_rapor.json");
+
             var sb = new StringBuilder();
             sb.AppendLine();
             sb.AppendLine("═══════ ZORLUK EĞRİSİ ═══════");
@@ -103,6 +108,10 @@ namespace TekCan.EditorTools
             }
 
             sb.Append(KaçınmaPenceresi(t));
+
+            try { if (System.IO.File.Exists(SaveFile.PathOverride)) System.IO.File.Delete(SaveFile.PathOverride); }
+            catch { /* geçici dosya silinemedi, önemsiz */ }
+            SaveFile.PathOverride = null;      // oyuncunun kaydına dönülüyor
 
             Debug.Log(sb.ToString());
             if (Application.isBatchMode) EditorApplication.Exit(0);

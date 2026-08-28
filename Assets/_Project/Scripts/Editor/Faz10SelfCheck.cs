@@ -25,6 +25,10 @@ namespace TekCan.EditorTools
         {
             int failed = 0, total = 0;
 
+            // ⚠️ Checkpoint yazdırıyoruz — oyuncunun kaydına DEĞİL, geçici dosyaya.
+            SaveFile.PathOverride = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(), "tekcan_faz10_check.json");
+
             var t = ScriptableObject.CreateInstance<Tuning>();
             t.startSeconds = 500f;
             t.enemyTimePool = 10f;
@@ -123,6 +127,10 @@ namespace TekCan.EditorTools
             Object.DestroyImmediate(root);
             Object.DestroyImmediate(t);
             Region.Reset(); Clock.Reset(); RoomManager.Reset();
+
+            try { if (System.IO.File.Exists(SaveFile.PathOverride)) System.IO.File.Delete(SaveFile.PathOverride); }
+            catch { /* geçici dosya silinemedi, önemsiz */ }
+            SaveFile.PathOverride = null;
 
             if (failed == 0) Debug.Log($"[Faz 10 öz-denetim] ✅ {total}/{total} GEÇTİ");
             else Debug.LogError($"[Faz 10 öz-denetim] ❌ {total} kontrolden {failed} tanesi BAŞARISIZ");

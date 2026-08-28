@@ -50,8 +50,13 @@ denetimini **tek Unity açılışında** çalıştırır; bir kontrol düşerse 
 faz numarası yazılmıyor.)* (Ayar sapması yalnızca uyarı —
 hangi değerin doğru olduğu Enes'in kararı.)
 
-Ayrı araçlar: `Denge simülasyonu` (hasat oranı taraması) · `Geri bildirim ekran görüntüsü al`
-· `Oda yerleşimlerini çek` (beş yerleşimi **gerçek `RoomManager` ile** kurup PNG'ye çeker).
+Ayrı araçlar (kapı değil, rapor): `Denge simülasyonu` (hasat oranı taraması) ·
+`Zorluk eğrisi raporu` (her bölge/oda için kazanç–masraf kırılımı + kaçınma pencereleri) ·
+`Geri bildirim ekran görüntüsü al` · `Oda yerleşimlerini çek`.
+
+⚠️ **Kayda yazan her araç `SaveFile.PathOverride`'ı geçici dosyaya çevirmeli.**
+Öz-denetimler ve raporlar checkpoint yazdırıyor; varsayılan yola yazarlarsa
+`AllChecks`'i çalıştırmak oyuncunun koşusunu siler. (2026-08-26'da canlı bulundu.)
 
 ## Tekrar eden tuzaklar — yeni kod yazmadan önce oku
 
