@@ -543,9 +543,29 @@ Koşu YALNIZCA son bölgenin boss'u düşünce kazanılır. Boss her bölgede se
 **Kimlik (greybox):** zemin rengi + HUD'da bölge adı ve kuralı. Kural hissediliyor ama
 görünmüyor; yazı onu duyuruyor ki oyuncu *"burada neden hızlı eriyorum"* diye sormasın.
 
-⚪ **Açık:** kural şiddetleri (×1.7 / ×0.65 / ×1.8 / 0.6) oynanarak oturacak.
-`regionsPerAct` şimdilik 5 — bütün kurallar test edilebilsin diye; koşu uzunluğu
-ayarlanırken düşürülecek.
+### ⚠️ Bu bölgeler TEMSİLİ — neyin kalıcı olduğu (Enes sordu, 2026-08-26)
+
+Silah / ses / VFX kararının aynısı: **yapı dursun, içerik sonra.**
+
+**KALICI — mekanizma:**
+- Bölge kavramı: odalar + düşman havuzu + kural + boss
+- Zincir: ara boss bölgeyi bitirir, son boss koşuyu kazandırır
+- **Kuralın SAATTEN geçmesi** — yasa sonucu, tercih değil
+- Düşman havuzunun bölgeye bağlı olması · checkpoint'in bölgeyi kaydetmesi
+
+**GEÇİCİ — içerik:**
+- **İsimler** (EŞİK/DARALMA/KITLIK/AĞIRLIK/SIZINTI) — ajanın uydurması.
+  Gerçek bölgeler Enes'in dünyasının yerleri olacak, adlandırma onda
+- Kural şiddetleri (×1.7 / ×0.65 / ×1.8 / 0.6) — hepsi tahmin, oynanarak oturacak
+- Zemin renkleri — greybox
+- `regionsPerAct = 5` — sırf bütün kurallar test edilebilsin diye
+- Hangi kuralın hangi bölgede olduğu — hikâyeye göre değişecek
+
+**ORTADA — karar bekliyor:** dört kural TİPİNİN kendisi (baskı / kıtlık / ağırlık /
+sızıntı). Ajanın önerisi, Enes'in kararı. Playtest'in asıl sorusu bu:
+*bu tip kurallar bölgeleri gerçekten farklı yapıyor mu?*
+Yapıyorsa mekanizma doğru, kurallar sonra yazılır. Yapmıyorsa bölgeleri başka bir
+şeyle ayırmak gerekir — mekân, düşman kadrosu, yapı.
 
 **Odalar:** karışık — her büyük perdede **birkaç basit şablon** tekrar kullanılır,
 tek kullanımlık set-piece'ler ayrı yapılır. Tamamı el yapımı olsaydı bitmezdi.
