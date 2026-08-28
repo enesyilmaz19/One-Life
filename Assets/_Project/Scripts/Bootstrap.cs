@@ -67,6 +67,18 @@ namespace TekCan
         /// <summary>Koşuya ait her şey bunun altında — yeniden başlatma tek Destroy.</summary>
         static GameObject _runRoot;
 
+        /// <summary>Zemin — bölge kimliğinin greybox'taki taşıyıcısı.</summary>
+        static Renderer _groundRenderer;
+
+        /// <summary>
+        /// Bölge kimliği: zemin rengi. Greybox'ta bölgeler arasındaki farkı gözle
+        /// gördüğün tek şey bu — kural HİSSEDİLİYOR ama görünmüyor, renk onu duyuruyor.
+        /// </summary>
+        public static void SetGroundColor(Color c)
+        {
+            if (_groundRenderer != null) _groundRenderer.material.color = c;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Build()
         {
@@ -114,10 +126,11 @@ namespace TekCan
             // Kameraya yakın yönden gelsin ki bize dönük yüzler aydınlansın.
             lightGo.transform.rotation = Quaternion.Euler(55f, t.camYaw - 25f, 0f);
 
-            // Zemin
+            // Zemin — rengi BÖLGEYE ait, `RoomManager` bölgeye girerken boyuyor.
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Arena"; ground.transform.SetParent(_runRoot.transform);
             ground.transform.localScale = Vector3.one * (t.arenaRadius / 5f) * 2f;
+            _groundRenderer = ground.GetComponent<Renderer>();
             Paint(ground, new Color(0.16f, 0.16f, 0.19f));
 
             // Oyuncu
@@ -168,7 +181,7 @@ namespace TekCan
             // oyuncuyu girişe koyuyor, çıkışı açıyor. Sunaklar da odaya ait artık,
             // arenaya değil (bkz. RoomManager.PlaceAltars).
             systems.AddComponent<RoomManager>().Init(t, player.transform, camGo.transform,
-                                                     save.checkpointRoom);
+                                                     save.checkpointRoom, save.checkpointRegion);
 
             Debug.Log($"[Tek Can] Arena hazır — oda {save.checkpointRoom}/{t.roomsPerRegion}, " +
                       $"{clock.Seconds:0}s saat, {RevivalKind.IntactCount(save)} diriliş eşyası.");
@@ -248,6 +261,8 @@ namespace TekCan
             Altar.ResetAll();
             RoomManager.Reset();
             RevivalSystem.Reset();
+            Region.Reset();
+            _groundRenderer = null;
             HitStop.Reset();
             Arc.Reset();
             Mote.Reset();

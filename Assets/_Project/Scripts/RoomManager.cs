@@ -34,12 +34,40 @@ namespace TekCan
         public bool Cleared { get; private set; }
         public RoomLayout Layout { get; private set; }
 
-        public void Init(Tuning tuning, Transform player, Transform cam, int startRoom = 1)
+        /// <summary>Zincirdeki kaçıncı bölge — 0 tabanlı.</summary>
+        public int RegionIndex { get; private set; }
+
+        /// <summary>Perdedeki bölge sayısı. `Region.All` tavan; `Tuning` kısaltabilir.</summary>
+        public int RegionCount => Mathf.Clamp(_t.regionsPerAct, 1, Region.All.Length);
+
+        /// <summary>Son bölge mi — koşu ancak burada KAZANILIYOR.</summary>
+        public bool IsLastRegion => RegionIndex >= RegionCount - 1;
+
+        public void Init(Tuning tuning, Transform player, Transform cam,
+                         int startRoom = 1, int startRegion = 0)
         {
             Instance = this;
             _t = tuning;
             _player = player;
             _cam = cam;
+            EnterRegion(startRegion, startRoom);
+        }
+
+        /// <summary>
+        /// Bölgeye giriş: kural devreye girer, zemin rengi değişir, oda 1'den başlar.
+        ///
+        /// ⚠️ Kural `Region.Current` üstünden okunuyor; `Clock` ve `Enemy` oradan
+        /// bakıyor. Bölgeye özel ayrı bir sistem YOK — hepsi saatten geçiyor (yasa).
+        /// </summary>
+        void EnterRegion(int index, int startRoom = 1)
+        {
+            RegionIndex = Mathf.Clamp(index, 0, RegionCount - 1);
+            Region.SetCurrent(Region.At(RegionIndex));
+            Bootstrap.SetGroundColor(Region.Current.GroundColor);
+
+            Debug.Log($"[Tek Can] BÖLGE {RegionIndex + 1}/{RegionCount} — {Region.Current.Name}" +
+                      (string.IsNullOrEmpty(Region.Current.RuleText) ? "" : $" ({Region.Current.RuleText})"));
+
             EnterRoom(startRoom);
         }
 
@@ -59,6 +87,7 @@ namespace TekCan
             if (s == null || Clock.Instance == null) return;
 
             s.checkpointRoom = Room;
+            s.checkpointRegion = RegionIndex;
             s.checkpointSeconds = Clock.Instance.Seconds;
 
             // Zaman TEK BAŞINA yetmez: sunağa ödediğin zaman checkpoint'in ardında
@@ -68,8 +97,9 @@ namespace TekCan
             s.dashCooldown = Clock.Instance.DashCooldown;
 
             SaveFile.Flush();
-            Debug.Log($"[Tek Can] CHECKPOINT — oda {Room}, {s.checkpointSeconds:0.0}s, " +
-                      $"hasat %{s.harvestRate * 100f:0}, hasar {s.attackDamage:0.0}");
+            Debug.Log($"[Tek Can] CHECKPOINT — bölge {RegionIndex + 1} oda {Room}, " +
+                      $"{s.checkpointSeconds:0.0}s, hasat %{s.harvestRate * 100f:0}, " +
+                      $"hasar {s.attackDamage:0.0}");
         }
 
         void Update()
@@ -86,14 +116,22 @@ namespace TekCan
         {
             Cleared = true;
 
-            // Boss odasının çıkışı yok — bölge orada bitiyor.
-            if (IsBossRoom) { Clock.Instance.Win(); return; }
+            // ⚠️ Koşu YALNIZCA son bölgenin boss'u düşünce kazanılıyor. Öncekilerde
+            // boss ölünce bölge biter ve çıkış açılır — zincir devam eder.
+            if (IsBossRoom && IsLastRegion) { Clock.Instance.Win(); return; }
 
             if (_gate != null) _gate.Open();
         }
 
-        /// <summary>`ExitGate` çağırıyor — oyuncu açık kapıya yürüdüğünde.</summary>
-        public void NextRoom() => EnterRoom(Room + 1);
+        /// <summary>
+        /// `ExitGate` çağırıyor — oyuncu açık kapıya yürüdüğünde.
+        /// Boss odasındaysak sıradaki BÖLGEYE, değilsek sıradaki ODAYA.
+        /// </summary>
+        public void NextRoom()
+        {
+            if (IsBossRoom) EnterRegion(RegionIndex + 1);
+            else EnterRoom(Room + 1);
+        }
 
         void EnterRoom(int index)
         {
@@ -104,12 +142,22 @@ namespace TekCan
             Layout = RoomLayout.For(Room);
 
             _roomRoot = new GameObject($"Room_{Room}");
-            _roomRoot.transform.SetParent(transform.parent);
+            // ⚠️ Ebeveyn yoksa KENDİMİZE bağlan. Oyunda `Systems` altındayız ve
+            // `transform.parent` = Run kökü; ama kök seviyesindeki bir nesnede parent
+            // NULL olur ve oda kökü sahnede ÖKSÜZ kalır — sahibi yok edilse bile
+            // temizlenmez. Öz-denetimler tam öyle kuruyor ve sonraki denetime
+            // kalıntı çıkış kapısı bırakıyordu (kontroller sıraya bağımlı hale geliyordu).
+            _roomRoot.transform.SetParent(transform.parent != null ? transform.parent : transform);
 
             // Oyuncu girişte başlar; oda bir YOL, girişten çıkışa gideceksin.
             if (_player != null) _player.position = Bootstrap.Entrance(_t);
 
-            if (IsBossRoom) PlaceBoss();
+            if (IsBossRoom)
+            {
+                PlaceBoss();
+                // Son bölge değilse boss odasının da çıkışı var: devrilince zincir sürüyor.
+                if (!IsLastRegion) PlaceExit();
+            }
             else { PlaceEnemies(); PlaceExit(); PlaceAltars(); }
 
             // Checkpoint odaya GİRERKEN yazılır, temizlenince değil: checkpoint'in anlamı
@@ -159,8 +207,11 @@ namespace TekCan
 
         void PlaceBoss()
         {
+            // Boss her bölgede sertleşiyor — yoksa 4. bölgenin boss'u 1. bölgeninkiyle
+            // aynı olurdu ve zincirin tırmanma hissi kaybolurdu.
+            float havuz = _t.bossPoolMultiplier * Mathf.Pow(_t.regionBossGrowth, RegionIndex);
             Bootstrap.SpawnEnemyAt(_t, new Vector3(0f, Bootstrap.ArenaCenter.y, _t.arenaRadius * 0.35f),
-                                   _player, _cam, _t.bossPoolMultiplier, boss: true,
+                                   _player, _cam, havuz, boss: true,
                                    parent: _roomRoot.transform);
         }
 
@@ -216,18 +267,34 @@ namespace TekCan
         /// </summary>
         EnemyKind PickKind(int room, int index)
         {
-            if (room <= _t.plainRoomCount) return EnemyKind.Basic;
+            // İlk bölgenin ilk odaları yalnızca TEMEL — oyun kendini önce öğretiyor.
+            if (RegionIndex == 0 && room <= _t.plainRoomCount) return EnemyKind.Basic;
 
-            int unlocked = Mathf.Min(EnemyKind.All.Length, 2 + (room - _t.plainRoomCount - 1));
-            return EnemyKind.All[(index + room) % unlocked];
+            // ⚠️ Tür havuzu artık BÖLGEYE bağlı, odaya değil. Enes'in kararı:
+            // "bölgeye göre yenileri ekleniyor". Oda içinde de kademe var ama tavanı
+            // bölge belirliyor — böylece yeni tür yeni bir MEKÂNLA birlikte geliyor.
+            int tavan = Mathf.Clamp(Region.Current != null ? Region.Current.UnlockedKinds : 2,
+                                    1, EnemyKind.All.Length);
+            int odaKademe = Mathf.Min(tavan, 2 + Mathf.Max(0, room - _t.plainRoomCount - 1));
+            return EnemyKind.All[(index + room + RegionIndex) % odaKademe];
         }
 
         /// <summary>HUD için.</summary>
         public string Prompt()
         {
-            if (IsBossRoom) return "BOSS";
+            if (IsBossRoom)
+                return IsLastRegion ? "SON BOSS" : "BÖLGE BOSS'U";
             if (Cleared) return "ÇIKIŞ AÇIK  ·  saat işlemeye devam ediyor";
             return $"oda {Room} / {_t.roomsPerRegion - 1}   ·   {Layout.Name}";
+        }
+
+        /// <summary>HUD üst satırı: bölge adı + kuralı.</summary>
+        public string RegionPrompt()
+        {
+            var r = Region.Current;
+            if (r == null) return "";
+            string kural = string.IsNullOrEmpty(r.RuleText) ? "" : $"  ·  {r.RuleText}";
+            return $"BÖLGE {RegionIndex + 1}/{RegionCount}  —  {r.Name}{kural}";
         }
     }
 }

@@ -139,6 +139,12 @@ namespace TekCan
         [Tooltip("Her odada düşman zaman havuzu bu kat büyür — odalar sertleşir")]
         public float roomPoolGrowth = 1.18f;
 
+        [Header("── BÖLGELER (Faz 10) ──")]
+        [Tooltip("Perdedeki bölge sayısı. Tavan Region.All uzunluğu; testte kısaltmak için düşür.")]
+        public int regionsPerAct = 3;
+        [Tooltip("Her bölgede boss havuzu bu kat büyür — zincir tırmanmalı")]
+        public float regionBossGrowth = 1.35f;
+
         [Header("── DİRİLİŞ / CHECKPOINT (Faz 9) ──")]
         [Tooltip("Kaç odada bir checkpoint. Gerçek oyunda 30dk-1sa'lik kesitler olacak; " +
                  "greybox'ta oda sayısı o kesitin yerini tutuyor.")]

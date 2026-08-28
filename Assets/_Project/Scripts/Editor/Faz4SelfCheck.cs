@@ -29,6 +29,9 @@ namespace TekCan.EditorTools
             var t = ScriptableObject.CreateInstance<Tuning>();
             t.startSeconds = 500f;
             t.roomsPerRegion = 3;            // kısa bölge: oda 1, 2, sonra boss odası
+            // ⚠️ TEK bölge: bu denetim koşunun yapısını sınıyor (boss = son, kazanma orada).
+            // Bölge ZİNCİRİ Faz 10'un konusu ve orada sınanıyor.
+            t.regionsPerAct = 1;
             t.roomBaseCount = 2f;
             t.roomCountGrowth = 1f;
             t.enemyTimePool = 10f;
@@ -114,7 +117,7 @@ namespace TekCan.EditorTools
             //    kaldıran bir saldırısı yoktu. Yere vuruş 360° — yana kaçmak işe yaramaz,
             //    UZAKLAŞMAK gerekir. Test: halkanın içi vurulur, dışı vurulmaz.
             KillAll();
-            wm.NextRoom();          // bölge sonrası oda da boss odası (Room >= roomsPerRegion)
+            GoToRoom(wm, t.roomsPerRegion);           // taze boss odası
             var slamBoss = Enemy.All.Count > 0 ? Enemy.All[0] : null;
             if (slamBoss != null)
             {
@@ -147,7 +150,7 @@ namespace TekCan.EditorTools
 
             // ⚠️ ETKİ testi, özellik değil: boss saati GERÇEKTEN emiyor mu?
             KillAll();
-            wm.NextRoom();                            // yeni boss odası
+            GoToRoom(wm, t.roomsPerRegion);           // yeni boss odası
             var b2 = Enemy.All.Count > 0 ? Enemy.All[0] : null;
             if (b2 != null)
             {
@@ -167,6 +170,15 @@ namespace TekCan.EditorTools
             else Debug.LogError($"[Faz 4 öz-denetim] ❌ {total} kontrolden {failed} tanesi BAŞARISIZ");
             return failed;
         }
+
+        /// <summary>
+        /// Belirli bir odaya doğrudan gir. `NextRoom` boss odasındayken BÖLGE atlıyor,
+        /// yani taze bir boss kurmak için kullanılamıyor.
+        /// </summary>
+        static void GoToRoom(RoomManager rm, int room) =>
+            typeof(RoomManager).GetMethod("EnterRoom",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.Invoke(rm, new object[] { room });
 
         /// <summary>RoomManager.Update'i bir kez elle çevir — temizlenme kararı orada veriliyor.</summary>
         static void Tick(RoomManager rm) =>

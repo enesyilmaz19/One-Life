@@ -222,6 +222,16 @@ namespace TekCan
 
             GUI.Label(new Rect(0f, Screen.height * 0.30f, Screen.width, 40f), wm.Prompt(), _mid);
 
+            // Bölge adı ve KURALI — kural hissediliyor ama görünmüyor, yazı onu duyuruyor.
+            // Oyuncu "burada neden hızlı eriyorum" diye sormamalı, okumalı.
+            string bolge = wm.RegionPrompt();
+            if (!string.IsNullOrEmpty(bolge))
+            {
+                _small.normal.textColor = new Color(0.75f, 0.8f, 0.9f);
+                GUI.Label(new Rect(0f, 6f, Screen.width, 20f), bolge, _small);
+                _small.normal.textColor = Color.white;
+            }
+
             if (wm.Cleared)
             {
                 _small.normal.textColor = new Color(1f, 0.75f, 0.5f);
@@ -292,8 +302,8 @@ namespace TekCan
             float net = _clock.TotalHarvested - _clock.TotalSpent;
             var wm = RoomManager.Instance;
             string dalga = wm == null ? ""
-                : won ? "BOSS DEVRİLDİ\n"
-                      : $"ulaşılan oda   {wm.Room}\n";
+                : won ? "SON BOSS DEVRİLDİ\n"
+                      : $"ulaşılan yer   bölge {wm.RegionIndex + 1} · oda {wm.Room}\n";
 
             string özet =
                 dalga +

@@ -87,6 +87,7 @@ namespace TekCan
                          * Kind.SpeedMultiplier
                          * (Fleeing ? _t.runnerFleeSpeedMultiplier : 1f);
         float HitCost => (Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost)
+                       * Region.HitCost                            // AĞIRLIK bölgesi kuralı
                        * (IsBoss ? _t.bossHitCostMultiplier : 1f);
 
         public EnemyKind Kind { get; private set; } = EnemyKind.Basic;
@@ -360,6 +361,7 @@ namespace TekCan
                 // onu zorlaştırmaz, ödül yapardı — havuzu hem canı hem ödemesi olduğu için.
                 float gain = drained * clock.HarvestRate * harvestMult
                              * Kind.HarvestMultiplier
+                             * Region.Harvest                      // KITLIK bölgesi kuralı
                              * (IsBoss ? _t.bossHarvestMultiplier : 1f);
                 clock.Add(gain);
 

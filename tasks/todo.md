@@ -7,7 +7,18 @@
 - [x] ✅ **HİKÂYE / MEKÂN KONUŞMASI TAMAM** (2026-08-25) — bütün 🔴 sorular cevaplandı.
       Kararlar `docs/TASARIM.md`'de: ölüm yapısı · 3 diriliş eşyası · checkpoint ·
       3 perde · 7 düşman + 4 boss · 5 silah · kurgu · EA kapsamı
-**Faz 8 + 9 hazır — oda zinciri ve diriliş sistemi playtest bekliyor.**
+**Faz 10 hazır — bölge zinciri.**
+
+- [ ] **Bölgeler FARKLI HİSSETTİRİYOR mu?** Kural yazıyor ama asıl soru: fark ediyor musun?
+      DARALMA'da acele ediyor musun · KITLIK'ta "buna değer mi" diyor musun ·
+      AĞIRLIK'ta kaçınmaya zorlanıyor musun · SIZINTI'da nefes alamıyor musun
+- [ ] **Kural şiddetleri doğru mu?** ×1.7 / ×0.65 / ×1.8 / 0.6 — biri fark edilmiyor mu,
+      biri oynanamaz mı yapıyor
+- [ ] **Zemin rengi yetiyor mu** bölgeyi ayırt etmeye
+- [ ] **Ara boss'tan sonra çıkış açılıyor mu**, zincir akıyor mu
+- [ ] **3 bölge × 5 oda = 15 oda** — koşu uzunluğu nasıl? (`regionsPerAct` ile ayarlanır)
+
+**Önceki fazlardan kalan:**
 
 Faz 8 (oda zinciri):
 - [ ] **Odadan odaya geçiş çalışıyor mu?** Temizle → yeşil disk açılır → üstüne yürü
@@ -64,7 +75,42 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 
 ---
 
-## Faz 9 — Checkpoint + diriliş ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+## Faz 10 — Bölge zinciri ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+
+> Boss ölünce oyun bitmiyor artık. **Bölge** bitiyor, çıkış açılıyor, sıradaki bölgeye
+> geçiyorsun. Koşu yalnızca SON bölgenin boss'u düşünce kazanılıyor.
+
+- [x] **`Region`** — 5 bölge, `Weapon`/`EnemyKind`/`RoomLayout` ile aynı desen
+- [x] **⚠️ KURALLAR SAATTEN GEÇİYOR** — bölgeye özel can/zırh/direnç YOK, yasa duruyor
+
+| Bölge | Kural | Ne değişiyor |
+|---|---|---|
+| **EŞİK** | — | Önce öğren |
+| **DARALMA** | oyalanmak pahalı | Dövüş dışı akış ×1.7 |
+| **KITLIK** | hasat az | Vuruş kazancı ×0.65 |
+| **AĞIRLIK** | hata affetmiyor | Darbe bedeli ×1.8 |
+| **SIZINTI** | sürekli emiliyor | Dövüşte BİLE 0.6/sn arka plan emişi |
+
+- [x] **Zincir** — ara boss'un odasında ÇIKIŞ var, son boss'unkinde yok
+- [x] **Düşman havuzu bölgeye bağlı** — Enes: *"bölgeye göre yenileri ekleniyor"*.
+      Yeni tür yeni MEKÂNLA geliyor
+- [x] **Boss her bölgede sertleşiyor** (`regionBossGrowth` 1.35)
+- [x] **Bölge kimliği** — zemin rengi + HUD'da bölge adı ve kuralı
+- [x] **Checkpoint bölgeyi de kaydediyor**
+- [x] Faz 10 öz-denetimi: **19/19** — kuralların ETKİSİ ölçülüyor, tanımı değil
+- [x] Faz 4 öz-denetimi tek bölgeye sabitlendi (koşu yapısı orası, zincir burası)
+- [ ] 🎮 **PLAYTEST KAPISI**
+
+### Yakalanan kırılganlık
+
+`RoomManager` oda kökünü `transform.parent`'a bağlıyordu. Oyunda `Systems` altında
+olduğu için çalışıyordu, ama kök seviyesindeki bir nesnede `parent` NULL olur ve oda
+kökü **öksüz kalır** — sahibi yok edilse bile temizlenmez. Öz-denetimler arası kalıntı
+çıkış kapısı bıraktığı için yakalandı (kontroller sıraya bağımlı hale gelmişti).
+
+---
+
+## Faz 9 — Checkpoint + diriliş ✅ **KAPANDI** (2026-08-26)
 
 - [x] **`SaveFile`** — diske JSON. ⚠️ **Ölüm anında YAZILIYOR**, gecikmesiz, UI'dan önce.
       Sıra kutsal: **eşya düşülür → diske yazılır → sonra diriliş uygulanır**

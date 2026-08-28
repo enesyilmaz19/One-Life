@@ -9,6 +9,7 @@ namespace TekCan
     public class SaveData
     {
         public int checkpointRoom = 1;
+        public int checkpointRegion;               // 0 tabanlı
         public float checkpointSeconds = -1f;      // -1 = henüz checkpoint yok, startSeconds kullan
 
         /// <summary>Sağlam eşya sayısı, `RevivalKind.All` sırasıyla.</summary>

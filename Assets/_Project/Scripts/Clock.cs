@@ -108,7 +108,11 @@ namespace TekCan
             // devam ediyor — yani bedeli savunmasız kalmak.
             if (Frozen) return;
 
-            Seconds -= (InCombat ? _t.drainInCombat : _t.drainOutOfCombat) * Time.deltaTime;
+            // ⚠️ BÖLGE KURALI buradan giriyor. Dövüş dışı akış çarpanı (DARALMA) ve
+            // arka plan emişi (SIZINTI) — ikisi de saatten geçiyor, çünkü yasa o.
+            // Bölgeye özel zırh/direnç olsaydı ikinci bir sistem doğardı.
+            float drain = InCombat ? _t.drainInCombat : _t.drainOutOfCombat * Region.Drain;
+            Seconds -= (drain + Region.Background) * Time.deltaTime;
             CheckDeath();
         }
 
