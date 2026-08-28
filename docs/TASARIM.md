@@ -515,7 +515,37 @@ başımıza gelenlere sebep oluyorlar. Biz intikam + kurtarma peşindeyiz.
 
 **Toplam: 7 düşman türü, 4 boss.** *(Şu an 4 tür + 1 boss var.)*
 
-**Bölgeler:** en az 3, kurala ve hikâyeye göre ayrılıyor.
+**Bölgeler:** en az 3, kurala ve hikâyeye göre ayrılıyor. → **Faz 10'da kuruldu, aşağıda.**
+
+### Bölge kuralları ✅ (Faz 10, 2026-08-26)
+
+Enes'in *"kurala göre ayrılır"* kararının somut hâli. **Her kural SAATTEN geçiyor** —
+bölgeye özel can, zırh, direnç YOK. Olsaydı ikinci bir sistem doğar ve yasa çatlardı.
+
+| Bölge | Kural | Mekanik | Doğurduğu soru |
+|-------|-------|---------|----------------|
+| **EŞİK** | — | — | (öğrenme bölgesi) |
+| **DARALMA** | oyalanmak pahalı | dövüş dışı akış ×1.7 | *acele mi etsem?* |
+| **KITLIK** | hasat az | vuruş kazancı ×0.65 | *bu düşman almaya değer mi?* |
+| **AĞIRLIK** | hata affetmiyor | darbe bedeli ×1.8 | *kaçınmak zorunda mıyım?* |
+| **SIZINTI** | sürekli emiliyor | **dövüşte bile** 0.6 sn/sn | *nefes alacak vaktim var mı?* |
+
+Her biri **tek bir çarpan** — ucuz kod, ama bölgeler gerçekten farklı HİSSETTİRİYOR,
+sadece farklı görünmüyor. Kuralın oyuncuya sorduğu soru sütunu asıl tasarım; çarpan
+onun aracı.
+
+**Zincir:** ara bölgelerin boss'u düşünce çıkış açılır, sıradaki bölgeye geçilir.
+Koşu YALNIZCA son bölgenin boss'u düşünce kazanılır. Boss her bölgede sertleşiyor
+(`regionBossGrowth`).
+
+**Düşman havuzu bölgeye bağlı** — yeni tür yeni MEKÂNLA geliyor, oda numarasıyla değil.
+
+**Kimlik (greybox):** zemin rengi + HUD'da bölge adı ve kuralı. Kural hissediliyor ama
+görünmüyor; yazı onu duyuruyor ki oyuncu *"burada neden hızlı eriyorum"* diye sormasın.
+
+⚪ **Açık:** kural şiddetleri (×1.7 / ×0.65 / ×1.8 / 0.6) oynanarak oturacak.
+`regionsPerAct` şimdilik 5 — bütün kurallar test edilebilsin diye; koşu uzunluğu
+ayarlanırken düşürülecek.
 
 **Odalar:** karışık — her büyük perdede **birkaç basit şablon** tekrar kullanılır,
 tek kullanımlık set-piece'ler ayrı yapılır. Tamamı el yapımı olsaydı bitmezdi.

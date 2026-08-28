@@ -97,11 +97,20 @@ namespace TekCan
             Dead = false;
         }
 
-        void Update()
+        void Update() => Tick(Time.deltaTime);
+
+        /// <summary>
+        /// Saatin bir adımı. ⚠️ dt DIŞARIDAN alınıyor — `Enemy.ApplyAura`, `Arc.Step`,
+        /// `Mote.Step` ile aynı gerekçe: editör modunda `Time.deltaTime` 0 olduğu için
+        /// akış hiç ÖLÇÜLEMİYORDU. Öz-denetim çarpanı kendi hesaplayıp "doğru" diyordu;
+        /// `Clock` o çarpanı uygulamayı unutsa test yine geçerdi. Artık gerçek saat
+        /// ölçülüyor. (`lessons.md` 6 ve 9'un birleşimi.)
+        /// </summary>
+        public void Tick(float dt)
         {
             if (Dead || Won || _t == null) return;
 
-            RunTime += Time.deltaTime;
+            RunTime += dt;
             InCombat = AnyLivingEnemyNear();
 
             // DURGUN silahı akışı durdurabiliyor. Dünya donmuyor — düşmanlar gelmeye
@@ -112,7 +121,7 @@ namespace TekCan
             // arka plan emişi (SIZINTI) — ikisi de saatten geçiyor, çünkü yasa o.
             // Bölgeye özel zırh/direnç olsaydı ikinci bir sistem doğardı.
             float drain = InCombat ? _t.drainInCombat : _t.drainOutOfCombat * Region.Drain;
-            Seconds -= (drain + Region.Background) * Time.deltaTime;
+            Seconds -= (drain + Region.Background) * dt;
             CheckDeath();
         }
 

@@ -131,18 +131,56 @@ namespace TekCan.EditorTools
 
         // ── ölçüm yardımcıları: hepsi ETKİYİ ölçüyor, çarpanı okumuyor ──
 
-        /// <summary>1 saniyede dövüş DIŞINDA ne kadar saat eriyor.</summary>
+        /// <summary>
+        /// ⚠️ GERÇEK SAATTEN ölçülüyor — formül yeniden hesaplanmıyor.
+        /// Kendim `t.drainOutOfCombat * Region.Drain` yazsaydım, `Clock` o çarpanı
+        /// uygulamayı unutsa bile test geçerdi. (`BossHitRepro`'nun dersi.)
+        /// </summary>
         static float DövüşDışıAkış(Tuning t, Region r)
         {
             Region.SetCurrent(r);
-            return t.drainOutOfCombat * Region.Drain + Region.Background;
+            Enemy.All.Clear();                       // düşman yok = dövüş dışı
+            return SaatteDüşüş(t, 1f);
         }
 
-        /// <summary>1 saniyede DÖVÜŞTE ne kadar eriyor — sızıntı burada ayrışıyor.</summary>
+        /// <summary>DÖVÜŞTE 1 saniyelik düşüş — sızıntı burada ayrışıyor.</summary>
         static float DövüşteAkış(Tuning t, Region r)
         {
             Region.SetCurrent(r);
-            return t.drainInCombat + Region.Background;
+            var root = new GameObject("dövüş");
+            var player = new GameObject("p"); player.transform.SetParent(root.transform);
+            player.transform.position = Bootstrap.ArenaCenter;
+
+            var clock = root.AddComponent<Clock>();
+            clock.Init(t, player.transform, 500f);
+            Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.5f);
+
+            float önce = clock.Seconds;
+            clock.Tick(1f);
+            float düşüş = önce - clock.Seconds;
+
+            bool dövüşteydi = clock.InCombat;
+            KillAll();
+            Object.DestroyImmediate(root);
+            Clock.Reset();
+
+            return dövüşteydi ? düşüş : -1f;         // dövüş kurulamadıysa testi düşür
+        }
+
+        static float SaatteDüşüş(Tuning t, float dt)
+        {
+            var root = new GameObject("akış");
+            var player = new GameObject("p"); player.transform.SetParent(root.transform);
+            var clock = root.AddComponent<Clock>();
+            clock.Init(t, player.transform, 500f);
+
+            float önce = clock.Seconds;
+            clock.Tick(dt);
+            float düşüş = önce - clock.Seconds;
+
+            Object.DestroyImmediate(root);
+            Clock.Reset();
+            return düşüş;
         }
 
         /// <summary>Aynı vuruş bu bölgede ne kadar saat kazandırıyor — GERÇEK saatten ölçülüyor.</summary>
@@ -165,11 +203,25 @@ namespace TekCan.EditorTools
             return kazanç;
         }
 
-        /// <summary>Darbe bedeli — `Enemy.HitCost` private, etkisi üzerinden okunuyor.</summary>
+        /// <summary>
+        /// ⚠️ ÜRETİMİN değerini okuyor: `Enemy.HitCost` private, yansımayla alınıyor.
+        /// `t.enemyFullHitCost * Region.HitCost` diye yeniden hesaplasaydım, `Enemy`
+        /// çarpanı uygulamayı unutsa bile test geçerdi.
+        /// </summary>
         static float DarbeBedeli(Tuning t, Region r)
         {
             Region.SetCurrent(r);
-            return t.enemyFullHitCost * Region.HitCost;
+            var root = new GameObject("darbe");
+            var player = new GameObject("p"); player.transform.SetParent(root.transform);
+            var e = Make(t, player.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.5f);
+
+            var prop = typeof(Enemy).GetProperty("HitCost",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            float bedel = prop != null ? (float)prop.GetValue(e) : -1f;
+
+            KillAll();
+            Object.DestroyImmediate(root);
+            return bedel;
         }
 
         static string KuralImzası(Region r) =>

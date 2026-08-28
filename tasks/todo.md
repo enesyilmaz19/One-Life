@@ -16,7 +16,11 @@
       biri oynanamaz mı yapıyor
 - [ ] **Zemin rengi yetiyor mu** bölgeyi ayırt etmeye
 - [ ] **Ara boss'tan sonra çıkış açılıyor mu**, zincir akıyor mu
-- [ ] **3 bölge × 5 oda = 15 oda** — koşu uzunluğu nasıl? (`regionsPerAct` ile ayarlanır)
+- [ ] **Koşu uzunluğu?** Şu an 5 bölge × 5 oda = 25 oda — bütün kuralları
+      görebilesin diye. Gerçek uzunluk `regionsPerAct` ile ayarlanacak
+
+> **N tuşu: sıradaki bölgeye atla** (test kısayolu). 5 odayı temizlemeden kuralı
+> hissedebilesin diye — B tuşu boss için aynı sebeple eklenmişti.
 
 **Önceki fazlardan kalan:**
 

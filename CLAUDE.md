@@ -44,8 +44,10 @@ hiçbir işe yaramaz, asset onu ezer.
 `Tek Can → TÜM kapıları çalıştır`, ya da batch'ten:
 `-executeMethod TekCan.EditorTools.AllChecks.Run`
 
-Faz 1–8 öz-denetimleri, **hasar reprodüksiyonu** ve ayar denetimini **tek Unity
-açılışında** çalıştırır; bir kontrol düşerse 1 ile çıkar. (Ayar sapması yalnızca uyarı —
+**Bütün** faz öz-denetimlerini, **hasar** ve **boss isabet** reprodüksiyonlarını ve ayar
+denetimini **tek Unity açılışında** çalıştırır; bir kontrol düşerse 1 ile çıkar.
+*(Yeni faz eklerken `AllChecks.Run` içine bir satır ekle — buradaki sayı eskimesin diye
+faz numarası yazılmıyor.)* (Ayar sapması yalnızca uyarı —
 hangi değerin doğru olduğu Enes'in kararı.)
 
 Ayrı araçlar: `Denge simülasyonu` (hasat oranı taraması) · `Geri bildirim ekran görüntüsü al`

@@ -107,6 +107,7 @@ namespace TekCan
             if (_t == null || Clock.Instance == null || Clock.Instance.Dead || Clock.Instance.Won) return;
 
             if (SkipToBossPressed()) { EnterRoom(_t.roomsPerRegion); return; }
+            if (SkipRegionPressed()) { EnterRegion(RegionIndex + 1); return; }
 
             if (Cleared || AnyEnemyAlive()) return;
             OnCleared();
@@ -256,6 +257,17 @@ namespace TekCan
         {
             var kb = Keyboard.current;
             return kb != null && kb.bKey.wasPressedThisFrame;
+        }
+
+        /// <summary>
+        /// N — sıradaki bölgeye atla. TEST KISAYOLU, gerçek oyunda kalkacak.
+        /// Bölge kurallarını hissetmek için 5 odayı temizlemek gerekmesin; kuralı
+        /// yargılayamayan onu ayarlayamaz (boss'ta aynı sebeple B eklenmişti).
+        /// </summary>
+        static bool SkipRegionPressed()
+        {
+            var kb = Keyboard.current;
+            return kb != null && kb.nKey.wasPressedThisFrame;
         }
 
         /// <summary>

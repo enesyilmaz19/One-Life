@@ -140,8 +140,9 @@ namespace TekCan
         public float roomPoolGrowth = 1.18f;
 
         [Header("── BÖLGELER (Faz 10) ──")]
-        [Tooltip("Perdedeki bölge sayısı. Tavan Region.All uzunluğu; testte kısaltmak için düşür.")]
-        public int regionsPerAct = 3;
+        [Tooltip("Perdedeki bölge sayısı. Tavan Region.All uzunluğu. " +
+                 "5 = bütün kurallar oyunda (test için); koşu uzunluğunu ayarlarken düşür.")]
+        public int regionsPerAct = 5;
         [Tooltip("Her bölgede boss havuzu bu kat büyür — zincir tırmanmalı")]
         public float regionBossGrowth = 1.35f;
 
