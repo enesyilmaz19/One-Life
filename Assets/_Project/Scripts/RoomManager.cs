@@ -125,6 +125,13 @@ namespace TekCan
         }
 
         /// <summary>
+        /// Odayı aynı numarayla yeniden kurar. A/B profil değiştirici kullanıyor:
+        /// arena geometrisi oda kurulurken okunuyor, canlı değişince yeniden kurulmalı.
+        /// ⚠️ Saat ve diriliş eşyaları KORUNUYOR — yalnızca oda içeriği tazeleniyor.
+        /// </summary>
+        public void RebuildRoom() => EnterRoom(Room);
+
+        /// <summary>
         /// `ExitGate` çağırıyor — oyuncu açık kapıya yürüdüğünde.
         /// Boss odasındaysak sıradaki BÖLGEYE, değilsek sıradaki ODAYA.
         /// </summary>

@@ -110,6 +110,7 @@ namespace TekCan
 
             DrawRevivals();
             DrawWeaponBar();
+            DrawProfile();
         }
 
         /// <summary>
@@ -168,6 +169,34 @@ namespace TekCan
                           "GEÇİCİ DÖNÜŞ  ·  ODAYI TEMİZLE", _mid);
                 _mid.normal.textColor = Color.white;
             }
+        }
+
+        /// <summary>
+        /// Hangi A/B profilinde olduğun. ⚠️ TEST ARACI, gerçek oyunda kalkacak.
+        ///
+        /// Sol üstte ve profil değişince PARLIYOR: hangi profilde olduğunu bilmeden
+        /// yapılan karşılaştırma işe yaramaz — "hangisi daha iyiydi" sorusunun cevabı
+        /// ancak hangisinin hangisi olduğunu bilirsen anlam taşır.
+        /// </summary>
+        void DrawProfile()
+        {
+            var p = TuneProfile.Current;
+            if (p == null) return;
+
+            float sinceChange = Time.unscaledTime - TuneProfile.ChangedAt;
+            bool taze = sinceChange < 1.2f;
+            float punch = taze ? 1f - sinceChange / 1.2f : 0f;
+
+            _small.normal.textColor = taze
+                ? Color.Lerp(Color.white, new Color(1f, 0.9f, 0.35f), punch)
+                : new Color(0.65f, 0.65f, 0.72f);
+
+            GUI.Label(new Rect(12f, 30f, 520f, 20f),
+                      $"[F{TuneProfile.CurrentIndex + 1}] {p.Name}" +
+                      (string.IsNullOrEmpty(p.Note) ? "" : $"  —  {p.Note}"), _small);
+
+            GUI.Label(new Rect(12f, 48f, 520f, 20f), "F1-F4 profil değiştir (test)", _small);
+            _small.normal.textColor = Color.white;
         }
 
         /// <summary>

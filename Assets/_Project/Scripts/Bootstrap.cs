@@ -91,6 +91,16 @@ namespace TekCan
                 Debug.LogWarning("[Tek Can] Tuning.asset bulunamadı, varsayılan değerlerle çalışılıyor.");
                 t = ScriptableObject.CreateInstance<Tuning>();
             }
+            else
+            {
+                // ⚠️ ASSET'İN KENDİSİYLE OYNANMAZ — KLONLA çalışılır.
+                // Editörde bir ScriptableObject'i çalışma anında değiştirmek DİSKE yazar.
+                // A/B profil değiştirici tam olarak bunu yapıyor (ayarları canlı çeviriyor);
+                // klon olmasaydı bir profil denemesi Enes'in Inspector'daki bütün his
+                // değerlerini kalıcı olarak ezerdi.
+                t = Object.Instantiate(t);
+                t.name = "Tuning (çalışma kopyası)";
+            }
 
             // Şablondan gelen sahne içeriğini temizle.
             //
@@ -177,6 +187,9 @@ namespace TekCan
             pc.Init(t, camGo.transform);
             systems.AddComponent<Hud>().Init(clock, pc);
 
+            // A/B ayar profilleri (F1-F4) — TEST ARACI, gerçek oyunda kalkacak.
+            systems.AddComponent<ProfileSwitcher>().Init(t);
+
             // Oda yöneticisi — ilk odayı kendisi kuruyor: düşmanları yerleştiriyor,
             // oyuncuyu girişe koyuyor, çıkışı açıyor. Sunaklar da odaya ait artık,
             // arenaya değil (bkz. RoomManager.PlaceAltars).
@@ -262,6 +275,7 @@ namespace TekCan
             RoomManager.Reset();
             RevivalSystem.Reset();
             Region.Reset();
+            TuneProfile.Reset();
             _groundRenderer = null;
             HitStop.Reset();
             Arc.Reset();

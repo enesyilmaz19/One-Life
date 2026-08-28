@@ -10,6 +10,27 @@
 - [x] ✅ **Faz 10 playtest GEÇTİ** (2026-08-26) — bölgeler farklı hissettiriyor,
       zincir akıyor. **Zorluk çok yüksek, ayar ertelendi** *(Faz 10 bölümüne yazıldı)*
 
+### 🎛️ A/B ARACI HAZIR — ayar oturumu seni bekliyor
+
+Oyunu aç, dövüşün ortasında **F1–F4** ile profil değiştir. Durma yok, yeniden başlatma yok.
+Sol üstte hangi profilde olduğun yazıyor.
+
+| Tuş | Profil | Ne değişiyor |
+|-----|--------|--------------|
+| **F1** | MEVCUT | taban — karşılaştırma noktası |
+| **F2** | BOSS BESLİYOR | boss hasadı ×2, aurası yarı |
+| **F3** | ODA KÜÇÜK | arena ×0.68, yürüme bedeli düşüyor |
+| **F4** | İKİSİ | ikisi birden |
+
+Profiller **ölçümün gösterdiği iki suçluyu** çeviriyor: boss odası (−23 sn/bölge) ve
+yürüme (9.6 sn/oda).
+
+- [ ] **F1 ↔ F2: boss ödül mü olmalı, bedel mi?** Boss'u yendiğinde kazanmış mı
+      hissediyorsun, yoksa hayatta kalmış mı
+- [ ] **F1 ↔ F3: oda küçülünce daralıyor mu?** Yürüme ucuzluyor ama kaçacak yer de azalıyor
+- [ ] **F4 yeterli mi?** İkisi birden oyunu doğru yere getiriyor mu, fazla mı kolaylaştırıyor
+- [ ] Beğendiğin profili söyle, kalıcı yaparım — sonra sıradaki kadranı çeviririz
+
 **Önceki fazlardan kalan:**
 
 Faz 8 (oda zinciri):
