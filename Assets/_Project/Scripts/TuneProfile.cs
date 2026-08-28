@@ -76,6 +76,19 @@ namespace TekCan
             },
         };
 
+        /// <summary>
+        /// ⚠️ `Clock.Init` bu alanları KOPYALIYOR — koşu başında bir kez okunuyor,
+        /// sonra `Clock` kendi kopyasını kullanıyor (sunak yükseltmeleri oraya biniyor).
+        /// Yani bir profil bunları değiştirse CANLI HİÇBİR ETKİSİ OLMAZ ve "profil
+        /// çalışmıyor" diye saatlerce aranır.
+        ///
+        /// Bunları ayarlamak gerekirse `Clock`'a canlı tazeleme eklenmeli — o zaman
+        /// da sunaktan alınan yükseltmelerin korunması gerekir. Ayrı bir iş.
+        /// `Faz11SelfCheck` hiçbir profilin bunlara dokunmadığını doğruluyor.
+        /// </summary>
+        public static readonly string[] ClockCopiedFields =
+            { "harvestRate", "attackDamage", "dashCooldown" };
+
         public static TuneProfile Current { get; private set; }
         public static int CurrentIndex { get; private set; }
 
@@ -86,6 +99,13 @@ namespace TekCan
 
         public static void Reset()
         {
+            // ⚠️ Taban bir ScriptableObject KLONU — sahneye bağlı değil, yani `Destroy`
+            // edilmezse her yeniden başlatmada bir tane daha birikiyor.
+            if (_baz != null)
+            {
+                if (Application.isPlaying) UnityEngine.Object.Destroy(_baz);
+                else UnityEngine.Object.DestroyImmediate(_baz);
+            }
             Current = null;
             CurrentIndex = 0;
             _baz = null;

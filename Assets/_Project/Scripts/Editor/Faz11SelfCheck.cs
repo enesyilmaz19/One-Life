@@ -100,7 +100,34 @@ namespace TekCan.EditorTools
             }
             failed += Check(ref total, "profiller birbirinin aynısı değil", aynı == 0, aynı);
 
-            // ── 5) Her profilin adı ve notu var — HUD'da ne olduğu okunmalı ──
+            // ── 5) ⚠️ PROFİLLER `Clock`'un KOPYALADIĞI ALANLARA DOKUNMUYOR ──
+            //    Dokunsalardı canlı hiçbir etkisi olmazdı (Clock koşu başında bir kez
+            //    okuyor) ve "profil çalışmıyor" diye saatlerce aranırdı. Bu kontrol
+            //    makine değil KORKULUK: yanlış profil yazılırsa burada patlıyor.
+            int tehlikeli = 0;
+            string tehlikeliAd = "";
+            foreach (var p in TuneProfile.All)
+            {
+                TuneProfile.Select(0, çalışma);
+                var öncesi = new System.Collections.Generic.Dictionary<string, object>();
+                foreach (var ad in TuneProfile.ClockCopiedFields)
+                    öncesi[ad] = typeof(Tuning).GetField(ad)?.GetValue(çalışma);
+
+                TuneProfile.Select(System.Array.IndexOf(TuneProfile.All, p), çalışma);
+                foreach (var ad in TuneProfile.ClockCopiedFields)
+                {
+                    var sonrası = typeof(Tuning).GetField(ad)?.GetValue(çalışma);
+                    if (Equals(öncesi[ad], sonrası)) continue;
+                    tehlikeli++;
+                    if (tehlikeliAd == "") tehlikeliAd = $"{p.Name} → {ad}";
+                }
+            }
+            failed += Check(ref total,
+                            "⚠️ hiçbir profil Clock'un KOPYALADIĞI alana dokunmuyor" +
+                            (tehlikeli > 0 ? $" ({tehlikeliAd} — canlı etkisi OLMAZ)" : ""),
+                            tehlikeli == 0, tehlikeli);
+
+            // ── 6) Her profilin adı ve notu var — HUD'da ne olduğu okunmalı ──
             int adsız = 0;
             foreach (var p in TuneProfile.All)
                 if (string.IsNullOrWhiteSpace(p.Name)) adsız++;

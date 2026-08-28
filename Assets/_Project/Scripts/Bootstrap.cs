@@ -71,6 +71,12 @@ namespace TekCan
         static Renderer _groundRenderer;
 
         /// <summary>
+        /// `Tuning.asset`'in çalışma kopyası. ⚠️ Sahneye bağlı DEĞİL — `Run` kökü
+        /// yok edilince onunla gitmiyor, elle alınması gerekiyor (bkz. ResetStatics).
+        /// </summary>
+        static Tuning _workingTuning;
+
+        /// <summary>
         /// Bölge kimliği: zemin rengi. Greybox'ta bölgeler arasındaki farkı gözle
         /// gördüğün tek şey bu — kural HİSSEDİLİYOR ama görünmüyor, renk onu duyuruyor.
         /// </summary>
@@ -100,6 +106,7 @@ namespace TekCan
                 // değerlerini kalıcı olarak ezerdi.
                 t = Object.Instantiate(t);
                 t.name = "Tuning (çalışma kopyası)";
+                _workingTuning = t;      // ResetStatics bunu alacak
             }
 
             // Şablondan gelen sahne içeriğini temizle.
@@ -276,6 +283,16 @@ namespace TekCan
             RevivalSystem.Reset();
             Region.Reset();
             TuneProfile.Reset();
+
+            // ⚠️ Çalışma kopyası da bir klon — sahneye bağlı değil, elle alınmalı.
+            // Yoksa her Restart'ta bir Tuning daha birikiyordu.
+            if (_workingTuning != null)
+            {
+                if (Application.isPlaying) Object.Destroy(_workingTuning);
+                else Object.DestroyImmediate(_workingTuning);
+                _workingTuning = null;
+            }
+
             _groundRenderer = null;
             HitStop.Reset();
             Arc.Reset();
