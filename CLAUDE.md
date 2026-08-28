@@ -54,9 +54,13 @@ Ayrı araçlar (kapı değil, rapor): `Denge simülasyonu` (hasat oranı taramas
 `Zorluk eğrisi raporu` (her bölge/oda için kazanç–masraf kırılımı + kaçınma pencereleri) ·
 `Geri bildirim ekran görüntüsü al` · `Oda yerleşimlerini çek`.
 
-⚠️ **Kayda yazan her araç `SaveFile.PathOverride`'ı geçici dosyaya çevirmeli.**
-Öz-denetimler ve raporlar checkpoint yazdırıyor; varsayılan yola yazarlarsa
-`AllChecks`'i çalıştırmak oyuncunun koşusunu siler. (2026-08-26'da canlı bulundu.)
+⚠️ **Kayıt dosyası korumalı:** `SaveFile` yalnızca `Application.isPlaying` iken oyuncunun
+dosyasına yazar; editör ve batch modda kendiliğinden geçici dosyaya gider. Yeni araç
+yazarken bir şey hatırlaman gerekmiyor. (`PathOverride` yine de var — bilinen bir dosya
+gerekiyorsa, örneğin `Faz9SelfCheck`'in diske yazıp geri okuma turu.)
+
+Sebep: öz-denetimler ve raporlar checkpoint yazdırıyor. Koruma yokken `AllChecks`
+çalıştırmak oyuncunun koşusunu siliyordu — 2026-08-26'da **canlı** bulundu.
 
 ## Tekrar eden tuzaklar — yeni kod yazmadan önce oku
 

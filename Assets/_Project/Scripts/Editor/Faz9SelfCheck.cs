@@ -220,6 +220,15 @@ namespace TekCan.EditorTools
                             SaveFile.PathOverride != null &&
                             !SaveFile.PathOverride.Contains("tekcan_run.json"), 1);
 
+            // ⚠️ ASIL KORUMA: `PathOverride` KOYMAYI UNUTAN bir araç bile oyuncunun
+            //    dosyasına yazamamalı. İlk düzeltmede dört araç korumasız kalmıştı;
+            //    kural kaynağa taşındı, bu kontrol onu koruyor.
+            var unutkanYol = SaveFile.PathOverride;
+            SaveFile.PathOverride = null;
+            failed += Check(ref total, "⚠️ KORUMA UNUTULSA BİLE oyuncunun kaydına yazılmıyor",
+                            !SaveFile.WritesToPlayerSave, 1);
+            SaveFile.PathOverride = unutkanYol;
+
             // ── 12) Checkpoint aralığı ──
             failed += Check(ref total, "checkpoint aralığı en az 1", t.checkpointEveryRooms >= 1,
                             t.checkpointEveryRooms);

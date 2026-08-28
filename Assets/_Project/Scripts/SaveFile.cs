@@ -67,8 +67,26 @@ namespace TekCan
         /// </summary>
         public static string PathOverride { get; set; }
 
+        /// <summary>
+        /// ⚠️⚠️ OYNANMIYORSA OYUNCUNUN DOSYASINA YAZILMAZ.
+        ///
+        /// İlk düzeltmede yalnızca o an dokunduğum üç araca `PathOverride` koymuştum.
+        /// Ama `RoomManager` kuran HER araç checkpoint yazdırıyor — `Faz4SelfCheck`,
+        /// `Faz5SelfCheck`, `Faz1Repro`, `RoomCapture` hâlâ gerçek kaydı eziyordu.
+        /// Her dosyaya tek tek koruma serpmek bir sonraki araçta yine unutulurdu.
+        ///
+        /// Bu yüzden kural kaynağa taşındı: **yalnızca gerçekten oynanırken**
+        /// (`Application.isPlaying`) oyuncunun dosyasına yazılır. Editör ve batch
+        /// modda otomatik olarak geçici dosyaya gidilir — yeni araç yazan kimsenin
+        /// bir şey hatırlamasına gerek yok.
+        /// </summary>
         static string Path => PathOverride
-            ?? System.IO.Path.Combine(Application.persistentDataPath, "tekcan_run.json");
+            ?? (Application.isPlaying
+                ? System.IO.Path.Combine(Application.persistentDataPath, "tekcan_run.json")
+                : System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tekcan_editor.json"));
+
+        /// <summary>Öz-denetim için: şu an oyuncunun gerçek dosyasına mı yazılıyor.</summary>
+        public static bool WritesToPlayerSave => PathOverride == null && Application.isPlaying;
 
         public static void Load()
         {
