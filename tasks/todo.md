@@ -23,7 +23,10 @@ Faz 9 (diriliş):
 - [ ] **Son eşyada uyarı yeterince BAĞIRIYOR mu?** Ölürsen oyun biter, bunu bilmelisin
 - [ ] **ONARIM bedeli doğru mu?** 45 saniye — çok ucuz mu, çok pahalı mı
 - [ ] **Checkpoint sıklığı?** 3 odada bir
-- [ ] ⚠️ **"Yenmek = odayı temizlemek" yorumum doğru mu?** *(Faz 9 bölümünde yazılı)*
+- [x] ✅ **"Yenmek = odayı temizlemek" ONAYLANDI** (2026-08-26) — Enes geçici dönüş
+      anında boss'u yendi ve çalıştı. *Not: normal (boss öncesi) odada da denenecek*
+- [x] ✅ **Boss'a vuruş düzeldi** — *"boss düzelmiş"*
+- [x] ✅ **Ölüm aldatma + geçici dönüş onaylandı** — *"güzel olmuş"*
 
 - [ ] **Ad koyma** — kahramanın adı, diriliş eşyalarının adları, bölge adları *(sende)*
 - [ ] **Referans topla** — asset fazını hızlandırır
