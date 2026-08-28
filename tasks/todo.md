@@ -291,6 +291,24 @@ efekt gider, okunurluk kalır. (Yasanın VFX'teki karşılığı.)
 
 ---
 
+## 🚨 TESLİMDEN ÖNCE KALKACAK — test kolaylıkları
+
+> Erken erişime debug tuşlarıyla çıkmak gerçek bir hata. Bunlar dört ayrı faz
+> bölümüne dağılmıştı; tek liste olmadan biri mutlaka unutulur.
+
+- [ ] **B tuşu** — boss odasına atla *(`RoomManager.SkipToBossPressed`)*
+- [ ] **N tuşu** — sıradaki bölgeye atla *(`RoomManager.SkipRegionPressed`)*
+- [ ] **1-4 tuşları** — anlık silah değiştirme *(`PlayerController`)*.
+      Gerçek oyunda silahlar YOLDA BULUNUYOR
+- [ ] **`testDefianceCount` / `testLastStandCount` / `testRecallCount`** *(`Tuning`)* —
+      diriliş eşyaları HİKÂYEDEN gelecek, başlangıç stoğundan değil
+- [ ] **`regionsPerAct = 5`** — bütün kurallar test edilebilsin diye; gerçek değer
+      koşu uzunluğu ayarlanınca belirlenecek
+- [ ] **`enemyCount` / `Bootstrap.RingPosition`** — yalnızca öz-denetimler kullanıyor,
+      oyun `RoomLayout` kullanıyor. Testler taşınırsa silinebilir
+
+---
+
 ## Faz 0 — Kurulum ✅
 
 - [x] Unity projesi oluşturuldu (`UnityProjects/Tek Can`, 6000.5.2f1, **URP**, izometrik 3B)
@@ -377,7 +395,7 @@ efekt gider, okunurluk kalır. (Yasanın VFX'teki karşılığı.)
 - [x] Boss sertleştirildi: hız ×1.25 · hazırlık ×0.85 · koni ×1.5 · darbe ×2.2
 - [x] Dash-atak silaha göre değişiyor
 - [x] 🎮 **Playtest turu 2** — "hepsi düzeldi". Boss: *"böyle kalsın, şikayetim olursa söylerim"*
-- [ ] ⚠️ **ENTER geçici** — gerçek oyunda dalgalar oyuncu tarafından çağrılmayacak, hikâye/mekân akışına bağlanacak
+- [x] ✅ **ENTER kalktı — Faz 8'de** (odaya girince dövüş zaten başlamış oluyor)
 - [x] ✅ **Düşman çeşitliliği — Faz 5'te çözüldü** (aşağıda)
 
 ## Faz 6 — Ses ✅ **KAPANDI** (2026-08-25)
