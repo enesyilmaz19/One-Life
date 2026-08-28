@@ -576,7 +576,63 @@ kurallar bölgeleri gerçekten farklı yapıyor, mekanizma doğrulandı.
 
 Ayar ertelendi ama **sebebi şimdi yazılıyor**, yoksa ileride kör ayar yapılır.
 
-### Neden zor: çarpanlar ÇARPILIYOR, kimse çarpımı tasarlamadı
+### ✅ ÖLÇÜLDÜ (2026-08-26) — tahminim yanlıştı
+
+`Tek Can → Zorluk eğrisi raporu` her (bölge, oda) için kazanç/masraf hesaplıyor.
+Oda kompozisyonu **üretimden okunuyor** (gerçek `RoomManager` odayı kuruyor),
+yalnızca dövüş modelleniyor.
+
+**Aşağıdaki "beş eğri çarpılıyor" tahminim ÖLÇÜMLE ÇÜRÜDÜ.** Gerçek tablo:
+
+| | TEMİZ oyuncu | ORTA oyuncu |
+|---|---|---|
+| Nerede ölüyor | bölge 2, oda 2 | bölge 1, oda 3 |
+| Yürüme | %26 | %16 |
+| Dövüş akışı | %36 | %31 |
+| Yenen darbe | %19 | %37 |
+| Aura | %19 | %16 |
+
+**① ASIL SUÇLU: BOSS ODASI.** Bölge 1 boss'u tek başına **−23 saniye**:
+kazanç 28 · masraf 51 (19 dövüş + **21 aura** + 9.6 yürüme).
+Sebebi tasarım: `bossHarvestMultiplier` 0.4 (boss seni beslemiyor) + `bossAuraDrain`
+1.1/sn × uzun dövüş. Her bölge bir boss'la bitiyor, yani **her bölge −23 ile kapanıyor.**
+5 bölge = başlangıç saatinin (60) neredeyse iki katı, sadece boss'lardan.
+
+**② Normal odalar ASLINDA DENGEDE.** Bölge 1'de net: −6.1 · −6.9 · −3.9 · **+0.5** · **+2.8**.
+Oda kalabalıklaştıkça pozitife dönüyor — sabit yürüme bedeli daha çok düşmana bölünüyor.
+Yani oda büyüme eğrileri sorun değil; tam tersi, işe yarıyor.
+
+**③ Yürüme SABİT ve pahalı:** oda başına 3.8 sn yol × 2.5/sn = **9.6 sn**, başlangıç
+saatinin %16'sı. DARALMA'da ×1.7 → 16.3 sn. O çarpan tam da SABİT masrafa biniyor,
+yani en acımasız yerde.
+
+### ⚠️ Model düzeltmesi — ilk ölçüm de yanlıştı
+
+İlk sürüm bütün düşmanları dövüş boyunca yaşatıyor ve **aurayı ciddi şekilde
+abartıyordu** (aura %32 görünüyordu, düzeltince %19). Gerçekte düşmanlar sırayla ölüyor,
+aura azalıyor. Düzeltilince tablo tamamen değişti: TEMİZ oyuncu bölge 1'i geçer oldu.
+*Yanlış model, yanlış kadranı çevirtir.*
+
+### Kaçınma pencereleri SAĞLAM (ölçüldü)
+
+Zorluk haksız kare pencerelerinden gelmiyor:
+dash dokunulmazlığı 12 kare vs düşman vuruşu 6 kare (+6 pay ✅) ·
+dash mesafesi 2.5 > düşman menzili 1.8 ✅ · dash bekleme 0.5 < saldırı aralığı 1.5 ✅
+
+### Ayar sırası (ölçüme göre güncellendi)
+
+1. **BOSS ekonomisi** — `bossHarvestMultiplier` ve `bossAuraDrain`. En büyük tek kalem
+2. **Yürüme bedeli** — `arenaRadius` (oda boyu) ya da `drainOutOfCombat`
+3. **DARALMA çarpanı** — sabit masrafa bindiği için en sert kural
+4. Kalan kural şiddetleri
+
+⚠️ Rapor **yükseltmeleri yok sayıyor** — sunaktan alınan hasat/hasar tabloyu pozitife
+kaydırır. Yani gerçek oyun bu tablodan kolay; ama ŞEKLİ (boss = büyük kayıp,
+DARALMA = yürüme vergisi) aynı kalıyor.
+
+---
+
+### Eski tahmin (ölçümden ÖNCE, kayıt için)
 
 Beş ayrı büyüme eğrisi aynı anda işliyor ve her biri **tek başına** seçilmişti:
 
