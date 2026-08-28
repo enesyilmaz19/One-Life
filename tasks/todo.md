@@ -7,20 +7,8 @@
 - [x] ✅ **HİKÂYE / MEKÂN KONUŞMASI TAMAM** (2026-08-25) — bütün 🔴 sorular cevaplandı.
       Kararlar `docs/TASARIM.md`'de: ölüm yapısı · 3 diriliş eşyası · checkpoint ·
       3 perde · 7 düşman + 4 boss · 5 silah · kurgu · EA kapsamı
-**Faz 10 hazır — bölge zinciri.**
-
-- [ ] **Bölgeler FARKLI HİSSETTİRİYOR mu?** Kural yazıyor ama asıl soru: fark ediyor musun?
-      DARALMA'da acele ediyor musun · KITLIK'ta "buna değer mi" diyor musun ·
-      AĞIRLIK'ta kaçınmaya zorlanıyor musun · SIZINTI'da nefes alamıyor musun
-- [ ] **Kural şiddetleri doğru mu?** ×1.7 / ×0.65 / ×1.8 / 0.6 — biri fark edilmiyor mu,
-      biri oynanamaz mı yapıyor
-- [ ] **Zemin rengi yetiyor mu** bölgeyi ayırt etmeye
-- [ ] **Ara boss'tan sonra çıkış açılıyor mu**, zincir akıyor mu
-- [ ] **Koşu uzunluğu?** Şu an 5 bölge × 5 oda = 25 oda — bütün kuralları
-      görebilesin diye. Gerçek uzunluk `regionsPerAct` ile ayarlanacak
-
-> **N tuşu: sıradaki bölgeye atla** (test kısayolu). 5 odayı temizlemeden kuralı
-> hissedebilesin diye — B tuşu boss için aynı sebeple eklenmişti.
+- [x] ✅ **Faz 10 playtest GEÇTİ** (2026-08-26) — bölgeler farklı hissettiriyor,
+      zincir akıyor. **Zorluk çok yüksek, ayar ertelendi** *(Faz 10 bölümüne yazıldı)*
 
 **Önceki fazlardan kalan:**
 
@@ -79,7 +67,27 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 
 ---
 
-## Faz 10 — Bölge zinciri ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+## Faz 10 — Bölge zinciri ✅ **KAPANDI** (2026-08-26)
+
+> Enes: *"basitçe istediğin ve koyduğun mekanikler çalışıyor. bölgeler gittikçe
+> zorlaşıyor canımı çıkarttılar. bossu yendikten sonra sonraki bölgeye geçebiliyorum."*
+>
+> **Kural mekanizması DOĞRULANDI** — bölgeler gerçekten farklı hissettiriyor.
+
+### ⚠️ ZORLUK ÇOK YÜKSEK — ayar ertelendi (Enes kararı)
+
+> *"oyunun güncel hali çok zor ileride değiştireceğiz"*
+
+Sebebi `docs/TASARIM.md`'ye yazıldı, kör ayar yapmayalım diye. Özeti:
+**beş büyüme eğrisi çarpılıyor ve kimse çarpımı tasarlamadı** — oda düşman sayısı
+(×1.5) · oda havuzu (×1.18) · bölge boss'u (×1.35) · bölge kuralı · tür açılımı.
+5. bölgenin 5. odası tasarlanmış bir zorluk değil, dört eğrinin kazası.
+
+⚠️ Zorluğun bir kısmı **test artefaktı**: `regionsPerAct` bütün kurallar denensin
+diye ajan tarafından 5'e çıkarıldı.
+
+- [ ] **Zorluk ayarı** — Faz 11'in (zamanlama kilidi) parçası, A/B aracıyla aynı oturumda.
+      Sıra: ① koşu uzunluğu ② eğrileri tek tek ölç ③ en son kural şiddetleri
 
 > Boss ölünce oyun bitmiyor artık. **Bölge** bitiyor, çıkış açılıyor, sıradaki bölgeye
 > geçiyorsun. Koşu yalnızca SON bölgenin boss'u düşünce kazanılıyor.

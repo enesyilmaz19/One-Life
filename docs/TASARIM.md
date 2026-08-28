@@ -567,6 +567,44 @@ sızıntı). Ajanın önerisi, Enes'in kararı. Playtest'in asıl sorusu bu:
 Yapıyorsa mekanizma doğru, kurallar sonra yazılır. Yapmıyorsa bölgeleri başka bir
 şeyle ayırmak gerekir — mekân, düşman kadrosu, yapı.
 
+**Playtest cevabı ✅ (2026-08-26):** *"bölgeler gittikçe zorlaşıyor canımı çıkarttılar"* —
+kurallar bölgeleri gerçekten farklı yapıyor, mekanizma doğrulandı.
+
+## ⚠️ ZORLUK ÇOK YÜKSEK — ertelendi (Enes, 2026-08-26)
+
+> *"oyunun güncel hali çok zor ileride değiştireceğiz"*
+
+Ayar ertelendi ama **sebebi şimdi yazılıyor**, yoksa ileride kör ayar yapılır.
+
+### Neden zor: çarpanlar ÇARPILIYOR, kimse çarpımı tasarlamadı
+
+Beş ayrı büyüme eğrisi aynı anda işliyor ve her biri **tek başına** seçilmişti:
+
+| Kaynak | Alan | Etkisi |
+|--------|------|--------|
+| Oda başına düşman sayısı | `roomCountGrowth` 1.5 | her odada +1.5 düşman |
+| Oda başına havuz | `roomPoolGrowth` 1.18 | her odada %18 daha dayanıklı |
+| Bölge boss'u | `regionBossGrowth` 1.35 | her bölgede %35 daha büyük boss |
+| Bölge kuralı | ×1.7 / ×0.65 / ×1.8 / 0.6 | üstüne biner |
+| Tür açılımı | bölgeye bağlı | daha çok tehdit çeşidi |
+
+Bunların **çarpımı** hiçbir yerde hesaplanmadı. 5. bölgenin 5. odası, tasarlanmış bir
+zorluk değil — dört eğrinin kazasıyla çıkan bir sayı.
+
+### Ne kadarı test artefaktı
+
+⚠️ `regionsPerAct` **5'e ajan tarafından çıkarıldı** — sırf bütün kurallar
+denenebilsin diye. Gerçek koşu muhtemelen daha kısa olacak; yani zorluğun bir kısmı
+tasarım değil, test ayarı.
+
+### Ayarlarken bakılacak sıra
+
+1. **Önce koşu uzunluğu** (`regionsPerAct`) — kaç bölge gerçekten olacak
+2. **Sonra eğrileri TEK TEK** ölç, çarpımı gör (`BalanceSim` genişletilebilir)
+3. **En son kural şiddetleri** — çünkü onlar en üste biniyor
+
+Bu, Faz 10'un (zamanlama kilidi) doğal parçası: aynı oturumda A/B aracıyla yapılmalı.
+
 **Odalar:** karışık — her büyük perdede **birkaç basit şablon** tekrar kullanılır,
 tek kullanımlık set-piece'ler ayrı yapılır. Tamamı el yapımı olsaydı bitmezdi.
 
