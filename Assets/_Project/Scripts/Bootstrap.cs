@@ -91,7 +91,8 @@ namespace TekCan
             ResetStatics();
             _runRoot = new GameObject("Run");
 
-            var t = Resources.Load<Tuning>("Tuning");
+            var tuningAsset = Resources.Load<Tuning>("Tuning");
+            var t = tuningAsset;
             if (t == null)
             {
                 Debug.LogWarning("[Tek Can] Tuning.asset bulunamadı, varsayılan değerlerle çalışılıyor.");
@@ -195,7 +196,7 @@ namespace TekCan
             systems.AddComponent<Hud>().Init(clock, pc);
 
             // A/B ayar profilleri (F1-F4) — TEST ARACI, gerçek oyunda kalkacak.
-            systems.AddComponent<ProfileSwitcher>().Init(t);
+            systems.AddComponent<ProfileSwitcher>().Init(tuningAsset, t);
 
             // Oda yöneticisi — ilk odayı kendisi kuruyor: düşmanları yerleştiriyor,
             // oyuncuyu girişe koyuyor, çıkışı açıyor. Sunaklar da odaya ait artık,

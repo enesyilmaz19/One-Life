@@ -14,17 +14,33 @@ namespace TekCan
     public class ProfileSwitcher : MonoBehaviour
     {
         Tuning _t;
+        float _pullTimer;
 
-        public void Init(Tuning çalışmaKopyası)
+        /// <summary>Inspector köprüsünün tazelenme aralığı — 60Hz gereksiz, göz farkı görmez.</summary>
+        const float PullInterval = 0.2f;
+
+        public void Init(Tuning asset, Tuning çalışmaKopyası)
         {
             _t = çalışmaKopyası;
-            TuneProfile.Init(_t);
+            TuneProfile.Init(asset, _t);
         }
 
         void Update()
         {
             var kb = Keyboard.current;
-            if (kb == null || _t == null) return;
+            if (_t == null) return;
+
+            // ⚠️ Inspector köprüsü: MEVCUT profilindeyken asset'te yapılan değişiklikler
+            // oyuna geçmeye devam ediyor. Çalışma kopyası asset'i profillerden koruyor
+            // ama Enes'in günlük ayar yöntemini kırmamalı.
+            _pullTimer -= Time.unscaledDeltaTime;
+            if (_pullTimer <= 0f)
+            {
+                _pullTimer = PullInterval;
+                TuneProfile.PullFromAssetIfBaseline(_t);
+            }
+
+            if (kb == null) return;
 
             int seçim = -1;
             if (kb.f1Key.wasPressedThisFrame) seçim = 0;

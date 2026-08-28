@@ -32,7 +32,7 @@ namespace TekCan.EditorTools
             var çalışma = Object.Instantiate(asset);
 
             TuneProfile.Reset();
-            TuneProfile.Init(çalışma);
+            TuneProfile.Init(asset, çalışma);
 
             failed += Check(ref total, "en az iki profil tanımlı", TuneProfile.All.Length >= 2,
                             TuneProfile.All.Length);
@@ -127,7 +127,36 @@ namespace TekCan.EditorTools
                             (tehlikeli > 0 ? $" ({tehlikeliAd} — canlı etkisi OLMAZ)" : ""),
                             tehlikeli == 0, tehlikeli);
 
-            // ── 6) Her profilin adı ve notu var — HUD'da ne olduğu okunmalı ──
+            // ── 6) ⚠️ INSPECTOR KÖPRÜSÜ — Enes'in GÜNLÜK ayar yöntemi ──
+            //    Çalışma kopyası asset'i profillerden koruyor; ama o koruma
+            //    Inspector'dan canlı ayar yapmayı KIRMIŞTI. Kalıcı olan (Inspector)
+            //    geçici olandan (A/B aracı) önce gelir.
+            failed += Check(ref total, "asset köprüsü kurulu", TuneProfile.AssetLinked, 1);
+
+            TuneProfile.Select(0, çalışma);                      // MEVCUT
+            asset.attackDamage = 99f;                            // "Inspector'da çevirdi"
+            TuneProfile.PullFromAssetIfBaseline(çalışma);
+            failed += Check(ref total, "⚠️ MEVCUT'ta INSPECTOR değişikliği oyuna GEÇİYOR",
+                            Mathf.Approximately(çalışma.attackDamage, 99f), çalışma.attackDamage);
+
+            // ⚠️ Profil seçiliyken geçmemeli: kopya BİLEREK ayrışmış durumda,
+            //    oraya asset'i basmak profili anında silerdi.
+            TuneProfile.Select(bossProfil, çalışma);
+            asset.attackDamage = 42f;
+            TuneProfile.PullFromAssetIfBaseline(çalışma);
+            failed += Check(ref total, "⚠️ PROFİL seçiliyken asset profili EZMİYOR",
+                            !Mathf.Approximately(çalışma.attackDamage, 42f), çalışma.attackDamage);
+
+            // Taban da tazelenmeli: MEVCUT'a dönüp profile basınca GÜNCEL değere uygulansın.
+            TuneProfile.Select(0, çalışma);
+            TuneProfile.PullFromAssetIfBaseline(çalışma);
+            TuneProfile.Select(bossProfil, çalışma);
+            failed += Check(ref total, "profil GÜNCEL Inspector değerine uygulanıyor",
+                            Mathf.Approximately(çalışma.attackDamage, 42f), çalışma.attackDamage);
+
+            asset.attackDamage = new Tuning().attackDamage;      // taklit asset'i geri al
+
+            // ── 7) Her profilin adı ve notu var — HUD'da ne olduğu okunmalı ──
             int adsız = 0;
             foreach (var p in TuneProfile.All)
                 if (string.IsNullOrWhiteSpace(p.Name)) adsız++;

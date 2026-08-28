@@ -29,7 +29,11 @@ Bir özellik bu yasayı bozuyorsa özellik gider, yasa kalır.
 asset'te **henüz olmayan** yeni alanların tohumudur; var olan bir alanı .cs'ten değiştirmek
 hiçbir işe yaramaz, asset onu ezer.
 
-- **His/denge değeri değiştireceksen → Inspector.**
+- **His/denge değeri değiştireceksen → Inspector.** Oyun asset'in bir **çalışma
+  kopyasıyla** koşuyor (A/B profilleri asset'i bozmasın diye), ama **MEVCUT profilinde
+  Inspector değişiklikleri canlı geçmeye devam ediyor** — 0.2 sn'de bir içeri alınıyor.
+  ⚠️ Bir A/B profili (F2-F4) seçiliyken köprü KAPALI: kopya bilerek ayrışmış durumda.
+  Inspector'dan ayar yapacaksan **F1'de ol.**
 - **C# varsayılanlarını asset'e taşımak istiyorsan → `Tek Can → Ayarları senkronla (C# → asset)`.**
   Tek yönlü ve elle tetiklenir: otomatik olsaydı biri .cs'e dokunduğu an Inspector'da
   ayarlanmış bütün his değerleri sessizce silinirdi.

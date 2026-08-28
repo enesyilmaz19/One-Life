@@ -97,6 +97,14 @@ namespace TekCan
 
         static Tuning _baz;
 
+        /// <summary>Gerçek `Tuning.asset` — Inspector'ın yazdığı yer.</summary>
+        static Tuning _asset;
+
+        // Yansıma alan listesi bir kez — her karede yeniden çıkarmak boşuna.
+        static System.Reflection.FieldInfo[] _fields;
+        static System.Reflection.FieldInfo[] Fields => _fields ??= typeof(Tuning).GetFields(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+
         public static void Reset()
         {
             // ⚠️ Taban bir ScriptableObject KLONU — sahneye bağlı değil, yani `Destroy`
@@ -117,12 +125,35 @@ namespace TekCan
         /// tabandan başlıyor, yoksa iki kez "×2" yapan bir profil ×4 verirdi ve
         /// karşılaştırma anlamsızlaşırdı.
         /// </summary>
-        public static void Init(Tuning çalışma)
+        public static void Init(Tuning asset, Tuning çalışma)
         {
+            _asset = asset;
             _baz = UnityEngine.Object.Instantiate(çalışma);
             _baz.name = "Tuning (A/B tabanı)";
             Select(0, çalışma);
         }
+
+        /// <summary>
+        /// ⚠️ MEVCUT profilindeyken INSPECTOR DEĞİŞİKLİKLERİNİ İÇERİ ALIR.
+        ///
+        /// Çalışma kopyası asset'i profillerden korumak için var — ama o koruma
+        /// Enes'in GÜNLÜK AYAR YÖNTEMİNİ kırmıştı: Inspector'da bir değeri çevirmek
+        /// artık oyuna geçmiyordu. (`CLAUDE.md`: "His/denge değeri değiştireceksen →
+        /// Inspector.") A/B aracı geçici, Inspector kalıcı; kalıcı olan kazanır.
+        ///
+        /// Yalnızca MEVCUT'tayken: bir profil seçiliyken kopya BİLEREK ayrışıyor,
+        /// oraya asset'i basmak profili anında silerdi.
+        /// Taban da tazeleniyor ki F2'ye bastığında profil GÜNCEL değerlere uygulansın.
+        /// </summary>
+        public static void PullFromAssetIfBaseline(Tuning çalışma)
+        {
+            if (CurrentIndex != 0 || _asset == null || çalışma == null || _baz == null) return;
+            CopyFrom(_asset, _baz);
+            CopyFrom(_asset, çalışma);
+        }
+
+        /// <summary>Öz-denetim için: Inspector köprüsü kurulu mu.</summary>
+        public static bool AssetLinked => _asset != null;
 
         public static void Select(int index, Tuning çalışma)
         {
@@ -145,9 +176,7 @@ namespace TekCan
         /// </summary>
         static void CopyFrom(Tuning kaynak, Tuning hedef)
         {
-            foreach (var f in typeof(Tuning).GetFields(
-                         System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-                f.SetValue(hedef, f.GetValue(kaynak));
+            foreach (var f in Fields) f.SetValue(hedef, f.GetValue(kaynak));
         }
     }
 }
