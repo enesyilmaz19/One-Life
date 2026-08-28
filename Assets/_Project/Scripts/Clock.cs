@@ -61,6 +61,18 @@ namespace TekCan
         }
 
         /// <summary>
+        /// Checkpoint'teki yükseltmeleri geri yükler. `Bootstrap` çağırıyor.
+        /// ⚠️ Checkpoint zamanı geri verip build'i vermemek yarım geri yükleme olurdu:
+        /// eski zamanınla ama sıfır güçle aynı odalara girerdin.
+        /// </summary>
+        public void RestoreUpgrades(float harvest, float damage, float dashCd)
+        {
+            if (harvest > 0f) HarvestRate = Mathf.Min(harvest, _t.harvestRateCap);
+            if (damage > 0f) AttackDamage = damage;
+            if (dashCd > 0f) DashCooldown = dashCd;
+        }
+
+        /// <summary>
         /// Diriliş: ölümü geri alır. YALNIZCA `RevivalSystem` çağırır — ölümün geri
         /// alınabilir olması bir eşyaya bağlı, keyfî değil.
         /// </summary>

@@ -60,8 +60,16 @@ namespace TekCan
 
             s.checkpointRoom = Room;
             s.checkpointSeconds = Clock.Instance.Seconds;
+
+            // Zaman TEK BAŞINA yetmez: sunağa ödediğin zaman checkpoint'in ardında
+            // kalırsa geri dönüş yarım olur ve ölüm sarmalı doğar.
+            s.harvestRate = Clock.Instance.HarvestRate;
+            s.attackDamage = Clock.Instance.AttackDamage;
+            s.dashCooldown = Clock.Instance.DashCooldown;
+
             SaveFile.Flush();
-            Debug.Log($"[Tek Can] CHECKPOINT — oda {Room}, {s.checkpointSeconds:0.0}s");
+            Debug.Log($"[Tek Can] CHECKPOINT — oda {Room}, {s.checkpointSeconds:0.0}s, " +
+                      $"hasat %{s.harvestRate * 100f:0}, hasar {s.attackDamage:0.0}");
         }
 
         void Update()

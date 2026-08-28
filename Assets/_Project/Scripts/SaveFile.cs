@@ -19,6 +19,17 @@ namespace TekCan
 
         public bool gameOver;
         public int deaths;
+
+        // ⚠️ Checkpoint SADECE zamanı değil, DURUMU kaydeder. Yalnızca saat kaydedilseydi
+        // checkpoint'e dönen oyuncu eski zamanıyla ama SIFIR yükseltmeyle aynı odalara
+        // girerdi — yarım geri yükleme, ve ölüm sarmalı. Sunağa ödediğin zaman
+        // checkpoint'in ARDINDA kalmamalı.
+        // (Meta ilerleme DEĞİL: game over'da `NewRun` hepsini siliyor.)
+        public float harvestRate = -1f;
+        public float attackDamage = -1f;
+        public float dashCooldown = -1f;
+
+        public bool HasUpgrades => harvestRate > 0f;
     }
 
     /// <summary>

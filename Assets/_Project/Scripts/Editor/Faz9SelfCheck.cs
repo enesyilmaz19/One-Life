@@ -154,7 +154,58 @@ namespace TekCan.EditorTools
             Object.DestroyImmediate(root8);
             Enemy.All.Clear();
 
-            // ── 9) Checkpoint aralığı ──
+            // ── 9) ⚠️ CHECKPOINT'E DÖNÜŞTE DÜŞMANLAR GERİ GELİYOR MU ──
+            //    Enes'in sorusu. Dönüş `Bootstrap.Restart` → oda sıfırdan kurulur.
+            //    Burada o yolun sonu sınanıyor: checkpoint odası, dolu düşmanlarla.
+            s = Bellek(defiance: 1, lastStand: 0, recall: 0, checkpointSeconds: 80f);
+            s.checkpointRoom = 3;
+            var (root9, clock9, _) = Kur(t, 80f);
+            var rm9Go = new GameObject("rooms"); rm9Go.transform.SetParent(root9.transform);
+            var rm9 = rm9Go.AddComponent<RoomManager>();
+            rm9.Init(t, clock9.transform, null, SaveFile.Current.checkpointRoom);
+
+            failed += Check(ref total, "⚠️ checkpoint ODASINDA başlıyor", rm9.Room == 3, rm9.Room);
+            failed += Check(ref total, "⚠️ dönüşte DÜŞMANLAR GERİ GELİYOR",
+                            Enemy.All.Count > 0, Enemy.All.Count);
+            bool hepsiDolu = true;
+            foreach (var e in Enemy.All) if (e != null && e.Hollow) hepsiDolu = false;
+            failed += Check(ref total, "düşmanlar TAM havuzla (boş değil)", hepsiDolu, 1);
+            Object.DestroyImmediate(root9);
+            Enemy.All.Clear();
+
+            // ── 10) ⚠️ CHECKPOINT YÜKSELTMELERİ DE KAYDEDİYOR ──
+            //    Yalnızca saat kaydedilseydi, dönen oyuncu eski zamanıyla ama SIFIR
+            //    build'le aynı odalara girerdi — yarım geri yükleme ve ölüm sarmalı.
+            s = Bellek(defiance: 1, lastStand: 0, recall: 0, checkpointSeconds: 80f);
+            var (root10, clock10, _) = Kur(t, 80f);
+            clock10.UpgradeHarvest(0.10f);
+            clock10.UpgradeDamage(2f);
+            float hasatSonra = clock10.HarvestRate, hasarSonra = clock10.AttackDamage;
+
+            var rm10Go = new GameObject("rooms"); rm10Go.transform.SetParent(root10.transform);
+            var rm10 = rm10Go.AddComponent<RoomManager>();
+            rm10.Init(t, clock10.transform, null);        // oda 1 = checkpoint → kaydeder
+
+            failed += Check(ref total, "⚠️ checkpoint yükseltmeleri de KAYDEDİYOR",
+                            Mathf.Abs(SaveFile.Current.harvestRate - hasatSonra) < 0.001f,
+                            SaveFile.Current.harvestRate);
+
+            // Dönüşü taklit et: yeni Clock + geri yükleme
+            var clock10b = root10.AddComponent<Clock>();
+            clock10b.Init(t, clock10.transform, SaveFile.Current.checkpointSeconds);
+            bool sıfırlanmıştı = Mathf.Abs(clock10b.AttackDamage - hasarSonra) > 0.001f;
+            clock10b.RestoreUpgrades(SaveFile.Current.harvestRate, SaveFile.Current.attackDamage,
+                                     SaveFile.Current.dashCooldown);
+
+            failed += Check(ref total, "yeni Clock yükseltmesiz doğuyor (geri yükleme şart)",
+                            sıfırlanmıştı, 1);
+            failed += Check(ref total, "⚠️ dönüşte YÜKSELTMELER geri geliyor",
+                            Mathf.Abs(clock10b.AttackDamage - hasarSonra) < 0.001f,
+                            clock10b.AttackDamage);
+            Object.DestroyImmediate(root10);
+            Enemy.All.Clear();
+
+            // ── 11) Checkpoint aralığı ──
             failed += Check(ref total, "checkpoint aralığı en az 1", t.checkpointEveryRooms >= 1,
                             t.checkpointEveryRooms);
 
