@@ -96,6 +96,31 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 
 ---
 
+## Faz 12 — Boss çeşitliliği ⬅️ **PLAN, ONAY BEKLİYOR**
+
+> Şu an **tek boss** var, beş bölgede beşi de aynı. Ve bu en kötü yerde tekrar:
+> boss her bölgenin doruk noktası ve ölçüme göre bölgenin −23 saniyesi orada gidiyor.
+>
+> Hikâye çerçevesi kuruldu (`docs/TASARIM.md` → BORÇ EKONOMİSİ), dört boss belli.
+
+- [ ] **`BossKind`** — `EnemyKind` / `Weapon` / `RoomLayout` / `Region` ile aynı desen
+      *(`Enemy.cs`'te bunun yapılabileceğine dair not zaten duruyor)*
+- [ ] **İki fazlı yapı** — ① ② yarıda döner, ③ ④ havuz bitince FULLENİR
+- [ ] **⚠️ İkinci fazın havuzu KREDİ** — vurunca erir ama hasat VERMEZ.
+      Boss ekonomisi sorununu sayıyla değil kurguyla çözüyor
+- [ ] **① TAHSİLDAR** — faz 1 emer / faz 2 kovalar *(mevcut boss buraya oturuyor)*
+- [ ] **② EKSPER** — faz 1 hasadı düşürür / faz 2 sıfırlar
+- [ ] **③ KEFİL** — faz 2'de ikiye bölünür
+- [ ] **④ MURABAHACI** — faz 2'de kendi zamanını geri sarar
+- [ ] **Bölge → boss eşlemesi** — her bölgenin kendi alacaklısı
+- [ ] Faz 12 öz-denetimi *(özellikle: ikinci faz hasat VERMİYOR mu — etki testi)*
+- [ ] 🎮 **PLAYTEST KAPISI**
+
+**Bu fazda YAPILMAYACAK:** nemesis *(boss kimliği oturduktan sonra)*, isimler
+*(Enes'te)*, hikâye metinleri *(içerik)*.
+
+---
+
 ## Faz 10 — Bölge zinciri ✅ **KAPANDI** (2026-08-26)
 
 > Enes: *"basitçe istediğin ve koyduğun mekanikler çalışıyor. bölgeler gittikçe

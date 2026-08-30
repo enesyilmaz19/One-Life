@@ -687,3 +687,94 @@ Enes'in kararı: EA için **giriş + gelişme** hazır olmalı, sonuç saklanır
 Bu doğru: perde 3 ödemenin kendisi, EA'da finali vermek istemezsin. Tek eklemem —
 gelişme perdesi **parça parça** da gelebilir; EA güncellemeleriyle doldurmak standart
 pratik ve piyasaya daha erken çıkarır.
+
+---
+
+# HİKÂYE ÇERÇEVESİ — BORÇ EKONOMİSİ ✅ (2026-08-26, Enes onayladı)
+
+## Nereden çıktı: oyunun dili zaten kurulmuştu
+
+Silah ve düşman adlarına bakınca ortaya çıktı:
+
+| Silahlar | Düşmanlar |
+|----------|-----------|
+| **FAİZLİ** · **VADELİ** · **DURGUN** | **KASA** · **SIZINTI** · **KAÇAK** |
+
+Faiz, vade, kasa, sızıntı, kaçak — bu bir **borç ekonomisi sözlüğü.** Farkında olmadan
+dünyanın dilini çoktan kurmuşuz. Zaman para olunca ortaya çıkacak şey de tam olarak bu.
+
+⚠️ **Yöntem notu:** hikâye sıfırdan uydurulmadı, **zaten orada olan adlandırıldı.**
+Silahlarda, düşmanlarda, bölgelerde ve seslerde izlenen kalıbın aynısı.
+
+## Dünya
+
+Patlamadan sonra zaman **tek korunan büyüklük** oldu. Zamanı olan yaşar, olmayan durur.
+Her para biriminde olduğu gibi **onu ödünç verenler** türedi: zamanı manipüle edebilenler
+bir ekonomi kurdu. Faizle zaman verirler; ödeyemezsen alırlar.
+
+## Bahis: aile TEMİNAT
+
+**Ölmediler. REHİN VERİLDİLER.** Bir borcun teminatı olarak tutuluyorlar ve borç
+işledikçe onların zamanı çekiliyor. Kahraman ulaşamıyor.
+
+Yani *"aileni zamandan kurtarmak"* birebir şu: **borcu kapatmak ya da alacaklıyı öldürmek.**
+
+⚠️ Bu, saatin baskısını HİKÂYEYE bağlıyor: acele etmen sadece mekanik değil — sen
+oyalandıkça onlar da tükeniyor.
+
+## Dört boss = ekonominin dört katı
+
+**Her boss SUÇUNU DÖVÜŞÜYOR.** Mekanikler uydurma değil, ne yaptıklarının doğrudan
+sonucu. *(Adlar çalışma adı — nihai adlandırma Enes'te.)*
+
+| # | Boss | Ne yapmış | Faz 1 | Faz 2 |
+|---|------|-----------|-------|-------|
+| ① | **TAHSİLDAR** | zorla alan, sokak seviyesi | yanındayken emer → uzak dur, vur, çekil | emmeyi bırakır, **KOVALAR** → uzak durmak işe yaramaz |
+| ② | **EKSPER** | zamanının ne ettiğine karar verir | hasadın düşük → acele et | hasadını **SIFIRLAR** → ondan artık hiçbir şey alamazsın |
+| ③ | **KEFİL** | borcu garantiye alır | normal dövüş | **İKİYE BÖLÜNÜR**, ikisi de yarım havuzla |
+| ④ | **MURABAHACI** | sözleşmeyi elinde tutan, son boss | büyük ama düz | **ZAMANINI GERİ SARAR** — vurmadığın her saniye havuzu doluyor |
+
+⚠️ Her fazın **farklı bir soru** sorması şart. "Aynısı ama daha çok" faz değildir.
+
+## Faz geçişi ✅ (Enes kararı)
+
+- **① ve ②** → havuz **yarıya** düşünce faz 2
+- **③ ve ④** → havuz **bitince FULLENİR** ve faz 2 başlar
+  *("kazandım" sandığın an bitmediğini öğreniyorsun — ve zamanı derinden manipüle
+  edebilenlerin ikisi bunlar, yani kurguyla örtüşüyor)*
+
+## ⚠️ İKİNCİ FAZIN HAVUZU KREDİDİR, ALTIN DEĞİL
+
+③ ve ④ fullenince havuzları iki kez sömürülebilir olurdu — ve son iki boss oyunun
+en büyük ZAMAN KAYNAĞI hâline gelirdi. Oysa tasarım boss'un seni beslememesini istiyor
+(ölçüm de boss ekonomisini zaten sorunlu bulmuştu).
+
+> **İkinci fazda vurursun, havuz erir, ama sana HİÇBİR ŞEY GEÇMEZ.**
+> Çünkü o zaman onun değildi zaten — gösterdiği para sahte, kredi.
+
+Murabahacı için birebir: sana borç gösteriyor, elinde bir şey yok.
+**Ölçümün bulduğu boss ekonomisi sorununu sayı çevirerek değil KURGUYLA çözüyor.**
+
+## Nemesis buraya oturuyor
+
+Seni öldüren boss, senden aldığı zamanı **hesabına geçiriyor** ve bir dahaki
+karşılaşmada daha büyük oluyor. Borç metaforu kesintisiz devam ediyor.
+
+## Hikâye NASIL anlatılacak — dört kanal, hepsi ZATEN VAR
+
+Hikâye oyunun üstüne EKLENMİYOR; var olan yapıya **isim veriliyor.**
+
+**① Checkpoint = güvenli nokta.** Onarım orada yapılıyor, doğal soluklanma yeri.
+**② Ölüm = TEMERRÜT.** Diriliş eşyası harcamak "borcu bir kez daha ertelemek".
+   Kalıcı ölüm bir ceza değil, **olay örgüsü anı** — "dünya ilerledi" buraya bağlanıyor.
+**③ Bölge = alacaklının bölgesi.** Kural, orayı kimin yönettiğinin sonucu.
+   DARALMA'nın acelesi bir tahsildarın bölgesi olduğu için. **Kural = kimlik.**
+**④ Boss = hesaplaşma.** Doruk zaten orada.
+
+⚠️ Enes: *"hikâye boğmasın"* — girişte geçmişin yalnızca bir kısmı anlatılır.
+
+## Açık
+
+- Adlandırma (kahraman, boss'lar, bölgeler, eşyalar) — Enes'te
+- Borcu kim aldı, neden? Kahraman mı imzaladı, ailesi mi, miras mı?
+- Borç KAPATILABİLİR mi (alternatif son) yoksa tek çıkış öldürmek mi?
