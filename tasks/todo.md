@@ -10,7 +10,15 @@
 - [x] ✅ **Faz 10 playtest GEÇTİ** (2026-08-26) — bölgeler farklı hissettiriyor,
       zincir akıyor. **Zorluk çok yüksek, ayar ertelendi** *(Faz 10 bölümüne yazıldı)*
 
-### 🎛️ A/B ARACI HAZIR — ayar oturumu seni bekliyor
+### 🎛️ A/B ARACI HAZIR — ⏸️ AYAR OTURUMU ANİMASYON ÖNCESİNE ERTELENDİ
+
+> Enes (2026-08-26): *"bunun testini şimdi yapmak yerine ileride animasyonlar öncesi
+> yapmayı daha mantıklı buluyorum"*
+
+Doğru: kadro, silahlar ve boss'lar değişmeden ayar yapmak, içerik gelince baştan
+ayarlamak demek. **Araç hazır ve bekliyor** — zamanlama kilidiyle aynı oturumda.
+
+Aşağıdaki sorular o oturuma saklı:
 
 Oyunu aç, dövüşün ortasında **F1–F4** ile profil değiştir. Durma yok, yeniden başlatma yok.
 Sol üstte hangi profilde olduğun yazıyor.
