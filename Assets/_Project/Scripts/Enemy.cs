@@ -305,7 +305,8 @@ namespace TekCan
             if (_attack != null && _attack.SafeAngle > 0f)
                 Arc.Spawn(transform.position, transform.rotation * Quaternion.Euler(0f, 180f, 0f),
                           StrikeRadius, _attack.SafeAngle,
-                          new Color(0.45f, 1f, 0.55f, 0.30f), dur, transform);
+                          new Color(0.45f, 1f, 0.55f, 0.30f), dur, transform,
+                          followYaw: 180f);   // ⚠️ olmazsa takip dönüşü sapmayı siler
 
             Paint();
         }

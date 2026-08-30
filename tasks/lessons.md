@@ -275,3 +275,38 @@ yere yazsaydık aynı hatayı iki kez yapar ve test yeşil yanardı.
 
 **Çift yönlü:** hem "örtüşüyorsa vurmalı" hem "açıkça dışarıdaysa vurmamalı" sınanıyor.
 Yalnızca ilkini yazsaydım `return true;` yazmak testi geçerdi.
+
+---
+
+## 2026-08-26 (10) — Takip eden görselin açısı sessizce siliniyordu
+
+**Ne oldu:** Son boss'a "güvenli açıklık" saldırısı ekledim: halka geliyor ama boss'un
+ARKASINDA güvenli bir dilim var. İsabet testi doğruydu. Yeşil dilimi de 180° çevirip
+doğurdum. **Ama görsel yanlış yeri gösteriyordu.**
+
+`Arc` takip modunda her karede şunu yapıyor:
+
+```csharp
+transform.SetPositionAndRotation(_follow.position, _follow.rotation);
+```
+
+Yani doğuşta verdiğim 180° sapma **bir kare sonra siliniyordu.** Yeşil dilim boss'un
+ÖNÜNE, yani tam da oyuncunun durduğu tarafa dönüyordu. Oyuncuya *"buradasın,
+güvendesin"* deyip vuracaktı.
+
+**Bu, bu projedeki en pahalı hata türünün üçüncü tekrarı:**
+① yay açıyı merkeze ölçüyordu, gövde içerideyken vuruş düşüyordu
+② ses üretiliyordu ama dinleyici yoktu
+③ şimdi bu
+
+Hepsinde **mekanik doğru, görsel yalan.** Ve hepsinde testler yeşildi çünkü mekaniği
+ölçüyorlardı, GÖRSELİ değil.
+
+**Kural:**
+
+> Görsel bir işaret mekaniğin yerini gösteriyorsa, **testin ikisini de ölçmesi** gerekir.
+> "Isabet doğru mu" yetmiyor; "gösterilen yer isabet edilen yer mi" diye sorulmalı.
+
+**Somut savunma:** `Arc.Spawn(followYaw:)` eklendi ve öz-denetim yeşil dilimin ileri
+yönünü boss'unkiyle karşılaştırıyor (`Dot < -0.5` = gerçekten arkaya bakıyor).
+Takip bir kare işletilip ÖYLE ölçülüyor — doğuş anına bakmak tam da kaçırılan şeydi.

@@ -247,6 +247,24 @@ namespace TekCan.EditorTools
                 failed += Check(ref total, "⚠️ açıklıklı halka ÖNDE duranı yakalıyor", önde, 1);
                 failed += Check(ref total, "⚠️ ARKASINA geçen KURTULUYOR (açıklık arkada)",
                                 !arkada, 0);
+
+                // ⚠️ GÖRSEL MEKANİKLE UYUŞUYOR MU — bu projenin en pahalı hata türü.
+                //    Yeşil dilim takip sapması olmadan bir kare sonra ÖNE dönüyordu:
+                //    oyuncuya "buradasın, güvendesin" deyip vuruyordu.
+                Arc yeşil = null;
+                foreach (var a in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include))
+                    if (a.name == "Arc") yeşil = a;   // en son doğan
+                var tickA = typeof(Arc).GetMethod("Step");
+                foreach (var a in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include))
+                    tickA?.Invoke(a, new object[] { 0.01f });   // takip bir kare işlesin
+
+                if (yeşil != null)
+                {
+                    // Güvenli dilim boss'un ARKASINA bakmalı: ileri yönleri TERS olmalı
+                    float uyum = Vector3.Dot(yeşil.transform.forward, bossA.transform.forward);
+                    failed += Check(ref total, "⚠️ YEŞİL dilim gerçekten ARKAYA bakıyor (görsel ≠ yalan)",
+                                    uyum < -0.5f, uyum);
+                }
                 Temizle(rootA);
             }
 

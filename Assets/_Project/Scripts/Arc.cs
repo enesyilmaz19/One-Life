@@ -30,14 +30,24 @@ namespace TekCan
         Color _color;
         float _life, _age;
         float _scaleFrom = 1f, _scaleTo = 1f;
+        float _followYaw;
 
         /// <param name="scaleFrom">Ömrün başındaki ölçek. <paramref name="scaleTo"/> ile
         /// birlikte yayı BÜYÜTÜR: isabet patlaması dışa açılır, hazırlık işareti vuruş
         /// anına doğru dolar. Sabit yay "ne zaman" sorusunu cevaplamıyordu, büyüyen yay
         /// cevaplıyor.</param>
+        /// <param name="followYaw">
+        /// Takip edilen nesnenin dönüşüne eklenen sapma (derece).
+        ///
+        /// ⚠️ Bu olmadan takip eden yaylara verilen açı SESSİZCE SİLİNİYORDU:
+        /// `LateUpdate` her karede `_follow.rotation`'ı üzerine yazıyor. Boss'un
+        /// güvenli açıklığı 180° çevrilmiş olarak doğuyor ama bir kare sonra ÖNE
+        /// dönüyordu — oyuncuya "buradasın, güvendesin" deyip vuruyordu.
+        /// Görselin mekanikle çelişmesi bu projede en pahalı hata türü.
+        /// </param>
         public static Arc Spawn(Vector3 pos, Quaternion rot, float radius, float angleDeg,
                                 Color color, float life, Transform follow = null,
-                                float scaleFrom = 1f, float scaleTo = 1f)
+                                float scaleFrom = 1f, float scaleTo = 1f, float followYaw = 0f)
         {
             var go = new GameObject("Arc");
             go.transform.SetPositionAndRotation(pos + Vector3.up * 0.06f, rot);
@@ -58,6 +68,7 @@ namespace TekCan
             arc._follow = follow;
             arc._scaleFrom = scaleFrom;
             arc._scaleTo = scaleTo;
+            arc._followYaw = followYaw;
             go.transform.localScale = Vector3.one * scaleFrom;
             arc.Apply(1f);
             return arc;
@@ -76,7 +87,8 @@ namespace TekCan
             _age += dt;
 
             if (_follow != null)
-                transform.SetPositionAndRotation(_follow.position + Vector3.up * 0.06f, _follow.rotation);
+                transform.SetPositionAndRotation(_follow.position + Vector3.up * 0.06f,
+                                                 _follow.rotation * Quaternion.Euler(0f, _followYaw, 0f));
 
             float k = 1f - Mathf.Clamp01(_age / _life);
             if (k <= 0f) { Kill(); return; }
