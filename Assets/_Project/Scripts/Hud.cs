@@ -109,6 +109,7 @@ namespace TekCan
             GUI.Label(r, $"hasat %{_clock.HarvestRate * 100f:0}   ·   hasar {_clock.AttackDamage:0.0}", _small);
 
             DrawRevivals();
+            DrawBossPhase();
             DrawWeaponBar();
             DrawProfile();
         }
@@ -169,6 +170,31 @@ namespace TekCan
                           "GEÇİCİ DÖNÜŞ  ·  ODAYI TEMİZLE", _mid);
                 _mid.normal.textColor = Color.white;
             }
+        }
+
+        /// <summary>
+        /// Boss faz 2'ye geçtiğinde SUÇUNU duyurur.
+        ///
+        /// ⚠️ Kurallar değiştiğini anlamadan ölen oyuncu "haksızlık" der. Halka ve
+        /// sarsıntı "bir şey oldu" diyor; bu yazı NE olduğunu söylüyor —
+        /// "artık kaçamazsın", "zamanın hiçbir şey etmiyor".
+        /// </summary>
+        void DrawBossPhase()
+        {
+            var rm = RoomManager.Instance;
+            var boss = rm?.BossInRoom();
+            if (boss == null || boss.Boss == null || boss.Phase < 2) return;
+
+            float since = Time.unscaledTime - boss.PhaseTwoAnnouncement;
+            if (since > 3.5f) return;                       // duyuru, kalıcı yazı değil
+
+            float alpha = since < 2.5f ? 1f : 1f - (since - 2.5f);
+            var c = boss.Boss.Tint; c.a = alpha;
+            _mid.normal.textColor = c;
+
+            GUI.Label(new Rect(0f, Screen.height * 0.44f, Screen.width, 40f),
+                      $"{boss.Boss.Name}  ·  {boss.Boss.Crime}", _mid);
+            _mid.normal.textColor = Color.white;
         }
 
         /// <summary>

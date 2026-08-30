@@ -57,6 +57,18 @@ namespace TekCan
         // ihtiyacı çıkarsa o zaman birleştir; iki mekanizma için erken.
         public bool IsBoss { get; private set; }
 
+        /// <summary>Boss kimliği — boss değilse null. Mekaniği bu belirliyor.</summary>
+        public BossKind Boss { get; private set; }
+
+        /// <summary>1 veya 2. Faz geçişi `CheckPhase`'de.</summary>
+        public int Phase { get; private set; } = 1;
+
+        /// <summary>
+        /// ⚠️ Havuz FULLENDİ mi — fullendiyse artık KREDİ, vurunca HASAT VERMEZ.
+        /// Gösterdiği para sahte; o zaman zaten onun değildi.
+        /// </summary>
+        public bool OnCredit { get; private set; }
+
         /// <summary>
         /// Gövde yarıçapı. İsabet hesabı bunu düşüyor: menzil MERKEZE değil YÜZEYE ölçülüyor.
         ///
@@ -84,6 +96,7 @@ namespace TekCan
 
         float MoveSpeed => (Hollow ? _t.enemyHollowSpeed : _t.enemyFullSpeed)
                          * (IsBoss ? _t.bossSpeedMultiplier : 1f)
+                         * (Boss != null ? Boss.SpeedMultiplier(Phase) : 1f)   // TAHSİLDAR faz 2
                          * Kind.SpeedMultiplier
                          * (Fleeing ? _t.runnerFleeSpeedMultiplier : 1f);
         float HitCost => (Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost)
@@ -98,12 +111,14 @@ namespace TekCan
         float _startingPool;
 
         public void Init(Tuning tuning, Transform player, TimeLabel label,
-                         float poolMultiplier = 1f, bool boss = false, EnemyKind kind = null)
+                         float poolMultiplier = 1f, bool boss = false, EnemyKind kind = null,
+                         BossKind bossKind = null)
         {
             _t = tuning;
             _player = player;
             _label = label;
             IsBoss = boss;
+            Boss = boss ? (bossKind ?? BossKind.For(0)) : null;
             Kind = kind ?? EnemyKind.Basic;
             TimeLeft = tuning.enemyTimePool * poolMultiplier * Kind.PoolMultiplier;
             _startingPool = TimeLeft;
@@ -359,9 +374,15 @@ namespace TekCan
                 // bütün ödeme öldürme anında gelir.
                 // Boss'un hasatı düşük: uzun bir dövüş, ama seni beslemiyor. Yoksa tankiliği
                 // onu zorlaştırmaz, ödül yapardı — havuzu hem canı hem ödemesi olduğu için.
-                float gain = drained * clock.HarvestRate * harvestMult
+                // ⚠️ KREDİ KURALI: fullenmiş havuz vurulunca erir ama HİÇBİR ŞEY VERMEZ.
+                // O zaman zaten onun değildi. Bu olmasaydı ③④ fullendiği için havuzları
+                // iki kez sömürülür ve son iki boss oyunun en büyük ZAMAN KAYNAĞI olurdu —
+                // oysa boss'un seni beslememesi gerekiyor (ölçüm de öyle diyordu).
+                float gain = OnCredit ? 0f
+                           : drained * clock.HarvestRate * harvestMult
                              * Kind.HarvestMultiplier
                              * Region.Harvest                      // KITLIK bölgesi kuralı
+                             * BossKind.ActiveHarvestMultiplier()  // EKSPER'in suçu
                              * (IsBoss ? _t.bossHarvestMultiplier : 1f);
                 clock.Add(gain);
 
@@ -371,6 +392,8 @@ namespace TekCan
                     Mote.Spawn(MoteOrigin(), _player, Mote.HarvestColor,
                                size: 0.16f + Mathf.Min(gain, 3f) * 0.05f);   // çok çaldıysan büyük görün
             }
+
+            CheckPhase();
 
             _flashTimer = _t.hitFlashDuration;
 
@@ -398,7 +421,23 @@ namespace TekCan
         public void ApplyAura(float dt)
         {
             if (Hollow || _t == null) return;
-            float aura = (IsBoss ? _t.bossAuraDrain : 0f) + Kind.AuraDrain(_t);
+
+            // ⚠️ MURABAHACI faz 2: vurmadığın her saniye havuzu doluyor.
+            // Ondan HIZLI olmak zorundasın — "borç işlemeye devam ediyor".
+            // Krediyi doldurmak hasat vermiyor, yani sadece dövüşü uzatıyor.
+            if (Boss != null)
+            {
+                float regen = Boss.RegenPerSecond(_t, Phase);
+                if (regen > 0f)
+                {
+                    TimeLeft = Mathf.Min(_startingPool, TimeLeft + regen * dt);
+                    if (_label != null) _label.Set(TimeLeft, Hollow);
+                }
+            }
+
+            float aura = (Boss != null ? Boss.AuraDrain(_t, Phase)
+                                       : (IsBoss ? _t.bossAuraDrain : 0f))
+                       + Kind.AuraDrain(_t);
             if (aura <= 0f) return;
 
             Clock.Instance?.Spend(aura * dt);
@@ -431,6 +470,83 @@ namespace TekCan
 
         /// <summary>Zerrenin çıktığı nokta — kapsülün gövde ortası, ayağı değil.</summary>
         Vector3 MoteOrigin() => transform.position + Vector3.up * 0.5f;
+
+        /// <summary>
+        /// Boss faz geçişi. İki farklı kural (Enes kararı):
+        ///   ① ② havuz YARIYA düşünce döner
+        ///   ③ ④ havuz BİTİNCE fullenip döner — "kazandım" sandığın an
+        ///
+        /// ⚠️ Fullenen havuz KREDİ olarak işaretleniyor: erir ama hasat vermez.
+        /// </summary>
+        void CheckPhase()
+        {
+            if (Boss == null || Phase >= 2) return;
+
+            if (Boss.RefillsOnEmpty)
+            {
+                if (TimeLeft > 0f) return;
+                TimeLeft = _startingPool;      // FULLENİR
+                OnCredit = true;               // ...ama artık sahte para
+            }
+            else if (TimeLeft > _startingPool * Boss.PhaseTwoAt) return;
+
+            EnterPhaseTwo();
+        }
+
+        void EnterPhaseTwo()
+        {
+            Phase = 2;
+            PhaseTwoAnnouncement = Time.unscaledTime;
+
+            // Faz değişimi GÖRÜNÜR olmalı: oyuncu kuralların değiştiğini anlamadan
+            // ölürse "haksızlık" der. Halka + sarsıntı + ses aynı anda.
+            Arc.Spawn(transform.position, transform.rotation, Radius * 6f, 360f,
+                      new Color(Boss.Tint.r, Boss.Tint.g, Boss.Tint.b, 0.75f), 0.8f,
+                      scaleFrom: 0.2f, scaleTo: 2.4f);
+            Sfx.Slam();
+            IsoCamera.Shake(_t.hitShake * 2f);
+            HitStop.Freeze(_t.hitStopDuration * 2f);
+
+            Debug.Log($"[Tek Can] {Boss.Name} FAZ 2 — {Boss.Crime}" +
+                      (OnCredit ? "  (havuz KREDİ, hasat vermez)" : ""));
+
+            if (Boss.SplitsOnPhaseTwo) Split();
+            Paint();
+        }
+
+        /// <summary>Faz 2 ne zaman başladı — HUD duyurusu için.</summary>
+        public float PhaseTwoAnnouncement { get; private set; } = -99f;
+
+        /// <summary>
+        /// KEFİL faz 2'de ikiye bölünüyor: kendi havuzu yarılanıyor, aynısından bir
+        /// tane daha doğuyor. "Borcu garantiye alan adam kendini de garantiliyor."
+        /// ⚠️ İkizi de KREDİ üstünde — ikisinden de hasat alınmıyor.
+        /// </summary>
+        void Split()
+        {
+            TimeLeft *= 0.5f;
+
+            var yan = transform.right * Radius * 2.2f;
+            Bootstrap.SpawnEnemyAt(_t, transform.position + yan, _player, null,
+                                   poolMultiplier: 1f, boss: true, kind: Kind,
+                                   parent: transform.parent, bossKind: Boss);
+
+            // Doğan ikiz aynı noktada başlamalı: yarı havuz + kredi + faz 2.
+            foreach (var e in All)
+                if (e != null && e != this && e.Boss == Boss && e.Phase == 1)
+                    e.BecomeTwin(TimeLeft);
+        }
+
+        /// <summary>Bölünmeden doğan ikiz — `Split` çağırıyor.</summary>
+        void BecomeTwin(float pool)
+        {
+            TimeLeft = pool;
+            _startingPool = pool;
+            Phase = 2;
+            OnCredit = true;
+            transform.localScale = _baseScale * 0.8f;
+            Paint();
+        }
 
         /// <summary>
         /// Havuz bitti: artık tek atımlık. Bu, dövüşün en önemli durum değişimi —

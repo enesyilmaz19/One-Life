@@ -139,6 +139,11 @@ namespace TekCan
         [Tooltip("Her odada düşman zaman havuzu bu kat büyür — odalar sertleşir")]
         public float roomPoolGrowth = 1.18f;
 
+        [Header("── BOSS TÜRLERİ (Faz 12) ──")]
+        [Tooltip("MURABAHACI faz 2: vurmadığın her saniye havuzunu bu kadar geri sarar. " +
+                 "Kredi doldurmak hasat vermiyor — sadece dövüşü uzatıyor.")]
+        public float usurerRegenPerSecond = 6f;
+
         [Header("── BÖLGELER (Faz 10) ──")]
         [Tooltip("Perdedeki bölge sayısı. Tavan Region.All uzunluğu. " +
                  "5 = bütün kurallar oyunda (test için); koşu uzunluğunu ayarlarken düşür.")]

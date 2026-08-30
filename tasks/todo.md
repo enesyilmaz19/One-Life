@@ -10,6 +10,21 @@
 - [x] ✅ **Faz 10 playtest GEÇTİ** (2026-08-26) — bölgeler farklı hissettiriyor,
       zincir akıyor. **Zorluk çok yüksek, ayar ertelendi** *(Faz 10 bölümüne yazıldı)*
 
+### 🎮 FAZ 12 PLAYTEST — dört boss
+
+**N tuşuyla** bölgeler arası gez, **B** ile boss'a atla. Her bölgenin kendi boss'u var.
+
+- [ ] **Dördü gerçekten farklı mı?** Yoksa "aynı boss, farklı sayı" mı hissettiriyor
+- [ ] **Faz 2 geçişi anlaşılıyor mu?** Halka + sarsıntı + ekranda suçu yazıyor.
+      Kuralların değiştiğini fark ediyor musun, yoksa şaşırıp mı ölüyorsun
+- [ ] **③ ve ④ fullenince ne hissediyorsun?** "Kazandım" sandığın anda dolması —
+      şok mu, sinir mi? İkincisiyse mekanik doğru ama sunum yanlış
+- [ ] **KREDİ kuralı fark ediliyor mu?** İkinci fazda vurunca saatin artmıyor.
+      Bunu anlıyor musun, yoksa "hasat bozuldu" mu sanıyorsun *(anlaşılmıyorsa
+      HUD'da göstermem lazım)*
+- [ ] **TAHSİLDAR faz 2'de kovalıyor** — emmeyi bırakıyor ama peşine düşüyor. Takas adil mi
+- [ ] **EKSPER'in cezası çok mu sert?** Yaşadığı sürece hasat %45, faz 2'de sıfır
+
 ### 🎛️ A/B ARACI HAZIR — ⏸️ AYAR OTURUMU ANİMASYON ÖNCESİNE ERTELENDİ
 
 > Enes (2026-08-26): *"bunun testini şimdi yapmak yerine ileride animasyonlar öncesi
@@ -96,24 +111,26 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 
 ---
 
-## Faz 12 — Boss çeşitliliği ⬅️ **PLAN, ONAY BEKLİYOR**
+## Faz 12 — Boss çeşitliliği ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
 
 > Şu an **tek boss** var, beş bölgede beşi de aynı. Ve bu en kötü yerde tekrar:
 > boss her bölgenin doruk noktası ve ölçüme göre bölgenin −23 saniyesi orada gidiyor.
 >
 > Hikâye çerçevesi kuruldu (`docs/TASARIM.md` → BORÇ EKONOMİSİ), dört boss belli.
 
-- [ ] **`BossKind`** — `EnemyKind` / `Weapon` / `RoomLayout` / `Region` ile aynı desen
-      *(`Enemy.cs`'te bunun yapılabileceğine dair not zaten duruyor)*
-- [ ] **İki fazlı yapı** — ① ② yarıda döner, ③ ④ havuz bitince FULLENİR
-- [ ] **⚠️ İkinci fazın havuzu KREDİ** — vurunca erir ama hasat VERMEZ.
-      Boss ekonomisi sorununu sayıyla değil kurguyla çözüyor
-- [ ] **① TAHSİLDAR** — faz 1 emer / faz 2 kovalar *(mevcut boss buraya oturuyor)*
-- [ ] **② EKSPER** — faz 1 hasadı düşürür / faz 2 sıfırlar
-- [ ] **③ KEFİL** — faz 2'de ikiye bölünür
-- [ ] **④ MURABAHACI** — faz 2'de kendi zamanını geri sarar
-- [ ] **Bölge → boss eşlemesi** — her bölgenin kendi alacaklısı
-- [ ] Faz 12 öz-denetimi *(özellikle: ikinci faz hasat VERMİYOR mu — etki testi)*
+- [x] **`BossKind`** — `EnemyKind` / `Weapon` / `RoomLayout` / `Region` ile aynı desen
+- [x] **İki fazlı yapı** — ① ② yarıda döner, ③ ④ havuz bitince FULLENİR
+- [x] **⚠️ İkinci fazın havuzu KREDİ** — vurunca erir ama hasat VERMEZ
+- [x] **① TAHSİLDAR** — faz 1 emer / faz 2 **emmeyi bırakır ama KOVALAR** (×1.55 hız).
+      Aynı tehdidin daha çoğu değil, BAŞKA bir soru: uzak durmak artık işe yaramıyor
+- [x] **② EKSPER** — yaşadığı sürece hasadın ×0.45 / faz 2'de **×0** ("acele et" değil,
+      "onu bitirmeden zenginleşemezsin")
+- [x] **③ KEFİL** — faz 2'de **ikiye bölünür**, ikisi de yarım havuz + kredi
+- [x] **④ MURABAHACI** — faz 2'de **havuzunu geri sarar**, vurmadığın her saniye doluyor
+- [x] **Bölge → boss eşlemesi** — her bölgenin kendi alacaklısı
+- [x] **HUD duyurusu** — faz 2'de boss'un SUÇU yazıyor ("artık kaçamazsın").
+      Halka "bir şey oldu" diyor, yazı NE olduğunu söylüyor
+- [x] Faz 12 öz-denetimi: **22/22** — kredi kuralı GERÇEK SAATTEN ölçülüyor
 - [ ] 🎮 **PLAYTEST KAPISI**
 
 **Bu fazda YAPILMAYACAK:** nemesis *(boss kimliği oturduktan sonra)*, isimler

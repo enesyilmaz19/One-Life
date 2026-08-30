@@ -218,9 +218,13 @@ namespace TekCan
             // Boss her bölgede sertleşiyor — yoksa 4. bölgenin boss'u 1. bölgeninkiyle
             // aynı olurdu ve zincirin tırmanma hissi kaybolurdu.
             float havuz = _t.bossPoolMultiplier * Mathf.Pow(_t.regionBossGrowth, RegionIndex);
+
+            // ⚠️ Her bölgenin KENDİ ALACAKLISI var — bölge kuralı da onun yönetiminin
+            // sonucu (bkz. TASARIM.md: "kural = kimlik").
             Bootstrap.SpawnEnemyAt(_t, new Vector3(0f, Bootstrap.ArenaCenter.y, _t.arenaRadius * 0.35f),
                                    _player, _cam, havuz, boss: true,
-                                   parent: _roomRoot.transform);
+                                   parent: _roomRoot.transform,
+                                   bossKind: BossKind.For(RegionIndex));
         }
 
         void PlaceExit()
@@ -302,9 +306,23 @@ namespace TekCan
         public string Prompt()
         {
             if (IsBossRoom)
-                return IsLastRegion ? "SON BOSS" : "BÖLGE BOSS'U";
+            {
+                // Boss'un ADI ve fazı görünmeli: hangi suçla dövüştüğün mekaniği açıklıyor.
+                var b = BossKind.For(RegionIndex);
+                var canlı = BossInRoom();
+                string faz = canlı != null && canlı.Phase >= 2 ? "  ·  FAZ 2" : "";
+                return $"{b.Name}{faz}" + (IsLastRegion ? "  (SON)" : "");
+            }
             if (Cleared) return "ÇIKIŞ AÇIK  ·  saat işlemeye devam ediyor";
             return $"oda {Room} / {_t.roomsPerRegion - 1}   ·   {Layout.Name}";
+        }
+
+        /// <summary>Odadaki yaşayan boss — HUD faz durumunu ondan okuyor.</summary>
+        public Enemy BossInRoom()
+        {
+            foreach (var e in Enemy.All)
+                if (e != null && e.Boss != null) return e;
+            return null;
         }
 
         /// <summary>HUD üst satırı: bölge adı + kuralı.</summary>
