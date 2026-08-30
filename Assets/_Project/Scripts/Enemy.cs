@@ -214,6 +214,11 @@ namespace TekCan
                 case State.Recover:
                     if (_stateTimer <= 0f)
                     {
+                        // ⚠️ Tekrarlı saldırıda BEKLEME YOK — hemen bir daha vuruyor.
+                        // Bir kez kaçmanın yetmediği tek yer burası; araya bekleme
+                        // koyarsak "tekrar" sıradan iki saldırıya dönüşür.
+                        if (_repeatsLeft > 0) { EnterWindup(); break; }
+
                         _attackTimer = _t.enemyAttackCooldown;
                         EnterState(State.Chase, 0f);
                     }
@@ -235,19 +240,35 @@ namespace TekCan
         /// </summary>
         static readonly Color SlamTint = new Color(1f, 0.3f, 0.1f, 0.28f);
 
-        // Yere vuruş, ölçeklenen boss özellikleriyle aynı deseni kullanıyor:
-        // koşul tek yerde, kullanan yerler sade kalıyor.
-        float StrikeRadius => _slamming ? _t.bossSlamRadius : AttackRange;
-        float StrikeAngle => _slamming ? 360f : AttackAngle;
-        Color StrikeColor => _slamming ? SlamTint : StrikeTint;
-        Color TelegraphColor => _slamming ? SlamTint : TelegraphTint;
+        /// <summary>
+        /// Şu anki boss saldırısı — boss değilse null, sıradan koni kullanılıyor.
+        /// ⚠️ Eski `_slamming` bayrağı bunun ÖZEL BİR HÂLİ oldu: `Angle >= 360`.
+        /// Tek bir özel saldırı yerine dağarcık var artık (bkz. `BossKind.Attacks`).
+        /// </summary>
+        BossAttack _attack;
+        int _repeatsLeft;
+
+        float StrikeRadius => _attack != null ? AttackRange * _attack.RangeMul
+                            : (_slamming ? _t.bossSlamRadius : AttackRange);
+        float StrikeAngle => _attack != null ? (_attack.Angle > 0f ? _attack.Angle : AttackAngle)
+                           : (_slamming ? 360f : AttackAngle);
+        float StrikeInner => _attack?.InnerRadius ?? 0f;
+        Color StrikeColor => _attack?.Tint ?? (_slamming ? SlamTint : StrikeTint);
+        Color TelegraphColor => _attack?.Tint ?? (_slamming ? SlamTint : TelegraphTint);
 
         void EnterWindup()
         {
-            _attackCount++;
-            _slamming = IsBoss && _t.bossSlamEvery > 0 && _attackCount % _t.bossSlamEvery == 0;
+            // Tekrarlı saldırıda AYNI saldırı devam ediyor — yeni seçim yok.
+            if (_repeatsLeft > 0) { _repeatsLeft--; }
+            else
+            {
+                _attackCount++;
+                PickAttack();
+            }
 
-            float dur = WindupDuration * (_slamming ? _t.bossSlamWindupMultiplier : 1f);
+            float dur = WindupDuration
+                      * (_attack != null ? _attack.WindupMul
+                                         : (_slamming ? _t.bossSlamWindupMultiplier : 1f));
             EnterState(State.Windup, dur);
             FacePlayer();
 
@@ -258,7 +279,36 @@ namespace TekCan
             _telegraph = Arc.Spawn(transform.position, transform.rotation,
                                    StrikeRadius, StrikeAngle, TelegraphColor, dur, transform,
                                    scaleFrom: 0.25f, scaleTo: 1f);
+
+            // ⚠️ SİMİT'in güvenli göbeği GÖRÜNMELİ. Görünmezse oyuncu "halka geliyor,
+            // kaç" der ve tam ters yönde ölür — mekanik doğru, sunum öldürücü olur.
+            if (StrikeInner > 0f)
+                Arc.Spawn(transform.position, transform.rotation, StrikeInner, 360f,
+                          new Color(0.45f, 1f, 0.55f, 0.35f), dur, transform);
+
             Paint();
+        }
+
+        /// <summary>
+        /// Sıradaki saldırı. Deterministik: aynı sıra hep aynı saldırıyı verir, böylece
+        /// "bu saldırı mı zor, ben mi kötü oynadım" cevaplanabilir kalıyor —
+        /// yerleşimlerde ve tür seçiminde uygulanan kuralın aynısı.
+        /// </summary>
+        void PickAttack()
+        {
+            if (Boss == null)
+            {
+                // Boss olmayan düşman: eski davranış, yere vuruş bayrağı hâlâ geçerli.
+                _attack = null;
+                _slamming = false;
+                _repeatsLeft = 0;
+                return;
+            }
+
+            var liste = Boss.Attacks(Phase);
+            _attack = liste[Mathf.Abs(_attackCount - 1) % liste.Length];
+            _repeatsLeft = Mathf.Max(0, _attack.Repeat - 1);
+            _slamming = _attack.Angle >= 360f;    // eski kavram, saldırıdan türüyor
         }
 
         void EnterStrike()
@@ -267,7 +317,13 @@ namespace TekCan
             EnterState(State.Strike, _t.enemyStrikeDuration);
 
             if (_telegraph != null) { _telegraph.Cancel(); _telegraph = null; }
-            if (_slamming) Sfx.Slam();
+            if (_slamming) Sfx.Slam(); else Sfx.Swing();
+
+            // HAMLE: mesafeyi vuruş anında kapatıyor. Geri çekilmek tek başına
+            // cevap olmaktan çıkıyor — hazırlığı okuyup YANA kaçman gerekiyor.
+            if (_attack != null && _attack.Lunge > 0f)
+                transform.position += _strikeDir * _attack.Lunge;
+
             Arc.Spawn(transform.position, transform.rotation,
                 StrikeRadius, StrikeAngle, StrikeColor, _t.enemyStrikeDuration * 1.6f);
             Paint();
@@ -275,7 +331,8 @@ namespace TekCan
             // Hasar yalnızca bu anda, kilitli yöne göre iner. Kaçtıysan ıskalar.
             if (PlayerInStrikeCone())
             {
-                float cost = HitCost * (_slamming ? _t.bossSlamCostMultiplier : 1f);
+                float cost = HitCost * (_attack != null ? _attack.CostMul
+                                      : (_slamming ? _t.bossSlamCostMultiplier : 1f));
                 _player.GetComponent<PlayerController>()?.TakeHit(cost, transform.position);
             }
         }
@@ -315,11 +372,18 @@ namespace TekCan
         public bool PlayerInStrikeCone()
         {
             Vector3 to = FlatToPlayer();
-            if (to.magnitude > StrikeRadius) return false;
+            float d = to.magnitude;
+            if (d > StrikeRadius) return false;
 
-            // Yere vuruşta yön kontrolü yok: 360° olduğu için her açı zaten içeride.
-            return _slamming || Vector3.Angle(_strikeDir, to) <= StrikeAngle * 0.5f;
+            // ⚠️ SİMİT: göbeği GÜVENLİ. Halkanın tam tersi soru — "uzaklaş" değil "YAKLAŞ".
+            if (StrikeInner > 0f && d <= StrikeInner) return false;
+
+            // 360°'de yön kontrolü yok: her açı zaten içeride.
+            return StrikeAngle >= 360f || Vector3.Angle(_strikeDir, to) <= StrikeAngle * 0.5f;
         }
+
+        /// <summary>Öz-denetim ve HUD için: şu an hangi saldırıyı yapıyor.</summary>
+        public BossAttack CurrentAttack => _attack;
 
         /// <summary>Öz-denetim için: şu an yere vuruş yapıyor mu.</summary>
         public bool Slamming => _slamming;
@@ -500,6 +564,10 @@ namespace TekCan
         {
             Phase = 2;
             PhaseTwoAnnouncement = Time.unscaledTime;
+
+            // Dağarcık değişti: sıradaki saldırı YENİ listeden seçilsin.
+            _attack = null;
+            _repeatsLeft = 0;
 
             // Faz değişimi GÖRÜNÜR olmalı: oyuncu kuralların değiştiğini anlamadan
             // ölürse "haksızlık" der. Halka + sarsıntı + ses aynı anda.

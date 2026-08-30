@@ -141,7 +141,67 @@ namespace TekCan.EditorTools
                             murabaha.TimeLeft > sarmaÖnce + 0.1f, murabaha.TimeLeft - sarmaÖnce);
             Temizle(root7);
 
-            // ── 8) Bölge → boss eşlemesi ──
+            // ── 8) ⚠️ SALDIRI DAĞARCIĞI — her boss KENDİ saldırılarıyla dövüşüyor ──
+            int adsız = 0, kopya = 0, fazAynı = 0;
+            foreach (var b in BossKind.All)
+            {
+                var f1 = b.Attacks(1);
+                var f2 = b.Attacks(2);
+
+                foreach (var a in f1) if (string.IsNullOrWhiteSpace(a.Name)) adsız++;
+                foreach (var a in f2) if (string.IsNullOrWhiteSpace(a.Name)) adsız++;
+
+                // ⚠️ Faz 2 listesi faz 1'in AYNISI OLAMAZ (Enes kararı: yeni saldırılar
+                //    + eskilerin gelişmiş hâli). Aynıysa "faz" diye bir şey yok demektir.
+                if (Dizi(f1) == Dizi(f2)) fazAynı++;
+
+                // Aynı boss içinde iki saldırı aynı soruyu soruyorsa biri gereksiz.
+                for (int i = 0; i < f1.Length; i++)
+                    for (int j = i + 1; j < f1.Length; j++)
+                        if (Soru(f1[i]) == Soru(f1[j])) kopya++;
+            }
+            failed += Check(ref total, "her saldırının adı var", adsız == 0, adsız);
+            failed += Check(ref total, "⚠️ FAZ 2 dağarcığı faz 1'in AYNISI DEĞİL",
+                            fazAynı == 0, fazAynı);
+            failed += Check(ref total, "aynı boss içinde iki saldırı aynı soruyu sormuyor",
+                            kopya == 0, kopya);
+
+            // Faz 2'de hem YENİ hem GELİŞMİŞ olmalı
+            int yenisizFaz = 0;
+            foreach (var b in BossKind.All)
+            {
+                var adlar1 = new System.Collections.Generic.HashSet<string>();
+                foreach (var a in b.Attacks(1)) adlar1.Add(a.Name);
+                bool yeni = false;
+                foreach (var a in b.Attacks(2))
+                    if (!adlar1.Contains(a.Name) && !a.Name.EndsWith("+")) yeni = true;
+                if (!yeni) yenisizFaz++;
+            }
+            failed += Check(ref total, "⚠️ her boss faz 2'de YENİ bir saldırı kazanıyor",
+                            yenisizFaz == 0, yenisizFaz);
+
+            // ── 9) ⚠️ SİMİT gerçekten TERS soruyor — göbeği GÜVENLİ ──
+            //    Bu, halkanın tersi. Çalışmazsa oyuncunun "uzaklaş" refleksi doğru olur
+            //    ve saldırının varlık sebebi kalmaz.
+            var (root9, clock9, kefil9) = Kur(t, Bul("KEFİL"));
+            var simit = İlkSimit(Bul("KEFİL").Attacks(1));
+            failed += Check(ref total, "KEFİL'in SİMİT saldırısı var", simit != null, 1);
+            if (simit != null)
+            {
+                failed += Check(ref total, "⚠️ simidin göbeği menzilinden KÜÇÜK (güvenli alan var)",
+                                simit.InnerRadius > 0f && simit.InnerRadius < 90f, simit.InnerRadius);
+            }
+            Temizle(root9);
+
+            // ── 10) TEKRARLI saldırı var mı — bir kez kaçmak yetmesin ──
+            bool tekrarVar = false;
+            foreach (var b in BossKind.All)
+                foreach (var a in b.Attacks(2))
+                    if (a.Repeat > 1) tekrarVar = true;
+            failed += Check(ref total, "faz 2'de TEKRARLI saldırı var (bir kez kaçmak yetmiyor)",
+                            tekrarVar, 1);
+
+            // ── 11) Bölge → boss eşlemesi ──
             bool eşleşme = true;
             for (int i = 0; i < BossKind.All.Length; i++)
                 if (BossKind.For(i) != BossKind.All[i]) eşleşme = false;
@@ -158,6 +218,32 @@ namespace TekCan.EditorTools
         static string İmza(BossKind b, Tuning t) =>
             $"{b.RefillsOnEmpty}|{b.SplitsOnPhaseTwo}|{b.PlayerHarvest(1)}|{b.PlayerHarvest(2)}|" +
             $"{b.SpeedMultiplier(2)}|{b.RegenPerSecond(t, 2)}|{b.AuraDrain(t, 1)}|{b.AuraDrain(t, 2)}";
+
+        /// <summary>
+        /// Saldırının SORDUĞU SORU — adı değil. İki saldırı farklı ad taşıyıp aynı
+        /// soruyu soruyorsa çeşitlilik sahtedir; test buna bakıyor.
+        /// </summary>
+        static string Soru(BossAttack a)
+        {
+            string şekil = a.InnerRadius > 0f ? "SİMİT(yaklaş)"
+                         : a.Angle >= 360f ? "HALKA(uzaklaş)"
+                         : a.Angle > 0f && a.Angle < 40f ? "IŞIN(hattan çık)"
+                         : "KONİ(yana kaç)";
+            return $"{şekil}|tekrar={a.Repeat > 1}|hamle={a.Lunge > 0f}|menzil={a.RangeMul:0.0}";
+        }
+
+        static string Dizi(BossAttack[] xs)
+        {
+            var sb = new System.Text.StringBuilder();
+            foreach (var a in xs) sb.Append(a.Name).Append(':').Append(Soru(a)).Append('|');
+            return sb.ToString();
+        }
+
+        static BossAttack İlkSimit(BossAttack[] xs)
+        {
+            foreach (var a in xs) if (a.InnerRadius > 0f) return a;
+            return null;
+        }
 
         static BossKind Bul(string ad)
         {

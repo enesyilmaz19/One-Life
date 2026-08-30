@@ -130,8 +130,26 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 - [x] **Bölge → boss eşlemesi** — her bölgenin kendi alacaklısı
 - [x] **HUD duyurusu** — faz 2'de boss'un SUÇU yazıyor ("artık kaçamazsın").
       Halka "bir şey oldu" diyor, yazı NE olduğunu söylüyor
-- [x] Faz 12 öz-denetimi: **22/22** — kredi kuralı GERÇEK SAATTEN ölçülüyor
+- [x] **`BossAttack` dağarcığı** (Enes istedi) — her boss KENDİ saldırılarıyla dövüşüyor,
+      faz 2'de hem YENİ saldırı hem eskilerin GELİŞMİŞ hâli
+- [x] **İki yeni saldırı kavramı** — mevcut makine yeni VERİYLE çalışabildi:
+      **SİMİT** (göbeği güvenli → halkanın TERSİ, "yaklaş") ve **TEKRAR** (bir kez
+      kaçmak yetmiyor). Ayrıca **HAMLE** (vuruşta mesafe kapatma)
+- [x] Faz 12 öz-denetimi: **29/29** — kredi kuralı GERÇEK SAATTEN, saldırı çeşitliliği
+      **SORDUĞU SORUDAN** ölçülüyor (ad farkı sahte çeşitlilik olabilir)
 - [ ] 🎮 **PLAYTEST KAPISI**
+
+### Saldırı dağarcıkları
+
+| Boss | Faz 1 | Faz 2 |
+|------|-------|-------|
+| **TAHSİLDAR** | HACİZ (koni) · TAHSİL (halka) | HACİZ+ *(hamle)* · TAHSİL+ *(×2)* · **ZORLA ALIM** *(5 birim atılış)* |
+| **EKSPER** | DEĞER BİÇME (24° ışın) · KESİNTİ | DEĞER BİÇME+ *(60°, artık biçiyor)* · **HACİM** *(simit)* · KESİNTİ+ |
+| **KEFİL** | TEMİNAT (simit) · KEFALET | TEMİNAT+ *(göbek daraldı)* · **ORTAK BORÇ** *(düz halka — simidin tersi)* · KEFALET+ *(×2)* |
+| **MURABAHACI** | VADE · İCRA (halka) | **FAİZ** *(×3, hızlı)* · VADE+ *(hamle)* · İCRA+ |
+
+⚠️ **KEFİL faz 2'de en zoru:** simit "yaklaş" derken ORTAK BORÇ "uzaklaş" diyor, ve
+ikisi birden var. Ezber bozuluyor.
 
 **Bu fazda YAPILMAYACAK:** nemesis *(boss kimliği oturduktan sonra)*, isimler
 *(Enes'te)*, hikâye metinleri *(içerik)*.

@@ -3,6 +3,48 @@ using UnityEngine;
 namespace TekCan
 {
     /// <summary>
+    /// Bir boss saldırısı — veri, davranış değil. Mevcut saldırı makinesi
+    /// (hazırlık yayı → kilitli yön → koni kontrolü) zaten bu parametrelerle çalışıyordu;
+    /// boss'a özgü saldırı yapmak için yeni makine değil, yeni VERİ gerekiyordu.
+    ///
+    /// ⚠️ Her saldırı FARKLI BİR SORU sormalı:
+    ///   • koni    → yana kaç
+    ///   • halka   → UZAKLAŞ
+    ///   • simit   → YAKLAŞ (tersi! içi güvenli)
+    ///   • ışın    → hattından çık
+    ///   • tekrar  → bir kez kaçmak yetmiyor
+    /// İkisi aynı soruyu soruyorsa biri gereksizdir.
+    /// </summary>
+    public sealed class BossAttack
+    {
+        public string Name = "";
+
+        /// <summary>Boss'un normal menziline çarpan.</summary>
+        public float RangeMul = 1f;
+
+        /// <summary>Mutlak derece. 360 = halka (yön kontrolü yok).</summary>
+        public float Angle = 0f;          // 0 = düşmanın kendi açısı
+
+        /// <summary>
+        /// &gt;0 ise SİMİT: bu yarıçapın İÇİ GÜVENLİ. Halkanın tam tersi soruyu sorar —
+        /// "uzaklaş" değil "YAKLAŞ". Boss'un dibi en güvenli yer olunca oyuncu
+        /// alışkanlığını bozmak zorunda kalıyor.
+        /// </summary>
+        public float InnerRadius = 0f;
+
+        public float WindupMul = 1f;
+        public float CostMul = 1f;
+
+        /// <summary>Kaç kez arka arkaya vuruyor — bir kez kaçmak yetmesin.</summary>
+        public int Repeat = 1;
+
+        /// <summary>Vuruş anında oyuncuya doğru atılma mesafesi — mesafeyi kapatır.</summary>
+        public float Lunge = 0f;
+
+        public Color Tint = new Color(1f, 0.45f, 0.15f, 0.30f);
+    }
+
+    /// <summary>
     /// Boss kimliği. `EnemyKind` / `Weapon` / `RoomLayout` / `Region` ile aynı desen.
     ///
     /// ⚠️ **HER BOSS SUÇUNU DÖVÜŞÜR.** Mekanikler uydurma değil — borç ekonomisinde
@@ -56,6 +98,22 @@ namespace TekCan
         /// <summary>Faz 2'ye geçerken ikiye bölünüyor mu — KEFİL.</summary>
         public virtual bool SplitsOnPhaseTwo => false;
 
+        /// <summary>
+        /// Bu fazın saldırı dağarcığı. Sırayla dönülüyor (deterministik — "bu saldırı mı
+        /// zor, ben mi kötü oynadım" cevaplanabilir kalsın).
+        ///
+        /// ⚠️ Faz 2 listesi faz 1'in AYNISI OLAMAZ: hem YENİ saldırı hem eskilerin
+        /// GELİŞMİŞ hâli olmalı (Enes kararı). "Aynı saldırı ama daha çok hasar"
+        /// faz değildir — oyuncunun öğrendiği cevabı geçersiz kılmayan şey yeni değildir.
+        /// </summary>
+        public abstract BossAttack[] Attacks(int phase);
+
+        // Ortak renkler — saldırının TÜRÜ renginden okunsun.
+        protected static readonly Color Cone = new Color(1f, 0.45f, 0.15f, 0.30f);
+        protected static readonly Color Ring = new Color(1f, 0.30f, 0.10f, 0.28f);
+        protected static readonly Color Donut = new Color(0.4f, 0.7f, 1f, 0.30f);
+        protected static readonly Color Beam = new Color(1f, 0.85f, 0.25f, 0.32f);
+
         // ── varyantlar ───────────────────────────────────────────────────────
 
         sealed class Tahsildar : BossKind
@@ -70,6 +128,27 @@ namespace TekCan
             public override float AuraDrain(Tuning t, int phase)
                 => phase >= 2 ? 0f : t.bossAuraDrain;
             public override float SpeedMultiplier(int phase) => phase >= 2 ? 1.55f : 1f;
+
+            // Zorla alan adam: yaklaşır, kapatır, tekrar vurur.
+            public override BossAttack[] Attacks(int phase) => phase >= 2
+                ? new[]
+                {
+                    // GELİŞMİŞ: hamle ekledi — geri çekilmek artık kurtarmıyor
+                    new BossAttack { Name = "HACİZ+", RangeMul = 1.3f, Angle = 130f,
+                                     Lunge = 2.5f, CostMul = 1.15f, Tint = Cone },
+                    // GELİŞMİŞ: halka büyüdü ve İKİ KEZ iniyor — bir kez kaçmak yetmiyor
+                    new BossAttack { Name = "TAHSİL+", RangeMul = 1.35f, Angle = 360f,
+                                     Repeat = 2, WindupMul = 0.8f, CostMul = 1.3f, Tint = Ring },
+                    // YENİ: uzaktan üstüne atlıyor. Mesafe tutmak bir cevap olmaktan çıkıyor
+                    new BossAttack { Name = "ZORLA ALIM", RangeMul = 2.2f, Angle = 70f,
+                                     Lunge = 5f, WindupMul = 1.25f, CostMul = 1.4f, Tint = Cone },
+                }
+                : new[]
+                {
+                    new BossAttack { Name = "HACİZ", Angle = 0f, Tint = Cone },
+                    new BossAttack { Name = "TAHSİL", RangeMul = 1f, Angle = 360f,
+                                     WindupMul = 1.4f, CostMul = 1.6f, Tint = Ring },
+                };
         }
 
         sealed class Eksper : BossKind
@@ -82,6 +161,29 @@ namespace TekCan
             // "Acele et" değil, "onu bitirmeden zenginleşemezsin" diyor.
             public override float PlayerHarvest(int phase) => phase >= 2 ? 0f : 0.45f;
             public override float AuraDrain(Tuning t, int phase) => t.bossAuraDrain * 0.5f;
+
+            // Önce ÖLÇER (ince ışın, hattından çık), sonra ölçmeyi bırakıp BİÇER.
+            public override BossAttack[] Attacks(int phase) => phase >= 2
+                ? new[]
+                {
+                    // GELİŞMİŞ: artık hassas ölçmüyor, geniş biçiyor
+                    new BossAttack { Name = "DEĞER BİÇME+", RangeMul = 2.6f, Angle = 60f,
+                                     WindupMul = 0.85f, CostMul = 1.2f, Tint = Beam },
+                    // YENİ: SİMİT — halkanın TERSİ. Kaçmak değil YAKLAŞMAK gerekiyor;
+                    // oyuncunun "uzaklaş" refleksi burada onu öldürüyor
+                    new BossAttack { Name = "HACİM", RangeMul = 3.2f, Angle = 360f,
+                                     InnerRadius = 2.6f, WindupMul = 1.3f, CostMul = 1.5f,
+                                     Tint = Donut },
+                    new BossAttack { Name = "KESİNTİ+", RangeMul = 1.25f, Angle = 120f,
+                                     CostMul = 1.2f, Tint = Cone },
+                }
+                : new[]
+                {
+                    // İnce ve UZUN: hattında durmak cezalı, yana bir adım yeterli
+                    new BossAttack { Name = "DEĞER BİÇME", RangeMul = 2.4f, Angle = 24f,
+                                     WindupMul = 0.9f, CostMul = 1.3f, Tint = Beam },
+                    new BossAttack { Name = "KESİNTİ", Angle = 0f, Tint = Cone },
+                };
         }
 
         sealed class Kefil : BossKind
@@ -93,6 +195,30 @@ namespace TekCan
             public override bool RefillsOnEmpty => true;
             public override bool SplitsOnPhaseTwo => true;
             public override float AuraDrain(Tuning t, int phase) => t.bossAuraDrain * 0.6f;
+
+            // Kefil seni KENDİNE ÇEKER: dibi güvenli, uzağı ölüm. Faz 2'de ikisi birden
+            // yaptığında iki güvenli bölge arasında koşuşturmak zorunda kalıyorsun.
+            public override BossAttack[] Attacks(int phase) => phase >= 2
+                ? new[]
+                {
+                    // GELİŞMİŞ: simit büyüdü, güvenli göbek DARALDI
+                    new BossAttack { Name = "TEMİNAT+", RangeMul = 3.6f, Angle = 360f,
+                                     InnerRadius = 1.7f, WindupMul = 1.1f, CostMul = 1.35f,
+                                     Tint = Donut },
+                    // YENİ: düz halka. Simit "yaklaş" derken bu "uzaklaş" diyor —
+                    // ikisi arka arkaya gelince ezber bozuluyor
+                    new BossAttack { Name = "ORTAK BORÇ", RangeMul = 1.5f, Angle = 360f,
+                                     WindupMul = 0.9f, CostMul = 1.25f, Tint = Ring },
+                    new BossAttack { Name = "KEFALET+", RangeMul = 1.2f, Angle = 140f,
+                                     Repeat = 2, Tint = Cone },
+                }
+                : new[]
+                {
+                    new BossAttack { Name = "TEMİNAT", RangeMul = 3f, Angle = 360f,
+                                     InnerRadius = 2.4f, WindupMul = 1.2f, CostMul = 1.3f,
+                                     Tint = Donut },
+                    new BossAttack { Name = "KEFALET", Angle = 0f, Tint = Cone },
+                };
         }
 
         sealed class Murabahaci : BossKind
@@ -105,6 +231,28 @@ namespace TekCan
             // Vurmadığın her saniye havuzu doluyor — ondan HIZLI olmak zorundasın.
             public override float RegenPerSecond(Tuning t, int phase)
                 => phase >= 2 ? t.usurerRegenPerSecond : 0f;
+
+            // Borç İŞLER: faz 2'de saldırıları da bileşik faiz gibi üst üste biniyor.
+            public override BossAttack[] Attacks(int phase) => phase >= 2
+                ? new[]
+                {
+                    // YENİ: ÜÇ kez arka arkaya, hazırlığı kısa. "Borç işlemeye devam ediyor" —
+                    // bir kez kaçmak yetmiyor, üçünü birden okuman gerekiyor
+                    new BossAttack { Name = "FAİZ", RangeMul = 1.15f, Angle = 150f,
+                                     Repeat = 3, WindupMul = 0.6f, CostMul = 0.75f, Tint = Cone },
+                    // GELİŞMİŞ: vade uzadı ve üstüne geliyor
+                    new BossAttack { Name = "VADE+", RangeMul = 2.4f, Angle = 80f,
+                                     Lunge = 4f, CostMul = 1.3f, Tint = Beam },
+                    // GELİŞMİŞ: icra halkası büyüdü ve çok daha pahalı
+                    new BossAttack { Name = "İCRA+", RangeMul = 1.6f, Angle = 360f,
+                                     WindupMul = 1.15f, CostMul = 1.8f, Tint = Ring },
+                }
+                : new[]
+                {
+                    new BossAttack { Name = "VADE", RangeMul = 1.4f, Angle = 90f, Tint = Cone },
+                    new BossAttack { Name = "İCRA", RangeMul = 1.15f, Angle = 360f,
+                                     WindupMul = 1.35f, CostMul = 1.5f, Tint = Ring },
+                };
         }
 
         public static readonly BossKind[] All =
