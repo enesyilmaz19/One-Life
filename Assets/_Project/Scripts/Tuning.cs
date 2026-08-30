@@ -201,14 +201,19 @@ namespace TekCan
         [Tooltip("Boss'a vurmak normal düşmanın kaç katı zaman kazandırır. DÜŞÜK olmalı: boss uzun bir dövüş, seni beslememeli.")]
         public float bossHarvestMultiplier = 0.4f;
 
-        [Header("── BOSS: YERE VURUŞ ──")]
-        [Tooltip("Kaç saldırıda bir yere vurur — 2 = bir normal, bir yere vuruş")]
+        [Header("── BOSS: YERE VURUŞ (⚠️ ARTIK OYUNU SÜRMÜYOR) ──")]
+        // ⚠️ Faz 12'de her boss KENDİ saldırı dağarcığını kazandı (`BossKind.Attacks`).
+        // Yere vuruş artık burdan değil, o dağarcıktaki halka saldırılarından geliyor
+        // (TAHSİL, İCRA, ORTAK BORÇ). Bu alanları çevirmek OYUNU DEĞİŞTİRMEZ.
+        // Yalnızca `BalanceSim`'in boss modeli hâlâ okuyor; o model ayar oturumunda
+        // gerçek dağarcığa göre yenilenecek.
+        [Tooltip("⚠️ OYUNU SÜRMÜYOR — yalnızca BalanceSim okuyor. Gerçek saldırılar BossKind'da.")]
         public int bossSlamEvery = 2;
-        [Tooltip("Yere vuruşun yarıçapı. Dışına çıkman gerek.")]
+        [Tooltip("⚠️ OYUNU SÜRMÜYOR — yalnızca BalanceSim okuyor.")]
         public float bossSlamRadius = 3.8f;
-        [Tooltip("Yere vuruşun hazırlığı bu kat uzun — kaçmak için adil süre")]
+        [Tooltip("⚠️ OYUNU SÜRMÜYOR — yalnızca BalanceSim okuyor.")]
         public float bossSlamWindupMultiplier = 3.5f;
-        [Tooltip("Yere vuruş kaç saniye götürür (normal darbeye ek çarpan)")]
+        [Tooltip("⚠️ OYUNU SÜRMÜYOR — yalnızca BalanceSim okuyor.")]
         public float bossSlamCostMultiplier = 1.6f;
 
         [Header("── ARENA (greybox test) ──")]

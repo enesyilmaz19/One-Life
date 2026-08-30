@@ -124,21 +124,31 @@ namespace TekCan.EditorTools
                 var windup = typeof(Enemy).GetMethod("EnterWindup",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-                // İlk saldırı normal, ikincisi yere vuruş (bossSlamEvery = 2)
-                windup.Invoke(slamBoss, null);
-                failed += Check(ref total, "1. saldırı normal", !slamBoss.Slamming, 0);
-                windup.Invoke(slamBoss, null);
-                failed += Check(ref total, "2. saldırı YERE VURUŞ", slamBoss.Slamming, 1);
+                // Dağarcığı dolaş, 360° halka saldırısını bul (Faz 12'den sonra her
+                // boss'un kendi dağarcığı var; "ikinci saldırı slam" artık doğru değil).
+                bool halkaBulundu = false;
+                for (int i = 0; i < 6 && !halkaBulundu; i++)
+                {
+                    windup.Invoke(slamBoss, null);
+                    halkaBulundu = slamBoss.Slamming;
+                }
+                failed += Check(ref total, "boss dağarcığında 360° HALKA saldırısı var",
+                                halkaBulundu, 1);
+
+                // ⚠️ Yarıçapı `Tuning`'den DEĞİL düşmanın kendisinden okuyoruz.
+                // Tuning'den okusaydık saldırı verisi değiştiğinde test yanlış yeri
+                // sınar ve yeşil kalırdı ("düzenek kopyalamaz, İTHAL EDER").
+                float r = slamBoss.CurrentStrikeRadius;
 
                 // Halkanın İÇİNDE: arkasında dursan bile yakalanıyorsun (yön yok)
                 player.transform.position = slamBoss.transform.position
-                                          - slamBoss.transform.forward * (t.bossSlamRadius * 0.5f);
+                                          - slamBoss.transform.forward * (r * 0.5f);
                 failed += Check(ref total, "yere vuruş ARKADA duranı bile yakalıyor",
                                 slamBoss.PlayerInStrikeCone(), 1);
 
                 // Halkanın DIŞINDA: kurtuluyorsun
                 player.transform.position = slamBoss.transform.position
-                                          + Vector3.right * (t.bossSlamRadius + 1.5f);
+                                          + Vector3.right * (r + 1.5f);
                 failed += Check(ref total, "halkanın DIŞINA çıkan kurtuluyor",
                                 !slamBoss.PlayerInStrikeCone(), 0);
             }

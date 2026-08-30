@@ -227,18 +227,12 @@ namespace TekCan
         }
 
         int _attackCount;
-        bool _slamming;
 
         /// <summary>
-        /// Boss'un yere vuruşu. Enes: "dümdüz durup saldırarak kesiyorum."
-        /// Sorun sayıda değildi — boss'un oyuncuyu YERİNDEN KALDIRAN bir saldırısı yoktu,
-        /// normal düşmanla aynı yapay zekâyı kullanıyordu.
-        ///
-        /// Yere vuruş 360° halka: yanına kaçmak işe yaramıyor, uzaklaşman gerekiyor.
-        /// Uzaklaşmak da vurmayı kesmek demek, yani dövüş uzuyor. Bedeli o.
-        /// Hazırlığı uzun tutuldu — sürpriz değil, karar olmalı.
+        /// Şu anki saldırı 360° mü — halka, yani yön kontrolü yok, UZAKLAŞMAK gerekiyor.
+        /// Ses ve öz-denetim buna bakıyor; değeri `_attack`'ten türüyor.
         /// </summary>
-        static readonly Color SlamTint = new Color(1f, 0.3f, 0.1f, 0.28f);
+        bool _slamming;
 
         /// <summary>
         /// Şu anki boss saldırısı — boss değilse null, sıradan koni kullanılıyor.
@@ -248,13 +242,23 @@ namespace TekCan
         BossAttack _attack;
         int _repeatsLeft;
 
-        float StrikeRadius => _attack != null ? AttackRange * _attack.RangeMul
-                            : (_slamming ? _t.bossSlamRadius : AttackRange);
-        float StrikeAngle => _attack != null ? (_attack.Angle > 0f ? _attack.Angle : AttackAngle)
-                           : (_slamming ? 360f : AttackAngle);
+        // Saldırı verisi varsa o belirliyor; yoksa sıradan düşman koni vuruşu.
+        // ⚠️ Eskiden burada bir de `_slamming ? bossSlamRadius : ...` dalı vardı; yere
+        // vuruş `BossAttack`'e taşınınca ÖLÜ KOD oldu (saldırı yokken `_slamming` da
+        // false). Bırakılsaydı "hangi yol çalışıyor" sorusu iki cevaplı kalırdı.
+        float StrikeRadius => _attack != null ? AttackRange * _attack.RangeMul : AttackRange;
+        float StrikeAngle => _attack != null && _attack.Angle > 0f ? _attack.Angle : AttackAngle;
         float StrikeInner => _attack?.InnerRadius ?? 0f;
-        Color StrikeColor => _attack?.Tint ?? (_slamming ? SlamTint : StrikeTint);
-        Color TelegraphColor => _attack?.Tint ?? (_slamming ? SlamTint : TelegraphTint);
+        Color StrikeColor => _attack?.Tint ?? StrikeTint;
+        Color TelegraphColor => _attack?.Tint ?? TelegraphTint;
+
+        /// <summary>
+        /// Şu anki gerçek vuruş yarıçapı ve güvenli göbeği. Öz-denetim BUNLARI okuyor —
+        /// `Tuning`'den yeniden hesaplamıyor. (`CurrentSpeed` ile aynı gerekçe: formül
+        /// değişince test yeşil kalıp oyun bozulmasın.)
+        /// </summary>
+        public float CurrentStrikeRadius => StrikeRadius;
+        public float CurrentStrikeInner => StrikeInner;
 
         void EnterWindup()
         {
