@@ -201,7 +201,67 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "faz 2'de TEKRARLI saldırı var (bir kez kaçmak yetmiyor)",
                             tekrarVar, 1);
 
-            // ── 11) Bölge → boss eşlemesi ──
+            // ── 11) ⚠️ SON BOSS en geniş dağarcığa sahip ──
+            var son = BossKind.For(BossKind.All.Length - 1);
+            int enFazla = 0;
+            foreach (var b in BossKind.All) enFazla = Mathf.Max(enFazla, b.Attacks(2).Length);
+            failed += Check(ref total, "⚠️ SON BOSS en geniş dağarcığa sahip",
+                            son.Attacks(2).Length >= enFazla, son.Attacks(2).Length);
+
+            // ── 12) ⚠️ GÜVENLİ AÇIKLIK gerçekten ARKADA mı ──
+            //    Öne konsaydı boss hazırlık boyunca oyuncuya döndüğü için oyuncu
+            //    DAİMA içinde kalır ve saldırı hiç isabet etmezdi — mekanik sessizce
+            //    anlamsızlaşırdı. Bu kontrol tam olarak onu yakalıyor.
+            var açıklıklı = İlkAçıklık(son.Attacks(1)) ?? İlkAçıklık(son.Attacks(2));
+            failed += Check(ref total, "SON BOSS'un güvenli açıklıklı saldırısı var",
+                            açıklıklı != null, 1);
+
+            if (açıklıklı != null)
+            {
+                var (rootA, clockA, bossA) = Kur(t, son);
+                var windup = typeof(Enemy).GetMethod("EnterWindup",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var setA = typeof(Enemy).GetMethod("SetAttack",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                windup.Invoke(bossA, null);
+                setA.Invoke(bossA, new object[] { açıklıklı });
+                var strike = typeof(Enemy).GetMethod("EnterStrike",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                strike.Invoke(bossA, null);
+
+                // ⚠️ Boss'un baktığı OYUNCU nesnesi — `clockA.transform` kök nesne,
+                // onu oynatmak hiçbir şeyi değiştirmiyordu (test ilk yazımda öyleydi
+                // ve "arkasına geçen kurtuluyor" haksız yere düşüyordu).
+                var oyuncu = rootA.transform.Find("player");
+                float r = bossA.CurrentStrikeRadius * 0.6f;
+
+                // ÖNÜNDE: yakalanmalı
+                oyuncu.position = bossA.transform.position + bossA.transform.forward * r;
+                bool önde = bossA.PlayerInStrikeCone();
+
+                // ARKASINDA: KURTULMALI — açıklık orada
+                oyuncu.position = bossA.transform.position - bossA.transform.forward * r;
+                bool arkada = bossA.PlayerInStrikeCone();
+
+                failed += Check(ref total, "⚠️ açıklıklı halka ÖNDE duranı yakalıyor", önde, 1);
+                failed += Check(ref total, "⚠️ ARKASINA geçen KURTULUYOR (açıklık arkada)",
+                                !arkada, 0);
+                Temizle(rootA);
+            }
+
+            // ── 13) ⚠️ ZİNCİR — farklı bir saldırı hemen ardından geliyor ──
+            BossAttack zincirli = null;
+            foreach (var b in BossKind.All)
+                foreach (var a in b.Attacks(2))
+                    if (a.Then != null) zincirli = a;
+            failed += Check(ref total, "⚠️ ZİNCİRLİ saldırı var (bir cevaba yerleşemezsin)",
+                            zincirli != null, 1);
+            if (zincirli != null)
+                failed += Check(ref total, "zincirin ikinci halkası FARKLI soru soruyor",
+                                Soru(zincirli) != Soru(zincirli.Then), 1);
+
+            // ── 14) Bölge → boss eşlemesi ──
             bool eşleşme = true;
             for (int i = 0; i < BossKind.All.Length; i++)
                 if (BossKind.For(i) != BossKind.All[i]) eşleşme = false;
@@ -226,10 +286,12 @@ namespace TekCan.EditorTools
         static string Soru(BossAttack a)
         {
             string şekil = a.InnerRadius > 0f ? "SİMİT(yaklaş)"
+                         : a.SafeAngle > 0f ? "AÇIKLIK(arkasına geç)"
                          : a.Angle >= 360f ? "HALKA(uzaklaş)"
                          : a.Angle > 0f && a.Angle < 40f ? "IŞIN(hattan çık)"
                          : "KONİ(yana kaç)";
-            return $"{şekil}|tekrar={a.Repeat > 1}|hamle={a.Lunge > 0f}|menzil={a.RangeMul:0.0}";
+            return $"{şekil}|tekrar={a.Repeat > 1}|zincir={a.Then != null}" +
+                   $"|hamle={a.Lunge > 0f}|menzil={a.RangeMul:0.0}";
         }
 
         static string Dizi(BossAttack[] xs)
@@ -237,6 +299,12 @@ namespace TekCan.EditorTools
             var sb = new System.Text.StringBuilder();
             foreach (var a in xs) sb.Append(a.Name).Append(':').Append(Soru(a)).Append('|');
             return sb.ToString();
+        }
+
+        static BossAttack İlkAçıklık(BossAttack[] xs)
+        {
+            foreach (var a in xs) if (a.SafeAngle > 0f) return a;
+            return null;
         }
 
         static BossAttack İlkSimit(BossAttack[] xs)

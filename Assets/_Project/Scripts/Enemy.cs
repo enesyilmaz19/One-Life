@@ -214,10 +214,10 @@ namespace TekCan
                 case State.Recover:
                     if (_stateTimer <= 0f)
                     {
-                        // ⚠️ Tekrarlı saldırıda BEKLEME YOK — hemen bir daha vuruyor.
-                        // Bir kez kaçmanın yetmediği tek yer burası; araya bekleme
-                        // koyarsak "tekrar" sıradan iki saldırıya dönüşür.
-                        if (_repeatsLeft > 0) { EnterWindup(); break; }
+                        // ⚠️ Tekrar ve ZİNCİRDE bekleme YOK — hemen devam ediyor.
+                        // Araya bekleme koyarsak ikisi de sıradan iki saldırıya dönüşür
+                        // ve sordukları soru ("yerleşemezsin") kaybolur.
+                        if (_repeatsLeft > 0 || _chained != null) { EnterWindup(); break; }
 
                         _attackTimer = _t.enemyAttackCooldown;
                         EnterState(State.Chase, 0f);
@@ -262,8 +262,17 @@ namespace TekCan
 
         void EnterWindup()
         {
-            // Tekrarlı saldırıda AYNI saldırı devam ediyor — yeni seçim yok.
-            if (_repeatsLeft > 0) { _repeatsLeft--; }
+            if (_repeatsLeft > 0)
+            {
+                _repeatsLeft--;                       // AYNI saldırı devam ediyor
+            }
+            else if (_chained != null)
+            {
+                // ZİNCİR: farklı bir saldırı hemen ardından geliyor. Bir cevaba
+                // yerleşemiyorsun — halka çıkarttı, simit hemen içeri çağırıyor.
+                SetAttack(_chained);
+                _chained = null;
+            }
             else
             {
                 _attackCount++;
@@ -290,6 +299,14 @@ namespace TekCan
                 Arc.Spawn(transform.position, transform.rotation, StrikeInner, 360f,
                           new Color(0.45f, 1f, 0.55f, 0.35f), dur, transform);
 
+            // ⚠️ GÜVENLİ AÇIKLIK da görünmeli — arkada, yeşil. Görünmezse oyuncu
+            // "halka geliyor, uzaklaş" der ve tam kaçamayacağı yerde ölür.
+            // Boss'un ARKASINA bakan yönde çiziliyor.
+            if (_attack != null && _attack.SafeAngle > 0f)
+                Arc.Spawn(transform.position, transform.rotation * Quaternion.Euler(0f, 180f, 0f),
+                          StrikeRadius, _attack.SafeAngle,
+                          new Color(0.45f, 1f, 0.55f, 0.30f), dur, transform);
+
             Paint();
         }
 
@@ -302,18 +319,28 @@ namespace TekCan
         {
             if (Boss == null)
             {
-                // Boss olmayan düşman: eski davranış, yere vuruş bayrağı hâlâ geçerli.
+                // Boss olmayan düşman: sıradan koni vuruşu.
                 _attack = null;
                 _slamming = false;
                 _repeatsLeft = 0;
+                _chained = null;
                 return;
             }
 
             var liste = Boss.Attacks(Phase);
-            _attack = liste[Mathf.Abs(_attackCount - 1) % liste.Length];
-            _repeatsLeft = Mathf.Max(0, _attack.Repeat - 1);
-            _slamming = _attack.Angle >= 360f;    // eski kavram, saldırıdan türüyor
+            SetAttack(liste[Mathf.Abs(_attackCount - 1) % liste.Length]);
         }
+
+        /// <summary>Saldırıyı kur — tekrar ve zincir durumu tek yerden ayarlanıyor.</summary>
+        void SetAttack(BossAttack a)
+        {
+            _attack = a;
+            _repeatsLeft = Mathf.Max(0, a.Repeat - 1);
+            _chained = a.Then;                    // tekrarlar bitince zincire geçilir
+            _slamming = a.Angle >= 360f;          // eski kavram, saldırıdan türüyor
+        }
+
+        BossAttack _chained;
 
         void EnterStrike()
         {
@@ -381,6 +408,13 @@ namespace TekCan
 
             // ⚠️ SİMİT: göbeği GÜVENLİ. Halkanın tam tersi soru — "uzaklaş" değil "YAKLAŞ".
             if (StrikeInner > 0f && d <= StrikeInner) return false;
+
+            // ⚠️ GÜVENLİ AÇIKLIK: halkanın ARKASINDA. Üçüncü soru — "uzaklaş" ya da
+            // "yaklaş" değil, "ARKASINA GEÇ". Açıklık öne konsaydı boss hazırlık
+            // boyunca oyuncuya döndüğü için oyuncu daima içinde kalır ve saldırı
+            // hiç isabet etmezdi.
+            float safe = _attack?.SafeAngle ?? 0f;
+            if (safe > 0f && Vector3.Angle(-_strikeDir, to) <= safe * 0.5f) return false;
 
             // 360°'de yön kontrolü yok: her açı zaten içeride.
             return StrikeAngle >= 360f || Vector3.Angle(_strikeDir, to) <= StrikeAngle * 0.5f;
@@ -572,6 +606,7 @@ namespace TekCan
             // Dağarcık değişti: sıradaki saldırı YENİ listeden seçilsin.
             _attack = null;
             _repeatsLeft = 0;
+            _chained = null;
 
             // Faz değişimi GÖRÜNÜR olmalı: oyuncu kuralların değiştiğini anlamadan
             // ölürse "haksızlık" der. Halka + sarsıntı + ses aynı anda.

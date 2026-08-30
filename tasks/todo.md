@@ -146,7 +146,17 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 | **TAHSİLDAR** | HACİZ (koni) · TAHSİL (halka) | HACİZ+ *(hamle)* · TAHSİL+ *(×2)* · **ZORLA ALIM** *(5 birim atılış)* |
 | **EKSPER** | DEĞER BİÇME (24° ışın) · KESİNTİ | DEĞER BİÇME+ *(60°, artık biçiyor)* · **HACİM** *(simit)* · KESİNTİ+ |
 | **KEFİL** | TEMİNAT (simit) · KEFALET | TEMİNAT+ *(göbek daraldı)* · **ORTAK BORÇ** *(düz halka — simidin tersi)* · KEFALET+ *(×2)* |
-| **MURABAHACI** | VADE · İCRA (halka) | **FAİZ** *(×3, hızlı)* · VADE+ *(hamle)* · İCRA+ |
+| **MURABAHACI** | VADE · İCRA · **TEMERRÜT** *(açıklık)* | **FAİZ** *(×3)* · **BİLEŞİK FAİZ** *(zincir)* · **TEMERRÜT+** *(zincir)* · VADE+ · İCRA+ |
+
+**Son boss'a iki YENİ soru eklendi** (Enes istedi — 5 saldırılık dağarcık):
+
+- **GÜVENLİ AÇIKLIK** — halkanın **arkasında** güvenli bölge. Üçüncü kaçış sorusu:
+  "uzaklaş" da değil "yaklaş" da değil, **"arkasına geç"**.
+  ⚠️ Açıklık ÖNE konsaydı boss hazırlık boyunca oyuncuya döndüğü için oyuncu daima
+  içinde kalır ve saldırı hiç isabet etmezdi — mekanik sessizce anlamsızlaşırdı
+- **ZİNCİR** — farklı bir saldırı beklemeden ardından geliyor. `Repeat` aynısını
+  tekrarlar, zincir FARKLI birini bağlar: *BİLEŞİK FAİZ* halkayla dışarı atıyor,
+  hemen ardından simitle içeri çağırıyor. **Bir cevaba yerleşemiyorsun**
 
 ⚠️ **KEFİL faz 2'de en zoru:** simit "yaklaş" derken ORTAK BORÇ "uzaklaş" diyor, ve
 ikisi birden var. Ezber bozuluyor.

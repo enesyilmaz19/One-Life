@@ -41,6 +41,23 @@ namespace TekCan
         /// <summary>Vuruş anında oyuncuya doğru atılma mesafesi — mesafeyi kapatır.</summary>
         public float Lunge = 0f;
 
+        /// <summary>
+        /// &gt;0 ise halkanın ARKASINDA bu genişlikte GÜVENLİ BİR AÇIKLIK var.
+        /// Yeni bir soru soruyor: "uzaklaş" değil, "ARKASINA GEÇ".
+        ///
+        /// ⚠️ Açıklık neden ARKA? Hazırlık boyunca boss oyuncuya dönüyor
+        /// (`FacePlayer`). Açıklığı ÖNE koysaydık oyuncu daima içinde olurdu ve
+        /// saldırı hiç isabet etmezdi — mekanik sessizce anlamsızlaşırdı.
+        /// </summary>
+        public float SafeAngle = 0f;
+
+        /// <summary>
+        /// Bu saldırıdan HEMEN SONRA gelen saldırı — arada bekleme yok.
+        /// `Repeat` aynısını tekrarlar; bu FARKLI birini zincirler. Yeni soru:
+        /// "bir cevaba yerleşemezsin" (halka → simit = çık, sonra hemen gir).
+        /// </summary>
+        public BossAttack Then;
+
         public Color Tint = new Color(1f, 0.45f, 0.15f, 0.30f);
     }
 
@@ -232,18 +249,35 @@ namespace TekCan
             public override float RegenPerSecond(Tuning t, int phase)
                 => phase >= 2 ? t.usurerRegenPerSecond : 0f;
 
-            // Borç İŞLER: faz 2'de saldırıları da bileşik faiz gibi üst üste biniyor.
+            // Son boss: en geniş dağarcık. Borç İŞLER — taksitler peş peşe gelir,
+            // bir cevaba yerleşmene izin vermez.
             public override BossAttack[] Attacks(int phase) => phase >= 2
                 ? new[]
                 {
-                    // YENİ: ÜÇ kez arka arkaya, hazırlığı kısa. "Borç işlemeye devam ediyor" —
-                    // bir kez kaçmak yetmiyor, üçünü birden okuman gerekiyor
+                    // YENİ: ÜÇ kez arka arkaya, hazırlığı kısa. Bir kez kaçmak yetmiyor
                     new BossAttack { Name = "FAİZ", RangeMul = 1.15f, Angle = 150f,
                                      Repeat = 3, WindupMul = 0.6f, CostMul = 0.75f, Tint = Cone },
-                    // GELİŞMİŞ: vade uzadı ve üstüne geliyor
+
+                    // YENİ ⚠️ ZİNCİR: halka → HEMEN simit. Çıkıyorsun, sonra hemen
+                    // girmen gerekiyor. Tek bir cevaba yerleşemiyorsun —
+                    // "bileşik faiz": her taksit bir öncekinin üstüne biniyor.
+                    new BossAttack { Name = "BİLEŞİK FAİZ", RangeMul = 1.7f, Angle = 360f,
+                                     WindupMul = 1.1f, CostMul = 1.3f, Tint = Ring,
+                                     Then = new BossAttack { Name = "…ve TAKSİT", RangeMul = 3.4f,
+                                                             Angle = 360f, InnerRadius = 2.4f,
+                                                             WindupMul = 0.55f, CostMul = 1.4f,
+                                                             Tint = Donut } },
+
+                    // GELİŞMİŞ: açıklık DARALDI ve arkasından bir de koni geliyor —
+                    // sığındığın yere vuruyor
+                    new BossAttack { Name = "TEMERRÜT+", RangeMul = 2.4f, Angle = 360f,
+                                     SafeAngle = 55f, WindupMul = 1.1f, CostMul = 1.5f, Tint = Ring,
+                                     Then = new BossAttack { Name = "…ve HACİZ", RangeMul = 1.6f,
+                                                             Angle = 120f, WindupMul = 0.6f,
+                                                             CostMul = 1.2f, Tint = Cone } },
+
                     new BossAttack { Name = "VADE+", RangeMul = 2.4f, Angle = 80f,
                                      Lunge = 4f, CostMul = 1.3f, Tint = Beam },
-                    // GELİŞMİŞ: icra halkası büyüdü ve çok daha pahalı
                     new BossAttack { Name = "İCRA+", RangeMul = 1.6f, Angle = 360f,
                                      WindupMul = 1.15f, CostMul = 1.8f, Tint = Ring },
                 }
@@ -252,6 +286,12 @@ namespace TekCan
                     new BossAttack { Name = "VADE", RangeMul = 1.4f, Angle = 90f, Tint = Cone },
                     new BossAttack { Name = "İCRA", RangeMul = 1.15f, Angle = 360f,
                                      WindupMul = 1.35f, CostMul = 1.5f, Tint = Ring },
+
+                    // YENİ: halkanın ARKASINDA güvenli açıklık. "Uzaklaş" değil
+                    // "ARKASINA GEÇ" — mekaniği faz 2 silahlaştırmadan ÖNCE öğretiyor
+                    new BossAttack { Name = "TEMERRÜT", RangeMul = 2.2f, Angle = 360f,
+                                     SafeAngle = 95f, WindupMul = 1.45f, CostMul = 1.4f,
+                                     Tint = Ring },
                 };
         }
 
