@@ -49,16 +49,20 @@ namespace TekCan
         static readonly Color FullColor = new Color(0.85f, 0.25f, 0.25f);
         static readonly Color HollowColor = new Color(0.35f, 0.35f, 0.38f);
 
-        /// <summary>Boss mu — kendi akışı yavaş, saatini emiyor, beklenerek yenilemiyor.</summary>
-        // ponytail: boss `IsBoss` bayrağıyla, diğer çeşitler `EnemyKind` ile çalışıyor —
-        // aynı iş için iki mekanizma. `BossKind : EnemyKind` yapılabilir ama boss dalga
-        // seviyesinde bir kavram (WaveManager kazanmayı ondan anlıyor), taşımak
-        // WaveManager + Bootstrap + testleri birden dolaşır. Üçüncü bir "özel düşman"
-        // ihtiyacı çıkarsa o zaman birleştir; iki mekanizma için erken.
-        public bool IsBoss { get; private set; }
-
-        /// <summary>Boss kimliği — boss değilse null. Mekaniği bu belirliyor.</summary>
+        /// <summary>
+        /// Boss kimliği — boss değilse null. Mekaniğini bu belirliyor (bkz. `BossKind`).
+        /// </summary>
         public BossKind Boss { get; private set; }
+
+        /// <summary>
+        /// Boss mu — kendi akışı yavaş, saatini emiyor, beklenerek yenilemiyor.
+        ///
+        /// ⚠️ Bir zamanlar ayrı bir `bool` alandı ve `Boss` ile AYNI ŞEYİ söyleyen iki
+        /// kaynak vardı. Üstündeki eski not "üçüncü bir özel düşman ihtiyacı çıkarsa
+        /// birleştir" diyordu — Faz 12'de `BossKind` gelince o koşul gerçekleşti.
+        /// Tek kaynağa indirildi: boss olmak = bir `BossKind`'ı olmak.
+        /// </summary>
+        public bool IsBoss => Boss != null;
 
         /// <summary>1 veya 2. Faz geçişi `CheckPhase`'de.</summary>
         public int Phase { get; private set; } = 1;
@@ -117,8 +121,7 @@ namespace TekCan
             _t = tuning;
             _player = player;
             _label = label;
-            IsBoss = boss;
-            Boss = boss ? (bossKind ?? BossKind.For(0)) : null;
+            Boss = boss ? (bossKind ?? BossKind.For(0)) : null;   // IsBoss bundan türüyor
             Kind = kind ?? EnemyKind.Basic;
             TimeLeft = tuning.enemyTimePool * poolMultiplier * Kind.PoolMultiplier;
             _startingPool = TimeLeft;
@@ -527,14 +530,13 @@ namespace TekCan
             TimeLeft *= 0.5f;
 
             var yan = transform.right * Radius * 2.2f;
-            Bootstrap.SpawnEnemyAt(_t, transform.position + yan, _player, null,
-                                   poolMultiplier: 1f, boss: true, kind: Kind,
-                                   parent: transform.parent, bossKind: Boss);
+            var ikiz = Bootstrap.SpawnEnemyAt(_t, transform.position + yan, _player, null,
+                                              poolMultiplier: 1f, boss: true, kind: Kind,
+                                              parent: transform.parent, bossKind: Boss);
 
-            // Doğan ikiz aynı noktada başlamalı: yarı havuz + kredi + faz 2.
-            foreach (var e in All)
-                if (e != null && e != this && e.Boss == Boss && e.Phase == 1)
-                    e.BecomeTwin(TimeLeft);
+            // ⚠️ Doğanı DOĞRUDAN alıyoruz. Sahnede "aynı türden faz 1'de olan" diye
+            // aramak, ikinci bir bölünmede yanlışını bulabilirdi.
+            if (ikiz != null) ikiz.BecomeTwin(TimeLeft);
         }
 
         /// <summary>Bölünmeden doğan ikiz — `Split` çağırıyor.</summary>

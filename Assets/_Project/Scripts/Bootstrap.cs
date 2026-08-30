@@ -310,10 +310,14 @@ namespace TekCan
         /// İki ayrı doğum kodu olsaydı biri düzeltilip diğeri unutulurdu
         /// (düşmanların havada doğduğu hata tam olarak öyle bir ayrışmadan çıkmıştı).
         /// </summary>
-        public static void SpawnEnemyAt(Tuning t, Vector3 pos, Transform player, Transform cam,
-                                        float poolMultiplier = 1f, bool boss = false,
-                                        EnemyKind kind = null, Transform parent = null,
-                                        BossKind bossKind = null)
+        /// <returns>
+        /// Doğan düşman. `KEFİL`'in bölünmesi bunu kullanıyor — sahnede arayarak bulmak
+        /// aynı türden ikinci bir boss varken YANLIŞINI bulabilirdi.
+        /// </returns>
+        public static Enemy SpawnEnemyAt(Tuning t, Vector3 pos, Transform player, Transform cam,
+                                         float poolMultiplier = 1f, bool boss = false,
+                                         EnemyKind kind = null, Transform parent = null,
+                                         BossKind bossKind = null)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             go.name = boss ? "Boss" : "Enemy";
@@ -330,7 +334,9 @@ namespace TekCan
             var label = labelGo.AddComponent<TimeLabel>();
             label.Init(cam);
 
-            go.AddComponent<Enemy>().Init(t, player, label, poolMultiplier, boss, kind, bossKind);
+            var enemy = go.AddComponent<Enemy>();
+            enemy.Init(t, player, label, poolMultiplier, boss, kind, bossKind);
+            return enemy;
         }
 
         static void Paint(GameObject go, Color c)
