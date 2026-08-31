@@ -349,7 +349,11 @@ namespace TekCan
             EnterState(State.Strike, _t.enemyStrikeDuration);
 
             if (_telegraph != null) { _telegraph.Cancel(); _telegraph = null; }
-            if (_slamming) Sfx.Slam(); else Sfx.Swing();
+            // ⚠️ Yalnızca halka saldırısı ses çıkarıyor. Bir ara buraya `Sfx.Swing()`
+            // eklemiştim — ama o OYUNCUNUN silah sesi. Düşmana verilince "ben mi
+            // vurdum, düşman mı vurdu" ayırt edilemez oluyordu; sessizlikten kötü.
+            // Düşman saldırılarının duyulması istenirse KENDİ sesi üretilmeli.
+            if (_slamming) Sfx.Slam();
 
             // HAMLE: mesafeyi vuruş anında kapatıyor. Geri çekilmek tek başına
             // cevap olmaktan çıkıyor — hazırlığı okuyup YANA kaçman gerekiyor.
