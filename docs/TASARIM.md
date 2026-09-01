@@ -627,8 +627,43 @@ dash mesafesi 2.5 > düşman menzili 1.8 ✅ · dash bekleme 0.5 < saldırı ara
 4. Kalan kural şiddetleri
 
 ⚠️ Rapor **yükseltmeleri yok sayıyor** — sunaktan alınan hasat/hasar tabloyu pozitife
-kaydırır. Yani gerçek oyun bu tablodan kolay; ama ŞEKLİ (boss = büyük kayıp,
-DARALMA = yürüme vergisi) aynı kalıyor.
+kaydırır. → **BU VARSAYIM SONUCUN TAMAMINI BELİRLİYORMUŞ, aşağıda düzeltildi.**
+
+### ✅ RAPOR DÜZELTİLDİ (2026-08-26) — asıl sorun BUYMUŞ
+
+Enes testte **1200 saniyeye** çıktı; rapor "her oda net negatif" diyordu. Rapor
+yükseltmeleri modellemiyordu ve o eksik varsayım tabloyu tersine çeviriyormuş.
+Yükseltme ilerlemesi modele katıldı (`ALIMSIZ` / `ALICI` profilleri):
+
+| Profil | Sonuç |
+|--------|-------|
+| TEMİZ / ALIMSIZ | bölge 2 oda 2'de ölüyor |
+| **TEMİZ / ALICI** | **koşuyu +297 sn ile bitiriyor** *(sunağa 396 sn ödemiş)* |
+| ORTA / ALIMSIZ | bölge 1 oda 3'te ölüyor |
+| ORTA / ALICI | bölge 1 oda 3'te ölüyor *(ilk sunağa yetişemiyor)* |
+
+**① ASIL SUÇLU: HASARIN TAVANI YOK.** `altarDamageStep` 1.2 ve sınırsız — hasar
+koşu boyunca **3.5 → 19.1**'e çıkıyor. Ve hasar **üç kalemi birden** iyileştiriyor:
+dövüş kısalıyor → akış azalıyor → aura azalıyor. Tabloda görünüyor: dövüş masrafı
+bölge 1'de 9.7, bölge 4'te **0.8**. Hasat tavanlı (%70), hasar değil.
+
+**② SUNAK FİYATLARI HER ODA SIFIRLANIYOR.** `Altar._bought` bir **örnek alanı** ve
+sunaklar her odada YENİDEN doğuyor — fiyat artışı (×1.6) koşu boyunca birikmiyor,
+her sunak odasında 6 saniyeden başlıyor. 42 alım yapılabiliyor.
+
+**③ Boss ekonomisi kendi kendine düzeliyor.** "Boss −23 sn" bulgusu yalnızca DÜŞÜK
+hasarda doğruydu; hasar yükselince boss odaları **+40'a** çıkıyor. Yani boss'a
+dokunmadan önce hasar eğrisi düzeltilmeli — yoksa yanlış kadranı çeviririz.
+
+**④ Yenen darbe %32-37** ile en büyük masraf kalemlerinden. Zorluk buradan gelmeli,
+akıştan değil.
+
+### Ayar sırası (ölçüme göre — ikinci kez güncellendi)
+
+1. **Hasar yükseltmesine TAVAN** ya da azalan getiri — tek büyük kaldıraç bu
+2. **Sunak fiyat birikimi** — `_bought` koşu boyunca korunmalı (oda başına değil)
+3. Sonra koşu uzunluğu ve kural şiddetleri
+4. **Boss ekonomisine EN SON dokunulur** — ilk üçü düzelince kendiliğinden değişiyor
 
 ---
 

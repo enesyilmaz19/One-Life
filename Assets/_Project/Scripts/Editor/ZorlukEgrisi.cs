@@ -36,6 +36,31 @@ namespace TekCan.EditorTools
             new Beceri { Ad = "ORTA",  İsabet = 0.65f, DarbePerDüşman = 1.10f },
         };
 
+        /// <summary>
+        /// ⚠️ Koşu boyunca DEĞİŞEN durum. İlk sürüm bunu yok sayıyordu ve rapor
+        /// yanıltıcıydı: "her oda net negatif" diyordu, Enes ise yükseltmelerle
+        /// 1200 saniyeye çıktı. Varsayım sonucun tamamını belirliyormuş.
+        /// </summary>
+        struct Durum
+        {
+            public float Hasat, Hasar;
+            public int Alım;
+        }
+
+        /// <summary>Sunaktan alım yapan profil — asıl fark burada çıkıyor.</summary>
+        struct Alışveriş
+        {
+            public string Ad;
+            public bool Alıyor;
+            public float Rezerv;      // bu kadar saniye kalacak şekilde alıyor
+        }
+
+        static readonly Alışveriş[] Alışverişler =
+        {
+            new Alışveriş { Ad = "ALIMSIZ", Alıyor = false },
+            new Alışveriş { Ad = "ALICI  ", Alıyor = true, Rezerv = 30f },
+        };
+
         [MenuItem("Tek Can/Zorluk eğrisi raporu")]
         public static void Run()
         {
@@ -54,33 +79,49 @@ namespace TekCan.EditorTools
                           $"hasat=%{t.harvestRate * 100f:0} dövüş akışı={t.drainInCombat}/sn " +
                           $"darbe={t.enemyFullHitCost}sn hız={t.moveSpeed}");
             sb.AppendLine("⚠️ oda KOMPOZİSYONU üretimden okunuyor; yalnızca dövüş modelleniyor");
-            sb.AppendLine("⚠️ yükseltme YOK sayılıyor — taban zorluk ölçülüyor, sunaklı hâli değil");
+            sb.AppendLine($"⚠️ SUNAK: {t.altarMaxPurchases} alım × 3 sunak, taban {t.altarBasePrice:0} sn, " +
+                          $"artış ×{t.altarPriceGrowth:0.0} — ve fiyat HER ODA SIFIRLANIYOR");
+            sb.AppendLine($"   hasat +{t.altarHarvestStep:0.00}/alım (tavan %{t.harvestRateCap * 100f:0}) · " +
+                          $"hasar +{t.altarDamageStep:0.0}/alım (TAVAN YOK)");
             sb.AppendLine();
 
             foreach (var b in Beceriler)
+            foreach (var alış in Alışverişler)
             {
-                sb.AppendLine($"── {b.Ad} oyuncu ──");
-                sb.AppendLine("  blg oda  düşman | kazanç     NET | MASRAF KIRILIMI: yürüme dövüş darbe aura | biriken");
-                sb.AppendLine("  ---------------+---------------+----------------------------------------+--------");
+                sb.AppendLine($"── {b.Ad} oyuncu · {alış.Ad} ──");
+                sb.AppendLine("  blg oda  düşman | kazanç     NET | yürüme dövüş darbe aura | hasat hasar | biriken");
+                sb.AppendLine("  ---------------+---------------+------------------------+-------------+--------");
 
                 float saat = t.startSeconds;
                 int öldüBölge = -1, öldüOda = -1;
-                float tYürüme = 0f, tDövüş = 0f, tDarbe = 0f, tAura = 0f;
+                float tYürüme = 0f, tDövüş = 0f, tDarbe = 0f, tAura = 0f, tAlım = 0f;
+
+                var d = new Durum { Hasat = t.harvestRate, Hasar = t.attackDamage };
 
                 int bölgeSayısı = Mathf.Clamp(t.regionsPerAct, 1, Region.All.Length);
                 for (int r = 0; r < bölgeSayısı; r++)
                 {
                     for (int oda = 1; oda <= t.roomsPerRegion; oda++)
                     {
-                        var ö = OdayıÖlç(t, r, oda, b);
+                        var ö = OdayıÖlç(t, r, oda, b, d);
                         saat += ö.Net;
 
                         tYürüme += ö.Yürüme; tDövüş += ö.Dövüş; tDarbe += ö.Darbe; tAura += ö.Aura;
 
+                        // ⚠️ SUNAK ODASI: `RoomManager.PlaceAltars` iki odada bir koyuyor.
+                        //    Ve sunaklar HER ODA YENİDEN DOĞUYOR — yani `_bought`
+                        //    sıfırlanıyor, fiyat tabana dönüyor. Model bunu birebir
+                        //    taklit ediyor; asıl bulgu da bu olabilir.
+                        float harcandı = 0f;
+                        if (alış.Alıyor && oda % 2 == 0 && oda < t.roomsPerRegion)
+                            harcandı = Alışverişi(t, ref d, ref saat, alış.Rezerv);
+                        tAlım += harcandı;
+
                         string boss = oda >= t.roomsPerRegion ? "B" : " ";
                         sb.AppendLine($"  {r + 1,3} {oda,3}{boss} {ö.Sayı,6} | " +
                                       $"{ö.Kazanç,6:0.0}  {ö.Net,+6:0.0} | " +
-                                      $"{ö.Yürüme,20:0.0} {ö.Dövüş,5:0.0} {ö.Darbe,5:0.0} {ö.Aura,4:0.0} | " +
+                                      $"{ö.Yürüme,6:0.0} {ö.Dövüş,5:0.0} {ö.Darbe,5:0.0} {ö.Aura,4:0.0} | " +
+                                      $"%{d.Hasat * 100f,4:0} {d.Hasar,6:0.0} | " +
                                       $"{saat,7:0.0}");
 
                         if (saat <= 0f && öldüBölge < 0) { öldüBölge = r + 1; öldüOda = oda; }
@@ -91,8 +132,9 @@ namespace TekCan.EditorTools
                 }
 
                 sb.AppendLine(öldüBölge < 0
-                    ? $"  ✅ {b.Ad}: koşuyu {saat:0.0} saniyeyle bitiriyor"
-                    : $"  ❌ {b.Ad}: BÖLGE {öldüBölge} ODA {öldüOda}'da saat bitiyor");
+                    ? $"  ✅ {b.Ad}/{alış.Ad}: koşuyu {saat:0.0} saniyeyle bitiriyor" +
+                      (alış.Alıyor ? $" (sunağa {tAlım:0.0} sn ödedi, {d.Alım} alım)" : "")
+                    : $"  ❌ {b.Ad}/{alış.Ad}: BÖLGE {öldüBölge} ODA {öldüOda}'da saat bitiyor");
 
                 // ⚠️ ASIL TEŞHİS: masraf nereye gidiyor. Toplam masrafa bakıp "zor" demek
                 // teşhis değil; suçlu kalemi ancak yüzdeler gösteriyor.
@@ -127,9 +169,43 @@ namespace TekCan.EditorTools
         }
 
         /// <summary>
+        /// Sunak odasında alışveriş. ⚠️ `Altar` her odada YENİDEN DOĞUYOR, yani
+        /// `_bought` sıfırlanıyor ve fiyat tabana dönüyor — model bunu birebir
+        /// taklit ediyor (tahmin etmiyor, üretimin davranışını yansıtıyor).
+        ///
+        /// Politika AÇIKÇA yazılı: rezerv kalacak şekilde, sırayla üç sunaktan
+        /// tavana kadar alıyor. Politika gizli kalsaydı çıkan sayı yorumlanamazdı.
+        /// </summary>
+        static float Alışverişi(Tuning t, ref Durum d, ref float saat, float rezerv)
+        {
+            float toplam = 0f;
+
+            // Üç sunak: HASAT, KESKİNLİK, ÇEVİKLİK. Her biri `altarMaxPurchases` kez.
+            for (int sunak = 0; sunak < 3; sunak++)
+            {
+                for (int i = 0; i < t.altarMaxPurchases; i++)
+                {
+                    float fiyat = t.altarBasePrice * Mathf.Pow(t.altarPriceGrowth, i);
+                    if (saat - fiyat < rezerv) break;
+
+                    // Hasat tavana dayandıysa o sunağa para verme — oyuncu da vermez.
+                    if (sunak == 0 && d.Hasat >= t.harvestRateCap - 0.001f) break;
+
+                    saat -= fiyat;
+                    toplam += fiyat;
+                    d.Alım++;
+
+                    if (sunak == 0) d.Hasat = Mathf.Min(t.harvestRateCap, d.Hasat + t.altarHarvestStep);
+                    else if (sunak == 1) d.Hasar += t.altarDamageStep;   // ⚠️ TAVANI YOK
+                }
+            }
+            return toplam;
+        }
+
+        /// <summary>
         /// Odayı GERÇEK `RoomManager` ile kurup içindekileri sayar, sonra dövüşü modeller.
         /// </summary>
-        static Ölçüm OdayıÖlç(Tuning t, int bölge, int oda, Beceri b)
+        static Ölçüm OdayıÖlç(Tuning t, int bölge, int oda, Beceri b, Durum d)
         {
             Enemy.All.Clear();
             SaveFile.UseInMemory(new SaveData());
@@ -161,7 +237,8 @@ namespace TekCan.EditorTools
                 // Vuruşla alınan: havuz × hasat × tür çarpanı × BÖLGE kuralı
                 float türÇarpan = e.Kind != null ? e.Kind.HarvestMultiplier : 1f;
                 float bossÇarpan = e.IsBoss ? t.bossHarvestMultiplier : 1f;
-                kazanç += e.TimeLeft * t.harvestRate * türÇarpan * Region.Harvest * bossÇarpan;
+                // ⚠️ `t.harvestRate` DEĞİL, koşunun O ANKİ hasadı — sunaktan yükseliyor.
+                kazanç += e.TimeLeft * d.Hasat * türÇarpan * Region.Harvest * bossÇarpan;
 
                 düşmanlar.Add((e.TimeLeft,
                                (e.Kind != null ? e.Kind.AuraDrain(t) : 0f)
@@ -170,7 +247,10 @@ namespace TekCan.EditorTools
 
             // ── modellenen dövüş ──
             // Etkin hasar hızı: savurma başına hasar × isabet oranı / savurma süresi
-            float dps = Mathf.Max(0.01f, t.attackDamage * b.İsabet / Mathf.Max(0.01f, t.attackDuration));
+            // ⚠️ `t.attackDamage` DEĞİL, koşunun O ANKİ hasarı. Hasar yükseldikçe
+            // dövüş kısalıyor, kısalan dövüş akışı ve aurayı da azaltıyor — yani
+            // yükseltmeler ÜÇ kalemi birden iyileştiriyor. İlk model bunu göremiyordu.
+            float dps = Mathf.Max(0.01f, d.Hasar * b.İsabet / Mathf.Max(0.01f, t.attackDuration));
             float süre = havuz / dps;
 
             // Girişten çıkışa yürüme — dövüş dışı, bölge akış kuralı burada işliyor
@@ -187,10 +267,10 @@ namespace TekCan.EditorTools
             // süresi boyunca emiyor. Zayıftan güçlüye gidiliyor (makul oyuncu davranışı).
             düşmanlar.Sort((a, b2) => a.havuz.CompareTo(b2.havuz));
             float mAura = 0f, geçen = 0f;
-            foreach (var d in düşmanlar)
+            foreach (var düş in düşmanlar)
             {
-                geçen += d.havuz / dps;                      // bu düşman bu anda ölüyor
-                mAura += d.aura * geçen;                     // o ana kadar emmiş
+                geçen += düş.havuz / dps;                    // bu düşman bu anda ölüyor
+                mAura += düş.aura * geçen;                   // o ana kadar emmiş
             }
             float mDarbe = b.DarbePerDüşman * sayı * t.enemyFullHitCost * Region.HitCost;
             float masraf = mDövüş + mYürüme + mAura + mDarbe;
