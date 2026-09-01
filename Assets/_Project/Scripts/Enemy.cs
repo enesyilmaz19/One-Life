@@ -160,6 +160,7 @@ namespace TekCan
             }
 
             ApplyAura(Time.deltaTime);
+            TickBossPassives(Time.deltaTime);
 
             // KAÇAK: havuzu eşiğin altına inince kaçmaya başlar.
             if (!Fleeing && !Hollow && Kind.FleesBelowRatio > 0f &&
@@ -554,41 +555,6 @@ namespace TekCan
         {
             if (Hollow || _t == null) return;
 
-            // ⚠️ MURABAHACI faz 2: vurmadığın her saniye havuzu doluyor.
-            // Ondan HIZLI olmak zorundasın — "borç işlemeye devam ediyor".
-            // Krediyi doldurmak hasat vermiyor, yani sadece dövüşü uzatıyor.
-            if (Boss != null)
-            {
-                float regen = Boss.RegenPerSecond(_t, Phase);
-                if (regen > 0f)
-                {
-                    TimeLeft = Mathf.Min(_startingPool, TimeLeft + regen * dt);
-                    if (_label != null) _label.Set(TimeLeft, Hollow);
-                }
-            }
-
-            // ⚠️ SİMSAR: oyuncunun DURDUĞU YERE gecikmeli patlama bırakıyor.
-            // Diğer boss'ların hepsi oyuncuya GİDİYOR, yani "dur ve vur" geçerli
-            // kalıyordu (Enes 1200 saniyeye öyle çıktı). Bu, ona gelmiyor —
-            // durduğu yere geliyor. Tek cevabı hareket etmek.
-            if (Boss != null && _player != null)
-            {
-                float aralık = Boss.GroundMarkInterval(Phase);
-                if (aralık > 0f)
-                {
-                    _markTimer -= dt;
-                    if (_markTimer <= 0f)
-                    {
-                        _markTimer = aralık;
-                        GroundMark.Spawn(_t, _player.position, _player,
-                                         radius: _t.groundMarkRadius,
-                                         delay: _t.groundMarkDelay,
-                                         cost: HitCost * _t.groundMarkCostMultiplier,
-                                         parent: transform.parent);
-                    }
-                }
-            }
-
             float aura = (Boss != null ? Boss.AuraDrain(_t, Phase)
                                        : (IsBoss ? _t.bossAuraDrain : 0f))
                        + Kind.AuraDrain(_t);
@@ -606,6 +572,45 @@ namespace TekCan
             // Yön TERS: zaman SENDEN ona gidiyor. Rengi de ters (kırmızı).
             Mote.Spawn(_player.position + Vector3.up * 0.6f, transform, Mote.DrainColor,
                        size: 0.18f, life: 0.45f);
+        }
+
+        /// <summary>
+        /// Boss'un pasif yetenekleri — MURABAHACI'nın geri sarması, SİMSAR'ın yer
+        /// işaretleri. Aura DEĞİL.
+        ///
+        /// ⚠️ Bunlar bir ara `ApplyAura` içindeydi ve o adı YALANCI yapıyordu:
+        /// "aura uygula" diye çağırıp bomba bıraktırıyordu. Fonksiyonun adı ne
+        /// yaptığını söylemiyorsa bir sonraki okuyan yanlış yerde arar.
+        /// `dt` yine dışarıdan — editör modunda `Time.deltaTime` 0.
+        /// </summary>
+        public void TickBossPassives(float dt)
+        {
+            if (Boss == null || Hollow || _t == null) return;
+
+            // MURABAHACI faz 2: vurmadığın her saniye havuzu doluyor. Ondan HIZLI
+            // olmak zorundasın. Krediyi doldurmak hasat vermiyor, dövüşü uzatıyor.
+            float regen = Boss.RegenPerSecond(_t, Phase);
+            if (regen > 0f)
+            {
+                TimeLeft = Mathf.Min(_startingPool, TimeLeft + regen * dt);
+                if (_label != null) _label.Set(TimeLeft, Hollow);
+            }
+
+            // SİMSAR: oyuncunun DURDUĞU YERE gecikmeli patlama bırakıyor. Diğer
+            // boss'ların hepsi oyuncuya GİDİYOR, yani "dur ve vur" geçerli kalıyordu
+            // (Enes 1200 saniyeye öyle çıktı). Bu ona gelmiyor, durduğu yere geliyor.
+            float aralık = Boss.GroundMarkInterval(Phase);
+            if (aralık <= 0f || _player == null) return;
+
+            _markTimer -= dt;
+            if (_markTimer > 0f) return;
+
+            _markTimer = aralık;
+            GroundMark.Spawn(_t, _player.position, _player,
+                             radius: _t.groundMarkRadius,
+                             delay: _t.groundMarkDelay,
+                             cost: HitCost * _t.groundMarkCostMultiplier,
+                             parent: transform.parent);
         }
 
         float FlatDistanceFromCenter()

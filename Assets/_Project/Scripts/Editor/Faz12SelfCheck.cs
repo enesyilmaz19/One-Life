@@ -149,7 +149,7 @@ namespace TekCan.EditorTools
             murabaha.TakeDamage(murabaha.TimeLeft + 1f);      // fullen, faz 2
             murabaha.TakeDamage(murabaha.TimeLeft * 0.5f);    // yarıya indir
             float sarmaÖnce = murabaha.TimeLeft;
-            murabaha.ApplyAura(1f);                           // 1 saniye geçir
+            murabaha.TickBossPassives(1f);                    // 1 saniye geçir
             failed += Check(ref total, "⚠️ MURABAHACI faz 2'de havuzunu GERİ SARIYOR",
                             murabaha.TimeLeft > sarmaÖnce + 0.1f, murabaha.TimeLeft - sarmaÖnce);
             Temizle(root7);
@@ -234,13 +234,19 @@ namespace TekCan.EditorTools
                 var (rootA, clockA, bossA) = Kur(t, son);
                 var windup = typeof(Enemy).GetMethod("EnterWindup",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                var setA = typeof(Enemy).GetMethod("SetAttack",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-                windup.Invoke(bossA, null);
-                setA.Invoke(bossA, new object[] { açıklıklı });
                 var strike = typeof(Enemy).GetMethod("EnterStrike",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                // ⚠️ Saldırıyı hazırlıktan ÖNCE zorluyoruz: `EnterWindup` telegrafı
+                // seçtiği saldırıya göre çiziyor. Sonra zorlasaydık çizilen yay BAŞKA
+                // saldırınınki olurdu — ilk yazımda öyleydi ve mesafe filtresi gelip
+                // seçimi değiştirene kadar şansla geçiyordu.
+                // `_chained` üretimin kendi yolu: zincirlenen saldırı seçimi ezer.
+                typeof(Enemy).GetField("_chained",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    ?.SetValue(bossA, açıklıklı);
+
+                windup.Invoke(bossA, null);
                 strike.Invoke(bossA, null);
 
                 // ⚠️ Boss'un baktığı OYUNCU nesnesi — `clockA.transform` kök nesne,
@@ -264,13 +270,19 @@ namespace TekCan.EditorTools
                 // ⚠️ GÖRSEL MEKANİKLE UYUŞUYOR MU — bu projenin en pahalı hata türü.
                 //    Yeşil dilim takip sapması olmadan bir kare sonra ÖNE dönüyordu:
                 //    oyuncuya "buradasın, güvendesin" deyip vuruyordu.
+                // Takip bir kare işlesin — sapmanın silinip silinmediği ancak
+                // ondan SONRA görülüyor. Doğuş anına bakmak tam da kaçırılan şeydi.
+                foreach (var a in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include))
+                    a.Step(0.01f);
+
+                // ⚠️ "En son doğan yay" diye aramak kırılgandı — `FindObjectsByType`
+                // doğuş sırasını GARANTİ ETMİYOR. Güvenli dilim RENGİNDEN bulunuyor:
+                // onu ayıran şey zaten yeşil olması.
                 Arc yeşil = null;
                 foreach (var a in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include))
-                    if (a.name == "Arc") yeşil = a;   // en son doğan
-                var tickA = typeof(Arc).GetMethod("Step");
-                foreach (var a in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include))
-                    tickA?.Invoke(a, new object[] { 0.01f });   // takip bir kare işlesin
+                    if (Yeşilce(a)) yeşil = a;
 
+                failed += Check(ref total, "güvenli dilim ÇİZİLDİ", yeşil != null, 1);
                 if (yeşil != null)
                 {
                     // Güvenli dilim boss'un ARKASINA bakmalı: ileri yönleri TERS olmalı
@@ -325,6 +337,31 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "yer işareti SİMSAR'a özel (kimlik dağılmıyor)",
                             işaretsiz == 0, işaretsiz);
 
+            // ⚠️ ETKİ testi: aralık değerini okumak ÖZELLİK testidir. İşaret
+            // GERÇEKTEN doğuyor mu ve DURDUĞUN YERE mi doğuyor — asıl soru bu.
+            foreach (var g in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include))
+                Object.DestroyImmediate(g.gameObject);
+
+            var (rootS, clockS, bossS) = Kur(t, simsar);
+            var oyuncuS = rootS.transform.Find("player");
+            oyuncuS.position = Bootstrap.ArenaCenter + Vector3.right * 5f;
+
+            bossS.TickBossPassives(simsar.GroundMarkInterval(1) + 0.1f);
+            var işaretler = Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include);
+            failed += Check(ref total, "⚠️ SİMSAR GERÇEKTEN işaret bırakıyor",
+                            işaretler.Length > 0, işaretler.Length);
+
+            if (işaretler.Length > 0)
+            {
+                float d = Vector3.Distance(işaretler[0].transform.position, oyuncuS.position);
+                failed += Check(ref total, "⚠️ işaret OYUNCUNUN DURDUĞU yere bırakılıyor",
+                                d < 0.01f, d);
+            }
+
+            foreach (var g in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include))
+                Object.DestroyImmediate(g.gameObject);
+            Temizle(rootS);
+
             // ── 17) Bölge → boss eşlemesi ──
             bool eşleşme = true;
             for (int i = 0; i < BossKind.All.Length; i++)
@@ -378,6 +415,17 @@ namespace TekCan.EditorTools
                     foreach (var a in b.Attacks(f))
                         for (var x = a; x != null; x = x.Then) liste.Add(x);
             return liste;
+        }
+
+        /// <summary>Güvenli bölge yayı mı — yeşil olması onu ayıran şey.</summary>
+        static bool Yeşilce(Arc a)
+        {
+            var mpb = new MaterialPropertyBlock();
+            var r = a.GetComponent<Renderer>();
+            if (r == null) return false;
+            r.GetPropertyBlock(mpb);
+            var c = mpb.GetColor("_BaseColor");
+            return c.g > 0.7f && c.g > c.r + 0.3f;
         }
 
         static BossAttack İlkAçıklık(BossAttack[] xs)
