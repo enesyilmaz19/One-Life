@@ -387,7 +387,15 @@ namespace TekCan
             // bölge belirliyor — böylece yeni tür yeni bir MEKÂNLA birlikte geliyor.
             int tavan = Mathf.Clamp(Region.Current != null ? Region.Current.UnlockedKinds : 2,
                                     1, EnemyKind.All.Length);
-            int odaKademe = Mathf.Min(tavan, 2 + Mathf.Max(0, room - _t.plainRoomCount - 1));
+
+            // ⚠️ Oda merdiveni bir ÖNCEKİ bölgenin tavanından başlıyor, 2'den değil.
+            // 2'ye sıfırlanıyordu ve `2 + (oda-2)` odaBaşına 6'yı geçemiyordu:
+            // `roomsPerRegion` 6 olduğu için YEDİNCİ TÜR MATEMATİKSEL OLARAK ERİŞİLEMEZDİ
+            // — bölge tavanı 7 olsa bile. Sıfırlama ayrıca öğrenmeyi geri alıyordu:
+            // SIZINTI'nın ilk odası oyuncuya yine iki tür gösteriyordu.
+            int taban = RegionIndex == 0 ? 2 : Region.At(RegionIndex - 1).UnlockedKinds;
+            int odaKademe = Mathf.Clamp(taban + Mathf.Max(0, room - _t.plainRoomCount - 1),
+                                        1, tavan);
             return EnemyKind.All[(index + room + RegionIndex) % odaKademe];
         }
 

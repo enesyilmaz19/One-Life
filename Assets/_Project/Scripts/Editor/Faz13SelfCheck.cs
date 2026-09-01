@@ -124,7 +124,40 @@ namespace TekCan.EditorTools
                             Mathf.Approximately(temel5.Growth, 1f), temel5.Growth);
             Temizle(root5);
 
-            // ── 6) Kamera kilidi — asset kapısı maddesi ──
+            // ── 6) ⚠️ HER TÜR GERÇEKTEN DOĞUYOR MU ──
+            //    Faz 13'te üç tür eklendi ama `Region.UnlockedKinds` tavanı 6'da
+            //    kalmıştı: yedinci tür (ZAMANAŞIMI) oyunda HİÇ DOĞMUYORDU.
+            //    ⚠️ Tavan sayısına bakmak yetmez — üretimin seçicisini ÇALIŞTIRIP
+            //    hangi türlerin çıktığını saymak lazım. "Tanımlı" ≠ "doğuyor".
+            var çıkanlar = new System.Collections.Generic.HashSet<EnemyKind>();
+            var (root6, clock6) = Kur(t);
+            var rm = root6.AddComponent<RoomManager>();
+            rm.Init(t, root6.transform.Find("player"), null);
+
+            var pick = typeof(RoomManager).GetMethod("PickKind",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var enterRegion = typeof(RoomManager).GetMethod("EnterRegion",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            for (int bölge = 0; bölge < Region.All.Length; bölge++)
+            {
+                enterRegion.Invoke(rm, new object[] { bölge, 1 });
+                for (int oda = 1; oda <= t.roomsPerRegion; oda++)
+                    for (int i = 0; i < 12; i++)
+                        çıkanlar.Add((EnemyKind)pick.Invoke(rm, new object[] { oda, i }));
+            }
+
+            failed += Check(ref total, "⚠️ HER TÜR gerçekten DOĞUYOR (tanımlı ≠ doğuyor)",
+                            çıkanlar.Count >= EnemyKind.All.Length, çıkanlar.Count);
+
+            if (çıkanlar.Count < EnemyKind.All.Length)
+                foreach (var k in EnemyKind.All)
+                    if (!çıkanlar.Contains(k)) Debug.LogError($"     hiç doğmayan tür: {k.Name}");
+
+            Temizle(root6);
+            RoomManager.Reset();
+
+            // ── 7) Kamera kilidi — asset kapısı maddesi ──
             failed += Check(ref total, "kamera eğimi makul (izometrik aralık)",
                             t.camPitch > 30f && t.camPitch < 70f, t.camPitch);
             float kısalma = Mathf.Cos(t.camPitch * Mathf.Deg2Rad);

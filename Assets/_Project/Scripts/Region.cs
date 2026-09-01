@@ -77,7 +77,7 @@ namespace TekCan
             // Darbe yemek çok daha pahalı: kaçınma zorunlu hale geliyor,
             // "yeriz devam ederiz" oynanışı burada çalışmıyor.
             public override float HitCostMultiplier => 1.8f;
-            public override int UnlockedKinds => 5;
+            public override int UnlockedKinds => 6;
         }
 
         sealed class Seep : Region
@@ -87,7 +87,10 @@ namespace TekCan
             public override Color GroundColor => new Color(0.14f, 0.14f, 0.22f);
             // Arka planda sabit emiş — dövüşte bile. Tek çare hızlı olmak.
             public override float BackgroundDrain => 0.6f;
-            public override int UnlockedKinds => 6;
+            // ⚠️ SON bölge SON türü açmalı. Faz 13'te yedinci tür (ZAMANAŞIMI) eklendi
+            // ama tavan 6'da kalmıştı — yani eklenen tür oyunda HİÇ DOĞMUYORDU.
+            // Öz-denetim artık "her tür en az bir bölgede açılıyor mu" diye soruyor.
+            public override int UnlockedKinds => 7;
         }
 
         public static readonly Region[] All =
