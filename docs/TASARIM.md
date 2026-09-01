@@ -576,7 +576,14 @@ kurallar bölgeleri gerçekten farklı yapıyor, mekanizma doğrulandı.
 
 Ayar ertelendi ama **sebebi şimdi yazılıyor**, yoksa ileride kör ayar yapılır.
 
-### ✅ ÖLÇÜLDÜ (2026-08-26) — tahminim yanlıştı
+### ⛔ AŞAĞIDAKİ İKİ BÖLÜM ESKİDİR — SONUNDAKİ DÜZELTMEYE BAK
+
+Bu bölümdeki *"asıl suçlu boss odası"* ve *"beş eğri çarpılıyor"* teşhislerinin
+**ikisi de çürüdü.** İkisi de yükseltmeleri yok sayan bir modelden çıkmıştı.
+Geçerli teşhis: **"RAPOR DÜZELTİLDİ"** başlığı — hasarın tavansız olması.
+*(Yanlış teşhisler kayıt için duruyor; nasıl yanıldığımız da bilgi.)*
+
+### ÖLÇÜLDÜ (2026-08-26) — ilk tahminim yanlıştı ⛔ BU DA ESKİDİ
 
 `Tek Can → Zorluk eğrisi raporu` her (bölge, oda) için kazanç/masraf hesaplıyor.
 Oda kompozisyonu **üretimden okunuyor** (gerçek `RoomManager` odayı kuruyor),

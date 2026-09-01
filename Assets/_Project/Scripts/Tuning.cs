@@ -207,20 +207,11 @@ namespace TekCan
         [Tooltip("Boss'a vurmak normal düşmanın kaç katı zaman kazandırır. DÜŞÜK olmalı: boss uzun bir dövüş, seni beslememeli.")]
         public float bossHarvestMultiplier = 0.4f;
 
-        [Header("── BOSS: YERE VURUŞ (⚠️ ARTIK OYUNU SÜRMÜYOR) ──")]
-        // ⚠️ Faz 12'de her boss KENDİ saldırı dağarcığını kazandı (`BossKind.Attacks`).
-        // Yere vuruş artık burdan değil, o dağarcıktaki halka saldırılarından geliyor
-        // (TAHSİL, İCRA, ORTAK BORÇ). Bu alanları çevirmek OYUNU DEĞİŞTİRMEZ.
-        // Yalnızca `BalanceSim`'in boss modeli hâlâ okuyor; o model ayar oturumunda
-        // gerçek dağarcığa göre yenilenecek.
-        [Tooltip("⚠️ OYUNU SÜRMÜYOR — yalnızca BalanceSim okuyor. Gerçek saldırılar BossKind'da.")]
-        public int bossSlamEvery = 2;
-        [Tooltip("⚠️ OYUNU SÜRMÜYOR — yalnızca BalanceSim okuyor.")]
-        public float bossSlamRadius = 3.8f;
-        [Tooltip("⚠️ OYUNU SÜRMÜYOR — yalnızca BalanceSim okuyor.")]
-        public float bossSlamWindupMultiplier = 3.5f;
-        [Tooltip("⚠️ OYUNU SÜRMÜYOR — yalnızca BalanceSim okuyor.")]
-        public float bossSlamCostMultiplier = 1.6f;
+        // Yere vuruşun ayarları buradaydı. Faz 12'de her boss KENDİ saldırı dağarcığını
+        // kazandı (`BossKind.Attacks`); halka saldırıları (TAHSİL, İCRA, ORTAK BORÇ,
+        // MÜZAYEDE) yarıçapını, hazırlığını ve bedelini kendi verisinden alıyor.
+        // Bu alanlar hiçbir şeyi sürmüyordu; Inspector'da durup "çevirdim ama değişmedi"
+        // dedirtmesinler diye silindiler.
 
         [Header("── ARENA (greybox test) ──")]
         [Tooltip("YALNIZCA ÖZ-DENETİM İÇİN. Oyunda düşman sayısını oda sistemi belirliyor " +

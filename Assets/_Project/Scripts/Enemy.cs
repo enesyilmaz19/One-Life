@@ -390,8 +390,7 @@ namespace TekCan
             // Hasar yalnızca bu anda, kilitli yöne göre iner. Kaçtıysan ıskalar.
             if (PlayerInStrikeCone())
             {
-                float cost = HitCost * (_attack != null ? _attack.CostMul
-                                      : (_slamming ? _t.bossSlamCostMultiplier : 1f));
+                float cost = HitCost * (_attack?.CostMul ?? 1f);
                 _player.GetComponent<PlayerController>()?.TakeHit(cost, transform.position);
             }
         }
