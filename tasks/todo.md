@@ -10,6 +10,49 @@
 - [x] ✅ **Faz 10 playtest GEÇTİ** (2026-08-26) — bölgeler farklı hissettiriyor,
       zincir akıyor. **Zorluk çok yüksek, ayar ertelendi** *(Faz 10 bölümüne yazıldı)*
 
+### 🔴 SİLAH KARARI — Enes'in masasında (2026-09-02)
+
+İki bulgu. Tür ve boss'lara uyguladığım *"her biri FARKLI SORU sormalı"* ölçüsünü
+silahlara hiç uygulamamışım.
+
+**① FAİZLİ ile VADELİ aynı soruyu soruyor** — ikisi de tek hedefli, ikisi de savurmayı
+saniyeyle ödetiyor, ikisinde de ıskalamak saf zarar. Fark sadece faturanın *ne zaman*
+geldiği.
+
+**② VADELİ ölçülebilir biçimde BASKIN ALTINDA** — `Denge simülasyonu`, düşman başına
+net saniye (hasar çarpanı, süre ve bedel dahil):
+
+| silah | 1 düşman | 2 | 3 | 4 |
+|---|---|---|---|---|
+| KONİ | +0,9 | +4,3 | +7,7 | **+11,1** |
+| **FAİZLİ** | **+5,9** | +5,9 | +5,9 | +5,9 |
+| DURGUN | +5,0 | +5,0 | +5,0 | +5,0 |
+| VADELİ | +2,8 | +2,8 | +2,8 | +2,8 |
+
+VADELİ hiçbir düşman sayısında FAİZLİ'yi veya DURGUN'u geçmiyor — onu seçmenin
+hiçbir durumu yok. Ayrıca kesişim ~2,5 düşman: odalar 3+ düşmanla başladığı için
+KONİ pratikte hep önde. Enes'in *"koni bir tık güçlü"*si burada görünüyor.
+
+- [ ] Hangi ceza silahı kalsın: **FAİZLİ** (önden öde, öldürünce 2× geri) mi
+      **VADELİ** (vuruştan sonra öde, ıskalasan da) mı
+- [ ] Boşalan iki yuvaya ne gelsin *(öneri: TAKSİT + HACİZ, mesajda)*
+
+### 🎮 FAZ 14 PLAYTEST — zırhlı / iri düşmanlar
+
+Her **3. odada** düşmanların üçte biri rütbeli doğuyor (ölçüldü: %13).
+
+- [ ] **ZIRHLI'yı görünce anlıyor musun?** Soğuk-mat renkte. "Niye ölmüyor bu"
+      diye sorman gerekmemeli — cevap ekranda olmalı
+- [ ] **ZIRHLI doğru şeyi mi cezalandırıyor?** Aynı parayı ödüyor ama çok geç.
+      Amaç: *"buna girmeye değer mi"* sorusu. Sadece sıkıcı geliyorsa
+      `armoredDrainMultiplier` (0.45) yükseltilecek
+- [ ] **İRİ ile ZIRHLI'yı birbirinden ayırabiliyor musun?** İRİ büyük ve çok
+      öder, ZIRHLI normal boy ve aynı öder. İkisi aynı hissediyorsa ayrım çökmüş
+- [ ] **Ağır odalar yeterince seyrek mi?** `eliteRoomInterval` = 3.
+      Sık geliyorsa 4'e çıkar, hiç fark edilmiyorsa 2'ye indir
+- [ ] ⚠️ **ZIRHLI SIZINTI'ya dikkat** — yaşadığı sürece zamanını emen düşman
+      artık 2× uzun yaşıyor. Kombinasyon adil mi, yoksa haksız mı
+
 ### 🎮 FAZ 12 PLAYTEST — dört boss
 
 **N tuşuyla** bölgeler arası gez, **B** ile boss'a atla. Her bölgenin kendi boss'u var.
@@ -108,6 +151,42 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 
 > **B** tuşu: doğrudan boss dalgasına atlar (test kısayolu, gerçek oyunda kalkacak)
 > **ENTER**: dalga çağırır (test kısayolu, gerçek oyunda kalkacak)
+
+---
+
+## Faz 14 — Düşman rütbesi ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR** (2026-09-02)
+
+> Enes: *"her odada çabuk ölen az canlı düşmanlar var; bazı odalarda zırhlı
+> (zamanı çok daha yavaş akan) ya da daha çok canlı hallerini koyabiliriz."*
+> Doğru tespit: oda kompozisyonu TÜRÜ değiştiriyordu, AĞIRLIĞI hiç değiştirmiyordu.
+
+- [x] **`EnemyRank`** — türün üstüne binen katman, yeni tür değil.
+      7 tür × 3 rütbe = 21 alt sınıf olurdu; rütbe kimliği değil ağırlığı değiştiriyor
+- [x] **ZIRHLI** — havuz aynı, hasar zamana `0.45` oranında çevriliyor.
+      Toplamda **AYNI** ödüyor, çok daha geç. Sattığı şey **TEMPO**
+- [x] **İRİ** — havuz `2.2×`, akış normal. Sonunda **daha çok** öder.
+      Saniye başına gelir aynı. Sattığı şey **TAAHHÜT**
+- [x] Seyrek + deterministik: her 3. oda, o odanın üçte biri → ölçüldü **%13**
+- [x] Öğretim odalarında yok · boss'a hiç uygulanmıyor
+- [x] Rütbe görünüyor; boyayan **her** yer `KindColor`'dan geçiyor
+- [x] Faz 14 öz-denetimi: **17/17**
+
+### ⚠️ Neden ZIRHLI ile İRİ ayrı — birleştirilmemeli
+
+| | havuz | akış | toplam ödeme | sn başına gelir | sorduğu soru |
+|---|---|---|---|---|---|
+| normal | 1× | 1× | — | — | — |
+| **İRİ** | **2.2×** | 1× | **↑ 2.2×** | aynı | *girmeye kalkışayım mı* |
+| **ZIRHLI** | 1× | **0.45×** | **aynı** | **↓ %55** | *şimdi mi kesmeliyim* |
+
+Zırhı havuzu küçülterek yapmak kolay olurdu — ama o zaman "daha az veren düşman"
+olurdu, yani ödülü kısardı. Zırh **ödülü değil TEMPOYU** kısıyor; saat sen vururken
+de işlediği için dövüş kârdan masrafa kayabiliyor. Öz-denetim tam bu farkı tutuyor
+(*"ZIRHLI TOPLAMDA aynı ödüyor"* + *"İRİ gerçekten daha çok ödüyor"*).
+
+### 🎛️ Kadranlar (Inspector, F1'de)
+
+`armoredDrainMultiplier` 0.45 · `heavyPoolMultiplier` 2.2 · `eliteRoomInterval` 3
 
 ---
 
