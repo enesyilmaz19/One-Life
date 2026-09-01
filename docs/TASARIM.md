@@ -665,6 +665,14 @@ dokunmadan önce hasar eğrisi düzeltilmeli — yoksa yanlış kadranı çeviri
 **④ Yenen darbe %32-37** ile en büyük masraf kalemlerinden. Zorluk buradan gelmeli,
 akıştan değil.
 
+### ⏸️ DENGE DEĞİŞİKLİKLERİ SONA ERTELENDİ (Enes, 2026-08-26)
+
+> *"bu denge değişikliklerini sona da atabiliriz"*
+
+Doğru: kadro, silahlar ve içerik tamamlanmadan ayar yapmak, içerik gelince baştan
+ayarlamak demek. **Teşhis hazır ve bekliyor**; ayar oturumu animasyon öncesinde,
+zamanlama kilidiyle aynı seansta yapılacak.
+
 ### Ayar sırası (ölçüme göre — ikinci kez güncellendi)
 
 1. **Hasar yükseltmesine TAVAN** ya da azalan getiri — tek büyük kaldıraç bu
