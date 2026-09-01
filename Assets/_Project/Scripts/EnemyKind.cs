@@ -33,13 +33,52 @@ namespace TekCan
         /// <summary>Öldüğünde. KASA bütün ödemesini burada yapıyor.</summary>
         public virtual void OnKilled(Clock clock, Tuning t, float startingPool) { }
 
+        // ── Faz 13 kancaları ─────────────────────────────────────────────────
+
+        /// <summary>
+        /// &gt;0 ise bu yarıçaptaki DİĞER düşmanların hasadını kısıyor — SİGORTA.
+        /// SIZINTI zaman EMER; bu GELİRİ KAPATIR. İkisi de hedef sırasını değiştiriyor
+        /// ama farklı soruyla: biri "ne kadar pahalı", öteki "ne zaman kârlı".
+        /// </summary>
+        public virtual float ProtectRadius(Tuning t) => 0f;
+
+        /// <summary>Koruma altındaki düşmanlardan alınan hasadın çarpanı.</summary>
+        public virtual float ProtectedHarvest(Tuning t) => 1f;
+
+        /// <summary>
+        /// &gt;0 ise bu kadar saniyede bir UZAKTAN oyuncunun yerine gecikmeli vuruş
+        /// bırakıyor — MÜBAŞİR. Bütün düşmanlar yakın dövüştü, yani mesafe tutmak
+        /// her zaman güvenliydi; bu onu bozuyor.
+        /// </summary>
+        public virtual float RangedMarkInterval(Tuning t) => 0f;
+
+        /// <summary>
+        /// &gt;0 ise oyuncuya bu mesafeden fazla YAKLAŞMIYOR. Menzilli düşman dibine
+        /// gelmemeli, yoksa "menzilli" olmaktan çıkar.
+        /// </summary>
+        public virtual float PreferredRange(Tuning t) => 0f;
+
+        /// <summary>
+        /// Saniyede ne kadar güçleniyor (0.05 = %5/sn) — ZAMANAŞIMI.
+        /// Dövüşü uzatmayı ve kite'lamayı cezalandırıyor: ötelemek onu besliyor.
+        /// </summary>
+        public virtual float GrowthPerSecond => 0f;
+
         public static readonly EnemyKind Basic = new BasicKind();
         public static readonly EnemyKind Leak = new LeakKind();
         public static readonly EnemyKind Vault = new VaultKind();
         public static readonly EnemyKind Runner = new RunnerKind();
+        public static readonly EnemyKind Insurer = new InsurerKind();
+        public static readonly EnemyKind Bailiff = new BailiffKind();
+        public static readonly EnemyKind Lapse = new LapseKind();
 
-        /// <summary>Dalga kompozisyonu bu listeden seçiyor.</summary>
-        public static readonly EnemyKind[] All = { Basic, Leak, Vault, Runner };
+        /// <summary>
+        /// Oda kompozisyonu bu listeden seçiyor. ⚠️ SIRA = AÇILIŞ SIRASI:
+        /// `RoomManager.PickKind` bölgeye göre baştan kaç tür açık olduğunu belirliyor,
+        /// yani buraya eklenen yeni tür GEÇ bölgelere düşer. Öğretim sırası budur.
+        /// </summary>
+        public static readonly EnemyKind[] All =
+            { Basic, Leak, Vault, Runner, Insurer, Bailiff, Lapse };
     }
 
     /// <summary>Temel düşman — dengenin sıfır noktası, diğerleri buna göre okunuyor.</summary>
@@ -100,5 +139,62 @@ namespace TekCan
         public override float FleesBelowRatio => 0.45f;
         public override float PoolMultiplier => 0.8f;
         public override float SpeedMultiplier => 1.15f;
+    }
+
+    /// <summary>
+    /// SİGORTA — yaşadığı sürece ÇEVRESİNDEKİLERİN hasadını kısar. Kendisi zararsız.
+    ///
+    /// Değiştirdiği karar: hedef sırası — ama SIZINTI'dan FARKLI bir soruyla.
+    /// SIZINTI "ne kadar pahalı" diye sordurur (zaman emiyor); SİGORTA "ne zaman
+    /// kârlı" diye sordurur (gelirini kapatıyor). Yanındakileri kesmek boşa emek:
+    /// önce sigortayı kes, sonra yağmala.
+    ///
+    /// Zayıf ve yavaş — tehdidi kendi vuruşu değil, VARLIĞI.
+    /// </summary>
+    public sealed class InsurerKind : EnemyKind
+    {
+        public override string Name => "SİGORTA";
+        public override Color FullColor => new Color(0.35f, 0.55f, 0.95f);
+        public override float ProtectRadius(Tuning t) => t.insurerRadius;
+        public override float ProtectedHarvest(Tuning t) => t.insurerHarvestMultiplier;
+        public override float PoolMultiplier => 0.7f;
+        public override float SpeedMultiplier => 0.8f;
+    }
+
+    /// <summary>
+    /// MÜBAŞİR — uzaktan tebligat. Yaklaşmıyor, durduğun yere gecikmeli vuruş bırakıyor.
+    ///
+    /// Değiştirdiği karar: MESAFE. Bu güne kadar bütün düşmanlar yakın dövüştü, yani
+    /// uzak durmak her zaman güvenliydi ve "kite" bedava bir cevaptı. MÜBAŞİR onu
+    /// bozuyor — ya yaklaşıp kesersin ya tebligatı yersin.
+    ///
+    /// ⚠️ `PreferredRange` şart: dibine gelirse "menzilli" olmaktan çıkar.
+    /// </summary>
+    public sealed class BailiffKind : EnemyKind
+    {
+        public override string Name => "MÜBAŞİR";
+        public override Color FullColor => new Color(0.95f, 0.55f, 0.25f);
+        public override float RangedMarkInterval(Tuning t) => t.bailiffMarkInterval;
+        public override float PreferredRange(Tuning t) => t.bailiffKeepDistance;
+        public override float PoolMultiplier => 0.65f;
+        public override float SpeedMultiplier => 0.9f;
+    }
+
+    /// <summary>
+    /// ZAMANAŞIMI — yaşadıkça güçlenir. Ötelemek onu besliyor.
+    ///
+    /// Değiştirdiği karar: SIRA ve SÜRE. Diğer türler "önce hangisi" diye sordururken
+    /// bu "ne kadar bekleyebilirim" diye sordurur. Kite'lamak, kaçmak, dövüşü uzatmak —
+    /// hepsi onun lehine işliyor. Odayı yavaş temizlemenin bedeli.
+    ///
+    /// Başlangıçta zayıf, ki ceza gecikmeden değil ERTELEMEDEN gelsin.
+    /// </summary>
+    public sealed class LapseKind : EnemyKind
+    {
+        public override string Name => "ZAMANAŞIMI";
+        public override Color FullColor => new Color(0.6f, 0.85f, 0.3f);
+        public override float GrowthPerSecond => 0.09f;     // saniyede %9
+        public override float PoolMultiplier => 0.9f;
+        public override float SpeedMultiplier => 0.95f;
     }
 }

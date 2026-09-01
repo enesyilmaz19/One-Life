@@ -102,10 +102,22 @@ namespace TekCan
                          * (IsBoss ? _t.bossSpeedMultiplier : 1f)
                          * (Boss != null ? Boss.SpeedMultiplier(Phase) : 1f)   // TAHSİLDAR faz 2
                          * Kind.SpeedMultiplier
+                         * Mathf.Min(Growth, 1.5f)                             // ZAMANAŞIMI (hafif)
                          * (Fleeing ? _t.runnerFleeSpeedMultiplier : 1f);
         float HitCost => (Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost)
                        * Region.HitCost                            // AĞIRLIK bölgesi kuralı
+                       * Growth                                    // ZAMANAŞIMI
                        * (IsBoss ? _t.bossHitCostMultiplier : 1f);
+
+        /// <summary>
+        /// ZAMANAŞIMI'nın büyüme çarpanı — yaşadığı süreyle artıyor.
+        /// ⚠️ TAVANLI: tavansız bırakılsaydı uzun bir odada tek düşman koşuyu bitirirdi.
+        /// Ceza öteleme için, imkânsızlık için değil.
+        /// </summary>
+        public float Growth => Kind.GrowthPerSecond <= 0f ? 1f
+                             : Mathf.Min(_t.lapseGrowthCap, 1f + Kind.GrowthPerSecond * _aliveTime);
+
+        float _aliveTime;
 
         public EnemyKind Kind { get; private set; } = EnemyKind.Basic;
 
@@ -161,6 +173,7 @@ namespace TekCan
 
             ApplyAura(Time.deltaTime);
             TickBossPassives(Time.deltaTime);
+            TickKindPassives(Time.deltaTime);
 
             // KAÇAK: havuzu eşiğin altına inince kaçmaya başlar.
             if (!Fleeing && !Hollow && Kind.FleesBelowRatio > 0f &&
@@ -475,6 +488,19 @@ namespace TekCan
                 return;
             }
 
+            // ⚠️ MÜBAŞİR mesafesini KORUYOR — dibine gelirse "menzilli" olmaktan çıkar
+            // ve sıradan bir düşmana dönüşür. Çok yaklaşırsa geri çekiliyor.
+            float tercih = Kind.PreferredRange(_t);
+            if (tercih > 0f)
+            {
+                if (dist < tercih * 0.85f)
+                    transform.position -= (to / dist) * MoveSpeed * Time.deltaTime;
+                else if (dist > tercih * 1.15f)
+                    transform.position += (to / dist) * MoveSpeed * Time.deltaTime;
+                FacePlayer();
+                return;
+            }
+
             if (dist > AttackRange * 0.9f)
                 transform.position += (to / dist) * MoveSpeed * Time.deltaTime;
             FacePlayer();
@@ -515,6 +541,7 @@ namespace TekCan
                              * Kind.HarvestMultiplier
                              * Region.Harvest                      // KITLIK bölgesi kuralı
                              * BossKind.ActiveHarvestMultiplier()  // EKSPER'in suçu
+                             * InsuredHarvest()                    // SİGORTA koruması
                              * (IsBoss ? _t.bossHarvestMultiplier : 1f);
                 clock.Add(gain);
 
@@ -612,6 +639,39 @@ namespace TekCan
                              parent: transform.parent);
         }
 
+        /// <summary>
+        /// TÜRE ait pasifler — `TickBossPassives`'in eşi. Ayrı duruyorlar çünkü
+        /// karıştırmak "boss pasifi" ile "tür pasifi"ni tek yere yığar ve bir sonraki
+        /// okuyan hangisinin nerede olduğunu bilemez. `dt` yine dışarıdan.
+        /// </summary>
+        public void TickKindPassives(float dt)
+        {
+            if (Hollow || _t == null) return;
+
+            // ZAMANAŞIMI: yaşadığı süre onu besliyor (bkz. `Growth`).
+            _aliveTime += dt;
+
+            // MÜBAŞİR: uzaktan tebligat — durduğun YERE bırakıyor, yaklaşmıyor.
+            // Bu güne kadar bütün düşmanlar yakın dövüştü, yani "uzak dur" bedava
+            // bir cevaptı; bu onu bozuyor.
+            float tebligat = Kind.RangedMarkInterval(_t);
+            if (tebligat <= 0f || _player == null) return;
+
+            _kindMarkTimer -= dt;
+            if (_kindMarkTimer > 0f) return;
+
+            _kindMarkTimer = tebligat;
+            GroundMark.Spawn(_t, _player.position, _player,
+                             radius: _t.bailiffMarkRadius,
+                             delay: _t.groundMarkDelay,
+                             cost: HitCost * _t.groundMarkCostMultiplier,
+                             parent: transform.parent);
+        }
+
+        // ⚠️ Boss'unkinden AYRI sayaç: aynı düşman hem boss hem MÜBAŞİR olamaz ama
+        // tek sayacı paylaştırmak ileride sessiz bir çakışma davetiyesi olurdu.
+        float _kindMarkTimer;
+
         float FlatDistanceFromCenter()
         {
             var p = transform.position;
@@ -628,6 +688,31 @@ namespace TekCan
 
         /// <summary>Zerrenin çıktığı nokta — kapsülün gövde ortası, ayağı değil.</summary>
         Vector3 MoteOrigin() => transform.position + Vector3.up * 0.5f;
+
+        /// <summary>
+        /// SİGORTA koruması: yakınında yaşayan bir SİGORTA varsa bu düşmandan alınan
+        /// hasat kısılıyor. Kendini korumuyor — yoksa öldürülemez olurdu.
+        ///
+        /// ⚠️ Statik bayrak tutulmuyor, her seferinde SAHNEYE soruluyor. Bayrak
+        /// tutsaydık sigorta ölünce temizlemeyi unutmak "hasadım niye hâlâ düşük"
+        /// hatası doğururdu — `BossKind.ActiveHarvestMultiplier` ile aynı gerekçe.
+        /// </summary>
+        float InsuredHarvest()
+        {
+            float m = 1f;
+            foreach (var e in All)
+            {
+                if (e == null || e == this || e.Hollow) continue;
+                float r = e.Kind.ProtectRadius(_t);
+                if (r <= 0f) continue;
+
+                // ⚠️ YATAY mesafe — y'nin yatay hesaba karışması bu projede dört kez yandı.
+                var d = e.transform.position - transform.position;
+                d.y = 0f;
+                if (d.magnitude <= r) m *= e.Kind.ProtectedHarvest(_t);
+            }
+            return m;
+        }
 
         /// <summary>
         /// Boss faz geçişi. İki farklı kural (Enes kararı):

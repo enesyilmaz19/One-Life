@@ -111,6 +111,37 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 
 ---
 
+## Faz 13 — Düşman kadrosu + kamera kilidi ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
+
+> Boss'lar zenginleşti ama sıradan odalar Faz 5'ten beri aynı dört türle dönüyordu —
+> ve odalar oyun süresinin %80'i.
+
+- [x] **① SİGORTA** — yaşadığı sürece **çevresindekilerin hasadını ×0.25'e kısıyor.**
+      SIZINTI zaman EMER, bu GELİRİ KAPATIR: *"önce sigortayı kes, sonra yağmala"*
+- [x] **② MÜBAŞİR** — **uzaktan tebligat.** Yaklaşmıyor (7 birim mesafe koruyor),
+      durduğun yere gecikmeli vuruş bırakıyor. Bütün düşmanlar yakın dövüştü, yani
+      "uzak dur" bedava bir cevaptı — bu onu bozuyor
+- [x] **③ ZAMANAŞIMI** — **yaşadıkça güçleniyor** (%9/sn, tavan ×2.5).
+      Kite'lamayı ve dövüşü uzatmayı cezalandırıyor: ötelemek onu besliyor
+- [x] `TickKindPassives` — tür pasifleri `TickBossPassives`'in eşi olarak AYRI duruyor
+- [x] **Kamera kilidi** + `Kamera kilidi raporu` aracı
+- [x] Faz 13 öz-denetimi: **14/14** — çeşitlilik ADdan değil SORDUĞU SORUdan ölçülüyor
+
+### 📐 KAMERA KİLİDİ — asset brief'i
+
+| | |
+|---|---|
+| Açı / eğim | **45° / 50°** |
+| Ortografik boy | **9.0** (18 birim görüş yüksekliği) |
+| Eğim kısaltması | dikey nesne **×0.64** görünüyor |
+| **1080p'de karakter** | **~77 piksel** |
+
+⚠️ **Bu sayı asset alışverişinin brief'i:** 77 pikselde yüz detayı, ince doku ve küçük
+aksesuar GÖRÜNMEZ. Para **siluet ve renge** harcanmalı — o boyutta ayırt edilen tek şey
+onlar. Ölçüm, `CLAUDE.md`'deki "kimliği siluet + VFX'e yasla" kararını doğruluyor.
+
+---
+
 ## Faz 12 — Boss çeşitliliği ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR**
 
 > Şu an **tek boss** var, beş bölgede beşi de aynı. Ve bu en kötü yerde tekrar:

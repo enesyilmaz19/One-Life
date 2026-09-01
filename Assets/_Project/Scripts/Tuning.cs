@@ -139,6 +139,20 @@ namespace TekCan
         [Tooltip("Her odada düşman zaman havuzu bu kat büyür — odalar sertleşir")]
         public float roomPoolGrowth = 1.18f;
 
+        [Header("── DÜŞMAN TÜRLERİ (Faz 13) ──")]
+        [Tooltip("SİGORTA: bu yarıçaptaki düşmanların hasadını kısar")]
+        public float insurerRadius = 5f;
+        [Tooltip("SİGORTA: koruduğu düşmanlardan alınan hasadın çarpanı")]
+        public float insurerHarvestMultiplier = 0.25f;
+        [Tooltip("MÜBAŞİR: kaç saniyede bir uzaktan tebligat bırakır")]
+        public float bailiffMarkInterval = 2.6f;
+        [Tooltip("MÜBAŞİR: oyuncuya bu mesafeden fazla yaklaşmaz")]
+        public float bailiffKeepDistance = 7f;
+        [Tooltip("MÜBAŞİR: tebligatın yarıçapı — SİMSAR'ınkinden küçük")]
+        public float bailiffMarkRadius = 2.1f;
+        [Tooltip("ZAMANAŞIMI: büyüme tavanı. Tavansız bırakılırsa tek düşman koşuyu bitirir.")]
+        public float lapseGrowthCap = 2.5f;
+
         [Header("── BOSS TÜRLERİ (Faz 12) ──")]
         [Tooltip("SİMSAR: durduğun yere bıraktığı işaretin yarıçapı")]
         public float groundMarkRadius = 2.6f;
