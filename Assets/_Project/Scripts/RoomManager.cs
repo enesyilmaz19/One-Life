@@ -270,7 +270,7 @@ namespace TekCan
             for (int i = 0; i < count; i++)
                 Bootstrap.SpawnEnemyAt(_t, Layout.Position(_t, i, count), _player, _cam,
                                        poolMult, boss: false, kind: PickKind(Room, i),
-                                       parent: _roomRoot.transform);
+                                       parent: _roomRoot.transform, rank: PickRank(Room, i));
         }
 
         void PlaceBoss()
@@ -397,6 +397,36 @@ namespace TekCan
             int odaKademe = Mathf.Clamp(taban + Mathf.Max(0, room - _t.plainRoomCount - 1),
                                         1, tavan);
             return EnemyKind.All[(index + room + RegionIndex) % odaKademe];
+        }
+
+        /// <summary>
+        /// Odanın AĞIRLIĞI — hangi düşman zırhlı/iri doğuyor.
+        ///
+        /// Enes'in tespiti: *"her odada çabuk ölen az canlı düşmanlar var."* Doğru;
+        /// oda kompozisyonu türü değiştiriyordu ama ağırlığı hiç değiştirmiyordu, yani
+        /// her oda aynı tempoda çözülüyordu. Rütbe o tekdüzeliği kırıyor.
+        ///
+        /// ⚠️ İki şey bilerek SEYREK:
+        ///   • Her oda değil — "ağır oda" ancak istisnaysa bir şey ifade eder.
+        ///     Her odada zırh olsaydı zırh bir olay değil, yeni taban olurdu.
+        ///   • Odanın hepsi değil — yanında normali durmalı ki oyuncu FARKI görsün.
+        ///     Baştan sona zırhlı oda, sadece uzun oda olurdu.
+        ///
+        /// `PickKind` gibi deterministik: "bu oda mı ağırdı, ben mi kötü oynadım"
+        /// sorusu cevaplanabilir kalmalı.
+        /// </summary>
+        EnemyRank PickRank(int room, int index)
+        {
+            // Öğretim odalarında rütbe yok — önce temel dövüş otursun.
+            if (RegionIndex == 0 && room <= _t.plainRoomCount) return EnemyRank.Normal;
+
+            if (_t.eliteRoomInterval <= 0) return EnemyRank.Normal;              // kapalı
+            if ((room + RegionIndex) % _t.eliteRoomInterval != 0) return EnemyRank.Normal;
+            if (index % 3 != 0) return EnemyRank.Normal;                         // odanın üçte biri
+
+            // İkisi dönüşümlü: aynı odada ikisi birden çıkmasın, oyuncu ikisini
+            // ayrı ayrı öğrensin (biri tempo vergisi, öteki taahhüt — farklı dersler).
+            return (room + RegionIndex) % 2 == 0 ? EnemyRank.Armored : EnemyRank.Heavy;
         }
 
         /// <summary>HUD için.</summary>

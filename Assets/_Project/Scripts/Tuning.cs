@@ -153,6 +153,16 @@ namespace TekCan
         [Tooltip("ZAMANAŞIMI: büyüme tavanı. Tavansız bırakılırsa tek düşman koşuyu bitirir.")]
         public float lapseGrowthCap = 2.5f;
 
+        [Header("── DÜŞMAN RÜTBESİ (Faz 14) ──")]
+        [Tooltip("ZIRHLI: hasarın zamana çevrilme oranı. 0.45 = havuzu %55 daha yavaş akar. " +
+                 "Havuz DEĞİŞMEZ — toplam ödeme aynı kalır, sadece daha uzun sürer.")]
+        public float armoredDrainMultiplier = 0.45f;
+        [Tooltip("İRİ: havuz çarpanı. Akış normal, yani sonunda bu kadar FAZLA öder.")]
+        public float heavyPoolMultiplier = 2.2f;
+        [Tooltip("Kaç odada bir ağır oda gelir. 3 = her üçüncü oda. " +
+                 "0 veya altı = rütbe kapalı. Seyrek olmalı: her odada olsaydı yeni taban olurdu.")]
+        public int eliteRoomInterval = 3;
+
         [Header("── BOSS TÜRLERİ (Faz 12) ──")]
         [Tooltip("SİMSAR: durduğun yere bıraktığı işaretin yarıçapı")]
         public float groundMarkRadius = 2.6f;

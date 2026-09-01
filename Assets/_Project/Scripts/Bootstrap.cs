@@ -317,7 +317,7 @@ namespace TekCan
         public static Enemy SpawnEnemyAt(Tuning t, Vector3 pos, Transform player, Transform cam,
                                          float poolMultiplier = 1f, bool boss = false,
                                          EnemyKind kind = null, Transform parent = null,
-                                         BossKind bossKind = null)
+                                         BossKind bossKind = null, EnemyRank rank = null)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             go.name = boss ? "Boss" : "Enemy";
@@ -335,7 +335,7 @@ namespace TekCan
             label.Init(cam);
 
             var enemy = go.AddComponent<Enemy>();
-            enemy.Init(t, player, label, poolMultiplier, boss, kind, bossKind);
+            enemy.Init(t, player, label, poolMultiplier, boss, kind, bossKind, rank);
             return enemy;
         }
 

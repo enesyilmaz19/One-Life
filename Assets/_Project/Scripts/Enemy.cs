@@ -102,6 +102,7 @@ namespace TekCan
                          * (IsBoss ? _t.bossSpeedMultiplier : 1f)
                          * (Boss != null ? Boss.SpeedMultiplier(Phase) : 1f)   // TAHSİLDAR faz 2
                          * Kind.SpeedMultiplier
+                         * Rank.SpeedMultiplier                                // ZIRHLI / İRİ ağır
                          * Mathf.Min(Growth, 1.5f)                             // ZAMANAŞIMI (hafif)
                          * (Fleeing ? _t.runnerFleeSpeedMultiplier : 1f);
         float HitCost => (Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost)
@@ -121,6 +122,17 @@ namespace TekCan
 
         public EnemyKind Kind { get; private set; } = EnemyKind.Basic;
 
+        /// <summary>Türün üstüne binen ağırlık katmanı — ZIRHLI / İRİ. Boss'lara uygulanmaz.</summary>
+        public EnemyRank Rank { get; private set; } = EnemyRank.Normal;
+
+        /// <summary>
+        /// Ekranda görünmesi gereken tür rengi — rütbe kayması DAHİL.
+        /// ⚠️ Boyayan her yer buradan geçmeli. `Kind.FullColor`'ı doğrudan okumak,
+        /// zırhın kaçarken ya da ölürken sessizce kaybolması demekti (ders 9:
+        /// aynı kavramın HER ölçümü düzeltilir, biri değil).
+        /// </summary>
+        public Color KindColor => Rank.Shade(Kind.FullColor);
+
         /// <summary>Kaçak kaçıyor mu — havuzu eşiğin altına inince başlıyor.</summary>
         public bool Fleeing { get; private set; }
 
@@ -128,15 +140,26 @@ namespace TekCan
 
         public void Init(Tuning tuning, Transform player, TimeLabel label,
                          float poolMultiplier = 1f, bool boss = false, EnemyKind kind = null,
-                         BossKind bossKind = null)
+                         BossKind bossKind = null, EnemyRank rank = null)
         {
             _t = tuning;
             _player = player;
             _label = label;
             Boss = boss ? (bossKind ?? BossKind.For(0)) : null;   // IsBoss bundan türüyor
             Kind = kind ?? EnemyKind.Basic;
-            TimeLeft = tuning.enemyTimePool * poolMultiplier * Kind.PoolMultiplier;
+
+            // ⚠️ Boss RÜTBE ALMAZ. Boss'un zaten kendi faz/havuz düzeneği var; üstüne
+            // zırh binseydi iki ayrı dayanıklılık sistemi çarpışır ve boss dövüşü
+            // ayarlanamaz hale gelirdi. Rütbe sıradan odaların meselesi.
+            Rank = boss ? EnemyRank.Normal : (rank ?? EnemyRank.Normal);
+
+            TimeLeft = tuning.enemyTimePool * poolMultiplier
+                     * Kind.PoolMultiplier * Rank.PoolMultiplier(tuning);
             _startingPool = TimeLeft;
+
+            // Ölçek rütbeden SONRA yakalanıyor: `_baseScale` isabet darbesinin ve
+            // `Radius`'un dayanağı, İRİ'nin gövdesi ikisine de yansımalı.
+            if (Rank.ScaleMultiplier != 1f) transform.localScale *= Rank.ScaleMultiplier;
             _baseScale = transform.localScale;
             _renderer = GetComponentInChildren<Renderer>();
             All.Add(this);
@@ -522,7 +545,13 @@ namespace TekCan
                 return;
             }
 
-            float drained = Mathf.Min(damage, TimeLeft);
+            // ⚠️ ZIRH BURADA. Hasar zamana daha yavaş çevriliyor — havuza dokunmuyor.
+            // Hasat akan zamanla orantılı olduğu için TOPLAM ödeme aynı kalıyor, sadece
+            // çok daha uzun sürüyor. Yani zırh ödülü kısmıyor, SANİYE BAŞINA GELİRİ kısıyor:
+            // saat sen vururken de işlediği için dövüş kârdan masrafa kayabiliyor.
+            // (Havuzu küçültseydim ödülü de kısardım ve zırh "daha az veren düşman"
+            // olurdu — bambaşka, çok daha kötü bir şey.)
+            float drained = Mathf.Min(damage * Rank.DrainMultiplier(_t), TimeLeft);
             TimeLeft -= drained;
 
             var clock = Clock.Instance;
@@ -817,7 +846,7 @@ namespace TekCan
             // Boss daha geniş — devrilişi olay olmalı, sıradan bir düşman gibi sönmemeli.
             Arc.Spawn(transform.position, transform.rotation,
                       Radius * (IsBoss ? 5f : 2.6f), 360f,
-                      new Color(Kind.FullColor.r, Kind.FullColor.g, Kind.FullColor.b, 0.7f),
+                      new Color(KindColor.r, KindColor.g, KindColor.b, 0.7f),
                       IsBoss ? 0.65f : 0.28f,
                       scaleFrom: 0.35f, scaleTo: IsBoss ? 2.2f : 1.6f);
 
@@ -856,8 +885,8 @@ namespace TekCan
             if (_flashTimer > 0f) c = Color.white;                                  // isabet aldı
             else if (_state == State.Windup || _state == State.Strike) c = WindupColor;  // saldırıyor
             else if (Hollow) c = HollowColor;
-            else if (Fleeing) c = Color.Lerp(Kind.FullColor, Color.white, 0.45f);   // kaçıyor: soluyor
-            else c = Kind.FullColor;                                                // tür rengi
+            else if (Fleeing) c = Color.Lerp(KindColor, Color.white, 0.45f);        // kaçıyor: soluyor
+            else c = KindColor;                                                     // tür + rütbe rengi
 
             _renderer.material.color = c;
             // ⚠️ Bu renkler TAŞIYICI, süs değil: dövüş kararları bunlara bakıyor.
