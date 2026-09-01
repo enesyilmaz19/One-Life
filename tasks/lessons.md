@@ -310,3 +310,38 @@ Hepsinde **mekanik doğru, görsel yalan.** Ve hepsinde testler yeşildi çünk�
 **Somut savunma:** `Arc.Spawn(followYaw:)` eklendi ve öz-denetim yeşil dilimin ileri
 yönünü boss'unkiyle karşılaştırıyor (`Dot < -0.5` = gerçekten arkaya bakıyor).
 Takip bir kare işletilip ÖYLE ölçülüyor — doğuş anına bakmak tam da kaçırılan şeydi.
+
+---
+
+## 2026-09-01 (11) — Türü ekledim, testleri yazdım, ama oyuna hiç girmemişti
+
+**Ne oldu:** Faz 13'te üç düşman türü eklendi. `EnemyKind.All` yedi elemanlı oldu,
+her tür için ETKİ testi yazıldı (SİGORTA gerçekten hasadı kısıyor mu, MÜBAŞİR
+gerçekten tebligat bırakıyor mu, ZAMANAŞIMI gerçekten büyüyor mu). Hepsi yeşil.
+Faz kapandı, commit atıldı.
+
+**Yedinci tür oyunda hiç doğmuyordu.**
+
+**Neden testler görmedi:** Testler türü `Make(...)` ile ELLE kuruyordu. Yani
+"bu tür doğru çalışıyor mu" sorusunu cevaplıyorlardı — ama "bu tür oyunda
+ORTAYA ÇIKIYOR MU" sorusunu kimse sormamıştı. Doğru cevap, sorulmamış soru.
+
+**İki ayrı kapı kesiyordu:**
+1. `Region.Seep.UnlockedKinds` 6'da kalmıştı — tür eklerken güncellenmedi.
+2. Onu düzelttim, hâlâ 6 tür çıktı. Asıl kök neden: `PickKind`'ın oda merdiveni
+   her bölgede 2'ye sıfırlanıyordu; `2 + (oda - 2)` ve `roomsPerRegion = 6`
+   olunca üst sınır 6'ydı. **Bölge tavanı 7 olsa bile erişilemezdi.**
+
+⚠️ Birinci düzeltmeden sonra "tamam" deyip geçseydim ders 9'u (kök nedenin
+yarısı) aynen tekrarlamış olurdum. Testi ÇALIŞTIRDIĞIM için ikincisi çıktı.
+
+**Kural:**
+
+> Bir içerik listesine (tür, silah, bölge, boss) eleman eklerken sor:
+> **onu oyuna sokan SEÇİCİ bu elemana ulaşabiliyor mu?**
+> "Tanımlı" ≠ "doğuyor". Listenin uzunluğuna bakmak yetmez — seçiciyi
+> ÇALIŞTIRIP çıkan kümeyi say.
+
+**Somut savunma:** `Faz13SelfCheck` artık `PickKind`'ı beş bölge × altı oda ×
+on iki yuva çalıştırıp çıkan türleri `HashSet`'te topluyor; küme `EnemyKind.All`
+kadar değilse eksik türün ADINI bastırıyor. Sayıya değil, çıktıya bakıyor.

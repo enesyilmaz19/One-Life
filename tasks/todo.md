@@ -125,7 +125,14 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
       Kite'lamayı ve dövüşü uzatmayı cezalandırıyor: ötelemek onu besliyor
 - [x] `TickKindPassives` — tür pasifleri `TickBossPassives`'in eşi olarak AYRI duruyor
 - [x] **Kamera kilidi** + `Kamera kilidi raporu` aracı
-- [x] Faz 13 öz-denetimi: **14/14** — çeşitlilik ADdan değil SORDUĞU SORUdan ölçülüyor
+- [x] Faz 13 öz-denetimi: **15/15** — çeşitlilik ADdan değil SORDUĞU SORUdan ölçülüyor
+- [x] 🐛 **Öz-incelemede yakalandı: yedinci tür (ZAMANAŞIMI) HİÇ DOĞMUYORDU.**
+      Testleri geçiyordu çünkü testler türü elle kuruyordu — "oyunda ortaya
+      çıkıyor mu" sorusunu kimse sormamıştı. İki kapı kesiyordu: ① `Seep`
+      tavanı 6'da kalmış ② asıl kök neden — `PickKind`'ın oda merdiveni her
+      bölgede 2'ye sıfırlanıyor, `roomsPerRegion=6` ile üst sınır 6'da
+      kalıyordu. Merdiven artık önceki bölgenin tavanından başlıyor.
+      Yeni kapı seçiciyi ÇALIŞTIRIP çıkan türleri sayıyor. (ders 11)
 
 ### 📐 KAMERA KİLİDİ — asset brief'i
 
