@@ -473,7 +473,7 @@ namespace TekCan
         {
             if (Invulnerable) return;
 
-            Clock.Instance?.Spend(secondsCost);
+            Clock.Instance?.Spend(secondsCost, fromHit: true);   // oda hesabında AYRI sayılıyor
             HitStop.Freeze(_t.hitStopDuration * 1.5f);
             IsoCamera.Shake(_t.hurtShake);
 

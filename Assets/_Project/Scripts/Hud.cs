@@ -190,13 +190,18 @@ namespace TekCan
             float since = Time.unscaledTime - rm.RoomClosedAt;
             if (since > 6f) return;                       // oda geçişine kadar durur
 
-            bool kâr = rm.RoomNet >= 0f;
-            _small.normal.textColor = kâr ? new Color(0.5f, 1f, 0.6f) : new Color(1f, 0.65f, 0.5f);
+            // ⚠️ GERÇEK net: test bağışı (F5) sayılmıyor. Sayılsaydı F5'e basılan oda
+            // kârlı görünür ve ölçüm yalan söylerdi.
+            float gerçekNet = rm.RoomNet - rm.RoomGranted;
+            _small.normal.textColor = gerçekNet >= 0f ? new Color(0.5f, 1f, 0.6f)
+                                                      : new Color(1f, 0.65f, 0.5f);
 
             GUI.Label(new Rect(0f, Screen.height * 0.36f, Screen.width, 22f),
                       $"ODA HESABI    hasat +{rm.RoomHarvest:0.0}    " +
-                      $"akış −{rm.RoomDrain:0.0}    darbe/alım −{rm.RoomSpent:0.0}    " +
-                      $"NET {rm.RoomNet:+0.0;-0.0}", _small);
+                      $"akış −{rm.RoomDrain:0.0}    darbe −{rm.RoomHitCost:0.0}    " +
+                      $"sunak −{rm.RoomSpent:0.0}    NET {gerçekNet:+0.0;-0.0}" +
+                      (rm.RoomGranted > 0.05f ? $"    (test bağışı +{rm.RoomGranted:0.0} hariç)" : ""),
+                      _small);
             _small.normal.textColor = Color.white;
         }
 

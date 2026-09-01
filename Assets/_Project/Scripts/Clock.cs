@@ -76,10 +76,23 @@ namespace TekCan
         /// Diriliş: ölümü geri alır. YALNIZCA `RevivalSystem` çağırır — ölümün geri
         /// alınabilir olması bir eşyaya bağlı, keyfî değil.
         /// </summary>
+        /// <summary>
+        /// Dövüşle KAZANILMAMIŞ, dışarıdan verilen zaman: diriliş eşyaları ve test
+        /// kısayolu (F5).
+        ///
+        /// ⚠️ Oda hesabı bunu bilmek ZORUNDA. Bilmezse "akış" negatif çıkar:
+        ///   akış = hasat + bağış − harcama − net
+        /// F5'e basılan bir oda ölçüm olarak çöp olurdu ve o çöp sayılara göre
+        /// ayar yapardık.
+        /// </summary>
+        public float TotalGranted { get; private set; }
+
         public void Revive(float seconds)
         {
+            float yeni = Mathf.Max(0.5f, seconds);   // 0 ile dirilmek anında tekrar ölmek demek
+            TotalGranted += Mathf.Max(0f, yeni - Seconds);
             Dead = false;
-            Seconds = Mathf.Max(0.5f, seconds);   // 0 ile dirilmek anında tekrar ölmek demek
+            Seconds = yeni;
             LastGainAt = -99f;
         }
 
@@ -159,10 +172,21 @@ namespace TekCan
         }
 
         /// <summary>Darbe yemek ve satın almak aynı kapıdan geçer — ikisi de saniye götürür.</summary>
-        public void Spend(float seconds)
+        /// <summary>
+        /// Yenen darbelerin toplam bedeli. ⚠️ `TotalSpent` yalnızca SUNAK alımlarını
+        /// sayıyor; darbeler hiçbir sayaca yazılmıyordu ve oda hesabında "akış"a
+        /// karışıyordu — yani "dövüş mü pahalı, oyalanmak mı" sorusu cevaplanamıyordu.
+        /// Tam olarak ayırmak istediğimiz iki şeydi.
+        /// </summary>
+        public float TotalHitCost { get; private set; }
+
+        /// <param name="fromHit">Yenen darbe mi (ayrı sayaca yazılır) yoksa aura/akış mı.</param>
+        public void Spend(float seconds, bool fromHit = false)
         {
             if (Dead) return;
-            Seconds -= Mathf.Max(0f, seconds);
+            float x = Mathf.Max(0f, seconds);
+            Seconds -= x;
+            if (fromHit) TotalHitCost += x;
             CheckDeath();
         }
 

@@ -35,7 +35,7 @@ namespace TekCan
         // yorumlayacağım" dedi — ama "azaldı" tek başına teşhis değil. Zamanın
         // NEREYE gittiğini ayırmak lazım: hasat mı yetmedi, akış mı yedi,
         // darbe mi pahalıydı. `ZorlukEgrisi` raporunun canlı karşılığı.
-        float _girişSaat, _girişHasat, _girişHarcama;
+        float _girişSaat, _girişHasat, _girişHarcama, _girişBağış, _girişDarbe;
 
         /// <summary>Odaya girerken saat kaçtı, temizlendiğinde kaça düştü.</summary>
         public float RoomNet { get; private set; }
@@ -52,7 +52,15 @@ namespace TekCan
             _girişSaat = c.Seconds;
             _girişHasat = c.TotalHarvested;
             _girişHarcama = c.TotalSpent;
+            _girişBağış = c.TotalGranted;
+            _girişDarbe = c.TotalHitCost;
         }
+
+        /// <summary>Bu odada dışarıdan verilen zaman (F5 ya da diriliş eşyası).</summary>
+        public float RoomGranted { get; private set; }
+
+        /// <summary>Bu odada YENEN DARBELERİN bedeli — sunak alımından ayrı.</summary>
+        public float RoomHitCost { get; private set; }
 
         void CloseLedger()
         {
@@ -62,13 +70,21 @@ namespace TekCan
             RoomNet = c.Seconds - _girişSaat;
             RoomHarvest = c.TotalHarvested - _girişHasat;
             RoomSpent = c.TotalSpent - _girişHarcama;
-            // Akış hiçbir sayaca yazılmıyor; kalandan çıkarılıyor.
-            RoomDrain = RoomHarvest - RoomSpent - RoomNet;
+            RoomGranted = c.TotalGranted - _girişBağış;
+            RoomHitCost = c.TotalHitCost - _girişDarbe;
+
+            // ⚠️ Akış hiçbir sayaca yazılmıyor, KALANDAN çıkarılıyor. Bu yüzden diğer
+            // bütün kalemler doğru sayılmak zorunda: bağış (F5) katılmazsa akış NEGATİF
+            // çıkar, darbe ayrılmazsa akışa karışır ve "oyalanmak mı pahalı, dövüş mü"
+            // sorusu cevaplanamaz. Ölçüm aracının kendisi de doğru olmalı.
+            RoomDrain = RoomHarvest + RoomGranted - RoomSpent - RoomHitCost - RoomNet;
             RoomClosedAt = Time.unscaledTime;
 
+            string bağış = RoomGranted > 0.05f ? $" · ⚠️ bağış +{RoomGranted:0.0} (test)" : "";
             Debug.Log($"[ODA HESABI] bölge {RegionIndex + 1} oda {Room} ({Layout.Name}) — " +
                       $"hasat +{RoomHarvest:0.0} · akış −{RoomDrain:0.0} · " +
-                      $"darbe/alım −{RoomSpent:0.0} · NET {RoomNet:+0.0;-0.0}");
+                      $"darbe −{RoomHitCost:0.0} · sunak −{RoomSpent:0.0} · " +
+                      $"NET {RoomNet - RoomGranted:+0.0;-0.0}" + bağış);
         }
 
         public bool IsBossRoom => Room >= _t.roomsPerRegion;

@@ -125,6 +125,40 @@ namespace TekCan.EditorTools
 
             KillAll();
             Object.DestroyImmediate(root);
+            Clock.Reset(); RoomManager.Reset();
+
+            // ── 8) ⚠️ ODA HESABI DOĞRU MU — ölçüm aracının kendisi de ölçülmeli ──
+            //    Enes zorluğu BU SAYILARA bakarak yorumlayacak. Bozuk olurlarsa
+            //    bozuk sayılara göre ayar yaparız.
+            //    ⚠️ Bu blok EN SONDA: `SaveFile`'ı ve `RoomManager`'ı sıfırlıyor,
+            //    yukarıdaki checkpoint kontrolünün önüne konsaydı onu bozardı
+            //    (ilk yazımda tam olarak öyle oldu).
+            SaveFile.UseInMemory(new SaveData());
+            var rootL = new GameObject("hesap-check");
+            var oyuncuL = new GameObject("p"); oyuncuL.transform.SetParent(rootL.transform);
+            var clockL = rootL.AddComponent<Clock>();
+            clockL.Init(t, oyuncuL.transform, 100f);
+            var rmL = rootL.AddComponent<RoomManager>();
+            rmL.Init(t, oyuncuL.transform, null);
+
+            float bağışÖnce = clockL.TotalGranted;
+            clockL.Revive(300f);                            // F5 taklidi
+            failed += Check(ref total, "⚠️ bağış SAYACA yazılıyor",
+                            clockL.TotalGranted > bağışÖnce + 100f,
+                            clockL.TotalGranted - bağışÖnce);
+
+            clockL.Spend(20f, fromHit: true);               // yenen darbe
+            KillAll(); Tick(rmL);                           // odayı temizle → hesap kapansın
+
+            failed += Check(ref total, "⚠️ F5'ten sonra bile AKIŞ negatif değil",
+                            rmL.RoomDrain >= -0.01f, rmL.RoomDrain);
+            failed += Check(ref total, "bağış oda hesabına yazıldı",
+                            rmL.RoomGranted > 100f, rmL.RoomGranted);
+            failed += Check(ref total, "⚠️ DARBE ayrı sayılıyor (akışa karışmıyor)",
+                            Mathf.Abs(rmL.RoomHitCost - 20f) < 0.5f, rmL.RoomHitCost);
+
+            KillAll();
+            Object.DestroyImmediate(rootL);
             Object.DestroyImmediate(t);
             Region.Reset(); Clock.Reset(); RoomManager.Reset();
 
