@@ -73,7 +73,8 @@ namespace TekCan
             DrawAltarPrompt();
 
             GUI.Label(new Rect(12f, Screen.height - 26f, 900f, 20f),
-                "WASD · Sol tık saldırı · Shift/Space dash · dash+saldırı = DASH-ATAK · E sunak · 1-4 silah · B boss · N bölge (test)", _small);
+                "WASD · Sol tık · Shift/Space dash · dash+saldırı = DASH-ATAK · E sunak · 1-4 silah" +
+                "   ‖ TEST: B boss · N bölge · F5 saati doldur · F1-F4 profil", _small);
         }
 
         void DrawClock()
@@ -109,6 +110,7 @@ namespace TekCan
             GUI.Label(r, $"hasat %{_clock.HarvestRate * 100f:0}   ·   hasar {_clock.AttackDamage:0.0}", _small);
 
             DrawRevivals();
+            DrawRoomLedger();
             DrawBossPhase();
             DrawWeaponBar();
             DrawProfile();
@@ -170,6 +172,32 @@ namespace TekCan
                           "GEÇİCİ DÖNÜŞ  ·  ODAYI TEMİZLE", _mid);
                 _mid.normal.textColor = Color.white;
             }
+        }
+
+        /// <summary>
+        /// Oda temizlenince HESABI gösterir. ⚠️ ÖLÇÜM ARACI — gerçek oyunda kalkacak.
+        ///
+        /// "Zaman azaldı" tek başına teşhis değil. Nereye gittiğini ayırmak lazım:
+        /// hasat mı yetmedi, akış mı yedi, darbe mi pahalıydı. `ZorlukEgrisi`
+        /// raporunun canlı karşılığı — modelin gerçekle uyuşup uyuşmadığı da
+        /// buradan görülüyor.
+        /// </summary>
+        void DrawRoomLedger()
+        {
+            var rm = RoomManager.Instance;
+            if (rm == null) return;
+
+            float since = Time.unscaledTime - rm.RoomClosedAt;
+            if (since > 6f) return;                       // oda geçişine kadar durur
+
+            bool kâr = rm.RoomNet >= 0f;
+            _small.normal.textColor = kâr ? new Color(0.5f, 1f, 0.6f) : new Color(1f, 0.65f, 0.5f);
+
+            GUI.Label(new Rect(0f, Screen.height * 0.36f, Screen.width, 22f),
+                      $"ODA HESABI    hasat +{rm.RoomHarvest:0.0}    " +
+                      $"akış −{rm.RoomDrain:0.0}    darbe/alım −{rm.RoomSpent:0.0}    " +
+                      $"NET {rm.RoomNet:+0.0;-0.0}", _small);
+            _small.normal.textColor = Color.white;
         }
 
         /// <summary>

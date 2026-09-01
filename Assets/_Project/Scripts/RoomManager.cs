@@ -30,6 +30,47 @@ namespace TekCan
         /// <summary>1'den başlar. Bölgedeki kaçıncı oda.</summary>
         public int Room { get; private set; }
 
+        // ── ODA HESABI ───────────────────────────────────────────────────────
+        // ⚠️ Ölçüm aracı, oyun mekaniği değil. Enes "giden zamana bakarak
+        // yorumlayacağım" dedi — ama "azaldı" tek başına teşhis değil. Zamanın
+        // NEREYE gittiğini ayırmak lazım: hasat mı yetmedi, akış mı yedi,
+        // darbe mi pahalıydı. `ZorlukEgrisi` raporunun canlı karşılığı.
+        float _girişSaat, _girişHasat, _girişHarcama;
+
+        /// <summary>Odaya girerken saat kaçtı, temizlendiğinde kaça düştü.</summary>
+        public float RoomNet { get; private set; }
+        public float RoomHarvest { get; private set; }
+        public float RoomSpent { get; private set; }
+        /// <summary>Sadece zamanın geçmesiyle giden — akış + aura.</summary>
+        public float RoomDrain { get; private set; }
+        public float RoomClosedAt { get; private set; } = -99f;
+
+        void OpenLedger()
+        {
+            var c = Clock.Instance;
+            if (c == null) return;
+            _girişSaat = c.Seconds;
+            _girişHasat = c.TotalHarvested;
+            _girişHarcama = c.TotalSpent;
+        }
+
+        void CloseLedger()
+        {
+            var c = Clock.Instance;
+            if (c == null) return;
+
+            RoomNet = c.Seconds - _girişSaat;
+            RoomHarvest = c.TotalHarvested - _girişHasat;
+            RoomSpent = c.TotalSpent - _girişHarcama;
+            // Akış hiçbir sayaca yazılmıyor; kalandan çıkarılıyor.
+            RoomDrain = RoomHarvest - RoomSpent - RoomNet;
+            RoomClosedAt = Time.unscaledTime;
+
+            Debug.Log($"[ODA HESABI] bölge {RegionIndex + 1} oda {Room} ({Layout.Name}) — " +
+                      $"hasat +{RoomHarvest:0.0} · akış −{RoomDrain:0.0} · " +
+                      $"darbe/alım −{RoomSpent:0.0} · NET {RoomNet:+0.0;-0.0}");
+        }
+
         public bool IsBossRoom => Room >= _t.roomsPerRegion;
         public bool Cleared { get; private set; }
         public RoomLayout Layout { get; private set; }
@@ -108,6 +149,7 @@ namespace TekCan
 
             if (SkipToBossPressed()) { EnterRoom(_t.roomsPerRegion); return; }
             if (SkipRegionPressed()) { EnterRegion(RegionIndex + 1); return; }
+            if (RefillClockPressed()) RefillClock();
 
             if (Cleared || AnyEnemyAlive()) return;
             OnCleared();
@@ -116,6 +158,7 @@ namespace TekCan
         void OnCleared()
         {
             Cleared = true;
+            CloseLedger();
 
             // ⚠️ Koşu YALNIZCA son bölgenin boss'u düşünce kazanılıyor. Öncekilerde
             // boss ölünce bölge biter ve çıkış açılır — zincir devam eder.
@@ -172,6 +215,7 @@ namespace TekCan
             // "buraya kadar geldin", "burayı da bitirdin" değil.
             if (IsCheckpointRoom) SaveCheckpoint();
 
+            OpenLedger();
             IsoCamera.Shake(_t.hitShake * 0.6f);
         }
 
@@ -279,6 +323,35 @@ namespace TekCan
         {
             var kb = Keyboard.current;
             return kb != null && kb.nKey.wasPressedThisFrame;
+        }
+
+        /// <summary>
+        /// F5 — saati başlangıç değerine doldur. TEST KISAYOLU, gerçek oyunda kalkacak.
+        ///
+        /// ⚠️ Zorluk AYARI DEĞİL, ölçüm aracı: Enes bütün içeriği ölmeden görüp
+        /// "giden zamana bakarak" yorumlayacak. Akış hızı bozulmuyor — sadece
+        /// koşu ölümle kesilmiyor. Ayar yapsaydık ölçtüğümüz şeyi değiştirirdik.
+        /// </summary>
+        static bool RefillClockPressed()
+        {
+            var kb = Keyboard.current;
+            return kb != null && kb.f5Key.wasPressedThisFrame;
+        }
+
+        /// <summary>
+        /// ⚠️ `startSeconds` DEĞİL — o Enes'in ayarı ve sonra ölçeceğimiz şey.
+        /// Onu yükseltmek ölçtüğümüz şeyi bozardı. Bu ayrı bir test sayısı.
+        /// </summary>
+        const float TestRefillSeconds = 300f;
+
+        void RefillClock()
+        {
+            var c = Clock.Instance;
+            if (c == null) return;
+            c.Revive(TestRefillSeconds);
+            Sfx.Buy();
+            Debug.Log($"[TEST] saat dolduruldu → {TestRefillSeconds:0} sn " +
+                      "(ayar değil, ölçüm sürsün diye)");
         }
 
         /// <summary>
