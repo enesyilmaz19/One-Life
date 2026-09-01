@@ -140,6 +140,12 @@ namespace TekCan
         public float roomPoolGrowth = 1.18f;
 
         [Header("── BOSS TÜRLERİ (Faz 12) ──")]
+        [Tooltip("SİMSAR: durduğun yere bıraktığı işaretin yarıçapı")]
+        public float groundMarkRadius = 2.6f;
+        [Tooltip("SİMSAR: işaret kaç saniye sonra patlıyor — çıkmaya yetmeli")]
+        public float groundMarkDelay = 1.3f;
+        [Tooltip("SİMSAR: işaretin bedeli, normal darbeye çarpan")]
+        public float groundMarkCostMultiplier = 0.9f;
         [Tooltip("MURABAHACI faz 2: vurmadığın her saniye havuzunu bu kadar geri sarar. " +
                  "Kredi doldurmak hasat vermiyor — sadece dövüşü uzatıyor.")]
         public float usurerRegenPerSecond = 6f;

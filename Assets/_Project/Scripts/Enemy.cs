@@ -279,9 +279,12 @@ namespace TekCan
                 PickAttack();
             }
 
-            float dur = WindupDuration
-                      * (_attack != null ? _attack.WindupMul
-                                         : (_slamming ? _t.bossSlamWindupMultiplier : 1f));
+            // ⚠️ MUTLAK süre çarpanı EZER: konum değiştirten saldırılara (güvenli açıklık,
+            // simit) çarpan vermek yetmiyordu — boss hazırlıkları ~0.2 sn ve
+            // "yeşil alana geçecek kadar süre kalmıyordu" (Enes).
+            float dur = _attack != null && _attack.WindupSeconds > 0f
+                      ? _attack.WindupSeconds
+                      : WindupDuration * (_attack?.WindupMul ?? 1f);
             EnterState(State.Windup, dur);
             FacePlayer();
 
@@ -329,7 +332,25 @@ namespace TekCan
             }
 
             var liste = Boss.Attacks(Phase);
-            SetAttack(liste[Mathf.Abs(_attackCount - 1) % liste.Length]);
+            float mesafe = FlatDistanceToPlayer();
+
+            // ⚠️ MESAFE FİLTRESİ. Enes: "dash attack yaparken olduğum yerde durunca
+            // misliyor — uzaktayken dash attack yapsın, yakındayken normal vursun."
+            // Hamleli saldırı yakından yapılınca oyuncunun ÜSTÜNDEN aşıyordu.
+            // Sıra korunuyor: uygun olan İLK saldırıdan itibaren dönülüyor,
+            // böylece determinizm bozulmuyor.
+            int başlangıç = Mathf.Abs(_attackCount - 1) % liste.Length;
+            for (int i = 0; i < liste.Length; i++)
+            {
+                var aday = liste[(başlangıç + i) % liste.Length];
+                if (aday.MinPlayerRange > 0f && mesafe < aday.MinPlayerRange) continue;
+                if (aday.MaxPlayerRange > 0f && mesafe > aday.MaxPlayerRange) continue;
+                SetAttack(aday);
+                return;
+            }
+
+            // Hiçbiri uymadıysa sıradakini yine de kullan — saldırısız kalmasın.
+            SetAttack(liste[başlangıç]);
         }
 
         /// <summary>Saldırıyı kur — tekrar ve zincir durumu tek yerden ayarlanıyor.</summary>
@@ -342,6 +363,7 @@ namespace TekCan
         }
 
         BossAttack _chained;
+        float _markTimer;
 
         void EnterStrike()
         {
@@ -542,6 +564,28 @@ namespace TekCan
                 {
                     TimeLeft = Mathf.Min(_startingPool, TimeLeft + regen * dt);
                     if (_label != null) _label.Set(TimeLeft, Hollow);
+                }
+            }
+
+            // ⚠️ SİMSAR: oyuncunun DURDUĞU YERE gecikmeli patlama bırakıyor.
+            // Diğer boss'ların hepsi oyuncuya GİDİYOR, yani "dur ve vur" geçerli
+            // kalıyordu (Enes 1200 saniyeye öyle çıktı). Bu, ona gelmiyor —
+            // durduğu yere geliyor. Tek cevabı hareket etmek.
+            if (Boss != null && _player != null)
+            {
+                float aralık = Boss.GroundMarkInterval(Phase);
+                if (aralık > 0f)
+                {
+                    _markTimer -= dt;
+                    if (_markTimer <= 0f)
+                    {
+                        _markTimer = aralık;
+                        GroundMark.Spawn(_t, _player.position, _player,
+                                         radius: _t.groundMarkRadius,
+                                         delay: _t.groundMarkDelay,
+                                         cost: HitCost * _t.groundMarkCostMultiplier,
+                                         parent: transform.parent);
+                    }
                 }
             }
 

@@ -35,8 +35,21 @@ namespace TekCan.EditorTools
             Region.Reset();
 
             // ── 1) Dört boss ve hepsi farklı ──
-            failed += Check(ref total, "dört boss tanımlı", BossKind.All.Length == 4,
-                            BossKind.All.Length);
+            // ⚠️ Gerçek kural "dört boss" değil, HER BÖLGENİN KENDİ BOSS'U olması.
+            //    Önceki hâl 4'ü sabitliyordu ve 5 bölge varken son ikisi AYNI boss'u
+            //    alıyordu (`For` son elemana kırpıyor) — testler yeşilken Enes oyunda
+            //    fark etti. Sayı değil, EŞLEŞME sınanmalı.
+            var t2 = ScriptableObject.CreateInstance<Tuning>();
+            int bölgeSayısı = t2.regionsPerAct;
+            Object.DestroyImmediate(t2);
+
+            failed += Check(ref total, "⚠️ HER BÖLGEYE bir boss var (kırpılma yok)",
+                            BossKind.All.Length >= bölgeSayısı, BossKind.All.Length);
+
+            var görülen = new System.Collections.Generic.HashSet<BossKind>();
+            for (int i = 0; i < bölgeSayısı; i++) görülen.Add(BossKind.For(i));
+            failed += Check(ref total, "⚠️ iki bölge AYNI boss'u paylaşmıyor",
+                            görülen.Count == bölgeSayısı, görülen.Count);
             int aynı = 0;
             for (int a = 0; a < BossKind.All.Length; a++)
                 for (int b = a + 1; b < BossKind.All.Length; b++)
@@ -279,7 +292,40 @@ namespace TekCan.EditorTools
                 failed += Check(ref total, "zincirin ikinci halkası FARKLI soru soruyor",
                                 Soru(zincirli) != Soru(zincirli.Then), 1);
 
-            // ── 14) Bölge → boss eşlemesi ──
+            // ── 14) ⚠️ MESAFE FİLTRESİ — hamleli saldırı YAKINDAN seçilmiyor ──
+            //    Enes: "dash attack yaparken olduğum yerde durunca misliyor."
+            //    Hamle oyuncunun üstünden aşıyordu.
+            int filtresizHamle = 0;
+            foreach (var a in TümSaldırılar())
+                if (a.Lunge > 2f && a.MinPlayerRange <= 0f) filtresizHamle++;
+            failed += Check(ref total, "⚠️ büyük HAMLELİ saldırıların hepsinde mesafe şartı var",
+                            filtresizHamle == 0, filtresizHamle);
+
+            // ── 15) ⚠️ KONUM DEĞİŞTİRTEN saldırılar GERÇEK süre veriyor ──
+            //    Enes: "yeşil alana geçecek kadar süre kalmıyor, çok hızlı iniyor."
+            //    Çarpan yetmiyordu — boss hazırlıkları ~0.2 sn.
+            int kısaKonum = 0;
+            foreach (var a in TümSaldırılar())
+                if ((a.SafeAngle > 0f || a.InnerRadius > 0f) && a.WindupSeconds < 0.9f) kısaKonum++;
+            failed += Check(ref total, "⚠️ simit/açıklık saldırıları ≥0.9 sn MUTLAK hazırlık veriyor",
+                            kısaKonum == 0, kısaKonum);
+
+            // ── 16) ⚠️ SİMSAR "dur ve vur"u cezalandırıyor ──
+            var simsar = Bul("SİMSAR");
+            failed += Check(ref total, "SİMSAR tanımlı", simsar.Name == "SİMSAR", 1);
+            failed += Check(ref total, "⚠️ SİMSAR durduğun YERE işaret bırakıyor",
+                            simsar.GroundMarkInterval(1) > 0f, simsar.GroundMarkInterval(1));
+            failed += Check(ref total, "faz 2'de daha SIK bırakıyor",
+                            simsar.GroundMarkInterval(2) < simsar.GroundMarkInterval(1),
+                            simsar.GroundMarkInterval(2));
+
+            int işaretsiz = 0;
+            foreach (var b in BossKind.All)
+                if (b != simsar && b.GroundMarkInterval(2) > 0f) işaretsiz++;
+            failed += Check(ref total, "yer işareti SİMSAR'a özel (kimlik dağılmıyor)",
+                            işaretsiz == 0, işaretsiz);
+
+            // ── 17) Bölge → boss eşlemesi ──
             bool eşleşme = true;
             for (int i = 0; i < BossKind.All.Length; i++)
                 if (BossKind.For(i) != BossKind.All[i]) eşleşme = false;
@@ -317,6 +363,21 @@ namespace TekCan.EditorTools
             var sb = new System.Text.StringBuilder();
             foreach (var a in xs) sb.Append(a.Name).Append(':').Append(Soru(a)).Append('|');
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Bütün boss'ların bütün fazlarındaki bütün saldırılar — ZİNCİRLENMİŞ olanlar
+        /// DÂHİL. ⚠️ Zinciri atlayan bir tarama, `Then` içine gizlenmiş bir hatayı
+        /// göremezdi; ilk yazımda tam olarak öyleydi.
+        /// </summary>
+        static System.Collections.Generic.List<BossAttack> TümSaldırılar()
+        {
+            var liste = new System.Collections.Generic.List<BossAttack>();
+            foreach (var b in BossKind.All)
+                for (int f = 1; f <= 2; f++)
+                    foreach (var a in b.Attacks(f))
+                        for (var x = a; x != null; x = x.Then) liste.Add(x);
+            return liste;
         }
 
         static BossAttack İlkAçıklık(BossAttack[] xs)

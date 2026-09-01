@@ -107,7 +107,19 @@ namespace TekCan
             GUI.Label(r, _clock.InCombat ? "dövüşte" : "DÖVÜŞ DIŞI — saat hızlı iniyor", _small);
 
             r.y += 24f;
-            GUI.Label(r, $"hasat %{_clock.HarvestRate * 100f:0}   ·   hasar {_clock.AttackDamage:0.0}", _small);
+
+            // ⚠️ GERÇEK hasat gösteriliyor — bölge kuralı ve boss cezası dâhil.
+            // Enes "EKSPER ne yapıyordu?" diye sordu: mekaniği GÖRÜNMÜYORDU.
+            // Ham oranı göstermek yalan söylüyordu; artık kesinti ekranda.
+            float kesinti = Region.Harvest * BossKind.ActiveHarvestMultiplier();
+            float gerçek = _clock.HarvestRate * kesinti;
+            bool kesintili = kesinti < 0.999f;
+
+            if (kesintili) _small.normal.textColor = new Color(1f, 0.6f, 0.4f);
+            GUI.Label(r, $"hasat %{gerçek * 100f:0}" +
+                         (kesintili ? $"  (%{_clock.HarvestRate * 100f:0} → KESİNTİDE)" : "") +
+                         $"   ·   hasar {_clock.AttackDamage:0.0}", _small);
+            _small.normal.textColor = Color.white;
 
             DrawRevivals();
             DrawRoomLedger();
