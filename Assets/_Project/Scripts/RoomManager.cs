@@ -62,6 +62,16 @@ namespace TekCan
         /// <summary>Bu odada YENEN DARBELERİN bedeli — sunak alımından ayrı.</summary>
         public float RoomHitCost { get; private set; }
 
+        /// <summary>
+        /// Bu odada kaç RÜTBELİ düşman vardı (ZIRHLI/İRİ).
+        ///
+        /// ⚠️ Defterin bunu söylemesi ŞART. Enes odaları *"giden zamana bakarak"*
+        /// yorumluyor; ağır oda daha çok saniye yer ve bunu söyleyen bir şey olmazsa
+        /// o fark zorluk eğrisi sanılır. Ölçüm aracının eksik bıraktığı şey, teşhisi
+        /// bozar — bu projede iki kez yanlış teşhise buradan gidildi.
+        /// </summary>
+        public int RoomElites { get; private set; }
+
         void CloseLedger()
         {
             var c = Clock.Instance;
@@ -81,10 +91,13 @@ namespace TekCan
             RoomClosedAt = Time.unscaledTime;
 
             string bağış = RoomGranted > 0.05f ? $" · ⚠️ bağış +{RoomGranted:0.0} (test)" : "";
-            Debug.Log($"[ODA HESABI] bölge {RegionIndex + 1} oda {Room} ({Layout.Name}) — " +
+            string ağır = RoomElites > 0 ? $" · ⚠️ AĞIR ODA ({RoomElites} rütbeli)" : "";
+            Debug.Log($"[ODA HESABI] bölge {RegionIndex + 1} oda {Room} ({Layout.Name}){ağır} — " +
                       $"hasat +{RoomHarvest:0.0} · akış −{RoomDrain:0.0} · " +
                       $"darbe −{RoomHitCost:0.0} · sunak −{RoomSpent:0.0} · " +
                       $"NET {RoomNet - RoomGranted:+0.0;-0.0}" + bağış);
+            // ⚠️ Ağır oda ETİKETİ NET'in yanında duruyor: kötü bir NET gördüğünde
+            // "eğri mi sertleşti, oda mı ağırdı" sorusu aynı satırda cevaplanıyor.
         }
 
         public bool IsBossRoom => Room >= _t.roomsPerRegion;
@@ -267,10 +280,15 @@ namespace TekCan
             int count = Mathf.RoundToInt(_t.roomBaseCount + _t.roomCountGrowth * (Room - 1));
             float poolMult = Mathf.Pow(_t.roomPoolGrowth, Room - 1);
 
+            RoomElites = 0;
             for (int i = 0; i < count; i++)
+            {
+                var rütbe = PickRank(Room, i);
+                if (rütbe.IsElite) RoomElites++;
                 Bootstrap.SpawnEnemyAt(_t, Layout.Position(_t, i, count), _player, _cam,
                                        poolMult, boss: false, kind: PickKind(Room, i),
-                                       parent: _roomRoot.transform, rank: PickRank(Room, i));
+                                       parent: _roomRoot.transform, rank: rütbe);
+            }
         }
 
         void PlaceBoss()
