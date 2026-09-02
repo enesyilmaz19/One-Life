@@ -67,6 +67,30 @@ namespace TekCan.EditorTools
                 overridden.Add($"  {f.Name,-28} C#={c,-10} ÇALIŞAN={a}");
             }
 
+            // ⚠️ İKİNCİ SORU — "hangi alanlar asset'te HİÇ YOK".
+            //
+            // Yukarıdaki karşılaştırma bunları göremez: asset'te olmayan alan zaten
+            // C# değeriyle yükleniyor, yani fark ÇIKMIYOR ve denetim "uyumlu" diyor.
+            // Ama o alanlarda kural TERSİNE İŞLİYOR: CLAUDE.md "C#'ten değiştirmek
+            // işe yaramaz, asset ezer" diyor — asset'te YOKSA C# değişikliği
+            // uygulanıyor. Denetimin bütün amacı sessiz sapmayı imkânsız kılmak;
+            // bu asimetri tam da sessiz kalıyordu.
+            //
+            // Dosya METİN olarak okunuyor: `SerializedObject` tipten üretildiği için
+            // eksik alanı da varmış gibi gösterir, yani sorulan soruyu cevaplayamaz.
+            var eksik = new List<string>();
+            string yaml = System.IO.File.Exists(AssetPath) ? System.IO.File.ReadAllText(AssetPath) : "";
+            if (yaml.Length > 0)
+                foreach (var f in typeof(Tuning).GetFields(BindingFlags.Public | BindingFlags.Instance))
+                    if (!yaml.Contains($"\n  {f.Name}:")) eksik.Add(f.Name);
+
+            if (eksik.Count > 0)
+                Debug.LogWarning(
+                    $"[Ayar denetimi] ℹ️ {eksik.Count} alan asset dosyasında YOK — bunlar C# " +
+                    "varsayılanıyla çalışıyor ve .cs'ten değiştirmek İŞE YARIYOR " +
+                    "(diğer alanların tersine). Inspector'dan düzenlersen asset'e yazılırlar " +
+                    $"ve o andan sonra .cs geçmez:\n  {string.Join(", ", eksik)}");
+
             if (overridden.Count == 0)
                 Debug.Log("[Ayar denetimi] ✅ Çalışan değerler C# varsayılanlarıyla uyumlu.");
             else

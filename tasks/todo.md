@@ -177,6 +177,36 @@ ve zamanlama kesinleşmeden alınan model çöpe gider. *(bedava, hiç çöpe gi
 
 ---
 
+## Faz 15 — Silah kadrosu ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR** (2026-09-02)
+
+> Enes: *"koni iyi, ceza veren silah iyi, diğerlerini değişebiliriz"* →
+> *"durgunu da silelim"* → *"faizli kalsın ve diğer silahları da yaz"*
+
+Tür ve boss'lara uygulanan *"her biri FARKLI SORU sormalı"* ölçüsü silahlara hiç
+uygulanmamıştı. Uygulanınca kadro yeniden kuruldu — **detay tablo `docs/TASARIM.md`**.
+
+- [x] **VADELİ silindi** — FAİZLİ ile imzası birebir aynı, ölçümde her düşman
+      sayısında geride (+2.8 / +5.9)
+- [x] **DURGUN silindi** (Enes kararı)
+- [x] **TAKSİT yazılmadan elendi** — vur-kaç-topla en iyi oyun oluyordu
+- [x] **HACİZ** — uzak, dar, tek hedef, **ölü bölge 3.2** (kırmızı halka görünüyor)
+- [x] **İPOTEK** — nişan noktasına gecikmeli alan vuruşu. `GroundMark` ters yönde
+- [x] **İFLAS** — saat düştükçe hasar ×0.70 → ×2.40
+- [x] **Silah çeşitliliği artık KAPI** — `SilahSorusu()`, `EnemyKind`/`BossKind`
+      denetimlerindeki ölçünün aynısı. Doğrulandı: FAİZLİ ↔ VADELİ imzası aynı çıkıyor
+- [x] Faz 3 öz-denetimi **52/52**
+
+### Yol boyunca yakalananlar
+
+| | |
+|---|---|
+| Silah tuşları **1-4 sabit** yazılıydı | 5. silah tanımlı olup ERİŞİLEMEZ olacaktı (ders 11) |
+| İFLAS eşikleri (120/25) **saat ölçeğine bakmadan** seçilmişti | Koşu 60'ta başlıyor → silah oyunun tamamında güçlü moddaydı. 60/15 |
+| Faz 3'ün genel testi **bütün silahların anında vurduğunu** varsayıyordu | İPOTEK gecikmeli, kırık görünüyordu — fixture artık gerçek davranışı ithal ediyor |
+| `FeedbackCapture` İPOTEK'i **koni gibi çiziyordu** | Yalanı yakalayan aracın kendisi yalan söylüyordu |
+
+---
+
 ## Faz 14 — Düşman rütbesi ⬅️ **KOD YAZILDI, PLAYTEST BEKLİYOR** (2026-09-02)
 
 > Enes: *"her odada çabuk ölen az canlı düşmanlar var; bazı odalarda zırhlı

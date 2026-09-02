@@ -41,7 +41,17 @@ hiçbir işe yaramaz, asset onu ezer.
   çalışır ve ayrışma varsa Console'a uyarı basar. (2026-08-24'te bir playtest seansı
   bu uyarı olmadığı için yanlış varsayımla geçti.)
 
-2026-08-24'te tam senkron yapıldı; asset artık 55 alanın hepsini içeriyor.
+⚠️ **Kuralın istisnası — asset'te HENÜZ OLMAYAN alanlar.** 2026-08-24'te tam senkron
+yapılmıştı, ama Faz 8–15'te eklenen alanlar asset'e hiç yazılmadı: **99 alanın 34'ü
+dosyada yok** (araç sayıyor, tahmin değil). O alanlarda kural TERSİNE işliyor — asset
+ezecek bir kayıt taşımadığı için **.cs değişikliği uygulanıyor.** Oda/bölge büyümesi,
+düşman rütbesi, checkpoint/diriliş, Faz 13 tür kancaları ve HACİZ / İPOTEK / İFLAS
+kadranlarının **hepsi** bu grupta — yani ayar oturumunun kadranlarının çoğu.
+
+`TuningAudit` artık hangi alanların dosyada olmadığını da yazıyor. Inspector'dan bir
+kere düzenlersen asset'e yazılır ve o andan sonra normal kurala döner.
+**`Ayarları senkronla`yı çalıştırma** — tek yönlü ve TOPLU, Inspector'da ayarlanmış
+80 alanın hepsini C# varsayılanına geri çeker.
 
 ## Doğrulama — tek komut
 
