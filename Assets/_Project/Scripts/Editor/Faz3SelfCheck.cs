@@ -47,6 +47,8 @@ namespace TekCan.EditorTools
                 BindingFlags.NonPublic | BindingFlags.Instance);
             var dashStrike = typeof(PlayerController).GetMethod("DashStrike",
                 BindingFlags.NonPublic | BindingFlags.Instance);
+            var startAttack = typeof(PlayerController).GetMethod("StartAttack",
+                BindingFlags.NonPublic | BindingFlags.Instance);
 
             // ── 1) KONİ üç düşmanın üçüne birden vurur ──
             SpawnThree(t, pGo.transform);
@@ -168,6 +170,34 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️ DASH-ATAK ölü bölgeyi tanımıyor (dibe girene CEVAP var)",
                             dipteki.TimeLeft < diptekiÖnce - 0.001f, diptekiÖnce - dipteki.TimeLeft);
 
+            // (d) ⚠️ ÖLÜ BÖLGE GERÇEKTEN ÇİZİLİYOR MU — mekanik değil GÖRSEL ──
+            //     Vuruşun düştüğünü ölçmek YETMİYOR. Oyuncu dibindekine savurup
+            //     ıskaladığında sebebi EKRANDA görmeli; görmezse silah bozuk sanılır.
+            //     Bu projede "mekanik doğru, görsel yalan" üç kez çıktı — dördüncüsü
+            //     tam buradan gelirdi.
+            YaylariTemizle();
+            startAttack.Invoke(pc, new object[] { Vector3.forward });
+            var yaylar = Object.FindObjectsByType<Arc>(FindObjectsInactive.Include);
+
+            failed += Check(ref total, "⚠️ HACİZ savurunca ÖLÜ BÖLGE HALKASI da çiziliyor",
+                            yaylar.Length == 2, yaylar.Length);
+
+            bool halkaDogruYerde = false;
+            foreach (var y in yaylar)
+                if (Mathf.Abs(y.Radius - haciz.MinRange(t)) < 0.01f) halkaDogruYerde = true;
+            failed += Check(ref total, "⚠️ halka TAM ölü bölgenin yarıçapında (görsel yalan söylemiyor)",
+                            halkaDogruYerde, haciz.MinRange(t));
+
+            // KONİ'de olmamalı — halka HACİZ'in kimliği, her savurmada çıkan süs değil
+            YaylariTemizle();
+            pc.SetWeapon(0);
+            startAttack.Invoke(pc, new object[] { Vector3.forward });
+            failed += Check(ref total, "KONİ'de halka YOK (kimlik dağılmıyor)",
+                            Object.FindObjectsByType<Arc>(FindObjectsInactive.Include).Length == 1,
+                            Object.FindObjectsByType<Arc>(FindObjectsInactive.Include).Length);
+            YaylariTemizle();
+            pc.SetWeapon(hacizIndex);
+
             // ── 6b) ⚠️ HER SİLAHA TUŞLA ULAŞILABİLİYOR MU — ders 11'in silah hali ──
             //    Tuşlar 1-4 diye SABİT yazılıydı; kadro 5'e çıkınca beşinci silah
             //    tanımlı olup ERİŞİLEMEZ olacaktı. Tam Faz 13'teki yedinci tür hatası.
@@ -287,6 +317,13 @@ namespace TekCan.EditorTools
             foreach (var e in Enemy.All.ToArray())
                 if (e != null) Object.DestroyImmediate(e.gameObject);
             Enemy.All.Clear();
+        }
+
+        /// <summary>Sahnedeki yayları hemen al — ertelenmiş `Destroy` sayımı bozar (tuzak 1).</summary>
+        static void YaylariTemizle()
+        {
+            foreach (var a in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include))
+                Object.DestroyImmediate(a.gameObject);
         }
 
         static int Check(ref int total, string name, bool ok, float actual)

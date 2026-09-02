@@ -29,6 +29,18 @@ namespace TekCan
         MaterialPropertyBlock _mpb;      // her karede yenisini kurmak GC baskısı yapıyordu
         Color _color;
         float _life, _age;
+
+        /// <summary>
+        /// Çizildiği yarıçap ve renk — mesh'e gömülü oldukları için dışarıdan
+        /// okunamıyordu.
+        ///
+        /// ⚠️ Öz-denetimlerin GÖRSELİ ölçebilmesi için açık. Bu projede "mekanik
+        /// doğru, görsel yalan" hatası ÜÇ KEZ çıktı (sessiz ses, yanlış tarafa
+        /// çizilen güvenli dilim, görünmeyen ölü bölge). Görseli test edememek
+        /// o hatanın dördüncüsünü davet ediyordu.
+        /// </summary>
+        public float Radius { get; private set; }
+        public Color Color => _color;
         float _scaleFrom = 1f, _scaleTo = 1f;
         float _followYaw;
 
@@ -64,6 +76,7 @@ namespace TekCan
             arc._mr = mr;
             arc._mpb = new MaterialPropertyBlock();
             arc._color = color;
+            arc.Radius = radius;
             arc._life = Mathf.Max(0.01f, life);
             arc._follow = follow;
             arc._scaleFrom = scaleFrom;
