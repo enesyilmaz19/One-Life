@@ -301,10 +301,9 @@ namespace TekCan
 
                 string mult = weapons[i].HarvestMultiplier > 1.001f
                     ? $"×{weapons[i].HarvestMultiplier:0.0}" : "";
-                // Menzilli silah "tek" yazsaydı KONİ'den tek farkı hedef sayısı sanılırdı;
-                // oysa onu ayıran şey MESAFE. Etiket silahın kimliğini söylemeli.
-                string tek = weapons[i].MinRange(_t) > 0f ? "menzil"
-                           : weapons[i].MaxTargets == 1 ? "tek" : "koni";
+                // Etiket silahın KENDİ verisinden türüyor (`Weapon.Category`) —
+                // burada ayrı bir sınıflandırma yazsaydım silah değişince eskirdi.
+                string tek = weapons[i].Category(_t);
 
                 GUI.Label(new Rect(x + i * w, y, w, 40f),
                           $"{i + 1}  {weapons[i].Name}\n{tek} {mult}", _small);

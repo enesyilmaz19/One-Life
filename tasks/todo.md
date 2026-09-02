@@ -10,7 +10,26 @@
 - [x] ✅ **Faz 10 playtest GEÇTİ** (2026-08-26) — bölgeler farklı hissettiriyor,
       zincir akıyor. **Zorluk çok yüksek, ayar ertelendi** *(Faz 10 bölümüne yazıldı)*
 
-### 🔴 SİLAH KARARI — Enes'in masasında (2026-09-02)
+### 🎮 FAZ 15 PLAYTEST — silah kadrosu (5/5 TAMAM)
+
+**1-5 tuşları.** DURGUN ve VADELİ gitti; HACİZ, İPOTEK, İFLAS geldi.
+
+- [ ] **HACİZ'in ölü bölgesi anlaşılıyor mu?** Yayın içinde kırmızı halka.
+      Dibine biri girince dash-atak cevabı **kendiliğinden akla geliyor mu**
+- [ ] **İPOTEK'le düşman vurabiliyor musun?** 0.85 sn gecikme — kaçıyorlar mı,
+      yoksa sana geldikleri için tahmin çok mu kolay
+- [ ] ⚠️ **İPOTEK kalabalıkta fazla mı güçlü?** Ölçüm 4 düşmanda koniyi geçiyor
+      (+15.8 / +11.1). Kaçma modellenmediği için üst sınır ama **bir numaralı şüpheli**
+- [ ] **İFLAS'ın eğrisi HİSSEDİLİYOR mu?** 60 sn'de ×0.7, 15 sn'de ×2.4.
+      Dibe inince gerçekten sertleşiyor mu, yoksa fark edilmiyor mu
+- [ ] ⚠️ **İFLAS'la bilerek dipte kalmak istiyor musun?** İstiyorsan tavan yüksek
+- [ ] **Beş silah gerçekten beş farklı oyun mu?** İkisi aynı hissediyorsa biri fazla
+
+⚠️ **Bilinen eksik:** İPOTEK'in yerleştirme noktası **imleçten** alınıyor. Kolda
+(gamepad) imleç yok, o yüzden hep azami menzile atıyor — mesafe seçilemiyor.
+Kol desteği gerekirse sağ çubuğun **basma miktarı** mesafeye bağlanır.
+
+### ✅ SİLAH KARARI — KAPANDI (2026-09-02)
 
 İki bulgu. Tür ve boss'lara uyguladığım *"her biri FARKLI SORU sormalı"* ölçüsünü
 silahlara hiç uygulamamışım.
@@ -33,9 +52,13 @@ VADELİ hiçbir düşman sayısında FAİZLİ'yi veya DURGUN'u geçmiyor — onu
 hiçbir durumu yok. Ayrıca kesişim ~2,5 düşman: odalar 3+ düşmanla başladığı için
 KONİ pratikte hep önde. Enes'in *"koni bir tık güçlü"*si burada görünüyor.
 
-- [ ] Hangi ceza silahı kalsın: **FAİZLİ** (önden öde, öldürünce 2× geri) mi
-      **VADELİ** (vuruştan sonra öde, ıskalasan da) mı
-- [ ] Boşalan iki yuvaya ne gelsin *(öneri: TAKSİT + HACİZ, mesajda)*
+- [x] **FAİZLİ kaldı, VADELİ silindi** (Enes kararı + ölçüm)
+- [x] **DURGUN silindi** — Enes: *"sadece akan zamanı durdurmak bir işimize yaramaz"*
+- [x] **TAKSİT yazılmadan elendi** — Enes anlatımı okuyunca sorunu gösterdi:
+      *"bir kere vuruyon sonra kite atıyon"*. En iyi oyun vur-kaç-topla oluyordu,
+      yani silah **dövüşmemeyi ödüllendiriyordu** — ve oyunun en okunur geri
+      bildirimini (vur → zaman sana akıyor) siliyordu
+- [x] **HACİZ · İPOTEK · İFLAS yazıldı** → kadro **5/5**
 
 ### 🎮 FAZ 14 PLAYTEST — zırhlı / iri düşmanlar
 

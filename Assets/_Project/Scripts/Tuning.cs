@@ -116,10 +116,31 @@ namespace TekCan
         public float singleTargetAngle = 45f;
         [Tooltip("FAİZLİ: her savurmanın peşin bedeli (saniye). Iska pahalı olsun diye var.")]
         public float faizliSwingCost = 0.5f;
-        [Tooltip("VADELİ: hasar çarpanı")]
-        public float vadeliDamageMult = 2.4f;
-        [Tooltip("VADELİ: vuruş İNDİKTEN sonra kesilen bedel (saniye)")]
-        public float vadeliCost = 1.4f;
+        // VADELİ kaldırıldı (2026-09-02): FAİZLİ ile aynı soruyu soruyordu ve
+        // `Denge simülasyonu`nda HER düşman sayısında geride kalıyordu (+2,8 / +5,9).
+        // `vadeliDamageMult` ve `vadeliCost` asset'te ölü anahtar olarak kalıyor —
+        // Unity tanımadığı anahtarı yok sayıyor, temizlemek için asset'i ezmek
+        // gerekirdi ve o da Inspector'daki bütün his ayarlarını silerdi.
+
+        [Tooltip("İPOTEK: yer vuruşunun olgunlaşma süresi (saniye). Kaçma penceresi bu.")]
+        public float ipotekDelay = 0.85f;
+        [Tooltip("İPOTEK: yer vuruşunun yarıçapı")]
+        public float ipotekRadius = 2.4f;
+        [Tooltip("İPOTEK: hasar çarpanı — gecikmeli ve kaçılabilir olduğu için yüksek")]
+        public float ipotekDamageMult = 1.6f;
+
+        // ⚠️ Bu iki eşik `startSeconds`e (60) GÖRE seçildi. İlk denemede 120/25
+        // yazmıştım — koşu 60'ta başladığı için silah OYUNUN TAMAMINDA güçlü
+        // moddaydı ve "güvendeyken zayıf" kimliği hiç ortaya çıkmıyordu.
+        // Denge simülasyonu ×1,77 gösterince yakalandı. Öz-denetim artık
+        // koşunun ZAYIF BANTTA başladığını gerçek asset'ten doğruluyor.
+        [Tooltip("İFLAS: bu saatin ÜSTÜNDE en zayıf hâlinde (saniye). " +
+                 "startSeconds'ten BÜYÜK olmamalı, yoksa silah baştan güçlü başlar.")]
+        public float iflasSafeSeconds = 60f;
+        [Tooltip("İFLAS: bu saatin ALTINDA en güçlü hâlinde (saniye)")]
+        public float iflasPanicSeconds = 15f;
+        [Tooltip("İFLAS: dipteki hasar çarpanı. Güvendeki çarpan 0.7 (silahın kimliği).")]
+        public float iflasMaxDamageMult = 2.4f;
 
         [Header("── DASH-ATAK (Faz 2) ──")]
         [Tooltip("Dash sırasında saldırıya basınca dash sonunda inen vuruşun hasar çarpanı")]

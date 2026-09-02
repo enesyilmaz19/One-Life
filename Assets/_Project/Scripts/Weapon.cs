@@ -50,6 +50,35 @@ namespace TekCan
         /// </summary>
         public virtual float MinRange(Tuning t) => 0f;
 
+        // ── YER VURUŞU (İPOTEK) ───────────────────────────────────────────────
+        // >0 ise savurma koni vurmaz: nişan noktasına GECİKMELİ bir alan vuruşu
+        // bırakır. Düşmanların gecikme boyunca kaçma şansı var — yani silah
+        // "nereye vuruyorum" değil "nereye GİDECEKLER" diye sordurur.
+
+        public virtual float GroundMarkDelay(Tuning t) => 0f;
+        public virtual float GroundMarkRadius(Tuning t) => 0f;
+
+        /// <summary>
+        /// Saat düştükçe hasar çarpanı (İFLAS). 1 = değişmiyor.
+        ///
+        /// ⚠️ Saniye DIŞARIDAN veriliyor, `Clock.Instance` okunmuyor. Sebep projenin
+        /// kendi kuralı: zaman güdümlü şey yazıyorsan girdiyi dışarıdan al, yoksa
+        /// editör modunda ETKİ ölçülemez, yalnızca ÖZELLİK sorulabilir. Denge
+        /// simülasyonu da bu sayede silahı gerçek eğrisiyle tarayabiliyor.
+        /// </summary>
+        public virtual float DesperationMultiplier(float seconds, Tuning t) => 1f;
+
+        /// <summary>
+        /// HUD etiketi — silahın kimliğini KENDİ verisinden türetiyor.
+        /// Ayrı bir `IsRanged`/`IsArea` bayrağı olsaydı asıl alanlardan ayrışır ve
+        /// etiket sessizce yalan söylemeye başlardı.
+        /// </summary>
+        public string Category(Tuning t) =>
+              GroundMarkDelay(t) > 0f ? "yer"
+            : MinRange(t) > 0f        ? "menzil"
+            : MaxTargets == 1         ? "tek"
+                                      : "koni";
+
         // ── DASH-ATAK: silaha göre değişir ────────────────────────────────────
         // Eskiden her silahta aynı geniş alan vuruşuydu; tek hedefli bir silahın
         // dash'te aniden koni olması silahın kimliğini siliyordu.
@@ -65,7 +94,7 @@ namespace TekCan
 
         public static Weapon[] All => _all ??= new Weapon[]
         {
-            new ConeBlade(), new Faizli(), new Vadeli(), new Haciz()
+            new ConeBlade(), new Faizli(), new Haciz(), new Ipotek(), new Iflas()
         };
         static Weapon[] _all;
     }
@@ -134,23 +163,59 @@ namespace TekCan
     }
 
     /// <summary>
-    /// VADELİ — korkunç hasar, ama bedeli vuruş İNDİKTEN sonra kesiliyor.
-    /// Savurmaya başlarken hesap yapamazsın; savurmanın ortasında ölebilirsin.
+    /// İPOTEK — nişan aldığın YERE gecikmeli bir alan vuruşu koyuyorsun.
+    /// Gecikme boyunca düşmanlar oradan çıkabilir.
+    ///
+    /// Sorduğu soru: **"nereye GİDECEKLER?"** HACİZ *nişan* silahı (neredeler),
+    /// İPOTEK *tahmin* silahı. İkisi de uzak ama aynı soruyu sormuyorlar —
+    /// yoksa ikinci menzilli silah birincinin kostümü olurdu.
+    ///
+    /// ⚠️ SİMSAR ve MÜBAŞİR'in sana yaptığının aynısı, ters yönde. `GroundMark`
+    /// aynen kullanılıyor: mekanik zaten oyunda ve oyuncu onu ÖĞRENMİŞ oluyor —
+    /// önce üzerinde deneniyor, sonra eline veriliyor.
+    ///
+    /// Alan vuruşu olduğu için hasat çarpanı düşük; yoksa hem çoklu hem yüksek
+    /// çarpan olur ve koninin dengelendiği yerden kaçardı.
     /// </summary>
-    public sealed class Vadeli : Weapon
+    public sealed class Ipotek : Weapon
     {
-        public override string Name => "VADELİ";
-        public override Color Tint => new Color(1f, 0.4f, 0.35f, 0.55f);
-        public override int MaxTargets => 1;
-        public override float HarvestMultiplier => 2.0f;
-        public override float Angle(Tuning t) => t.singleTargetAngle;
-        public override float Duration(Tuning t) => t.attackDuration * 1.35f;  // ağır
-        public override float Damage(Tuning t, float baseDamage) => baseDamage * t.vadeliDamageMult;
+        public override string Name => "İPOTEK";
+        public override Color Tint => new Color(1f, 0.45f, 0.95f, 0.42f);
+        public override float HarvestMultiplier => 1.3f;
+        public override float Range(Tuning t) => t.attackRange * 2.2f;      // koyabildiğin mesafe
+        public override float GroundMarkDelay(Tuning t) => t.ipotekDelay;
+        public override float GroundMarkRadius(Tuning t) => t.ipotekRadius;
+        public override float Damage(Tuning t, float baseDamage) => baseDamage * t.ipotekDamageMult;
+    }
 
-        public override void OnStrike(Clock clock, Tuning t, int hits, int kills)
+    /// <summary>
+    /// İFLAS — saatin düştükçe daha sert vuruyor. Dolu saatte zayıf, dipte canavar.
+    ///
+    /// Sorduğu soru: **"ne kadar dibe inmeye cesaretim var?"** Oyunun TEK kaynağını
+    /// silahın kadranı yapıyor — başka hiçbir silah saate BAKMIYOR bile.
+    ///
+    /// ⚠️ Kendi kendini sınırlıyor, o yüzden tavan serbest bırakılabiliyor: 25
+    /// saniyedeyken tek darbe koşuyu bitiriyor. "Bilerek dipte kal" stratejisi
+    /// teorik olarak var ama bedeli ölüm, ve bu bir TERCİH — istismar değil.
+    /// (Playtest'te doğrulanacak; yanlışsa `iflasMaxDamageMult` inecek.)
+    /// </summary>
+    public sealed class Iflas : Weapon
+    {
+        /// <summary>Dolu saatteyken cezası — silahın kimliği bu: güvendeyken KÖTÜ.</summary>
+        const float GüvendekiÇarpan = 0.7f;
+
+        public override string Name => "İFLAS";
+        public override Color Tint => new Color(1f, 0.3f, 0.25f, 0.55f);
+        public override int MaxTargets => 1;
+        public override float HarvestMultiplier => 1.8f;
+        public override float Angle(Tuning t) => t.singleTargetAngle;
+        public override float Duration(Tuning t) => t.attackDuration * 1.25f;   // ağır
+
+        public override float DesperationMultiplier(float seconds, Tuning t)
         {
-            // Bedel vuruştan SONRA — ıskaladıysan bile ödüyorsun ve ölebilirsin.
-            clock?.Spend(t.vadeliCost);
+            // Güvenli eşiğin üstünde en zayıf, panik eşiğinin altında en güçlü.
+            float k = Mathf.InverseLerp(t.iflasSafeSeconds, t.iflasPanicSeconds, seconds);
+            return Mathf.Lerp(GüvendekiÇarpan, t.iflasMaxDamageMult, k);
         }
     }
 }

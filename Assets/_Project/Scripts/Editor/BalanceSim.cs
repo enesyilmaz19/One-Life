@@ -117,8 +117,15 @@ namespace TekCan.EditorTools
                     // Tek hedefli silah kalabalıktan etkilenmiyor: hep 1 hedef.
                     s.TargetsPerSwing = w.MaxTargets == 1 ? 1 : crowd;
 
+                    // ⚠️ İFLAS'ın hasarı SAATE bağlı. Çarpanı katmasaydım tablo onu
+                    // sabit sanır ve rapor sessizce yanlış olurdu — ölçüm aracının
+                    // eksik modellemesi bu projede iki kez yanlış teşhise götürdü.
+                    // Tablo silahın EN ZAYIF hâlini (dolu saat) gösteriyor; dipteki
+                    // hâli tablonun altında ayrıca yazılıyor.
                     float net = NetPerEnemy(t, s, t.harvestRate * w.HarvestMultiplier,
-                                            w.Damage(t, t.attackDamage), w.Duration(t));
+                                            w.Damage(t, t.attackDamage)
+                                            * w.DesperationMultiplier(t.startSeconds, t),
+                                            w.Duration(t));
                     net -= SwingCosts(t, w);
                     row.Append($" {net,8:+0.0;-0.0} |");
                 }
@@ -127,6 +134,28 @@ namespace TekCan.EditorTools
 
             sb.AppendLine("  → Tek hedefliler kalabalıkta sabit kalır, koni yükselir.");
             sb.AppendLine("     Kesişim noktası: koninin kaç düşmandan sonra baskın olduğu.");
+
+            // ⚠️ Tablonun SÖYLEYEMEDİKLERİ. Raporun ne modellemediğini yazmazsa
+            // rakamlar olduğundan emin görünür ve yanlış teşhise götürür.
+            foreach (var w in Weapon.All)
+            {
+                float güvende = w.DesperationMultiplier(t.startSeconds, t);
+                float dipte = w.DesperationMultiplier(0f, t);
+                if (Mathf.Approximately(güvende, dipte)) continue;
+
+                var s = Skills[0]; s.TargetsPerSwing = 1;
+                float dipNet = NetPerEnemy(t, s, t.harvestRate * w.HarvestMultiplier,
+                                           w.Damage(t, t.attackDamage) * dipte, w.Duration(t))
+                             - SwingCosts(t, w);
+                sb.AppendLine($"  ⚠️ {w.Name} tabloda EN ZAYIF hâliyle (dolu saat, ×{güvende:0.00}). " +
+                              $"Dipte ×{dipte:0.00} → {dipNet:+0.0;-0.0} sn/düşman.");
+            }
+
+            foreach (var w in Weapon.All)
+                if (w.MinRange(t) > 0f || w.GroundMarkDelay(t) > 0f)
+                    sb.AppendLine($"  ⚠️ {w.Name} bu tabloda EKSİK ölçülüyor: simülasyon MESAFEYİ " +
+                                  "ve KAÇMAYI modellemiyor, yani asıl bedeli (konumlanma / " +
+                                  "gecikme penceresi) sayıda YOK. Rakam ÜST SINIR.");
         }
 
 
@@ -138,7 +167,6 @@ namespace TekCan.EditorTools
             return w switch
             {
                 Faizli => t.faizliSwingCost * swingsPerEnemy - t.faizliSwingCost * 2f,  // öldürme iadesi
-                Vadeli => t.vadeliCost * swingsPerEnemy,
                 _ => 0f,
             };
         }

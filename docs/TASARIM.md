@@ -215,16 +215,41 @@ Artık: **tek hedefli silah dash'te de tek hedefli kalır ama çok sert vurur** 
 için hedef sayısı kadar üstün. Tek hedefli silahlar bunu **hasar başına daha çok zaman
 çalarak** kapatıyor.
 
-| silah | hedef | çarpan | özellik |
-|---|---|---:|---|
-| **KONİ** | koni | ×1.0 | Kıyas noktası. Geniş, herkese vurur |
-| **FAİZLİ** | tek | ×2.6 | Savurmak saniye götürür, öldürünce iki katı geri verir. Iska pahalı |
-| **DURGUN** | tek | ×2.2 | Basılı tutunca saat donar; saldıramaz, dash atamazsın. Dünya donmaz |
-| **VADELİ** | tek | ×2.0 | ×2.4 hasar, bedel vuruştan SONRA kesilir — savurmanın ortasında ölebilirsin |
+### ⚠️ KADRO YENİLENDİ — 2026-09-02, beş silah kesinleşti
 
-### Denge ölçümü — kesişim 3 düşmanda
+Ölçü türlere ve boss'lara uygulanıyordu ama **silahlara hiç uygulanmamıştı:**
+*her biri FARKLI SORU sormalı.* Uygulanınca FAİZLİ ile VADELİ'nin **aynı** soruyu
+sorduğu çıktı, ölçüm de VADELİ'nin her düşman sayısında geride olduğunu gösterdi.
+
+**Elenenler:** VADELİ (FAİZLİ'nin kopyası, +2.8 / +5.9) · DURGUN (Enes: *"sadece
+akan zamanı durdurmak bir işimize yaramaz"*) · TAKSİT (önerildi, **yazılmadan
+elendi** — vur-kaç-topla en iyi oyun oluyordu, yani dövüşmemeyi ödüllendiriyordu).
+
+| silah | menzil | hedef | çarpan | sorduğu SORU |
+|---|---|---|---:|---|
+| **KONİ** | yakın | koni | ×1.0 | *kaç kişiye birden vurabilirim* |
+| **FAİZLİ** | yakın | tek | ×2.6 | *bu savurma tutar mı* — peşin bedel, öldürünce 2× iade |
+| **HACİZ** | **uzak** | tek | ×2.2 | *yaklaşmalı mıyım* — dibindekine vuramaz (ölü bölge 3.2) |
+| **İPOTEK** | **uzak** | alan | ×1.3 | *nereye GİDECEKLER* — yere gecikmeli vuruş (0.85 sn) |
+| **İFLAS** | yakın | tek | ×1.8 | *ne kadar dibe inerim* — saat düştükçe hasar ×0.7 → ×2.4 |
+
+### Denge ölçümü
 
 `Tek Can → Denge simülasyonu`, düşman başına net saniye (TEMİZ oyuncu):
+
+| silah | 1 düşman | 2 | 3 | 4 |
+|---|---:|---:|---:|---:|
+| KONİ | +0.9 | +4.3 | +7.7 | +11.1 |
+| FAİZLİ | **+5.9** | +5.9 | +5.9 | +5.9 |
+| HACİZ | +4.8 | +4.8 | +4.8 | +4.8 |
+| İPOTEK | +2.3 | +6.8 | +11.3 | **+15.8** |
+| İFLAS | +2.9 | +2.9 | +2.9 | +2.9 (dolu saat) · **+3.8 dipte** |
+
+> 🔴 **AÇIK DENGE MADDESİ:** İPOTEK 3+ düşmanda koniyi geçiyor. Simülasyon KAÇMAYI
+> modellemiyor (düşmanlar 0.85 sn boyunca dağılıyor), yani rakam **üst sınır** — ama
+> yine de ayar turunun bir numaralı bakılacak maddesi. Kadran: `HarvestMultiplier`.
+
+### Eski tablo (Faz 3, 2026-08-24 — kadro değişmeden önce)
 
 | silah | 1 düşman | 2 | 3 | 4 |
 |---|---:|---:|---:|---:|

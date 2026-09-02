@@ -174,19 +174,32 @@ namespace TekCan
         /// hareket girdisi → mevcut bakış. İzometrikte imleçle nişan standarttır;
         /// oyuncu kaçarken bile istediği tarafa vurabilmeli.
         /// </summary>
+        /// <summary>
+        /// İmlecin YER DÜZLEMİNDEKİ noktası. `AimDirection` ve İPOTEK'in yerleştirme
+        /// noktası aynı ışını istiyordu; iki kopya olsaydı biri düzeltilip öteki
+        /// unutulurdu — nişan ile vuruşun ayrışması bu projede zaten üç kez oldu.
+        /// </summary>
+        bool CursorGround(out Vector3 point)
+        {
+            point = transform.position;
+            var mouse = Mouse.current;
+            if (mouse == null || _camera == null) return false;
+
+            var ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
+            var ground = new Plane(Vector3.up, new Vector3(0f, transform.position.y, 0f));
+            if (!ground.Raycast(ray, out float dist)) return false;
+
+            point = ray.GetPoint(dist);
+            return true;
+        }
+
         Vector3 AimDirection(Vector3 moveInput)
         {
-            var mouse = Mouse.current;
-            if (mouse != null && _camera != null)
+            if (CursorGround(out Vector3 nokta))
             {
-                var ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
-                var ground = new Plane(Vector3.up, new Vector3(0f, transform.position.y, 0f));
-                if (ground.Raycast(ray, out float dist))
-                {
-                    Vector3 to = ray.GetPoint(dist) - transform.position;
-                    to.y = 0f;
-                    if (to.sqrMagnitude > 0.04f) return to.normalized;
-                }
+                Vector3 to = nokta - transform.position;
+                to.y = 0f;
+                if (to.sqrMagnitude > 0.04f) return to.normalized;
             }
 
             var gp = Gamepad.current;
@@ -273,8 +286,7 @@ namespace TekCan
             // Eskiden hepsi aynı geniş alan vuruşuydu ve silahın kimliğini siliyordu.
             float range = Weapon.Range(_t) * _t.dashAttackRangeMult;
             float angle = Weapon.DashAngle(_t);
-            float damage = Weapon.Damage(_t, Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage)
-                           * Weapon.DashDamageMultiplier(_t);
+            float damage = WeaponDamage() * Weapon.DashDamageMultiplier(_t);
 
             // Silahın kendi rengi ama daha parlak — dash-atak olduğu okunsun.
             var tint = Weapon.Tint; tint.a = Mathf.Min(1f, tint.a * 1.5f);
@@ -344,19 +356,60 @@ namespace TekCan
             }
         }
 
+        /// <summary>
+        /// Silahın nihai hasarı — sunak yükseltmeleri + İFLAS'ın çaresizlik eğrisi.
+        /// ⚠️ TEK yer: normal savurma da dash-atak da buradan geçiyor. İkisinde ayrı
+        /// hesaplansaydı İFLAS dash'te eğrisini kaybederdi ve kimse fark etmezdi.
+        /// </summary>
+        float WeaponDamage()
+        {
+            float baseDamage = Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage;
+            float saniye = Clock.Instance != null ? Clock.Instance.Seconds : _t.startSeconds;
+            return Weapon.Damage(_t, baseDamage) * Weapon.DesperationMultiplier(saniye, _t);
+        }
+
         void Strike()
         {
-            // Hasar Clock'tan okunuyor: sunak yükseltmeleri koşu kapsamlı,
-            // Tuning asset'i çalışma anında değiştirilmiyor.
-            float baseDamage = Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage;
+            // ⚠️ İPOTEK koni vurmuyor: nişan noktasına GECİKMELİ yer vuruşu bırakıyor.
+            // Silahın kendi vuruş biçimi olması `Weapon`'ın deseniyle uyumlu —
+            // veri + kanca, `PlayerController` içinde silah adı geçmiyor.
+            if (Weapon.GroundMarkDelay(_t) > 0f) { PlaceLien(); return; }
 
-            StrikeCone(Weapon.Range(_t), Weapon.Angle(_t), Weapon.Damage(_t, baseDamage),
+            StrikeCone(Weapon.Range(_t), Weapon.Angle(_t), WeaponDamage(),
                        _t.hitStopDuration, _t.hitShake,
                        Weapon.MaxTargets, Weapon.HarvestMultiplier,
                        out int hits, out int kills,
                        minRange: Weapon.MinRange(_t));
 
             Weapon.OnStrike(Clock.Instance, _t, hits, kills);
+        }
+
+        /// <summary>
+        /// İPOTEK'in vuruşu — nişan noktasına gecikmeli alan işareti.
+        ///
+        /// ⚠️ Nokta MENZİLE KIRPILIYOR. Kırpmasaydım imleci ekranın ucuna götürüp
+        /// arenanın öbür ucuna vurabilirdin ve "menzil" diye bir şey kalmazdı.
+        /// Kırpılan nokta yönde kalıyor, yani nişan hep dürüst.
+        /// </summary>
+        void PlaceLien()
+        {
+            Vector3 hedef = CursorGround(out Vector3 nokta)
+                          ? nokta
+                          : transform.position + transform.forward * Weapon.Range(_t);
+
+            Vector3 delta = hedef - transform.position;
+            delta.y = 0f;                                  // tuzak 2: y yatay hesaba karışmasın
+            float menzil = Weapon.Range(_t);
+            if (delta.magnitude > menzil) delta = delta.normalized * menzil;
+
+            GroundMark.SpawnLien(_t, transform.position + delta,
+                                 Weapon.GroundMarkRadius(_t), Weapon.GroundMarkDelay(_t),
+                                 WeaponDamage(), Weapon.HarvestMultiplier,
+                                 transform.parent);
+
+            // Silah "savurdu" sayılıyor: iska/isabet ayrımı işaretin KENDİSİNDE
+            // çözülüyor, burada değil. Bedeli olan silahlar yine ödemesini alıyor.
+            Weapon.OnStrike(Clock.Instance, _t, 0, 0);
         }
 
         /// <summary>

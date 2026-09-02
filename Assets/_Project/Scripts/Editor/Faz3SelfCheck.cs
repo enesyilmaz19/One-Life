@@ -117,15 +117,50 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "FAİZLİ savururken peşin kesti",
                             Mathf.Approximately(poorClock.Seconds, b2 - poorT.faizliSwingCost), poorClock.Seconds);
 
-            // ── 5) VADELİ bedeli vuruştan SONRA keser ──
-            var vadeli = new Vadeli();
-            float b3 = poorClock.Seconds;
-            vadeli.OnSwingStart(poorClock, poorT);
-            failed += Check(ref total, "VADELİ savurma başında bedel ALMADI",
-                            Mathf.Approximately(poorClock.Seconds, b3), poorClock.Seconds);
-            vadeli.OnStrike(poorClock, poorT, 1, 0);
-            failed += Check(ref total, "VADELİ bedeli vuruştan SONRA kesti",
-                            Mathf.Approximately(poorClock.Seconds, b3 - poorT.vadeliCost), poorClock.Seconds);
+            // ── 5) ⚠️ İFLAS: SAAT DÜŞTÜKÇE SERTLEŞİYOR ──
+            //    Saniye dışarıdan veriliyor, `Clock.Instance` okunmuyor: eğri o sayede
+            //    editörde ölçülebiliyor ve denge simülasyonu da tarayabiliyor.
+            var iflas = new Iflas();
+            // ⚠️ "Dolu saat" fixture'ın `startSeconds`'ı DEĞİL — o değer güvenli eşiğin
+            // altında kalabiliyor (bu denetimde 100 < 120) ve test silahı haksız yere
+            // suçluyordu. Eşiği ÜRETİMDEN ithal edip üstüne çıkıyoruz.
+            float dolu = iflas.DesperationMultiplier(t.iflasSafeSeconds + 50f, t);
+            float dip  = iflas.DesperationMultiplier(t.iflasPanicSeconds * 0.5f, t);
+
+            failed += Check(ref total, "⚠️ İFLAS DİPTE daha sert vuruyor", dip > dolu * 1.5f, dip / dolu);
+            failed += Check(ref total, "⚠️ İFLAS DOLU saatte CEZALI (güvende olmak bedava değil)",
+                            dolu < 1f, dolu);
+            failed += Check(ref total, "İFLAS eğrisi TAVANLI", dip <= t.iflasMaxDamageMult + 0.001f, dip);
+
+            // Eğri MONOTON: saat düştükçe hep artmalı, ortada çukur olmamalı
+            bool monoton = true;
+            float öncekiÇarpan = -1f;
+            for (float s = t.startSeconds; s >= 0f; s -= 5f)
+            {
+                float m = iflas.DesperationMultiplier(s, t);
+                if (öncekiÇarpan >= 0f && m < öncekiÇarpan - 0.0001f) monoton = false;
+                öncekiÇarpan = m;
+            }
+            failed += Check(ref total, "İFLAS eğrisi MONOTON (saat düştükçe hep artıyor)", monoton, 0f);
+
+            // ⚠️ KOŞU ZAYIF BANTTA BAŞLAMALI — yoksa silahın kimliği YALAN.
+            //    İlk denemede eşikleri (120/25) saat ölçeğine bakmadan seçmiştim;
+            //    koşu 60'ta başladığı için silah oyunun TAMAMINDA güçlü moddaydı.
+            //    Bu kontrol sentetik fixture'a değil GERÇEK ASSET'e bakıyor, çünkü
+            //    yalan tam orada (asset ↔ C# eşiği) doğuyordu.
+            var gerçek = AssetDatabase.LoadAssetAtPath<Tuning>("Assets/_Project/Resources/Tuning.asset");
+            if (gerçek != null)
+            {
+                float başlangıçÇarpanı = iflas.DesperationMultiplier(gerçek.startSeconds, gerçek);
+                failed += Check(ref total,
+                    $"⚠️ KOŞU İFLAS'ın ZAYIF bandında başlıyor (saat {gerçek.startSeconds:0})",
+                    başlangıçÇarpanı < 1f, başlangıçÇarpanı);
+            }
+
+            // Diğer silahlar saate BAKMIYOR — kimlik dağılmasın
+            failed += Check(ref total, "çaresizlik eğrisi İFLAS'a özel",
+                            Mathf.Approximately(new ConeBlade().DesperationMultiplier(10f, t), 1f)
+                            && Mathf.Approximately(new Faizli().DesperationMultiplier(10f, t), 1f), 1f);
 
             // ── 6) ⚠️ HACİZ'İN ÖLÜ BÖLGESİ — özellik değil ETKİ ──
             //    "MinRange 3.2 mi" diye sormuyoruz; DİBİNDEKİNE HASAR İNİYOR MU diye
@@ -198,6 +233,64 @@ namespace TekCan.EditorTools
             YaylariTemizle();
             pc.SetWeapon(hacizIndex);
 
+            // ── 6c) ⚠️ İPOTEK GERÇEKTEN VURUYOR MU ──
+            //    "İşaret doğdu mu" değil — DÜŞMANIN HAVUZU İNDİ Mİ. GroundMark
+            //    bugüne kadar SADECE oyuncuya vuruyordu; ters yön yeni kod, yani
+            //    "doğdu ama kimseye değmiyor" tam olarak beklenebilir hata.
+            int ipotekIndex = System.Array.IndexOf(Weapon.All,
+                System.Array.Find(Weapon.All, w => w is Ipotek));
+            var ipotek = Weapon.All[ipotekIndex];
+            pc.SetWeapon(ipotekIndex);
+
+            ClearEnemies();
+            YaylariTemizle();
+            var kurban = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 2f);
+            float kurbanÖnce = kurban.TimeLeft;
+
+            // İşareti doğrudan kurbanın üstüne koy — nişan yolu ayrı test ediliyor,
+            // burada ölçülen şey İŞARETİN VURUP VURMADIĞI.
+            var isaret = GroundMark.SpawnLien(t, kurban.transform.position,
+                                              ipotek.GroundMarkRadius(t), ipotek.GroundMarkDelay(t),
+                                              ipotek.Damage(t, t.attackDamage),
+                                              ipotek.HarvestMultiplier, null);
+
+            failed += Check(ref total, "İPOTEK işareti HEMEN patlamıyor (kaçma penceresi var)",
+                            !isaret.Fired && Mathf.Approximately(kurban.TimeLeft, kurbanÖnce),
+                            kurbanÖnce - kurban.TimeLeft);
+
+            isaret.Step(ipotek.GroundMarkDelay(t) + 0.05f);      // dt dışarıdan
+            failed += Check(ref total, "⚠️ İPOTEK olgunlaşınca DÜŞMANA VURUYOR",
+                            kurban.TimeLeft < kurbanÖnce - 0.001f, kurbanÖnce - kurban.TimeLeft);
+            failed += Check(ref total, "İPOTEK isabet SAYIYOR", isaret.EnemiesHit == 1, isaret.EnemiesHit);
+
+            // (b) ⚠️ YARIÇAPIN DIŞINDAKİ KURTULUYOR — yoksa "alan" diye bir şey yok
+            ClearEnemies();
+            var kacan = MakeEnemy(t, pGo.transform,
+                                  Bootstrap.ArenaCenter + Vector3.forward * 30f);
+            float kacanÖnce = kacan.TimeLeft;
+            var isaret2 = GroundMark.SpawnLien(t, Bootstrap.ArenaCenter,
+                                               ipotek.GroundMarkRadius(t), ipotek.GroundMarkDelay(t),
+                                               ipotek.Damage(t, t.attackDamage),
+                                               ipotek.HarvestMultiplier, null);
+            isaret2.Step(ipotek.GroundMarkDelay(t) + 0.05f);
+            failed += Check(ref total, "⚠️ İPOTEK yarıçapın DIŞINDAKİNE vurmuyor (kaçmak işe yarıyor)",
+                            Mathf.Approximately(kacan.TimeLeft, kacanÖnce), kacanÖnce - kacan.TimeLeft);
+
+            // (c) ⚠️ Düşmanın tebligatı OYUNCUYA vuruyor, İPOTEK DÜŞMANA — karışmasın
+            ClearEnemies();
+            var yanindaki = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter);
+            float yanindakiÖnce = yanindaki.TimeLeft;
+            var tebligat = GroundMark.Spawn(t, Bootstrap.ArenaCenter, pGo.transform,
+                                            2.5f, 0.4f, 1f, null);
+            tebligat.Step(0.5f);
+            failed += Check(ref total, "⚠️ DÜŞMAN tebligatı düşmana vurmuyor (yönler karışmıyor)",
+                            Mathf.Approximately(yanindaki.TimeLeft, yanindakiÖnce),
+                            yanindakiÖnce - yanindaki.TimeLeft);
+
+            ClearEnemies();
+            YaylariTemizle();
+            pc.SetWeapon(hacizIndex);
+
             // ── 6b) ⚠️ HER SİLAHA TUŞLA ULAŞILABİLİYOR MU — ders 11'in silah hali ──
             //    Tuşlar 1-4 diye SABİT yazılıydı; kadro 5'e çıkınca beşinci silah
             //    tanımlı olup ERİŞİLEMEZ olacaktı. Tam Faz 13'teki yedinci tür hatası.
@@ -221,7 +314,13 @@ namespace TekCan.EditorTools
                 // gelince o mesafe ölü bölgenin İÇİNDE kaldı — test, silahı çalışmıyor
                 // diye suçlayacaktı. Suç testin kurgusunda: her silah kendi geçerli
                 // bandından denenmeli, yoksa "hasar veremiyor" bulgusu YALAN olur.
-                float mesafe = Mathf.Max(1.2f, pc.Weapon.MinRange(t) * 1.6f);
+                // ⚠️ Yer vuruşu silahı imleç yokken (batch modda) AZAMİ MENZİLE atıyor,
+                // hedefin üstüne değil. Hedefi 1.2 birimde bırakmak İPOTEK'i "hasar
+                // veremiyor" diye gösteriyordu — üçüncü kez aynı ders: fixture silahın
+                // GERÇEK davranışını ithal etmeli, ortalama bir varsayım uydurmamalı.
+                float mesafe = pc.Weapon.GroundMarkDelay(t) > 0f
+                             ? pc.Weapon.Range(t)
+                             : Mathf.Max(1.2f, pc.Weapon.MinRange(t) * 1.6f);
                 var target = MakeEnemy(t, pGo.transform,
                                        Bootstrap.ArenaCenter + Vector3.forward * mesafe);
 
@@ -232,8 +331,20 @@ namespace TekCan.EditorTools
                 pc.Weapon.OnSwingStart(clock, t);
                 strike.Invoke(pc, null);
 
+                // ⚠️ Her silah ANINDA vurmuyor. İPOTEK gecikmeli yer vuruşu bırakıyor;
+                // testin "savurdum, hemen düşmeli" varsayımı onu haksız yere kırık
+                // gösteriyordu. Gecikmeli silahta işareti OLGUNLAŞTIRIP öyle bakıyoruz —
+                // ölçülen şey yine ETKİ, sadece zincirin sonuna kadar gidiliyor.
+                float gecikme = pc.Weapon.GroundMarkDelay(t);
+                if (gecikme > 0f)
+                    foreach (var m in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include))
+                        m.Step(gecikme + 0.05f);
+
                 failed += Check(ref total, $"{pc.Weapon.Name} HASAR VEREBİLİYOR",
                                 target.TimeLeft < poolBefore - 0.001f, poolBefore - target.TimeLeft);
+
+                foreach (var m in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include))
+                    Object.DestroyImmediate(m.gameObject);   // tuzak 1: ertelenmez, hemen
             }
 
             // ── 8) ⚠️ BÜYÜK DÜŞMAN YÜZEYİNDEN VURULABİLİYOR MU (Enes: "bossa vururken buglanıyor")
