@@ -12,6 +12,12 @@ namespace TekCan
     /// kalabalık oyunu kolaylaştırır — roguelite'ta tam tersi olması gereken şey.
     ///
     /// Denge iddiası tahmin değil: `Tek Can → Denge simülasyonu` her silahı tarıyor.
+    ///
+    /// ⚠️ **DURGUN KALDIRILDI** (2026-09-02, Enes: *"sadece akan zamanı durdurmak bir
+    /// işimize yaramaz"*). Kodun içindeki *"DURGUN dersi"* yorumları BİLEREK duruyor:
+    /// o silah "özelliği değil ETKİYİ test et" dersini öğretti (tamamen kırık teslim
+    /// edilmişti, testler yeşildi çünkü hiçbiri *"bu silah vurabiliyor mu"* diye
+    /// sormuyordu). Ders `tasks/lessons.md`'de; silah gitti, ders kaldı.
     /// </summary>
     public abstract class Weapon
     {
@@ -35,8 +41,14 @@ namespace TekCan
         /// <summary>Vuruş indikten sonra — isabet sayısı ve öldürme sayısıyla.</summary>
         public virtual void OnStrike(Clock clock, Tuning t, int hits, int kills) { }
 
-        /// <summary>Basılı tutulunca saati dondurur mu (Durgun).</summary>
-        public virtual bool HoldFreezesClock => false;
+        /// <summary>
+        /// &gt;0 ise bu mesafeden YAKINDAKİNE vuramaz — menzilli silahın ölü bölgesi.
+        ///
+        /// ⚠️ Yalnızca NORMAL savurmaya uygulanıyor, dash-atağa değil. Sebebi tasarım:
+        /// "biri dibine girdi" durumunun bir CEVABI olmalı, yoksa silah çaresiz kalır.
+        /// Dash o cevap. Böylece menzilli silah bir mesafe BANDI oynatıyor.
+        /// </summary>
+        public virtual float MinRange(Tuning t) => 0f;
 
         // ── DASH-ATAK: silaha göre değişir ────────────────────────────────────
         // Eskiden her silahta aynı geniş alan vuruşuydu; tek hedefli bir silahın
@@ -53,7 +65,7 @@ namespace TekCan
 
         public static Weapon[] All => _all ??= new Weapon[]
         {
-            new ConeBlade(), new Faizli(), new Durgun(), new Vadeli()
+            new ConeBlade(), new Faizli(), new Vadeli(), new Haciz()
         };
         static Weapon[] _all;
     }
@@ -95,25 +107,30 @@ namespace TekCan
     }
 
     /// <summary>
-    /// DURGUN — yay gerer gibi. Çekili tuttuğun sürece saatin donar, ama **hiç
-    /// kıpırdayamazsın**: saldırı, dash, hareket hepsi kapalı. Dünya donmuyor,
-    /// düşmanlar gelmeye devam ediyor. **Bıraktığında vuruş iner.**
+    /// HACİZ — uzaktan, dar ve tek hedef. **Dibindekine vuramaz.**
     ///
-    /// Yani "nefesini tutma" mekaniği: akışı durdurabilirsin, bedeli çakılı kalmak.
+    /// Sorduğu soru: **"yaklaşmalı mıyım?"** Bu güne kadar dört silahın dördü de yakın
+    /// dövüştü, yani *uzak durmak* bedava bir cevaptı — hiçbir silah onu ödüllendirmiyor
+    /// da, cezalandırmıyor da değildi, sadece alakasızdı. HACİZ mesafeyi bir TERCİH
+    /// haline getiriyor: bir bandın içinde kalman gerekiyor.
     ///
-    /// ⚠️ İlk teslimde bu silah tamamen kırıktı — basılı tutma bloğu erken `return`
-    /// ediyordu, bırakınca hiçbir şey olmuyordu, yani hiç hasar veremiyordu. Öz-denetim
-    /// yeşildi çünkü hiçbir test "bu silah vurabiliyor mu" diye sormamıştı. Artık soruyor.
+    /// MÜBAŞİR'in (Faz 13) tam karşılığı — o da uzaktan vuruyor, mesafesini koruyor.
+    /// Artık oyuncunun elinde de aynı alet var.
+    ///
+    /// ⚠️ Ölü bölgesi **görünüyor** (savurma yayının içinde ikinci bir halka). Görünmeseydi
+    /// oyuncu dibindeki düşmana savurup boşa ıskalar ve sebebini asla anlamazdı —
+    /// ders 10'un aynısı: mekanik doğru, görsel yalan.
     /// </summary>
-    public sealed class Durgun : Weapon
+    public sealed class Haciz : Weapon
     {
-        public override string Name => "DURGUN";
-        public override Color Tint => new Color(0.6f, 0.75f, 1f, 0.5f);
+        public override string Name => "HACİZ";
+        public override Color Tint => new Color(0.55f, 1f, 0.7f, 0.42f);
         public override int MaxTargets => 1;
         public override float HarvestMultiplier => 2.2f;
-        public override float Angle(Tuning t) => t.singleTargetAngle;
-        public override float Range(Tuning t) => t.attackRange * 1.25f;   // uzun namlu
-        public override bool HoldFreezesClock => true;
+        public override float Range(Tuning t) => t.attackRange * 2.6f;        // uzun
+        public override float Angle(Tuning t) => t.singleTargetAngle * 0.6f;  // dar: nişan
+        public override float MinRange(Tuning t) => t.hacizMinRange;          // ölü bölge
+        public override float Duration(Tuning t) => t.attackDuration * 1.15f; // nişan alıyor
     }
 
     /// <summary>

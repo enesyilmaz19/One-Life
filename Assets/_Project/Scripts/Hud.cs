@@ -16,9 +16,15 @@ namespace TekCan
         PlayerController _player;
         GUIStyle _big, _small, _mid;
 
-        public void Init(Clock clock, PlayerController player)
+        // ⚠️ Ayar HUD'a VERİLİYOR, silaha ayrıca `IsRanged` gibi bir bayrak
+        // EKLENMEDİ: bayrak `MinRange`'den ayrışabilir ve etiket sessizce yalan
+        // söylemeye başlardı. Tek gerçek kaynak `MinRange`.
+        Tuning _t;
+
+        public void Init(Clock clock, PlayerController player, Tuning tuning)
         {
             _clock = clock;
+            _t = tuning;
             _player = player;
             // Ölü kod değil: koşu bitiş ekranı bu olaylara bağlı.
             clock.OnDeath += OnRunEnded;
@@ -295,19 +301,16 @@ namespace TekCan
 
                 string mult = weapons[i].HarvestMultiplier > 1.001f
                     ? $"×{weapons[i].HarvestMultiplier:0.0}" : "";
-                string tek = weapons[i].MaxTargets == 1 ? "tek" : "koni";
+                // Menzilli silah "tek" yazsaydı KONİ'den tek farkı hedef sayısı sanılırdı;
+                // oysa onu ayıran şey MESAFE. Etiket silahın kimliğini söylemeli.
+                string tek = weapons[i].MinRange(_t) > 0f ? "menzil"
+                           : weapons[i].MaxTargets == 1 ? "tek" : "koni";
 
                 GUI.Label(new Rect(x + i * w, y, w, 40f),
                           $"{i + 1}  {weapons[i].Name}\n{tek} {mult}", _small);
             }
             _small.normal.textColor = Color.white;
 
-            if (_clock.Frozen)
-            {
-                _mid.normal.textColor = new Color(0.6f, 0.8f, 1f);
-                GUI.Label(new Rect(0f, Screen.height * 0.42f, Screen.width, 40f), "SAAT DURDU", _mid);
-                _mid.normal.textColor = Color.white;
-            }
         }
 
         /// <summary>

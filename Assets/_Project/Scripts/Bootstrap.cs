@@ -193,7 +193,7 @@ namespace TekCan
             systems.AddComponent<RevivalSystem>().Init(t, clock);
             var pc = player.AddComponent<PlayerController>();
             pc.Init(t, camGo.transform);
-            systems.AddComponent<Hud>().Init(clock, pc);
+            systems.AddComponent<Hud>().Init(clock, pc, t);
 
             // A/B ayar profilleri (F1-F4) — TEST ARACI, gerçek oyunda kalkacak.
             systems.AddComponent<ProfileSwitcher>().Init(tuningAsset, t);

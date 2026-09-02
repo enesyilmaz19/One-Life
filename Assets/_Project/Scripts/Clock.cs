@@ -26,9 +26,6 @@ namespace TekCan
         public bool Dead { get; private set; }
         public bool InCombat { get; private set; }
 
-        /// <summary>Akış durdurulmuş mu — DURGUN silahı basılı tutulurken.</summary>
-        public bool Frozen { get; set; }
-
         // ── koşu boyunca yükseltilebilen değerler ────────────────────────────
         // ⚠️ Bunlar Tuning'den KOPYALANIR, Tuning'e YAZILMAZ. ScriptableObject
         // çalışma anında değiştirilirse editörde kalıcı olur ve bir sonraki koşu
@@ -125,10 +122,6 @@ namespace TekCan
 
             RunTime += dt;
             InCombat = AnyLivingEnemyNear();
-
-            // DURGUN silahı akışı durdurabiliyor. Dünya donmuyor — düşmanlar gelmeye
-            // devam ediyor — yani bedeli savunmasız kalmak.
-            if (Frozen) return;
 
             // ⚠️ BÖLGE KURALI buradan giriyor. Dövüş dışı akış çarpanı (DARALMA) ve
             // arka plan emişi (SIZINTI) — ikisi de saatten geçiyor, çünkü yasa o.

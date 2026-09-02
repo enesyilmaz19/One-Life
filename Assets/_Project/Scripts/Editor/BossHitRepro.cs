@@ -71,7 +71,10 @@ namespace TekCan.EditorTools
                     bool gercekteOrtusuyor = GovdeYaylaOrtusuyorMu(
                         player.transform, boss.transform.position, r, range, half);
 
-                    var args = new object[] { boss, range, half, 0f };
+                    // ⚠️ Son eleman `minRange` (HACİZ'in ölü bölgesi) — burada 0 olmalı,
+                    // bu reprodüksiyon ölçülen şey MENZİL/AÇI geometrisi. Yansımayla
+                    // çağırdığımız için isteğe bağlı parametre de ELLE verilmek zorunda.
+                    var args = new object[] { boss, range, half, 0f, 0f };
                     bool oyunVuruyor = (bool)inHitCone.Invoke(pc, args);
 
                     if (gercekteOrtusuyor && !oyunVuruyor)

@@ -45,6 +45,8 @@ namespace TekCan.EditorTools
 
             var strike = typeof(PlayerController).GetMethod("Strike",
                 BindingFlags.NonPublic | BindingFlags.Instance);
+            var dashStrike = typeof(PlayerController).GetMethod("DashStrike",
+                BindingFlags.NonPublic | BindingFlags.Instance);
 
             // ── 1) KONİ üç düşmanın üçüne birden vurur ──
             SpawnThree(t, pGo.transform);
@@ -123,9 +125,57 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "VADELİ bedeli vuruştan SONRA kesti",
                             Mathf.Approximately(poorClock.Seconds, b3 - poorT.vadeliCost), poorClock.Seconds);
 
-            // ── 6) DURGUN saati dondurur ──
-            failed += Check(ref total, "DURGUN basılı tutunca dondurur", new Durgun().HoldFreezesClock, 1);
-            failed += Check(ref total, "KONİ dondurmaz", !new ConeBlade().HoldFreezesClock, 0);
+            // ── 6) ⚠️ HACİZ'İN ÖLÜ BÖLGESİ — özellik değil ETKİ ──
+            //    "MinRange 3.2 mi" diye sormuyoruz; DİBİNDEKİNE HASAR İNİYOR MU diye
+            //    soruyoruz. Ölü bölge silahın kimliği: çalışmazsa HACİZ sadece
+            //    "uzun menzilli tek hedefli" olur ve sorduğu soru yok olur.
+            var haciz = new Haciz();
+            failed += Check(ref total, "HACİZ'in ölü bölgesi VAR", haciz.MinRange(t) > 0f, haciz.MinRange(t));
+            failed += Check(ref total, "KONİ'nin ölü bölgesi YOK (kimlik dağılmıyor)",
+                            new ConeBlade().MinRange(t) <= 0f, new ConeBlade().MinRange(t));
+
+            int hacizIndex = System.Array.IndexOf(Weapon.All, System.Array.Find(Weapon.All, w => w is Haciz));
+            pc.SetWeapon(hacizIndex);
+
+            // (a) dibindeki düşmana VURAMIYOR
+            ClearEnemies();
+            var yakin = MakeEnemy(t, pGo.transform,
+                                  Bootstrap.ArenaCenter + Vector3.forward * (haciz.MinRange(t) * 0.4f));
+            float yakinÖnce = yakin.TimeLeft;
+            strike.Invoke(pc, null);
+            failed += Check(ref total, "⚠️ HACİZ DİBİNDEKİNE VURAMIYOR (ölü bölge işliyor)",
+                            Mathf.Approximately(yakin.TimeLeft, yakinÖnce), yakinÖnce - yakin.TimeLeft);
+
+            // (b) ama uzaktakine VURUYOR — hem de KONİ'nin yetişemediği mesafeden
+            ClearEnemies();
+            float uzakMesafe = t.attackRange * 1.8f;
+            var uzak = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * uzakMesafe);
+            float uzakÖnce = uzak.TimeLeft;
+            strike.Invoke(pc, null);
+            failed += Check(ref total, "⚠️ HACİZ UZAKTAKİNE VURUYOR",
+                            uzak.TimeLeft < uzakÖnce - 0.001f, uzakÖnce - uzak.TimeLeft);
+
+            failed += Check(ref total, "test kurgusu: o mesafe KONİ'nin menzili DIŞINDA",
+                            uzakMesafe - uzak.Radius > t.attackRange, uzakMesafe - t.attackRange);
+
+            // (c) ⚠️ DASH-ATAK ölü bölgeyi TANIMIYOR — dibine girene bir cevap olmalı,
+            //     yoksa menzilli silah kalabalıkta tamamen çaresiz kalır.
+            ClearEnemies();
+            var dipteki = MakeEnemy(t, pGo.transform,
+                                    Bootstrap.ArenaCenter + Vector3.forward * (haciz.MinRange(t) * 0.4f));
+            float diptekiÖnce = dipteki.TimeLeft;
+            dashStrike.Invoke(pc, null);
+            failed += Check(ref total, "⚠️ DASH-ATAK ölü bölgeyi tanımıyor (dibe girene CEVAP var)",
+                            dipteki.TimeLeft < diptekiÖnce - 0.001f, diptekiÖnce - dipteki.TimeLeft);
+
+            // ── 6b) ⚠️ HER SİLAHA TUŞLA ULAŞILABİLİYOR MU — ders 11'in silah hali ──
+            //    Tuşlar 1-4 diye SABİT yazılıydı; kadro 5'e çıkınca beşinci silah
+            //    tanımlı olup ERİŞİLEMEZ olacaktı. Tam Faz 13'teki yedinci tür hatası.
+            var swapKeys = typeof(PlayerController).GetField("SwapKeys",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            int tuşSayısı = ((System.Array)swapKeys.GetValue(null)).Length;
+            failed += Check(ref total, "⚠️ HER SİLAHIN bir tuşu var (tanımlı ≠ ulaşılabilir)",
+                            tuşSayısı >= Weapon.All.Length, tuşSayısı - Weapon.All.Length);
 
             // ── 7) ⚠️ HER SİLAH GERÇEKTEN HASAR VEREBİLİYOR MU ──
             //    DURGUN bu kontrol olmadığı için tamamen kırık teslim edilmişti:
@@ -135,8 +185,18 @@ namespace TekCan.EditorTools
             for (int wi = 0; wi < Weapon.All.Length; wi++)
             {
                 ClearEnemies();
-                var target = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f);
                 pc.SetWeapon(wi);
+
+                // ⚠️ Hedef SİLAHA GÖRE konumlanıyor. Sabit 1.2 birimdeydi ve HACİZ
+                // gelince o mesafe ölü bölgenin İÇİNDE kaldı — test, silahı çalışmıyor
+                // diye suçlayacaktı. Suç testin kurgusunda: her silah kendi geçerli
+                // bandından denenmeli, yoksa "hasar veremiyor" bulgusu YALAN olur.
+                float mesafe = Mathf.Max(1.2f, pc.Weapon.MinRange(t) * 1.6f);
+                var target = MakeEnemy(t, pGo.transform,
+                                       Bootstrap.ArenaCenter + Vector3.forward * mesafe);
+
+                failed += Check(ref total, $"  test kurgusu: {pc.Weapon.Name} menzili {mesafe:0.0} birimi kapsıyor",
+                                mesafe - target.Radius <= pc.Weapon.Range(t), pc.Weapon.Range(t) - mesafe);
 
                 float poolBefore = target.TimeLeft;
                 pc.Weapon.OnSwingStart(clock, t);

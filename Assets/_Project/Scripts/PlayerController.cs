@@ -25,7 +25,6 @@ namespace TekCan
 
         TrailRenderer _dashTrail;    // yalnızca dash boyunca çizer, bkz. BuildDashTrail
         bool _dashAttackQueued;
-        bool _holdCharging;          // DURGUN gerili mi
         int _weaponIndex;
 
         /// <summary>Kuşanılan silah. 1-4 tuşlarıyla değişiyor (Faz 3 test kolaylığı).</summary>
@@ -92,26 +91,6 @@ namespace TekCan
 
             Vector3 input = ReadMove();
 
-            // DURGUN: yay gerer gibi. Basılı tutarken saat donuyor ama KIPIRDAYAMIYORSUN —
-            // saldırı, dash, hareket hepsi kapalı. Dünya donmadığı için bedeli çakılı kalmak.
-            // BIRAKINCA vuruş iniyor; yoksa silah hiç hasar veremezdi.
-            if (Weapon.HoldFreezesClock)
-            {
-                if (AttackHeld())
-                {
-                    if (Clock.Instance != null) Clock.Instance.Frozen = true;
-                    _holdCharging = true;
-                    return;
-                }
-                if (Clock.Instance != null) Clock.Instance.Frozen = false;
-                if (_holdCharging)
-                {
-                    _holdCharging = false;
-                    if (!Attacking) { StartAttack(input); return; }
-                }
-            }
-            else if (Clock.Instance != null) Clock.Instance.Frozen = false;
-
             if (Dashing) { TickDash(); return; }        // dash sırasında saldırı girdisi burada okunuyor
 
             if (ReadDash() && _dashCd <= 0f)
@@ -157,24 +136,20 @@ namespace TekCan
             return gp != null && gp.buttonSouth.wasPressedThisFrame;
         }
 
-        /// <summary>DURGUN için: basılı tutuluyor mu (tek kare değil).</summary>
-        static bool AttackHeld()
-        {
-            var m = Mouse.current;
-            if (m != null && m.leftButton.isPressed) return true;
-            var gp = Gamepad.current;
-            return gp != null && gp.buttonWest.isPressed;
-        }
+        /// <summary>Silah değiştirme tuşları — kadro büyüdükçe buraya tuş eklenir.</summary>
+        static readonly Key[] SwapKeys =
+            { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5 };
 
         void ReadWeaponSwap()
         {
             var kb = Keyboard.current;
             if (kb == null) return;
 
-            if (kb.digit1Key.wasPressedThisFrame) SetWeapon(0);
-            else if (kb.digit2Key.wasPressedThisFrame) SetWeapon(1);
-            else if (kb.digit3Key.wasPressedThisFrame) SetWeapon(2);
-            else if (kb.digit4Key.wasPressedThisFrame) SetWeapon(3);
+            // ⚠️ Listeden sürülüyor, elle sayılmıyor. Sabit 1-4 yazılıydı ve kadro
+            // 5'e çıkınca BEŞİNCİ SİLAH ERİŞİLEMEZ olacaktı — ders 11'in aynısı
+            // ("tanımlı ≠ ulaşılabilir"), sadece silahta. Öz-denetim de bunu ölçüyor.
+            for (int i = 0; i < SwapKeys.Length && i < TekCan.Weapon.All.Length; i++)
+                if (kb[SwapKeys[i]].wasPressedThisFrame) { SetWeapon(i); return; }
         }
 
         /// <summary>Silah kuşan. Öz-denetim de bu yoldan geçiyor — test kendi yolunu kurmaz.</summary>
@@ -183,8 +158,6 @@ namespace TekCan
             if (index < 0 || index >= TekCan.Weapon.All.Length || index == _weaponIndex) return;
             _weaponIndex = index;
             _attackTimer = 0f;                                    // yarım savurma taşınmasın
-            _holdCharging = false;                                // gerili DURGUN taşınmasın
-            if (Clock.Instance != null) Clock.Instance.Frozen = false;
             IsoCamera.Shake(_t.hitShake * 0.4f);
         }
 
@@ -337,6 +310,17 @@ namespace TekCan
             // Yay, gerçek vuruş alanının kendisi — menzil ve açı Strike() ile aynı kaynaktan.
             Arc.Spawn(transform.position, transform.rotation,
                 Weapon.Range(_t), Weapon.Angle(_t), Weapon.Tint, _t.swingArcLife);
+
+            // ⚠️ ÖLÜ BÖLGE DE GÖRÜNMELİ (HACİZ). Boss'un simit göbeğiyle aynı gerekçe,
+            // ama TERS ANLAM: boss'unki güvenli olduğu için YEŞİL, bu ise silahın
+            // ÇALIŞMADIĞI yer, o yüzden kırmızı. Görünmeseydi oyuncu dibindekine
+            // savurur, ıskalar ve sebebini asla anlamazdı — ders 10'un aynısı.
+            float ölüBölge = Weapon.MinRange(_t);
+            if (ölüBölge > 0f)
+                Arc.Spawn(transform.position, transform.rotation,
+                    ölüBölge, Weapon.Angle(_t), new Color(0.95f, 0.35f, 0.3f, 0.3f),
+                    _t.swingArcLife);
+
             SwingsSpawned++;
             Sfx.Swing();
         }
@@ -369,7 +353,8 @@ namespace TekCan
             StrikeCone(Weapon.Range(_t), Weapon.Angle(_t), Weapon.Damage(_t, baseDamage),
                        _t.hitStopDuration, _t.hitShake,
                        Weapon.MaxTargets, Weapon.HarvestMultiplier,
-                       out int hits, out int kills);
+                       out int hits, out int kills,
+                       minRange: Weapon.MinRange(_t));
 
             Weapon.OnStrike(Clock.Instance, _t, hits, kills);
         }
@@ -399,7 +384,8 @@ namespace TekCan
         /// Pay = gövdenin açısal yarıçapı: `asin(r / d)`. Oyuncu gövdenin içindeyse
         /// (d ≤ r) pay 90° olur, yani her yönden vurulur — doğrusu da bu.
         /// </summary>
-        bool InHitCone(Enemy e, float range, float halfAngle, out float surfaceDist)
+        bool InHitCone(Enemy e, float range, float halfAngle, out float surfaceDist,
+                       float minRange = 0f)
         {
             surfaceDist = float.MaxValue;
             if (e == null) return false;
@@ -411,6 +397,12 @@ namespace TekCan
             surfaceDist = dist - e.Radius;
             if (surfaceDist > range) return false;
 
+            // ⚠️ ÖLÜ BÖLGE (HACİZ) — menzil gibi, o da YÜZEYE ölçülüyor. Merkeze
+            // ölçseydim boss isabetindeki ölü bandın aynısını üretirdim, sadece ters
+            // yönde: iri gövde ölü bölgeye taşar, oyuncu yayın içinde görür, vuruş
+            // düşer. Aynı kavramın HER ölçümü aynı yerden (ders 9).
+            if (minRange > 0f && surfaceDist < minRange) return false;
+
             float acisalYaricap = dist > e.Radius
                 ? Mathf.Asin(Mathf.Clamp01(e.Radius / dist)) * Mathf.Rad2Deg
                 : 90f;                                    // içindeysen her yön geçerli
@@ -418,7 +410,8 @@ namespace TekCan
         }
 
         void StrikeCone(float range, float angleDeg, float damage, float hitStop, float shake,
-                        int maxTargets, float harvestMult, out int hits, out int kills)
+                        int maxTargets, float harvestMult, out int hits, out int kills,
+                        float minRange = 0f)
         {
             hits = 0; kills = 0;
             float half = angleDeg * 0.5f;
@@ -430,7 +423,7 @@ namespace TekCan
 
                 foreach (var e in Enemy.All)
                 {
-                    if (!InHitCone(e, range, half, out float d)) continue;
+                    if (!InHitCone(e, range, half, out float d, minRange)) continue;
                     if (d < bestDist) { bestDist = d; nearest = e; }
                 }
 
@@ -447,7 +440,7 @@ namespace TekCan
                 for (int i = Enemy.All.Count - 1; i >= 0; i--)
                 {
                     var e = Enemy.All[i];
-                    if (!InHitCone(e, range, half, out _)) continue;
+                    if (!InHitCone(e, range, half, out _, minRange)) continue;
 
                     bool wasHollow = e.Hollow;
                     e.TakeDamage(damage, harvestMult);

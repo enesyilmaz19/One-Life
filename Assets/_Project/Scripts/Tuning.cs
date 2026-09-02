@@ -153,6 +153,10 @@ namespace TekCan
         [Tooltip("ZAMANAŞIMI: büyüme tavanı. Tavansız bırakılırsa tek düşman koşuyu bitirir.")]
         public float lapseGrowthCap = 2.5f;
 
+        [Tooltip("HACİZ: bu mesafeden yakındakine VURAMAZ (ölü bölge). " +
+                 "Dash-atağa uygulanmaz — dibine girene cevap odur.")]
+        public float hacizMinRange = 3.2f;
+
         [Header("── DÜŞMAN RÜTBESİ (Faz 14) ──")]
         [Tooltip("ZIRHLI: hasarın zamana çevrilme oranı. 0.45 = havuzu %55 daha yavaş akar. " +
                  "Havuz DEĞİŞMEZ — toplam ödeme aynı kalır, sadece daha uzun sürer.")]
