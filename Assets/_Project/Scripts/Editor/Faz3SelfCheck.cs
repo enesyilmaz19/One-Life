@@ -217,11 +217,25 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️ HACİZ savurunca ÖLÜ BÖLGE HALKASI da çiziliyor",
                             yaylar.Length == 2, yaylar.Length);
 
-            bool halkaDogruYerde = false;
+            Arc halka = null;
             foreach (var y in yaylar)
-                if (Mathf.Abs(y.Radius - haciz.MinRange(t)) < 0.01f) halkaDogruYerde = true;
+                if (Mathf.Abs(y.Radius - haciz.MinRange(t)) < 0.01f) halka = y;
             failed += Check(ref total, "⚠️ halka TAM ölü bölgenin yarıçapında (görsel yalan söylemiyor)",
-                            halkaDogruYerde, haciz.MinRange(t));
+                            halka != null, haciz.MinRange(t));
+
+            // ⚠️ Doğru yerde olmak yetmiyor, doğru ŞEYİ SÖYLEMELİ. Savurmanın kendi
+            // rengindeyse oyuncu onu "yayın bir parçası" okur, "burası ölü" değil.
+            // Renk değeri sabit yazılmıyor (ayar değişince test kırılmasın); ANLAMI
+            // ölçülüyor: savurmadan farklı, ve uyarı tonunda (kırmızı baskın).
+            if (halka != null)
+            {
+                var c = halka.Color;
+                failed += Check(ref total, "⚠️ halka savurma renginden FARKLI (yayın parçası sanılmıyor)",
+                                Mathf.Abs(c.r - haciz.Tint.r) + Mathf.Abs(c.g - haciz.Tint.g)
+                                + Mathf.Abs(c.b - haciz.Tint.b) > 0.3f, 0f);
+                failed += Check(ref total, "halka UYARI tonunda (kırmızı baskın)",
+                                c.r > c.g && c.r > c.b, c.r);
+            }
 
             // KONİ'de olmamalı — halka HACİZ'in kimliği, her savurmada çıkan süs değil
             YaylariTemizle();
@@ -290,6 +304,47 @@ namespace TekCan.EditorTools
             ClearEnemies();
             YaylariTemizle();
             pc.SetWeapon(hacizIndex);
+
+            // ── 6d) ⚠️ SİLAHLAR FARKLI SORU SORUYOR MU ──
+            //    Bu ölçü `EnemyKind`'da ve `BossKind`'da vardı, SİLAHLARDA YOKTU —
+            //    ve VADELİ tam bu yüzden aylarca FAİZLİ'nin kopyası olarak durdu.
+            //    Onu silerken kullandığım ölçüyü koda geçirmezsem bir sonraki silah
+            //    aynı sessizlikle yeniden kopya olur.
+            int ayni = 0, adsiz = 0;
+            for (int a = 0; a < Weapon.All.Length; a++)
+            {
+                if (string.IsNullOrWhiteSpace(Weapon.All[a].Name)) adsiz++;
+                for (int b = a + 1; b < Weapon.All.Length; b++)
+                    if (SilahSorusu(Weapon.All[a], t) == SilahSorusu(Weapon.All[b], t))
+                    {
+                        ayni++;
+                        Debug.LogError($"     aynı soruyu soruyor: {Weapon.All[a].Name} = {Weapon.All[b].Name}");
+                    }
+            }
+            failed += Check(ref total, "her silahın adı var", adsiz == 0, adsiz);
+            failed += Check(ref total, "⚠️ silahlar FARKLI SORU soruyor (ad farkı çeşitlilik değil)",
+                            ayni == 0, ayni);
+            failed += Check(ref total, "kadro BEŞ silah (TASARIM.md kararı)",
+                            Weapon.All.Length == 5, Weapon.All.Length);
+
+            // ── 6e) ⚠️ MENZİLLİ SİLAHIN DASH'İ YAKIN CEVABIDIR ──
+            //    HACİZ için ayrıca ölçüldü; İPOTEK için de geçerli olmalı, yoksa
+            //    kural "HACİZ'e özel bir istisna" olur ve bir dahaki menzilli
+            //    silahta kimse hatırlamaz.
+            foreach (var w in Weapon.All)
+            {
+                if (w.MinRange(t) <= 0f && w.GroundMarkDelay(t) <= 0f) continue;
+
+                ClearEnemies();
+                pc.SetWeapon(System.Array.IndexOf(Weapon.All, w));
+                var dipte = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.1f);
+                float dipteÖnce = dipte.TimeLeft;
+                dashStrike.Invoke(pc, null);
+                failed += Check(ref total, $"⚠️ {w.Name} DASH'i dibindekine vuruyor (çaresiz kalmıyor)",
+                                dipte.TimeLeft < dipteÖnce - 0.001f, dipteÖnce - dipte.TimeLeft);
+            }
+            ClearEnemies();
+            YaylariTemizle();
 
             // ── 6b) ⚠️ HER SİLAHA TUŞLA ULAŞILABİLİYOR MU — ders 11'in silah hali ──
             //    Tuşlar 1-4 diye SABİT yazılıydı; kadro 5'e çıkınca beşinci silah
@@ -428,6 +483,34 @@ namespace TekCan.EditorTools
             foreach (var e in Enemy.All.ToArray())
                 if (e != null) Object.DestroyImmediate(e.gameObject);
             Enemy.All.Clear();
+        }
+
+        /// <summary>
+        /// Silahın SORDUĞU SORU — adı, rengi ya da sayıları değil.
+        /// `EnemyKind` ve `BossKind` denetimlerindeki ölçünün aynısı.
+        ///
+        /// ⚠️ "Bedelli mi" ÖZELLİKTEN değil ETKİDEN okunuyor: bir saat kurulup
+        /// savurma yaşatılıyor ve saniye düştü mü diye BAKILIYOR. `OnSwingStart`
+        /// override edilmiş mi diye sormak, bedeli sıfır olan bir silahı da
+        /// "bedelli" sayardı.
+        /// </summary>
+        static string SilahSorusu(Weapon w, Tuning t)
+        {
+            var root = new GameObject("soru");
+            var clock = root.AddComponent<Clock>();
+            clock.Init(t, root.transform);
+            float önce = clock.Seconds;
+            w.OnSwingStart(clock, t);
+            w.OnStrike(clock, t, 1, 0);
+            bool bedelli = clock.Seconds < önce - 0.0001f;
+            Object.DestroyImmediate(root);
+            Clock.Reset();
+
+            bool saateBağlı = !Mathf.Approximately(w.DesperationMultiplier(0f, t),
+                                                   w.DesperationMultiplier(9999f, t));
+            return $"çoklu={w.MaxTargets != 1}|band={w.MinRange(t) > 0f}"
+                 + $"|yer={w.GroundMarkDelay(t) > 0f}|bedelli={bedelli}"
+                 + $"|saate={saateBağlı}|uzun={w.Range(t) > t.attackRange * 1.5f}";
         }
 
         /// <summary>Sahnedeki yayları hemen al — ertelenmiş `Destroy` sayımı bozar (tuzak 1).</summary>

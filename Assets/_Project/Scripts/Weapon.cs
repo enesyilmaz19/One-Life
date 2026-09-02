@@ -85,6 +85,12 @@ namespace TekCan
         // Kural: silah tek hedefliyse dash-atağı da tek hedefli kalır ama ÇOK sert vurur;
         // koni silahın dash-atağı süpürür ama vuruş başına daha az.
 
+        // ⚠️ MENZİLLİ SİLAHIN DASH'İ ONUN YAKIN CEVABIDIR. HACİZ dash'te ölü
+        // bölgesini tanımıyor, İPOTEK dash'te yer işareti değil doğrudan yay
+        // vuruyor. Kural ikisinde de aynı: uzaktan iş gören silah dibine biri
+        // girdiğinde çaresiz kalmamalı, ama bunun bedeli dash'i harcamak olsun.
+        // Öz-denetim ikisini de ölçüyor.
+
         public virtual int DashTargets => MaxTargets;
         public virtual float DashAngle(Tuning t) => MaxTargets == 1 ? t.singleTargetAngle * 1.6f
                                                                    : t.dashAttackAngle;

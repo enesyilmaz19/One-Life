@@ -95,14 +95,30 @@ namespace TekCan.EditorTools
                 Tint(alt, altarColors[i]);
             }
 
-            // Faz 3: dört silahın yayı yan yana — şekilleri gerçekten ayrışıyor mu?
-            // (KONİ geniş, tek hedefliler dar; DURGUN uzun namlulu)
+            // Silah yayları yan yana — şekilleri gerçekten ayrışıyor mu?
+            // (KONİ geniş, FAİZLİ/İFLAS dar, HACİZ uzun + ölü bölgeli, İPOTEK halka)
             for (int i = 0; i < Weapon.All.Length; i++)
             {
                 var w = Weapon.All[i];
                 var origin = new Vector3(-6f + i * 3.2f, 1f, -6.5f);
+
+                // ⚠️ Yer vuruşu silahı KONİ ÇİZMEZ. `Angle` varsayılanını kullanmak
+                // İPOTEK'i ekran görüntüsünde koni gibi gösterirdi — aracın kendisi
+                // yalan söylerdi, ki bu araç tam da yalanı yakalamak için var.
+                if (w.GroundMarkDelay(t) > 0f)
+                {
+                    Arc.Spawn(origin + Vector3.forward * w.Range(t) * 0.5f, Quaternion.identity,
+                              w.GroundMarkRadius(t), 360f, w.Tint, 999f);
+                    continue;
+                }
+
                 Arc.Spawn(origin, Quaternion.Euler(0f, -35f, 0f),
                           w.Range(t), w.Angle(t), w.Tint, 999f);
+
+                // Ölü bölge de görünmeli, yoksa HACİZ karede sadece "uzun koni".
+                if (w.MinRange(t) > 0f)
+                    Arc.Spawn(origin, Quaternion.Euler(0f, -35f, 0f),
+                              w.MinRange(t), w.Angle(t), new Color(0.95f, 0.35f, 0.3f, 0.3f), 999f);
             }
 
             // İzometrik kamera
