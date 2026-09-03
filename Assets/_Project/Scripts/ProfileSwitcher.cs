@@ -49,6 +49,13 @@ namespace TekCan
             else if (kb.f4Key.wasPressedThisFrame) seçim = 3;
             if (seçim < 0 || seçim >= TuneProfile.All.Length) return;
 
+            // ⚠️ TABAN DIŞI PROFİL KOŞUYU KİRLETİR — `N`/`B`/`F5` ile aynı sınıf hata.
+            // F2-F4 hasat, boss ve arena değerlerini oyunun ortasında değiştiriyor;
+            // o kurallar altında kazanılan saat checkpoint'e yazılırsa kayıt, hiç
+            // oynanmamış bir oyunun ilerlemesini tutar. Bir kez sapıldıysa geri
+            // dönmek temizlemiyor: F2'de oynanan dakika F1'e basınca geri gelmiyor.
+            if (seçim != 0) SaveFile.MarkTestJump();
+
             TuneProfile.Select(seçim, _t);
             Sfx.Buy();
             IsoCamera.Shake(0.15f);

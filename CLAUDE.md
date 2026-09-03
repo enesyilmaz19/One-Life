@@ -90,6 +90,16 @@ Bu üç hata sınıfı projede defalarca çıktı. Yeni kod yazarken önce bunla
    değil, DUYULUYOR mu. Efekt doğdu mu değil, hedefe VARDI mı. Zaman güdümlü sınıf
    yazıyorsan `dt`'yi dışarıdan al (`Enemy.ApplyAura`, `Arc.Step`, `Mote.Step`) —
    yoksa editör modunda `Time.deltaTime` 0 olduğu için etki ölçülemez.
+4. **Test kısayolu KALICI DURUM YAZMAZ.** Yeni bir kısayol eklerken
+   `SaveFile.MarkTestJump()` çağır — koşu kirlenir ve `Flush()` diske hiç yazmaz.
+   `N` bunu yapmadığı için atladığı bölgeyi checkpoint'e yazıyordu ve Enes bir daha
+   1. bölgeye **dönemedi** (2026-09-02, ders 12).
+   *Ölçü:* KURALI ya da İLERLEMEYİ değiştiren kısayol kirletir (`N`, `B`, `F5`,
+   `F2-F4`); yalnızca KUŞANIMI değiştiren kirletmez (1-5 silah — checkpoint'e zaten
+   yazılmıyor, kirletseydi kir sürekli açık kalır ve işe yaramazdı).
+   Ve her kısayolun **geri alma yolu** olmalı, kısayolun kendisi kadar erişilebilir
+   bir yerde: `F6` sıfırdan yeni koşu başlatır ve **ölüm ekranında da çalışır**.
+   ⚠️ Bu kural klavye girdisiyle test edilemiyor — o yüzden burada yazıyor.
 
 ## graphify
 
