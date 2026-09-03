@@ -174,11 +174,23 @@ namespace TekCan
 
         void Update()
         {
-            if (_t == null || Clock.Instance == null || Clock.Instance.Dead || Clock.Instance.Won) return;
+            if (_t == null) return;
 
-            if (SkipToBossPressed()) { EnterRoom(_t.roomsPerRegion); return; }
-            if (SkipRegionPressed()) { EnterRegion(RegionIndex + 1); return; }
-            if (RefillClockPressed()) RefillClock();
+            // ⚠️ F6 ÖLÜM EKRANINDA DA ÇALIŞMALI, ve bu yüzden ölüm kontrolünden ÖNCE.
+            // Çakılmanın tam şekli şu: kayıt 5. bölgede, ölüyorsun, `R` seni
+            // checkpoint'e yani YİNE 5. bölgeye atıyor. Çıkış yolunu tam da
+            // kullanılamadığı yere koymak, çıkış yolu olmamasıyla aynı şey.
+            if (NewRunPressed()) { Bootstrap.NewRun(); return; }
+
+            if (Clock.Instance == null || Clock.Instance.Dead || Clock.Instance.Won) return;
+
+            // ⚠️ Atlama tuşları koşuyu KİRLETİYOR. Atlanan bölgenin 1. odası checkpoint
+            // odası olduğu için her atlayış diske "buradasın" yazıyordu; Enes N ile
+            // bölgeleri gezip bir daha 1. bölgeye DÖNEMEDİ. Kirli koşu artık diske
+            // gitmiyor, yani kayıt olduğu yerde kalıyor.
+            if (SkipToBossPressed()) { SaveFile.MarkTestJump(); EnterRoom(_t.roomsPerRegion); return; }
+            if (SkipRegionPressed()) { SaveFile.MarkTestJump(); EnterRegion(RegionIndex + 1); return; }
+            if (RefillClockPressed()) { SaveFile.MarkTestJump(); RefillClock(); }
 
             if (Cleared || AnyEnemyAlive()) return;
             OnCleared();
@@ -357,6 +369,19 @@ namespace TekCan
         {
             var kb = Keyboard.current;
             return kb != null && kb.nKey.wasPressedThisFrame;
+        }
+
+        /// <summary>
+        /// F6 — SIFIRDAN yeni koşu: 1. bölge, 1. oda, kayıt silinir. TEST KISAYOLU.
+        ///
+        /// ⚠️ Bu tuş olmadan başa dönmenin YOLU YOKTU: `R` yalnızca ölünce çalışıyor
+        /// ve o da checkpoint'e döndürüyor, sıfırdan başlatmıyor (eşya bittiyse hariç).
+        /// Enes N ile 5. bölgeye gezmeye gidip bir daha geri gelemedi.
+        /// </summary>
+        static bool NewRunPressed()
+        {
+            var kb = Keyboard.current;
+            return kb != null && kb.f6Key.wasPressedThisFrame;
         }
 
         /// <summary>

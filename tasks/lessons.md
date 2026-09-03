@@ -345,3 +345,38 @@ yarısı) aynen tekrarlamış olurdum. Testi ÇALIŞTIRDIĞIM için ikincisi ç�
 **Somut savunma:** `Faz13SelfCheck` artık `PickKind`'ı beş bölge × altı oda ×
 on iki yuva çalıştırıp çıkan türleri `HashSet`'te topluyor; küme `EnemyKind.All`
 kadar değilse eksik türün ADINI bastırıyor. Sayıya değil, çıktıya bakıyor.
+
+---
+
+## 2026-09-02 (12) — Test kısayolu kalıcı kaydı bozdu, geri dönüş yolu yoktu
+
+**Ne oldu:** Enes bildirdi: *"bölgeyi başa saramıyorum, restart atınca 5. bölgeye
+geçiyor."*
+
+`N` (bölge atla) test kısayolu, atladığı bölgenin **1. odasına** giriyor — ve
+`IsCheckpointRoom` oda 1 için doğru. Yani her test atlayışı **diske "5. bölgedesin"
+yazıyordu.** Enes bölgeleri gezmeye gitti, bir daha 1. bölgeye dönemedi.
+
+Beter eden şey: **geri dönüş yolu hiç yoktu.** `R` yalnızca ölünce çalışıyor ve
+checkpoint'e döndürüyor — yani yine 5. bölgeye. Sıfırdan başlatan tek yol eşyaların
+bitmesiydi.
+
+**Kural:**
+
+> **Test kısayolu KALICI durum yazmamalı.** Kısayol geçicidir, bıraktığı iz kalıcı
+> olursa oyuncunun/testçinin kaydını sessizce bozar.
+>
+> Ve her kısayolun **geri alma yolu** olmalı — kısayolun kendisi kadar erişilebilir
+> bir yerde.
+
+**Somut savunma:**
+- `SaveFile.MarkTestJump()` → koşu kirlenir, `Flush()` diske hiç yazmaz.
+  ⚠️ Koruma `Flush`'ta, `SaveCheckpoint`'te DEĞİL: ölüm kaydı, eşya harcaması, oyun
+  sonu — hepsi oradan geçiyor. Tek çağıranı korumak, bir sonraki yazma yolunda aynı
+  hatayı üretirdi. (`PathOverride` dersinin aynısı: **kural kaynağa konur.**)
+- **F6 = sıfırdan yeni koşu**, ve **ölüm ekranında da çalışıyor** — ilk yazışımda
+  ölüm kontrolünün ARDINA koymuştum, yani çakılmanın tam şeklinde (kayıt 5. bölgede,
+  ölüyorsun, R seni yine oraya atıyor) kullanılamıyordu. **Çıkış yolunu
+  kullanılamadığı yere koymak, çıkış yolu olmamasıyla aynı şey.**
+- Reprodüksiyon `Faz9SelfCheck`'te ve **bayrağı değil DİSKTE NE YAZDIĞINI** ölçüyor:
+  yaz, geri oku, bölge hâlâ 0 mı.

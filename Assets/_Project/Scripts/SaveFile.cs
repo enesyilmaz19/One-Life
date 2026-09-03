@@ -109,9 +109,34 @@ namespace TekCan
         }
 
         /// <summary>⚠️ Diske HEMEN yazar. Ölüm anında gecikme kalıcı ölümü yok eder.</summary>
+        /// <summary>
+        /// ⚠️ TEST KISAYOLU KULLANILDI — bu koşu artık DİSKE YAZILMAZ.
+        ///
+        /// Enes bildirdi: *"bölgeyi başa saramıyorum, restart atınca 5. bölgeye geçiyor."*
+        /// Sebep: `N` ile atlanan bölgenin 1. odası checkpoint odası, yani her test
+        /// atlayışı diske **"5. bölgedesin"** yazıyordu. Kısayol geçiciydi, bıraktığı
+        /// iz kalıcı — ve geri dönüşü yoktu.
+        ///
+        /// Koruma `Flush`'ta, `SaveCheckpoint`'te DEĞİL: ölüm kaydı, diriliş eşyası
+        /// harcaması, oyun sonu — hepsi buradan geçiyor. Tek çağıranı korumak, bir
+        /// sonraki yazma yolunda aynı hatayı tekrar üretirdi (bu proje o dersi
+        /// `PathOverride` ile bir kez öğrendi: kural KAYNAĞA konur).
+        /// </summary>
+        public static bool TestJumpUsed { get; private set; }
+
+        /// <summary>Test kısayolu basıldı — koşuyu kirlet. Geri alınmıyor: kirlenen kirlidir.</summary>
+        public static void MarkTestJump()
+        {
+            if (TestJumpUsed) return;
+            TestJumpUsed = true;
+            Debug.LogWarning("[Tek Can] ⚠️ TEST KISAYOLU kullanıldı — bu koşu artık DİSKE " +
+                             "YAZILMIYOR. Kaydın olduğu yerde duruyor. (F6 = sıfırdan yeni koşu)");
+        }
+
         public static void Flush()
         {
             if (Current == null) return;
+            if (TestJumpUsed) return;                    // ⚠️ kirli koşu diske gitmez
             try { File.WriteAllText(Path, JsonUtility.ToJson(Current)); }
             catch (Exception e) { Debug.LogError($"[Tek Can] Kayıt YAZILAMADI: {e.Message}"); }
         }
@@ -129,6 +154,10 @@ namespace TekCan
 
         public static void NewRun(Tuning t)
         {
+            // ⚠️ Sıfırdan yeni koşu KİRİ DE SİLER — yoksa test kısayolu kullanılmış
+            // bir oturumdan sonra hiçbir yeni koşu bir daha kaydedilemezdi.
+            TestJumpUsed = false;
+
             Current = new SaveData();
             LoadedFromDisk = true;      // artık gerçek bir koşu var
             Normalize();

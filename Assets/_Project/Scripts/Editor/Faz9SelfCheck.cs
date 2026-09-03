@@ -214,6 +214,35 @@ namespace TekCan.EditorTools
             //    Bu denetim diske gerçekten yazıyor; yazdığı yer OYUNCUNUN dosyası
             //    olsaydı `AllChecks`'i her çalıştırmak koşuyu silerdi. Sessiz ve
             //    yıkıcı bir hataydı — canlıydı, öz-incelemede yakalandı.
+            // ── ⚠️ TEST KISAYOLU KAYDI KİRLETMEMELİ — Enes'in bildirdiği hata ──
+            //    "bölgeyi başa saramıyorum, restart atınca 5. bölgeye geçiyor."
+            //    `N` ile atlanan bölgenin 1. odası checkpoint odası olduğu için her
+            //    atlayış diske "buradasın" yazıyordu ve geri dönüş yolu YOKTU.
+            //    ⚠️ Ölçülen şey BAYRAK DEĞİL, DİSKTE NE YAZDIĞI — yazıp geri okuyoruz.
+            SaveFile.NewRun(t);                                  // temiz koşu, kir sıfırlandı
+            SaveFile.Current.checkpointRegion = 0;
+            SaveFile.Flush();
+
+            SaveFile.MarkTestJump();                             // N / B / F5 basıldı
+            SaveFile.Current.checkpointRegion = 4;               // 5. bölgeye "ilerlendi"
+            SaveFile.Flush();
+
+            SaveFile.Load();
+            failed += Check(ref total, "⚠️ TEST ATLAYIŞI diske YAZILMIYOR (kayıt 1. bölgede kaldı)",
+                            SaveFile.Current.checkpointRegion == 0, SaveFile.Current.checkpointRegion);
+
+            // ⚠️ Ama kir SONSUZA KADAR sürmemeli: sıfırdan yeni koşu yeniden yazabilmeli,
+            //    yoksa F6'dan sonra hiçbir ilerleme bir daha kaydedilmezdi.
+            SaveFile.NewRun(t);
+            failed += Check(ref total, "⚠️ SIFIRDAN yeni koşu kiri TEMİZLİYOR",
+                            !SaveFile.TestJumpUsed, 0);
+
+            SaveFile.Current.checkpointRegion = 2;
+            SaveFile.Flush();
+            SaveFile.Load();
+            failed += Check(ref total, "temiz koşu yine diske yazıyor",
+                            SaveFile.Current.checkpointRegion == 2, SaveFile.Current.checkpointRegion);
+
             failed += Check(ref total, "⚠️ denetim GEÇİCİ dosyaya yazıyor",
                             !string.IsNullOrEmpty(SaveFile.PathOverride), 1);
             failed += Check(ref total, "geçici yol oyuncunun kaydı DEĞİL",
