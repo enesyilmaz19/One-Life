@@ -296,6 +296,52 @@ namespace TekCan.EditorTools
                             kurban.TimeLeft < kurbanÖnce - 0.001f, kurbanÖnce - kurban.TimeLeft);
             failed += Check(ref total, "İPOTEK isabet SAYIYOR", isaret.EnemiesHit == 1, isaret.EnemiesHit);
 
+            // (a2) ⚠️ PATLAMADAN YOK EDİLEN İŞARET SAYACI SIZDIRMAMALI
+            //      Oda değişimi / restart bekleyen işareti patlatmadan yok ediyor.
+            //      Sayaç düşmezse `ActiveLiens` kalıcı >0 takılır ve İPOTEK
+            //      TAMAMEN çalışmaz olur — hem de sessizce: savuruyorsun, hiçbir
+            //      şey olmuyor. ⚠️ Ölçülen şey bayrak değil SONRAKİ SAVURMA.
+            GroundMark.ResetLiens();
+            var ölüİşaret = GroundMark.SpawnLien(t, Bootstrap.ArenaCenter,
+                                                 ipotek.GroundMarkRadius(t), 99f,
+                                                 5f, 1f, null);
+
+            // ⚠️ ÜRETİMİN GERÇEK YOLU çağrılıyor — `TearDown`. Testin kendi
+            // temizliğini yazsaydım oda geçişinin sayacı sıfırladığını değil,
+            // testin sıfırladığını doğrulardım (düzeneği KOPYALAMA, İTHAL ET).
+            // ⚠️ `RoomManager.Init` oyuncuyu ODANIN GİRİŞİNE taşıyor; bu denetimdeki
+            // sonraki bütün testler düşmanı arena merkezine koyup oradan vuruyor.
+            // İlk yazışımda konumu geri koymamıştım ve BEŞ silahın hepsi birden
+            // "hasar veremiyor" dedi — silahlar değil, testin kendisi bozulmuştu.
+            var oyuncuKonum = pGo.transform.position;
+            var oyuncuYön = pGo.transform.rotation;
+
+            var rmGo = new GameObject("teardown-check");
+            var rmc = rmGo.AddComponent<RoomManager>();
+            rmc.Init(t, pGo.transform, null);
+            typeof(RoomManager).GetMethod("TearDown", BindingFlags.NonPublic | BindingFlags.Instance)
+                               .Invoke(rmc, null);
+            Object.DestroyImmediate(rmGo);
+            RoomManager.Reset();
+            if (ölüİşaret != null) Object.DestroyImmediate(ölüİşaret.gameObject);
+
+            pGo.transform.SetPositionAndRotation(oyuncuKonum, oyuncuYön);
+            ClearEnemies();
+
+            failed += Check(ref total, "⚠️ ODA DEĞİŞİMİ bekleyen ipotek sayacını sıfırlıyor",
+                            GroundMark.ActiveLiens == 0, GroundMark.ActiveLiens);
+
+            ClearEnemies();
+            var sonraki = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 2f);
+            float sonrakiÖnce = sonraki.TimeLeft;
+            var yeni = GroundMark.SpawnLien(t, sonraki.transform.position,
+                                            ipotek.GroundMarkRadius(t), ipotek.GroundMarkDelay(t),
+                                            ipotek.Damage(t, t.attackDamage),
+                                            ipotek.HarvestMultiplier, null);
+            yeni.Step(ipotek.GroundMarkDelay(t) + 0.05f);
+            failed += Check(ref total, "⚠️ sızıntıdan SONRA İPOTEK hâlâ vuruyor",
+                            sonraki.TimeLeft < sonrakiÖnce - 0.001f, sonrakiÖnce - sonraki.TimeLeft);
+
             // (b) ⚠️ YARIÇAPIN DIŞINDAKİ KURTULUYOR — yoksa "alan" diye bir şey yok
             ClearEnemies();
             var kacan = MakeEnemy(t, pGo.transform,

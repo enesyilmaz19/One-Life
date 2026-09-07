@@ -39,6 +39,16 @@ namespace TekCan
         /// üç tane daha koyabiliyordun ve hepsi aynı noktada üst üste patlıyordu.
         /// Hasat çarpanını kısmak bunu çözmez, sadece geciktirir.
         /// </summary>
+        /// ⚠️ SAYAÇ PATLAMADAN YOK EDİLEN İŞARETİ GÖREMEZ. İşaret oda değişiminde,
+        /// restart'ta ve yeni koşuda patlamadan ölüyor; her biri sayacı bir artırılmış
+        /// bırakırdı ve birkaç odadan sonra `ActiveLiens` kalıcı &gt;0 takılıp
+        /// **İPOTEK'i tamamen çalışmaz** hale getirirdi — sessizce: savuruyorsun,
+        /// hiçbir şey olmuyor.
+        ///
+        /// Çözüm `OnDestroy` DEĞİL: Unity edit modda o kancayı çağırmıyor, yani
+        /// koruma test edilemez olurdu (aynı sebeple `Update` yerine `Step(dt)` var).
+        /// Bunun yerine işaretleri yok eden ÜRETİM YOLLARI sayacı sıfırlıyor:
+        /// `RoomManager.TearDown` ve `Bootstrap.ResetStatics`. İkisi de test edilebilir.
         public static int ActiveLiens { get; private set; }
         public static void ResetLiens() => ActiveLiens = 0;
 

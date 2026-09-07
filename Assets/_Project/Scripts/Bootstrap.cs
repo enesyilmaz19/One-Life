@@ -280,6 +280,7 @@ namespace TekCan
         {
             Enemy.All.Clear();
             Altar.ResetAll();
+            GroundMark.ResetLiens();      // bekleyen ipotek sayacı koşular arası taşınmasın
             RoomManager.Reset();
             RevivalSystem.Reset();
             Region.Reset();

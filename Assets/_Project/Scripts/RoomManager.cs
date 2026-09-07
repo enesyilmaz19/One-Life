@@ -272,6 +272,12 @@ namespace TekCan
             Enemy.All.Clear();
 
             Altar.ResetAll();
+
+            // ⚠️ Bekleyen İPOTEK oda ile birlikte PATLAMADAN yok oluyor. Sayaç
+            // sıfırlanmazsa her oda geçişinde bir artık kalır ve birkaç odada
+            // İPOTEK sessizce çalışmaz olur (savuruyorsun, hiçbir şey olmuyor).
+            GroundMark.ResetLiens();
+
             _gate = null;
 
             if (_roomRoot != null)
