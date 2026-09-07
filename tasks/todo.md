@@ -10,6 +10,84 @@
 - [x] ✅ **Faz 10 playtest GEÇTİ** (2026-08-26) — bölgeler farklı hissettiriyor,
       zincir akıyor. **Zorluk çok yüksek, ayar ertelendi** *(Faz 10 bölümüne yazıldı)*
 
+### 📋 PLAYTEST RAPORU 2026-09-02 — SIRADAKİ İŞLER
+
+Enes'in raporundan çıkan **yapılacaklar**. ✅ olanlar bu oturumda yapıldı.
+
+- [x] 🐛 İPOTEK'in sahte konisi kaldırıldı *(hasar vurmayan yay çiziliyordu)*
+- [x] 🐛 ÖLÜM ALDATMA süre tabanı *(sıra doğruymuş, süre 4-5 sn'ye düşüyordu)*
+- [x] ⚖️ İPOTEK nerf — **aynı anda tek ipotek** (yapısal) + hasat 1.3→0.7 + süre ×1.45
+- [x] ⚖️ FAİZLİ "oturtsun" — hit-stop ×1.9, sarsıntı ×2.2, hasar ×1.45
+- [x] ⚖️ İFLAS hız — süre ×1.25 → ×0.80, hasat 1.8 → 2.1
+- [x] ⚖️ HACİZ menzil ×2.6 → ×3.4
+- [x] 🔬 Buff matematiği *(aşağıda)*
+
+#### 🔴 FAZ 16 — Silah derinliği
+- [ ] **Sağ tık: her silaha ikinci saldırı**, birkaç saniyede bir. Bekleme süresi
+      silahtan silaha değişir
+- [ ] **Her silaha ÖZEL dash-atak** — Enes: *"burada çok belli olmuyor neyin ne yaptığı"*
+- [ ] KONİ buff'ı — ⏸️ İPOTEK nerf'i sonrası **yeniden hissedilsin**, sonra karar
+
+#### 🔴 FAZ 17 — Rütbe yeniden tasarımı *(mevcut ayrım çöktü)*
+> Enes: *"iri ve zırhlı ayrışmıyor. mantığı farklı olmalı."*
+
+- [ ] **ZIRHLI** — her türden olabilir, sadece **daha çok can** + **daha yavaş**.
+      Bir odada **birkaç tane** olabilir *(şu anki "yavaş akan zaman" mantığı gidiyor)*
+- [ ] **İRİ** — **mini boss**: birkaç odada bir, normal mobun **çok gelişmiş** hali,
+      odada **tek**
+
+#### 🔴 FAZ 18 — Boss yeniden tasarımı *(en büyük iş)*
+> Enes: *"bosslar çok farklı hissettirmedi."*
+
+Her boss'ta olacaklar:
+- [ ] **1 özgün mekanik** *(faz 2'de güçlenir — bu zaten var)*
+- [ ] **1 düz saldırı** + **1 menzilli saldırı** — bosstan bossa değişir ama
+      hepsinin "klasik" atağıdır. Faz 2'de güçlenir
+- [ ] **En az 2 özgün saldırı** — arada yapılan güçlü ve değişik olanlar
+- [ ] **Boss 3-4-5'te en az 3-4 özgün saldırı**
+- [ ] **Faz 2'de YENİ özgün saldırılar eklenecek**, sadece güçlenme değil
+- [ ] **Son boss:** kendi mekaniği + **önceki tüm boss'ların mekanikleri** +
+      **tüm haritaya vuran, minik güvenli noktası olan** bir yetenek
+
+#### 🔴 FAZ 19 — Sunak odası
+- [ ] Sunak/buff alma için **ayrı oda tasarımı** *(şu an dövüş odasının içinde)*
+
+#### 📝 Not — animasyon fazına
+> Enes: *"düşmanların oyun içi animasyonları ile ne yapıldığı anlaşılır diye ümit
+> ediyorum, çünkü renklerden kafamda tutmadığım için tam anlaşılmıyor (yine ayırt
+> ediliyor, sadece biraz anlaşmazlıklar var)."*
+
+Renk **ayırt ettiriyor ama anlatmıyor.** Animasyon fazının birinci işi: her türün
+NE YAPTIĞI duruşundan/hareketinden okunmalı, renginden ezberlenmemeli.
+
+### 🔬 BUFF MATEMATİĞİ — Enes sordu, cevap: EVET fazla güçlü (2026-09-02)
+
+`Zorluk eğrisi raporu`, TEMİZ oyuncu:
+
+| | sonuç |
+|---|---|
+| **ALIMSIZ** (buff almadan) | ❌ bölge 2 oda 3'te saat bitiyor |
+| **ALICI** (alarak) | ✅ koşuyu **+312 sn** artıyla bitiriyor (374 sn ödedi, **39 alım**) |
+
+Enes'in *"buff almadan imkanı yok"* gözlemi ölçümle birebir. **Zorluk doğru.**
+Sorun ölçek:
+
+| | koşu başı | koşu sonu | büyüme |
+|---|---|---|---|
+| **Oyuncu hasarı** | 3,5 | **27,5** | **×7,9** ← tavansız |
+| Hasat | %35 | %70 | ×2 *(tavanlı — sorun değil)* |
+| Düşman havuzu (boss) | — | — | ×1,35⁴ ≈ **×3,3** |
+
+**Teşhis: hasar yükseltmesi içerikten 2,4 KAT hızlı büyüyor** — ve tek tavansız
+eksen o. Eğri tersine dönüyor: ilk odalar zararda (−6, −7 sn), son bölge boss
+odası **+151 sn**.
+
+İkinci suçlu: **sunak fiyatı her odada sıfırlanıyor** (kodda zaten `ponytail:`
+işaretli) — 39 alımı mümkün kılan şey bu.
+
+- [ ] `altarDamageStep`'e TAVAN (hasat gibi) — **birinci kadran**
+- [ ] Sunak fiyat artışı odalar arası KALICI olsun
+
 ### 🎮 FAZ 15 PLAYTEST — silah kadrosu (5/5 TAMAM)
 
 **1-5 tuşları.** DURGUN ve VADELİ gitti; HACİZ, İPOTEK, İFLAS geldi.
