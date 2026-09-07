@@ -30,6 +30,18 @@ namespace TekCan
         bool _hitsEnemies;
         float _enemyDamage, _harvestMult;
 
+        /// <summary>
+        /// Şu an olgunlaşmayı bekleyen OYUNCU ipoteği sayısı.
+        ///
+        /// ⚠️ Enes: *"ipotek solo boss fightlarda bile spam yapınca çok vuruyor,
+        /// 1k pasif stacklemiş Veigar W'su gibi bonk bonk bonk."* Sebep sayı değil
+        /// YAPI: gecikme 0.85 sn, savurma 0.35 sn — yani ilk işaret patlamadan
+        /// üç tane daha koyabiliyordun ve hepsi aynı noktada üst üste patlıyordu.
+        /// Hasat çarpanını kısmak bunu çözmez, sadece geciktirir.
+        /// </summary>
+        public static int ActiveLiens { get; private set; }
+        public static void ResetLiens() => ActiveLiens = 0;
+
         /// <summary>DÜŞMANIN bıraktığı tebligat — OYUNCUYA vurur. (SİMSAR, MÜBAŞİR)</summary>
         public static GroundMark Spawn(Tuning t, Vector3 pos, Transform player,
                                        float radius, float delay, float cost, Transform parent)
@@ -76,6 +88,7 @@ namespace TekCan
             m._hitsEnemies = true;
             m._enemyDamage = damage;
             m._harvestMult = harvestMult;
+            ActiveLiens++;
 
             // Oyuncununki KENDİ RENGİNDE (İPOTEK moru) — düşmanın tebligatıyla
             // karışsaydı oyuncu kendi koyduğu işaretten kaçmaya çalışırdı.
@@ -92,6 +105,7 @@ namespace TekCan
             if (_timer > 0f) return;
 
             _fired = true;
+            if (_hitsEnemies) ActiveLiens = Mathf.Max(0, ActiveLiens - 1);
             Detonate();
 
             if (Application.isPlaying) Destroy(gameObject);
@@ -105,6 +119,7 @@ namespace TekCan
             _timer -= dt;
             if (_timer > 0f) return;
             _fired = true;
+            if (_hitsEnemies) ActiveLiens = Mathf.Max(0, ActiveLiens - 1);
             Detonate();
         }
 

@@ -295,7 +295,11 @@ namespace TekCan
             SwingsSpawned++;
             Sfx.Swing();
 
-            StrikeCone(range, angle, damage, _t.hitStopDuration * 1.4f, _t.hitShake * 1.5f,
+            // Dash-atak zaten ağır; silahın kendi ağırlığı ONUN ÜSTÜNE biniyor,
+            // yerine geçmiyor — yoksa FAİZLİ'nin dash'i normal savurmasından hafif kalırdı.
+            StrikeCone(range, angle, damage,
+                       _t.hitStopDuration * 1.4f * Weapon.HitStopMultiplier,
+                       _t.hitShake * 1.5f * Weapon.ShakeMultiplier,
                        Weapon.DashTargets, Weapon.HarvestMultiplier, out int hits, out int kills);
 
             Weapon.OnStrike(Clock.Instance, _t, hits, kills);
@@ -320,8 +324,14 @@ namespace TekCan
             // ⚠️ ISKADA DA ÇIKAR. Faz 1'in ilk playtest'i tam olarak bu eksik olduğu için
             // yürümedi: oyuncu saldırdığını göremeyince hissi yargılayamadı.
             // Yay, gerçek vuruş alanının kendisi — menzil ve açı Strike() ile aynı kaynaktan.
-            Arc.Spawn(transform.position, transform.rotation,
-                Weapon.Range(_t), Weapon.Angle(_t), Weapon.Tint, _t.swingArcLife);
+            // ⚠️ YER VURUŞU SİLAHI SAVURMA YAYI ÇİZMEZ. İPOTEK koni vurmuyor, ama yay
+            // koşulsuz çiziliyordu: ekranda kocaman bir koni açılıyor ve HİÇBİR ŞEYE
+            // VURMUYOR. Enes bildirdi. Bu, "mekanik doğru görsel yalan" hatasının
+            // DÖRDÜNCÜSÜ — ve en kötüsü, çünkü yay burada isabet alanının kendisi
+            // olduğunu söylüyor. İşaretin kendi halkası zaten `GroundMark` içinde çiziliyor.
+            if (Weapon.GroundMarkDelay(_t) <= 0f)
+                Arc.Spawn(transform.position, transform.rotation,
+                    Weapon.Range(_t), Weapon.Angle(_t), Weapon.Tint, _t.swingArcLife);
 
             // ⚠️ ÖLÜ BÖLGE DE GÖRÜNMELİ (HACİZ). Boss'un simit göbeğiyle aynı gerekçe,
             // ama TERS ANLAM: boss'unki güvenli olduğu için YEŞİL, bu ise silahın
@@ -376,7 +386,8 @@ namespace TekCan
             if (Weapon.GroundMarkDelay(_t) > 0f) { PlaceLien(); return; }
 
             StrikeCone(Weapon.Range(_t), Weapon.Angle(_t), WeaponDamage(),
-                       _t.hitStopDuration, _t.hitShake,
+                       _t.hitStopDuration * Weapon.HitStopMultiplier,
+                       _t.hitShake * Weapon.ShakeMultiplier,
                        Weapon.MaxTargets, Weapon.HarvestMultiplier,
                        out int hits, out int kills,
                        minRange: Weapon.MinRange(_t));
@@ -393,6 +404,14 @@ namespace TekCan
         /// </summary>
         void PlaceLien()
         {
+            // ⚠️ AYNI ANDA TEK İPOTEK — spam'in YAPISAL cevabı.
+            // Enes: "spam yapınca çok vuruyor, bonk bonk bonk". Gecikme savurmadan
+            // uzun olduğu için üç işareti üst üste yığabiliyordun. Hasat çarpanını
+            // kısmak bunu çözmezdi, sadece geciktirirdi. Tek işaret kuralı silahın
+            // kimliğini de netleştiriyor: koyduğunu BEKLEYECEKSİN — "nereye
+            // gidecekler" sorusu ancak bekleyince gerçek bir soru.
+            if (GroundMark.ActiveLiens > 0) return;
+
             Vector3 hedef = CursorGround(out Vector3 nokta)
                           ? nokta
                           : transform.position + transform.forward * Weapon.Range(_t);

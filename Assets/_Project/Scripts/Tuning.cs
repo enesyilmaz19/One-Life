@@ -116,6 +116,9 @@ namespace TekCan
         public float singleTargetAngle = 45f;
         [Tooltip("FAİZLİ: her savurmanın peşin bedeli (saniye). Iska pahalı olsun diye var.")]
         public float faizliSwingCost = 0.5f;
+        [Tooltip("FAİZLİ: hasar çarpanı. Tek hedefli silahın 'tek ama sert' iddiası — " +
+                 "hit-stop ×1.9 ve sarsıntı ×2.2 ile birlikte çalışıyor.")]
+        public float faizliDamageMult = 1.45f;
         // VADELİ kaldırıldı (2026-09-02): FAİZLİ ile aynı soruyu soruyordu ve
         // `Denge simülasyonu`nda HER düşman sayısında geride kalıyordu (+2,8 / +5,9).
         // `vadeliDamageMult` ve `vadeliCost` asset'te ölü anahtar olarak kalıyor —
@@ -218,6 +221,12 @@ namespace TekCan
         [Tooltip("Kırık diriliş eşyasını tamir etmenin SANİYE bedeli. " +
                  "⚠️ Ayrı malzeme YOK — tamir zamanla yapılır, yoksa ikinci para birimi doğar.")]
         public float revivalRepairPrice = 45f;
+
+        [Tooltip("ÖLÜM ALDATMA en az bu kadar saniye verir. ⚠️ Oranla hesaplanan süre " +
+                 "düşük checkpoint'te 4-5 saniyeye iniyordu: eşya yanıyor, oyuncu hiçbir " +
+                 "şey olmadı sanıyor ve sıradaki eşya devreye giriyor. Enes bunu 'ölüm " +
+                 "aldatmadan önce geçici dönüş çalıştı' diye bildirdi — sıra değil SÜRE hatası.")]
+        public float defianceMinSeconds = 12f;
 
         [Tooltip("TEST: başlangıçtaki ÖLÜM ALDATMA sayısı. Gerçek oyunda eşyalar hikâyeden gelecek.")]
         public int testDefianceCount = 1;

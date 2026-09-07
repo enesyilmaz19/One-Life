@@ -42,8 +42,12 @@ namespace TekCan
             public override Color Tint => new Color(1f, 0.85f, 0.35f);
             // Checkpoint'teki zamanın küçük bir kısmı (Enes kararı). Yerinde kalkıyorsun,
             // düşmanlar da yerinde — yani ucuz değil, dövüşün ortasında az zamanla kalıyorsun.
+            // ⚠️ TABAN VAR. Yalnızca oran olsaydı düşük checkpoint'te 4-5 saniye
+            // verirdi — dövüşün ortasında o süre "diriliş" değil formalite: eşya
+            // yanıyor, oyuncu hiçbir şey olmadı sanıyor, sıradaki eşya devreye
+            // giriyor. Enes bunu SIRA hatası diye bildirdi; aslında SÜRE hatasıydı.
             public override float SecondsOnUse(Tuning t)
-                => SaveFile.CheckpointSeconds(t) * t.defianceFraction;
+                => Mathf.Max(t.defianceMinSeconds, SaveFile.CheckpointSeconds(t) * t.defianceFraction);
         }
 
         sealed class LastStand : RevivalKind

@@ -247,6 +247,25 @@ namespace TekCan.EditorTools
             YaylariTemizle();
             pc.SetWeapon(hacizIndex);
 
+            // ── 6f) ⚠️ İPOTEK SAVURMA YAYI ÇİZMEMELİ ──
+            //    Enes bildirdi: *"ipotekte iki alan açılıyor, ilk bastığımızda çıkan
+            //    koni hasar vurmuyor."* Yay koşulsuz çiziliyordu — ekranda kocaman
+            //    bir isabet alanı açılıyor ve hiçbir şeye değmiyor. "Mekanik doğru,
+            //    görsel yalan" hatasının DÖRDÜNCÜSÜ, ve en kötüsü: yay tanımı gereği
+            //    "isabet alanı burası" diyor.
+            YaylariTemizle();
+            ClearEnemies();
+            pc.SetWeapon(System.Array.IndexOf(Weapon.All,
+                System.Array.Find(Weapon.All, w => w is Ipotek)));
+            startAttack.Invoke(pc, new object[] { Vector3.forward });
+
+            int ipotekYay = 0;
+            foreach (var y in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include))
+                if (y.Radius > new Ipotek().GroundMarkRadius(t) + 0.5f) ipotekYay++;
+            failed += Check(ref total, "⚠️ İPOTEK savurunca SAHTE KONİ çıkmıyor",
+                            ipotekYay == 0, ipotekYay);
+            YaylariTemizle();
+
             // ── 6c) ⚠️ İPOTEK GERÇEKTEN VURUYOR MU ──
             //    "İşaret doğdu mu" değil — DÜŞMANIN HAVUZU İNDİ Mİ. GroundMark
             //    bugüne kadar SADECE oyuncuya vuruyordu; ters yön yeni kod, yani

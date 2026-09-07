@@ -41,6 +41,15 @@ namespace TekCan
         /// <summary>Vuruş indikten sonra — isabet sayısı ve öldürme sayısıyla.</summary>
         public virtual void OnStrike(Clock clock, Tuning t, int hits, int kills) { }
 
+        // ── DARBE AĞIRLIĞI ────────────────────────────────────────────────────
+        // Enes: *"faizli de kodum mu oturtsun cinsinden olsun."* Ağırlık hissi
+        // hasardan gelmiyor — HIT-STOP ve SARSINTIDAN geliyor. Bunlar sabitti, yani
+        // bütün silahlar aynı ağırlıkta vuruyordu ve tek hedefli silahın "tek ama
+        // sert" olma iddiası ekranda hiç görünmüyordu.
+
+        public virtual float HitStopMultiplier => 1f;
+        public virtual float ShakeMultiplier => 1f;
+
         /// <summary>
         /// &gt;0 ise bu mesafeden YAKINDAKİNE vuramaz — menzilli silahın ölü bölgesi.
         ///
@@ -126,6 +135,13 @@ namespace TekCan
         public override float HarvestMultiplier => 2.6f;
         public override float Angle(Tuning t) => t.singleTargetAngle;
 
+        // ⚠️ "Oturtsun" (Enes). Ağırlık HASARDAN değil DARBEDEN geliyor: hit-stop
+        // uzuyor, ekran daha çok sarsılıyor, hasar da artıyor. Üçü birlikte tek
+        // vuruşu olay yapıyor — tek hedefli silahın varlık sebebi bu.
+        public override float Damage(Tuning t, float baseDamage) => baseDamage * t.faizliDamageMult;
+        public override float HitStopMultiplier => 1.9f;
+        public override float ShakeMultiplier => 2.2f;
+
         public override bool OnSwingStart(Clock clock, Tuning t)
         {
             // Ödeyemiyorsan savuramıyorsun — silah seni öldürmüyor, sadece susuyor.
@@ -162,7 +178,7 @@ namespace TekCan
         public override Color Tint => new Color(0.55f, 1f, 0.7f, 0.42f);
         public override int MaxTargets => 1;
         public override float HarvestMultiplier => 2.2f;
-        public override float Range(Tuning t) => t.attackRange * 2.6f;        // uzun
+        public override float Range(Tuning t) => t.attackRange * 3.4f;        // Enes: menzil buffu
         public override float Angle(Tuning t) => t.singleTargetAngle * 0.6f;  // dar: nişan
         public override float MinRange(Tuning t) => t.hacizMinRange;          // ölü bölge
         public override float Duration(Tuning t) => t.attackDuration * 1.15f; // nişan alıyor
@@ -187,8 +203,12 @@ namespace TekCan
     {
         public override string Name => "İPOTEK";
         public override Color Tint => new Color(1f, 0.45f, 0.95f, 0.42f);
-        public override float HarvestMultiplier => 1.3f;
+        // ⚠️ Playtest sonrası SERT KISILDI (Enes: "ipotek fazla güçlü amk"). Üç kadran
+        // birden çevrildi çünkü üç ayrı yerden güçlüydü: alan + yığılabilirlik + hasat.
+        // Yığılma yapısal olarak kapandı (tek işaret); burada kalan ikisi.
+        public override float HarvestMultiplier => 0.7f;                    // 1.3 → 0.7
         public override float Range(Tuning t) => t.attackRange * 2.2f;      // koyabildiğin mesafe
+        public override float Duration(Tuning t) => t.attackDuration * 1.45f;  // ağır: spam'i kesiyor
         public override float GroundMarkDelay(Tuning t) => t.ipotekDelay;
         public override float GroundMarkRadius(Tuning t) => t.ipotekRadius;
         public override float Damage(Tuning t, float baseDamage) => baseDamage * t.ipotekDamageMult;
@@ -213,9 +233,14 @@ namespace TekCan
         public override string Name => "İFLAS";
         public override Color Tint => new Color(1f, 0.3f, 0.25f, 0.55f);
         public override int MaxTargets => 1;
-        public override float HarvestMultiplier => 1.8f;
+        public override float HarvestMultiplier => 2.1f;                        // 1.8 → 2.1
         public override float Angle(Tuning t) => t.singleTargetAngle;
-        public override float Duration(Tuning t) => t.attackDuration * 1.25f;   // ağır
+
+        // ⚠️ HIZLI, ağır değil (Enes: "iflasın saldırı hızına da buff yapalım").
+        // 1.25 idi — yani dipteyken sertleşen silah tam da sertleştiği anda YAVAŞ
+        // vuruyordu ve eğrisi hissedilmiyordu. Hızlı olması eğriyi görünür kılıyor:
+        // dipte hem sert hem seri, yani gerçekten "son çare" gibi çalışıyor.
+        public override float Duration(Tuning t) => t.attackDuration * 0.8f;
 
         public override float DesperationMultiplier(float seconds, Tuning t)
         {

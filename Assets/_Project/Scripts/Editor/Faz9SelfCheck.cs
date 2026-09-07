@@ -214,6 +214,38 @@ namespace TekCan.EditorTools
             //    Bu denetim diske gerçekten yazıyor; yazdığı yer OYUNCUNUN dosyası
             //    olsaydı `AllChecks`'i her çalıştırmak koşuyu silerdi. Sessiz ve
             //    yıkıcı bir hataydı — canlıydı, öz-incelemede yakalandı.
+            // ── ⚠️ GERÇEK DİZİ: ÜÇ ÖLÜM ART ARDA, TEK KOŞUDA ──
+            //    Enes: *"ölüm aldatmadan önce geçici dönüş çalıştı."*
+            //    Mevcut sıra testleri YAPAY envanterle kuruluyordu ("aldatma YOKKEN
+            //    ne oluyor") — yani üçü de eldeyken oyuncunun yaşadığı DİZİYİ hiçbir
+            //    test oynamamıştı. Fixture tek tek doğruydu, birlikte hiç denenmedi.
+            SaveFile.NewRun(t);                       // gerçek başlangıç: üçü de 1'er
+            SaveFile.Current.checkpointSeconds = 40f; // oyunun ortası gibi
+            SaveFile.Flush();
+
+            var sıra = new System.Collections.Generic.List<string>();
+            var verilen = new System.Collections.Generic.List<float>();
+
+            for (int ölüm = 0; ölüm < 3; ölüm++)
+            {
+                var (r, c, rv) = Kur(t, 100f);
+                c.Spend(999f);                        // öl
+                sıra.Add(rv.LastUsed?.Name ?? (rv.RecallCount > 0 ? "(sayaç→çağrı)" : "(yok)"));
+                verilen.Add(c.Seconds);
+                Object.DestroyImmediate(r);
+                RevivalSystem.Reset();
+            }
+
+            failed += Check(ref total, $"⚠️ DİZİ doğru: {string.Join(" → ", sıra)}",
+                            sıra[0] == "ÖLÜM ALDATMA" && sıra[1] == "GEÇİCİ DÖNÜŞ", 0);
+
+            // ⚠️ VE HER BİRİ İŞE YARAMALI. Diriliş 3-4 saniye veriyorsa oyuncu için
+            //    "çalışmadı" demektir — eşya yandı, hiçbir şey olmadı, bir sonraki
+            //    eşya devreye girdi. Enes'in gördüğü şey büyük ihtimalle buydu:
+            //    mekanik doğru, ETKİSİ yok. Sıra hatası gibi görünen bir SÜRE hatası.
+            failed += Check(ref total, $"⚠️ ÖLÜM ALDATMA yaşanabilir süre veriyor ({verilen[0]:0.0} sn)",
+                            verilen[0] >= t.defianceMinSeconds - 0.01f, verilen[0]);
+
             // ── ⚠️ TEST KISAYOLU KAYDI KİRLETMEMELİ — Enes'in bildirdiği hata ──
             //    "bölgeyi başa saramıyorum, restart atınca 5. bölgeye geçiyor."
             //    `N` ile atlanan bölgenin 1. odası checkpoint odası olduğu için her
