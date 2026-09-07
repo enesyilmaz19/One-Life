@@ -124,6 +124,16 @@ namespace TekCan
             if (_player == null) return;
 
             // ⚠️ YATAY mesafe — y'nin yatay hesaba karışması bu projede dört kez hata üretti.
+            //
+            // ⚠️ VE BU ÖLÇÜM OYUNCUNUN MERKEZİNE — `VurDüşmanlara` ise düşmanın
+            // YÜZEYİNE bakıyor. Tutarsızlık DEĞİL, düzeltilmemeli:
+            //   • Oyuncuya vuran işaret merkezi ölçer, çünkü izometrikte oyuncu kendi
+            //     AYAK NOKTASINI okuyor; "merkezin halkaya girmesin" dürüst bir söz.
+            //     (Boss'un simit göbeği de aynı gerekçeyle merkeze ölçüyor.)
+            //   • Düşmana vuran işaret yüzeyi ölçer, çünkü oyuncu GÖRDÜĞÜ GÖVDEYE
+            //     nişan alıyor; İRİ rütbeli düşman halkaya taşmışken vurulmaması
+            //     boss isabetindeki ölü bandın aynısı olurdu (ders 9).
+            // Biri "tutarlılık" diye ötekine çevrilirse isabet oranları sessizce kayar.
             var d = _player.position - transform.position;
             d.y = 0f;
             if (d.magnitude > _radius) return;
