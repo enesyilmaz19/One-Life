@@ -128,6 +128,13 @@ namespace TekCan
     {
         public abstract string Name { get; }
 
+        /// <summary>
+        /// `All` içindeki yeri = NEMESİS DEFTERİNDEKİ indis.
+        /// `EnemyKind` / `RevivalKind` ile aynı desen — indisi elle yazmak,
+        /// listeye bir boss eklendiğinde sessizce YANLIŞ boss'un hesabına yazardı.
+        /// </summary>
+        public int Index { get; private set; }
+
         /// <summary>Ne yaptığı — HUD'da faz geçişinde gösteriliyor.</summary>
         public abstract string Crime { get; }
 
@@ -722,6 +729,11 @@ namespace TekCan
         // MURABAHACI SONDA kalmalı: sözleşmeyi elinde tutan, koşunun finali.
         public static readonly BossKind[] All =
             { new Tahsildar(), new Eksper(), new Kefil(), new Simsar(), new Murabahaci() };
+
+        static BossKind()
+        {
+            for (int i = 0; i < All.Length; i++) All[i].Index = i;
+        }
 
         /// <summary>Bölge → boss. Her bölgenin kendi alacaklısı.</summary>
         public static BossKind For(int regionIndex)

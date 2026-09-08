@@ -209,6 +209,15 @@ namespace TekCan
                  "geliyorlar; dördü de tam havuzla gelseydi final bir yıpratma olurdu.")]
         public float rivalPoolMultiplier = 0.7f;
 
+        [Tooltip("NEMESİS: boss'un senden aldığı zamanın ne kadarı havuzuna ekleniyor. " +
+                 "1.0 = tamamı. ⚠️ Tam ödetmek ölüm sarmalı yapabilir: her ölüm boss'u " +
+                 "biraz daha yenilmez kılar. Pay, hikâyeyi bozmadan sarmalı kesiyor.")]
+        public float nemesisPoolShare = 0.5f;
+        [Tooltip("NEMESİS: borç havuzun bu katını geçemez — tavan. " +
+                 "⚠️ Tavansız bırakılsaydı yeterince ölen oyuncu için boss matematiksel " +
+                 "olarak yenilemez olurdu ve kalıcı ölüm bir CEZA değil bir DUVAR olurdu.")]
+        public float nemesisMaxShare = 1.5f;
+
         [Header("── DÜŞMAN RÜTBESİ (Faz 17) ──")]
         // ⚠️ ZIRHLI = MİKTAR ekseni, İRİ = KİMLİK ekseni. İlk tasarımda ikisi de
         // havuz ekseninde durup aynı hissettiriyordu (Enes: "ayrışmıyor").

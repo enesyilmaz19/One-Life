@@ -8,6 +8,20 @@ namespace TekCan
     [Serializable]
     public class SaveData
     {
+        /// <summary>
+        /// NEMESİS DEFTERİ — her boss'un SENDEN ALDIĞI toplam saniye.
+        ///
+        /// `TASARIM.md`: *"Seni öldüren boss, senden aldığı zamanı hesabına
+        /// geçiriyor ve bir dahaki karşılaşmada daha büyük oluyor."*
+        ///
+        /// ⚠️ Borç metaforu kesintisiz: bu oyunda ölmek bir ceza değil bir
+        /// TEMERRÜT. Kaybettiğin zaman yok olmuyor, KARŞI TARAFA geçiyor.
+        ///
+        /// ⚠️ Kalıcı ölümle siliniyor (`NewRun`): meta ilerleme yok, nemesis de
+        /// meta değil — bir KOŞUNUN içindeki hikâye.
+        /// </summary>
+        public float[] bossLedger = new float[0];
+
         public int checkpointRoom = 1;
         public int checkpointRegion;               // 0 tabanlı
         public float checkpointSeconds = -1f;      // -1 = henüz checkpoint yok, startSeconds kullan
@@ -175,6 +189,38 @@ namespace TekCan
             int n = RevivalKind.All.Length;
             Current.intact = Fit(Current.intact, n);
             Current.broken = Fit(Current.broken, n);
+
+            // ⚠️ Boss defteri de boy uyumlu tutuluyor — kadroya boss eklenirse
+            // eski kayıt kısa kalır ve indis okuma patlardı.
+            Current.bossLedger = FitFloat(Current.bossLedger, BossKind.All.Length);
+        }
+
+        static float[] FitFloat(float[] src, int n)
+        {
+            var dst = new float[n];
+            if (src != null)
+                for (int i = 0; i < Mathf.Min(src.Length, n); i++) dst[i] = Mathf.Max(0f, src[i]);
+            return dst;
+        }
+
+        /// <summary>Bu boss senden ne kadar aldı — havuzuna eklenecek borç.</summary>
+        public static float BossLedger(BossKind kind)
+        {
+            if (kind == null || Current?.bossLedger == null) return 0f;
+            return kind.Index < Current.bossLedger.Length ? Current.bossLedger[kind.Index] : 0f;
+        }
+
+        /// <summary>
+        /// Boss'un hesabına yaz — ÖLÜM ANINDA çağrılıyor.
+        /// ⚠️ Çağıran yer `RevivalSystem`: ölüm sırası zaten orada kutsal
+        /// (düş → diske yaz → uygula) ve nemesis o sıranın İÇİNE giriyor,
+        /// yanına değil. Ayrı bir yazma yolu ikinci bir sıra sorunu doğururdu.
+        /// </summary>
+        public static void CreditBoss(BossKind kind, float seconds)
+        {
+            if (kind == null || Current == null || seconds <= 0f) return;
+            Normalize();
+            Current.bossLedger[kind.Index] += seconds;
         }
 
         static int[] Fit(int[] src, int n)

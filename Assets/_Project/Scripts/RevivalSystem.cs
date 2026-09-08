@@ -45,6 +45,28 @@ namespace TekCan
             if (_clock != null) _clock.OnDeath -= OnDeath;
         }
 
+        /// <summary>
+        /// Sahnedeki boss'un senden aldığı zamanı hesabına geçir.
+        ///
+        /// ⚠️ Yalnızca GERÇEK boss — son boss'un çağırdığı yankıların kendi hesabı
+        /// yok. Olsaydı final tek ölümde dört ayrı boss'u birden şişirirdi.
+        ///
+        /// ⚠️ Sıradan düşman hesap tutmuyor (TASARIM.md: "sadece boss ve isimli
+        /// düşmanlar; tam nemesis çok pahalı"). Az iş, çok etki.
+        /// </summary>
+        static void NemesisiYaz()
+        {
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || !e.IsBoss || e.SummonedRival) continue;
+                if (e.StolenFromPlayer <= 0f) continue;
+
+                SaveFile.CreditBoss(e.Boss, e.StolenFromPlayer);
+                Debug.Log($"[Tek Can] NEMESİS — {e.Boss.Name} senden {e.StolenFromPlayer:0.0} sn aldı. " +
+                          $"Toplam hesabı: {SaveFile.BossLedger(e.Boss):0.0} sn.");
+            }
+        }
+
         void Update()
         {
             if (!LastStandArmed || _clock == null || _clock.Dead) return;
@@ -84,6 +106,16 @@ namespace TekCan
 
             var kind = RevivalKind.FirstAvailable(save);
             if (kind == null) { GameOver(save); return; }
+
+            // ⚠️ NEMESİS: seni öldüren boss'un hesabına, SENDEN ALDIĞI zaman yazılıyor.
+            //    `TASARIM.md`: "seni öldüren boss, senden aldığı zamanı hesabına
+            //    geçiriyor ve bir dahaki karşılaşmada daha büyük oluyor."
+            //
+            //    ⚠️ Buraya konuldu çünkü ölüm sırası ZATEN burada kutsal
+            //    (düş → diske yaz → uygula). Nemesis o sıranın İÇİNE giriyor,
+            //    yanına değil: ayrı bir yazma yolu ikinci bir sıra sorunu doğururdu
+            //    ve "ölüm anında kapatan oyuncu" açığı nemesis için yeniden açılırdı.
+            NemesisiYaz();
 
             // ⚠️ ÖNCE DÜŞ, SONRA YAZ, EN SON UYGULA.
             save.intact[kind.Index]--;

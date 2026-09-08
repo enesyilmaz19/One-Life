@@ -86,8 +86,31 @@ namespace TekCan
         /// </summary>
         public bool SummonedRival { get; private set; }
 
-        /// <summary>Son boss'un çağırdığı rakip olarak işaretle — havuzu da kısılır.</summary>
-        public void MarkAsSummonedRival() => SummonedRival = true;
+        /// <summary>
+        /// NEMESİS — bu boss'un BU DÖVÜŞTE senden aldığı toplam saniye.
+        /// Ölürsen hesabına geçiyor; bir dahaki karşılaşmada havuzuna ekleniyor.
+        /// </summary>
+        public float StolenFromPlayer { get; private set; }
+
+        /// <summary>Bu boss daha önce seni öldürdüyse havuzuna eklenen borç.</summary>
+        public float NemesisDebt { get; private set; }
+
+        /// <summary>
+        /// Son boss'un çağırdığı rakip olarak işaretle.
+        ///
+        /// ⚠️ Nemesis borcu GERİ ALINIYOR: yankıların kendi hesabı yok. Borç
+        /// `Init`'te ekleniyor (o an bunun rakip olduğu henüz bilinmiyor), burada
+        /// düşülüyor. Kalsaydı finalde aynı borcu İKİ KEZ ödetirdik — bir kez
+        /// rakipte, bir kez asıl karşılaşmada.
+        /// </summary>
+        public void MarkAsSummonedRival()
+        {
+            SummonedRival = true;
+            if (NemesisDebt <= 0f) return;
+            TimeLeft = Mathf.Max(0.1f, TimeLeft - NemesisDebt);
+            _startingPool = Mathf.Max(0.1f, _startingPool - NemesisDebt);
+            NemesisDebt = 0f;
+        }
 
         /// <summary>
         /// ⚠️ Havuz FULLENDİ mi — fullendiyse artık KREDİ, vurunca HASAT VERMEZ.
@@ -187,6 +210,19 @@ namespace TekCan
 
             TimeLeft = tuning.enemyTimePool * poolMultiplier
                      * Kind.PoolMultiplier * Rank.PoolMultiplier(tuning);
+
+            // ⚠️ NEMESİS: seni öldüren boss, senden aldığı zamanı HAVUZUNA ekleyerek
+            // geri geliyor. Sayı uydurulmuyor — defterde ne yazıyorsa onun payı.
+            if (Boss != null)
+            {
+                // ⚠️ TAVANLI. Tavansız bırakılsaydı yeterince ölen oyuncu için boss
+                // matematiksel olarak YENİLEMEZ olurdu ve kalıcı ölüm bir ceza değil
+                // bir DUVAR olurdu. Nemesis hikâye anlatmalı, koşuyu kilitlememeli.
+                float tavan = TimeLeft * tuning.nemesisMaxShare;
+                NemesisDebt = Mathf.Min(SaveFile.BossLedger(Boss) * tuning.nemesisPoolShare, tavan);
+                TimeLeft += NemesisDebt;
+            }
+
             _startingPool = TimeLeft;
 
             // Ölçek rütbeden SONRA yakalanıyor: `_baseScale` isabet darbesinin ve
@@ -542,7 +578,11 @@ namespace TekCan
             if (PlayerInStrikeCone())
             {
                 float cost = HitCost * (_attack?.CostMul ?? 1f);
-                _player.GetComponent<PlayerController>()?.TakeHit(cost, transform.position);
+                // ⚠️ NEMESİS: boss'un senden aldığı saniye SAYILIYOR — ve gerçekten
+                // İNEN bedel sayılıyor. Dash i-frame'i vuruşu yutabiliyor; "vurdum,
+                // demek ki aldı" varsayımı boss'a hak etmediği alacak yazardı.
+                float inen = _player.GetComponent<PlayerController>()?.TakeHit(cost, transform.position) ?? 0f;
+                if (IsBoss) StolenFromPlayer += inen;
             }
         }
 
@@ -750,6 +790,7 @@ namespace TekCan
             if (aura <= 0f) return;
 
             Clock.Instance?.Spend(aura * dt);
+            if (IsBoss) StolenFromPlayer += aura * dt;   // NEMESİS: aura da onun hanesine
 
             // ⚠️ Zerreyi KISARAK çıkarıyoruz. Aura her karede işliyor; her karede zerre
             // doğursaydık saniyede ~60 nesne olurdu — hem çöp hem ekran karmaşası.

@@ -68,6 +68,32 @@ kanca eklendi — olanı tekrar yazmak, olmayanı eklemekten kötü.
 - [ ] **Dash'ler artık ayrışıyor mu?** Özellikle HACİZ'in geri dash'i — kafa karıştırıyor mu
 - [ ] **Kombo kuruluyor mu?** Silah değiştir → özel → dash zinciri akıyor mu
 
+#### ✅ FAZ 21 — NEMESİS — **KOD BİTTİ, PLAYTEST BEKLİYOR**
+> `TASARIM.md`: *"Seni öldüren boss, senden aldığı zamanı **hesabına geçiriyor**
+> ve bir dahaki karşılaşmada daha büyük oluyor."* Tasarlanmıştı, yazılmamıştı.
+
+Borç metaforu kesintisiz: bu oyunda ölmek bir **ceza değil TEMERRÜT.** Kaybettiğin
+zaman yok olmuyor, **karşı tarafa geçiyor.**
+
+- [x] Boss senden aldığı her saniyeyi sayıyor — **vuruş + aura**
+- [x] ⚠️ **Gerçekten inen** bedel sayılıyor: dash i-frame'iyle yediğin vuruş
+      hanesine yazılmıyor *(`TakeHit` artık inen bedeli döndürüyor)*
+- [x] Ölünce **diske** yazılıyor — `RevivalSystem`'deki kutsal sıranın **içinde**
+- [x] Bir dahaki karşılaşmada havuzuna ekleniyor *(pay %50)*
+- [x] ⚠️ **TAVANLI** — tavansız olsa yeterince ölen oyuncu için boss matematiksel
+      olarak yenilemez olurdu; kalıcı ölüm bir ceza değil **duvar** olurdu
+- [x] ⚠️ Çağrılan **yankıların hesabı yok** — finalde çifte ödeme olmasın
+- [x] ⚠️ **Kalıcı ölümde siliniyor** — meta ilerleme yok, nemesis bir koşunun içi
+- [x] HUD borcu yazıyor: *"X SENDEN 43 SANİYE ALDI — o kadar büyük geldi"*
+- [x] Faz 21 öz-denetimi **12/12**
+
+##### 🎮 Playtest — Faz 21
+- [ ] **Öldükten sonra o boss'a dönünce fark ediyor musun?** HUD yazıyor ama
+      GÖVDESİNDEN de anlaşılmalı — anlaşılmıyorsa asset fazına not
+- [ ] **Pay doğru mu?** `nemesisPoolShare` = 0.5. Fazla hissediyorsa düşer
+- [ ] ⚠️ **Ölüm sarmalı var mı?** Aynı boss'a iki kez ölünce üçüncüsü imkânsız
+      geliyorsa tavan (`nemesisMaxShare` = 1.5) inecek
+
 #### 🔴 FAZ 20 — SİLAHA ÖZEL YÜKSELTMELER
 > Enes: *"hem genel geliştirme olduğu gibi silaha özel geliştirmeler de olsun,
 > bunları da ekleme planı yapalım."*

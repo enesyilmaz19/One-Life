@@ -781,9 +781,15 @@ namespace TekCan
         /// Kırmızı parlama + geri itilme, "yedim" anını okunur kılıyor —
         /// ilk playtest'te saatin azalması dışında hiçbir işaret yoktu.
         /// </summary>
-        public void TakeHit(float secondsCost, Vector3 fromPosition)
+        /// <returns>
+        /// GERÇEKTEN inen bedel (dokunulmazsan 0).
+        /// ⚠️ Nemesis defteri bunu kullanıyor: "vurdum, demek ki aldı" varsayımı
+        /// dash i-frame'inde yanlış olurdu ve boss kaçırdığı vuruşları da hesabına
+        /// yazardı. Ölçüm tahmin değil, gerçekten inen miktar.
+        /// </returns>
+        public float TakeHit(float secondsCost, Vector3 fromPosition)
         {
-            if (Invulnerable) return;
+            if (Invulnerable) return 0f;
 
             Clock.Instance?.Spend(secondsCost, fromHit: true);   // oda hesabında AYRI sayılıyor
             HitStop.Freeze(_t.hitStopDuration * 1.5f);
@@ -795,6 +801,8 @@ namespace TekCan
             away.y = 0f;
             if (away.sqrMagnitude > 0.0001f) _knockback = away.normalized * _t.playerKnockback;
             Paint();
+
+            return secondsCost;
         }
 
         void TickHurt()

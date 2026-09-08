@@ -314,6 +314,20 @@ namespace TekCan
                 break;
             }
 
+            // ⚠️ NEMESİS GÖRÜNMELİ. Boss sessizce büyüseydi oyuncu "bu neden bu
+            // kadar kalın" diye sorar ve cevabı hiçbir yerde olmazdı — mekanik
+            // doğru, sunum yok (ders 10). Borç ekranda yazıyor.
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || !e.IsBoss || e.NemesisDebt <= 0.05f) continue;
+                _small.normal.textColor = new Color(1f, 0.55f, 0.45f);
+                GUI.Label(new Rect(0f, Screen.height * 0.31f, Screen.width, 22f),
+                          $"⚠ {e.Boss.Name} SENDEN {e.NemesisDebt:0} SANİYE ALDI — o kadar büyük geldi",
+                          _small);
+                _small.normal.textColor = Color.white;
+                break;
+            }
+
             var rm = RoomManager.Instance;
             var boss = rm?.BossInRoom();
             if (boss == null || boss.Boss == null || boss.Phase < 2) return;
