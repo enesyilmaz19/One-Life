@@ -116,8 +116,9 @@ namespace TekCan
         /// baskı altında alışveriş yapmak "karar vermek" değil, panikle almak ya da
         /// hiç almamak olur. Saat durunca alışveriş GERÇEK bir karar haline geliyor.
         ///
-        /// ⚠️ Sömürüye açık değil: odada düşman, hasat, hiçbir kazanç yok. Sonsuza
-        /// kadar beklemek hiçbir şey kazandırmıyor — yani bu bir duraklama, açık değil.
+        /// ⚠️ Sömürüye açık değil: odada düşman ve hasat yok, yani beklemek SANİYE
+        /// kazandırmıyor. Bekleme süreleri (özel saldırı, dash) gerçek zamanla
+        /// işlemeye devam ediyor — bilerek: burası boss'a HAZIRLANMA odası.
         ///
         /// ⚠️ Ve boss'tan HEMEN ÖNCE: alışverişi bir sınavın eşiğinde yapıyorsun,
         /// yani "ne kadar hazırım" sorusu somut bir düşmana bakarak soruluyor.

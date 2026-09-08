@@ -135,8 +135,19 @@ Bölgenin **boss'tan hemen önceki** odası. Düşman yok, üç sunak var, çık
 Oyunun tamamı zaman baskısı; baskı altında alışveriş yapmak "karar vermek" değil,
 **panikle almak ya da hiç almamak** olur. Saat durunca alışveriş gerçek bir karar.
 
-⚠️ Sömürüye açık değil: odada düşman, hasat, hiçbir kazanç yok. Sonsuza kadar
-beklemek hiçbir şey kazandırmıyor — bu bir duraklama, açık değil.
+⚠️ **Ne duruyor, ne durmuyor** — sınır net:
+
+| | |
+|---|---|
+| **DURAN** | **saniye** — oyunun tek kaynağı, yasanın konusu |
+| durmayan | **bekleme süreleri** (özel saldırı, dash) — gerçek zamanla işliyor, hep öyleydi |
+
+Yani beklemek **saniye kazandırmıyor** (sömürü yok), ama **özel saldırını hazır
+hale getiriyor.** Bu bilerek: burası boss'a **hazırlanma** odası.
+
+- [ ] 🔴 **Enes'e soru:** bekleme sürelerinin de durmasını ister misin? Şu an
+      durmuyor. Durursa oda "tam duraklama" olur ama özelini kullanıp giren
+      oyuncu boss'a bekleme süresiyle girer.
 
 ⚠️ **Boss'tan hemen önce** olması kasıtlı: alışverişi bir sınavın eşiğinde
 yapıyorsun, yani *"ne kadar hazırım"* sorusu somut bir düşmana bakarak soruluyor.

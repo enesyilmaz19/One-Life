@@ -137,9 +137,17 @@ namespace TekCan
             // KAYNAĞI. İkisini karıştırmak ölçüm araçlarını bozardı.
             //
             // ⚠️ Yasayı bozmuyor: ikinci bir para birimi doğmuyor, yalnızca bir
-            // odada harcama olmuyor. Ve orada kazanç da yok — bekleyerek elde
-            // edilecek hiçbir şey olmadığı için "sonsuza kadar dur" bir sömürü
-            // değil, sadece bir duraklama.
+            // odada harcama olmuyor.
+            //
+            // ⚠️ NE DURUYOR, NE DURMUYOR — tam sınır:
+            //   DURAN     : SANİYE. Oyunun tek kaynağı, yani yasanın konusu olan şey.
+            //   DURMAYAN  : bekleme süreleri (özel saldırı, dash). Onlar GERÇEK
+            //               zamanla işliyor ve hep öyleydi — ayrı bir saat.
+            // Yani beklemek SANİYE kazandırmıyor (sömürü yok), ama özel saldırını
+            // hazır hale getiriyor. Bu bilerek: boss'a hazırlanma odası burası.
+            // ⚠️ "Hiçbir şey kazandırmıyor" diye yazmıştım ve YANLIŞTI — bekleme
+            // süreleri işlemeye devam ediyor. Yorum düzeltildi, kod değil: sınır
+            // zaten doğru yerde.
             if (Frozen) return;
 
             // ⚠️ BÖLGE KURALI buradan giriyor. Dövüş dışı akış çarpanı (DARALMA) ve
