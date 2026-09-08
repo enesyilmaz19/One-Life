@@ -202,6 +202,32 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "seri BİTİYOR (sonsuza kadar vurmuyor)",
                             pc.FlurryLeft == 0, pc.FlurryLeft);
 
+            // ⚠️ SERİ, KENDİSİNİ BAŞLATAN EYLEMİ AŞMAMALI ──
+            //    Sayaçla ilerlediği için silah değişse de dash atılsa da kendi
+            //    başına devam ediyordu. En kötüsü: `SpecialStrike` o an KUŞANILAN
+            //    silahın hasarını okuyor, yani İFLAS'ın serisini FAİZLİ'nin
+            //    hasarıyla atmak mümkündü.
+            ResetSpecial(pc);
+            ClearEnemies();
+            MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f);
+            startSpecial.Invoke(pc, new object[] { Vector3.forward });
+            failed += Check(ref total, "test kurgusu: seri başladı", pc.FlurryLeft > 0, pc.FlurryLeft);
+
+            pc.SetWeapon(Index<Faizli>());
+            failed += Check(ref total, "⚠️ SİLAH DEĞİŞİNCE seri kesiliyor (istismar kapalı)",
+                            pc.FlurryLeft == 0, pc.FlurryLeft);
+
+            // Dash de kesmeli — dash bu oyunda HER saldırıyı keser
+            pc.SetWeapon(Index<Iflas>());
+            ResetSpecial(pc);
+            ClearEnemies();
+            MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f);
+            startSpecial.Invoke(pc, new object[] { Vector3.forward });
+            typeof(PlayerController).GetMethod("StartDash", BindingFlags.NonPublic | BindingFlags.Instance)
+                                    .Invoke(pc, new object[] { Vector3.forward });
+            failed += Check(ref total, "⚠️ DASH seriyi kesiyor (dash her saldırıyı keser)",
+                            pc.FlurryLeft == 0, pc.FlurryLeft);
+
             // Seri, İFLAS'a ÖZEL — diğerlerinin özeli tek vuruş
             int seriSayısı = 0;
             foreach (var w in Weapon.All) if (w.Special(t).Hits > 1) seriSayısı++;

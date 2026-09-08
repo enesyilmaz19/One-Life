@@ -206,6 +206,7 @@ namespace TekCan
             if (index < 0 || index >= TekCan.Weapon.All.Length || index == _weaponIndex) return;
             _weaponIndex = index;
             _attackTimer = 0f;                                    // yarım savurma taşınmasın
+            CancelFlurry();                                       // seri ESKİ silaha aitti
 
             // ⚠️ Eskiden burada ekran sarsılıyordu. Enes: *"silahlar arası geçişi
             // daha hızlı yapabilmeliyiz, kombolar için."* Geçiş KODDA zaten anlıktı
@@ -300,6 +301,26 @@ namespace TekCan
 
         /// <summary>Öz-denetim için: seri vuruşta kaç vuruş kaldı.</summary>
         public int FlurryLeft => _flurryLeft;
+
+        /// <summary>
+        /// Seriyi kes. ⚠️ Seri, kendisini BAŞLATAN eylemi aşan bir durum: sayaçla
+        /// ilerlediği için silah değişse de dash atılsa da kendi başına devam
+        /// ediyordu. İki somut sonucu vardı:
+        ///
+        ///   ① Silah değiştirince `SpecialStrike` YENİ silahın hasarını, menzilini
+        ///      ve hasat çarpanını okuyordu — İFLAS'ın serisini FAİZLİ'nin hasarıyla
+        ///      atmak mümkündü. Düpedüz istismar.
+        ///   ② Dash seriyi kesmiyordu; oysa dash bu oyunda HER saldırıyı keser
+        ///      (`_attackTimer = 0f` iki yerde de zaten var).
+        ///
+        /// Bu yüzden iptal, saldırının iptal edildiği YERLERE bağlandı — ayrı bir
+        /// kural değil, var olan kuralın eksik kalmış yarısı.
+        /// </summary>
+        void CancelFlurry()
+        {
+            _flurryLeft = 0;
+            _flurrySpecial = null;
+        }
 
         /// <summary>
         /// Özelin TEK bir vuruşu. Seri de tek de buradan geçiyor — iki ayrı vuruş
@@ -425,6 +446,7 @@ namespace TekCan
             _iFrames = _t.iFrameDuration;
             Sfx.Dash();
             _attackTimer = 0f;              // dash saldırıyı keser
+            CancelFlurry();                 // ...seriyi de keser, o da bir saldırı
             _dashAttackQueued = false;      // önceki dash'ten sarkmasın
             transform.rotation = Quaternion.LookRotation(_dashDir);
             if (_dashTrail != null) { _dashTrail.Clear(); _dashTrail.emitting = true; }
