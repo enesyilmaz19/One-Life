@@ -249,6 +249,33 @@ namespace TekCan.EditorTools
                 }
             }
 
+            // ── 13) ⚠️ HİÇBİR İKİ SALDIRI MEKANİK OLARAK AYNI DEĞİL ──
+            //
+            //    Enes: *"düz atak ve menzilli ataklar da bosstan bossa değişecek."*
+            //
+            //    ⚠️ Bu kural olmadan üç boss'un düz saldırısı BİREBİR aynıydı
+            //    (Angle = 0, gerisi varsayılan): üç boss, tek saldırı, üç ad.
+            //    Adları farklı olduğu için gözle bakınca "hepsinin düz atağı var"
+            //    diyordum. Projenin her yerinde uyguladığımız ölçü burada da
+            //    geçerli: AD FARKI ÇEŞİTLİLİK DEĞİL.
+            var imzalar = new System.Collections.Generic.Dictionary<string, string>();
+            int çakışan = 0;
+            foreach (var b13 in BossKind.All)
+                for (int faz = 1; faz <= b13.PhaseCount; faz++)
+                    foreach (var a13 in b13.Attacks(faz))
+                    {
+                        string imza = Imza(a13);
+                        string sahip = $"{b13.Name} f{faz} · {a13.Name}";
+                        if (imzalar.TryGetValue(imza, out var önceki))
+                        {
+                            çakışan++;
+                            Debug.LogError($"     MEKANİK OLARAK AYNI: {önceki}  =  {sahip}");
+                        }
+                        else imzalar[imza] = sahip;
+                    }
+            failed += Check(ref total, "⚠️ hiçbir iki saldırı MEKANİK olarak aynı değil",
+                            çakışan == 0, çakışan);
+
             Object.DestroyImmediate(t);
             Clock.Reset(); Region.Reset(); Enemy.All.Clear();
 
@@ -256,6 +283,15 @@ namespace TekCan.EditorTools
             else Debug.LogError($"[Faz 18 öz-denetim] ❌ {total} kontrolden {failed} tanesi BAŞARISIZ");
             return failed;
         }
+
+        /// <summary>
+        /// Saldırının MEKANİK imzası — adı hariç her şey. İki saldırı aynı imzayı
+        /// taşıyorsa oyuncu için AYNI SALDIRIDIR, adları ne olursa olsun.
+        /// </summary>
+        static string Imza(BossAttack a) =>
+            $"{a.RangeMul:0.00}|{a.Angle:0.0}|{a.InnerRadius:0.00}|{a.SafeAngle:0.0}"
+          + $"|{a.WindupMul:0.00}|{a.WindupSeconds:0.00}|{a.CostMul:0.00}|{a.Repeat}"
+          + $"|{a.Lunge:0.00}|{a.MinPlayerRange:0.0}|{a.MaxPlayerRange:0.0}|{a.Then != null}";
 
         static float Fark(Color a, Color b) =>
             Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b);

@@ -267,7 +267,12 @@ namespace TekCan
                 : new[]
                 {
                     // DÜZ: klasik yakın vuruş.
-                    new BossAttack { Name = "HACİZ", Angle = 0f, Tint = Cone },
+                    // DÜZ · TAHSİLDAR: GENİŞ ve ağır. Zorla alan adam kavrar,
+                    // yana kaçmayı zorlaştırır. ⚠️ Üç boss'un düz saldırısı birebir
+                    // aynıydı (Angle = 0, gerisi varsayılan) — üç boss, tek saldırı,
+                    // üç ad. Enes'in kuralı: düz atak da bosstan bossa değişecek.
+                    new BossAttack { Name = "HACİZ", RangeMul = 1.2f, Angle = 135f,
+                                     WindupMul = 1.15f, CostMul = 1.25f, Tint = Cone },
 
                     // MENZİLLİ: uzaktan dar ışın. ⚠️ EKSİKTİ — TAHSİLDAR faz 1'inde
                     // hiç uzak saldırı yoktu, yani "uzak dur" bedava bir cevaptı ve
@@ -338,7 +343,10 @@ namespace TekCan
                     // İnce ve UZUN: hattında durmak cezalı, yana bir adım yeterli
                     new BossAttack { Name = "DEĞER BİÇME", RangeMul = 2.4f, Angle = 24f,
                                      WindupMul = 0.9f, CostMul = 1.3f, Tint = Beam },
-                    new BossAttack { Name = "KESİNTİ", Angle = 0f, Tint = Cone },
+                    // DÜZ · EKSPER: DAR ve HIZLI. Değer biçen adam ölçer ve keser;
+                    // ucuz ama sık. TAHSİLDAR'ın geniş-ağır vuruşunun tam tersi.
+                    new BossAttack { Name = "KESİNTİ", RangeMul = 1f, Angle = 65f,
+                                     WindupMul = 0.7f, CostMul = 0.85f, Tint = Cone },
                     // YENİ: iki ışın arka arkaya — bir kez yana kaçmak yetmiyor
                     new BossAttack { Name = "ÇİFT EKSPERTİZ", RangeMul = 2.4f, Angle = 28f,
                                      Repeat = 2, WindupMul = 0.7f, CostMul = 1f, Tint = Beam },
@@ -414,7 +422,10 @@ namespace TekCan
                     new BossAttack { Name = "TEMİNAT", RangeMul = 3f, Angle = 360f,
                                      InnerRadius = 2.4f, WindupSeconds = 1.2f, CostMul = 1.3f,
                                      Tint = Donut },
-                    new BossAttack { Name = "KEFALET", Angle = 0f, Tint = Cone },
+                    // DÜZ · KEFİL: YAVAŞ ve PAHALI. Kefil savunmada durur, nadiren
+                    // vurur ama vurunca borcu hatırlatır. Uzun hazırlık, ağır bedel.
+                    new BossAttack { Name = "KEFALET", RangeMul = 0.95f, Angle = 100f,
+                                     WindupMul = 1.35f, CostMul = 1.55f, Tint = Cone },
                     // YENİ: uzaktan kapatıyor — göbeğe sığınma alışkanlığını cezalandırıyor
                     new BossAttack { Name = "REHİN", RangeMul = 2.4f, Angle = 90f,
                                      Lunge = 4f, MinPlayerRange = 4f,
@@ -579,9 +590,13 @@ namespace TekCan
 
                     // ÖZGÜN: simit — üç kaçış sorusunun (uzaklaş / yaklaş / arkasına
                     // geç) hepsi faz 1'de tanıtılıyor, faz 2 ve 3 onları BİRLEŞTİRİYOR.
-                    new BossAttack { Name = "KREDİ", RangeMul = 3f, Angle = 360f,
-                                     InnerRadius = 2.4f, WindupSeconds = 1.2f,
-                                     CostMul = 1.3f, Tint = Donut },
+                    // ⚠️ KEFİL'in TEMİNAT'ıyla BİREBİR aynı yazmıştım (3.0/2.4/1.2/1.3):
+                    // iki boss, tek saldırı, iki ad. Son boss'un simidi üçüncü
+                    // boss'unkinden SERT olmalı — daha geniş erişim, daha DAR güvenli
+                    // göbek, daha ağır bedel. Yoksa zincirde tırmanma hissi kırılır.
+                    new BossAttack { Name = "KREDİ", RangeMul = 3.5f, Angle = 360f,
+                                     InnerRadius = 1.9f, WindupSeconds = 1.35f,
+                                     CostMul = 1.5f, Tint = Donut },
 
                     // YENİ: halkanın ARKASINDA güvenli açıklık. "Uzaklaş" değil
                     // "ARKASINA GEÇ" — mekaniği faz 2 silahlaştırmadan ÖNCE öğretiyor.
