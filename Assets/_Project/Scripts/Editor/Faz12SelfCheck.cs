@@ -318,7 +318,11 @@ namespace TekCan.EditorTools
             //    Çarpan yetmiyordu — boss hazırlıkları ~0.2 sn.
             int kısaKonum = 0;
             foreach (var a in TümSaldırılar())
-                if ((a.SafeAngle > 0f || a.InnerRadius > 0f) && a.WindupSeconds < 0.9f) kısaKonum++;
+                // ⚠️ Haritadaki rastgele güvenli nokta da KONUM DEĞİŞTİRTEN bir
+                //    saldırıdır — hatta en uzun koşuyu isteyen. Listeye eklenmeseydi
+                //    yeni tip bu kuralın DIŞINDA kalır ve kural sessizce delinirdi.
+                if ((a.SafeAngle > 0f || a.InnerRadius > 0f || a.SafeSpotRadius > 0f)
+                    && a.WindupSeconds < 0.9f) kısaKonum++;
             failed += Check(ref total, "⚠️ simit/açıklık saldırıları ≥0.9 sn MUTLAK hazırlık veriyor",
                             kısaKonum == 0, kısaKonum);
 

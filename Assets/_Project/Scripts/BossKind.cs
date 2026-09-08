@@ -75,6 +75,24 @@ namespace TekCan
         public float SafeAngle = 0f;
 
         /// <summary>
+        /// &gt;0 ise güvenli yer boss'un DİBİ değil, HARİTADA RASTGELE bir nokta.
+        ///
+        /// Enes: *"ultiden kaçınmak için bossun dibine koşmak yerine haritada
+        /// rastgele belirlenen bir yer güvenli bölge olsun."*
+        ///
+        /// ⚠️ Neden daha iyi: simidin göbeği HEP boss'un dibi, yani cevabı bir kez
+        /// öğrenince refleks oluyor. Rastgele nokta her seferinde AYNI SORUYU
+        /// yeniden sordurur: "neredeyim, oraya yetişir miyim". Ve saldırıyı adil
+        /// tutan şey rastgelelik değil TELGRAF — nokta hazırlık boyunca yeşil
+        /// halkayla apaçık gösteriliyor.
+        ///
+        /// ⚠️ Hazırlık MUTLAK ve UZUN olmak zorunda: haritanın öbür ucuna KOŞMAK
+        /// gerekebiliyor. Çarpanla verilirse Enes'in Faz 12'de bildirdiği
+        /// "yeşil alana geçecek süre kalmıyor" hatası aynen geri gelir.
+        /// </summary>
+        public float SafeSpotRadius = 0f;
+
+        /// <summary>
         /// Bu saldırıdan HEMEN SONRA gelen saldırı — arada bekleme yok.
         /// `Repeat` aynısını tekrarlar; bu FARKLI birini zincirler. Yeni soru:
         /// "bir cevaba yerleşemezsin" (halka → simit = çık, sonra hemen gir).
@@ -486,8 +504,13 @@ namespace TekCan
                     //    Simit: göbeği güvenli. Yarıçap arenayı aşıyor, yani
                     //    KAÇACAK YER YOK — tek cevap boss'un DİBİNE girmek.
                     //    Hazırlık MUTLAK ve uzun: arenanın öbür ucundan koşman gerek.
+                    // ⚠️ Güvenli yer artık boss'un DİBİ DEĞİL, haritada RASTGELE bir
+                    // nokta (Enes). Göbek olsaydı cevap "boss'a koş" refleksine
+                    // dönerdi; rastgele nokta her seferinde "neredeyim, yetişir
+                    // miyim" diye yeniden sordurur. 2.2 sn hazırlık: haritanın
+                    // öbür ucuna koşmak gerekebiliyor.
                     new BossAttack { Name = "TAM TASFİYE", RangeMul = 9f, Angle = 360f,
-                                     InnerRadius = 2.6f, WindupSeconds = 2.2f,
+                                     SafeSpotRadius = 2.6f, WindupSeconds = 2.2f,
                                      CostMul = 2.2f, Tint = Ring },
 
                     // GELİŞMİŞ: zincir üçe çıktı — halka, simit, sonra açıklık.

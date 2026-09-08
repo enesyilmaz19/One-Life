@@ -434,6 +434,20 @@ namespace TekCan
                                    StrikeRadius, StrikeAngle, TelegraphColor, dur, transform,
                                    scaleFrom: 0.25f, scaleTo: 1f);
 
+            // ⚠️ HARİTADAKİ RASTGELE GÜVENLİ NOKTA — hazırlık başında seçiliyor ve
+            // yeşil halkayla APAÇIK gösteriliyor. Saldırıyı adil tutan şey
+            // rastgelelik değil TELGRAF: nokta görünmeseydi bu saldırı kaçınılamaz
+            // bir ceza olurdu, mekanik doğru ama sunum öldürücü (ders 10).
+            // ⚠️ Halka boss'u TAKİP ETMİYOR (`follow` verilmiyor): nokta sabit,
+            // boss hareket etse bile yeri değişmemeli.
+            if (_attack != null && _attack.SafeSpotRadius > 0f)
+            {
+                _safeSpot = RastgeleGüvenliNokta();
+                Arc.Spawn(_safeSpot, Quaternion.identity, _attack.SafeSpotRadius, 360f,
+                          new Color(0.45f, 1f, 0.55f, 0.40f), dur,
+                          scaleFrom: 1f, scaleTo: 1f);
+            }
+
             // ⚠️ SİMİT'in güvenli göbeği GÖRÜNMELİ. Görünmezse oyuncu "halka geliyor,
             // kaç" der ve tam ters yönde ölür — mekanik doğru, sunum öldürücü olur.
             if (StrikeInner > 0f)
@@ -569,6 +583,15 @@ namespace TekCan
             Vector3 to = FlatToPlayer();
             float d = to.magnitude;
             if (d > StrikeRadius) return false;
+
+            // ⚠️ HARİTADAKİ GÜVENLİ NOKTA: dördüncü kaçış sorusu. "Uzaklaş" değil,
+            // "yaklaş" değil, "arkasına geç" de değil — ORAYA YETİŞ.
+            if (_attack != null && _attack.SafeSpotRadius > 0f)
+            {
+                var s = _player.position - _safeSpot;
+                s.y = 0f;                                  // tuzak 2
+                if (s.magnitude <= _attack.SafeSpotRadius) return false;
+            }
 
             // ⚠️ SİMİT: göbeği GÜVENLİ. Halkanın tam tersi soru — "uzaklaş" değil "YAKLAŞ".
             if (StrikeInner > 0f && d <= StrikeInner) return false;
@@ -758,9 +781,20 @@ namespace TekCan
             // güçlenen bir boss olurdu ve dövüş kazanılamaz hale gelirdi.
             if (Dormant)
             {
-                // Rakiplerin hepsi öldü mü → boss uyanıyor.
+                // Sahnedeki rakip ölmediyse bekle.
                 foreach (var e in All)
                     if (e != null && e != this && e.SummonedRival) return;
+
+                // ⚠️ SIRAYLA çağırılıyor, hepsi birden değil (Enes: "her biri
+                // rastgele şekilde çıkmalı"). Dördü aynı anda gelseydi final bir
+                // boss savaşı değil bir kalabalık olurdu; sırayla gelince gerçek
+                // bir boss geçidi oluyor ve her birinin dağarcığı ayrı ayrı
+                // okunuyor.
+                if (_rivalQueue != null && _rivalQueue.Count > 0)
+                {
+                    ÇağırSıradakiRakibi();
+                    return;
+                }
 
                 Dormant = false;
                 Arc.Spawn(transform.position, transform.rotation, Radius * 7f, 360f,
@@ -914,6 +948,33 @@ namespace TekCan
 
         float _summonTimer;
 
+        /// <summary>Bu saldırının güvenli noktası — hazırlıkta seçiliyor.</summary>
+        Vector3 _safeSpot;
+
+        /// <summary>Öz-denetim için: şu anki güvenli nokta.</summary>
+        public Vector3 CurrentSafeSpot => _safeSpot;
+
+        /// <summary>
+        /// Şu anki saldırının güvenli nokta yarıçapı (0 = bu saldırıda yok).
+        /// ⚠️ `CurrentStrikeInner` ile aynı gerekçe: öz-denetim hangi saldırının
+        /// seçildiğini ÜRETİMDEN öğreniyor, kendi seçimini dayatmıyor.
+        /// </summary>
+        public float CurrentSafeSpotRadius => _attack?.SafeSpotRadius ?? 0f;
+
+        /// <summary>
+        /// Arenada rastgele bir nokta — kenardan biraz içeride.
+        /// ⚠️ Kenara yapışık seçilseydi oyuncu arena sınırına sıkışır ve "yetiştim
+        /// ama yine öldüm" derdi; sınır bu oyunda yeni (Enes bildirdi).
+        /// </summary>
+        Vector3 RastgeleGüvenliNokta()
+        {
+            float açı = Random.value * Mathf.PI * 2f;
+            float r = Random.Range(0.15f, 0.75f) * _t.arenaRadius;
+            return new Vector3(Bootstrap.ArenaCenter.x + Mathf.Cos(açı) * r,
+                               Bootstrap.ArenaCenter.y,
+                               Bootstrap.ArenaCenter.z + Mathf.Sin(açı) * r);
+        }
+
         /// <summary>
         /// Yardım çağır. ⚠️ TAVANLI: tavansız çağırma, oyuncu yavaş oynadığında
         /// odayı doldurup dövüşü matematiksel olarak kazanılamaz yapardı. Boss'un
@@ -961,26 +1022,80 @@ namespace TekCan
         /// olurdu — Enes'in istediği "hepsi ölünce kendisi gelsin", dört boss
         /// dövüşü üst üste değil.
         /// </summary>
+        List<BossKind> _rivalQueue;
+
         void ÇağırRakipleri()
         {
             Dormant = true;
 
-            int n = BossKind.All.Length - 1;      // kendisi hariç
-            for (int i = 0; i < n; i++)
-            {
-                float açı = (360f / Mathf.Max(1, n)) * i * Mathf.Deg2Rad;
-                var yer = transform.position + new Vector3(Mathf.Cos(açı), 0f, Mathf.Sin(açı)) * (Radius + 4f);
-                yer.y = Bootstrap.ArenaCenter.y;
+            // ⚠️ RASTGELE SIRA, HER OYNAYIŞTA FARKLI (Enes). Sabit sıra olsaydı
+            // final ezberlenir ve ikinci denemede bir sıralamanın tekrarı olurdu.
+            // Sıra değişince aynı dört dövüş her seferinde başka bir ritim kuruyor:
+            // hangi mekanikle karşılaşacağını bilmemek finalin kendi gerilimi.
+            _rivalQueue = new List<BossKind>();
+            for (int i = 0; i < BossKind.All.Length - 1; i++) _rivalQueue.Add(BossKind.All[i]);
 
-                var rakip = Bootstrap.SpawnEnemyAt(_t, yer, _player, null,
-                                                   poolMultiplier: _t.rivalPoolMultiplier, boss: true,
-                                                   parent: transform.parent,
-                                                   bossKind: BossKind.All[i]);
-                if (rakip != null) rakip.MarkAsSummonedRival();
+            for (int i = _rivalQueue.Count - 1; i > 0; i--)      // Fisher-Yates
+            {
+                int j = Random.Range(0, i + 1);
+                (_rivalQueue[i], _rivalQueue[j]) = (_rivalQueue[j], _rivalQueue[i]);
             }
 
-            Debug.Log($"[Tek Can] {Boss.Name} FAZ 3 — dört alacaklısını da çağırdı. " +
+            Debug.Log($"[Tek Can] {Boss.Name} FAZ 3 — dört alacaklısını çağırıyor. " +
                       "Hepsi ölmeden kendisine dokunamazsın.");
+            ÇağırSıradakiRakibi();
+            Paint();
+        }
+
+        /// <summary>
+        /// Kuyruktaki bir sonraki rakibi sahneye sür.
+        ///
+        /// ⚠️ RAKİPLER YENDİĞİNDEN GÜÇLÜ (Enes). Bunu "daha çok can" ile değil
+        /// FAZ 2'DE BAŞLATARAK yapıyoruz: onları yenerken faz 1'i geçip faz 2'yi
+        /// öğrenmiştin; burada faz 2 dağarcığıyla, ilk saniyeden geliyorlar.
+        /// Havuz da bir miktar yüksek. "Daha çok can" tek başına ZIRHLI dersinin
+        /// tekrarı olurdu: kalınlık zorluk değil, süre.
+        /// </summary>
+        void ÇağırSıradakiRakibi()
+        {
+            if (_rivalQueue == null || _rivalQueue.Count == 0) return;
+
+            var kind = _rivalQueue[0];
+            _rivalQueue.RemoveAt(0);
+
+            // Oyuncunun ÜSTÜNDE değil, arenanın karşı tarafında doğuyor:
+            // her tehdidin bir cevabı olmalı, kaçınılamaz hasar olmamalı.
+            var yön = (transform.position - Bootstrap.ArenaCenter);
+            yön.y = 0f;
+            if (yön.sqrMagnitude < 0.01f) yön = Vector3.forward;
+            var yer = Bootstrap.ArenaCenter - yön.normalized * (_t.arenaRadius * 0.45f);
+            yer.y = Bootstrap.ArenaCenter.y;
+
+            var rakip = Bootstrap.SpawnEnemyAt(_t, yer, _player, null,
+                                               poolMultiplier: _t.rivalPoolMultiplier, boss: true,
+                                               parent: transform.parent,
+                                               bossKind: kind);
+            if (rakip == null) return;
+
+            rakip.MarkAsSummonedRival();
+            rakip.StartAtPhaseTwo();
+
+            Debug.Log($"[Tek Can] {kind.Name} çağrıldı — FAZ 2 gücüyle. " +
+                      $"Kuyrukta {_rivalQueue.Count} kişi daha var.");
+        }
+
+        /// <summary>
+        /// Doğrudan faz 2'de başlat — çağrılan rakipler için.
+        /// ⚠️ `AdvancePhase` çağrılmıyor: o, faz geçişi GÖSTERİSİNİ yapıyor
+        /// (halka, sarsıntı, hit-stop) ve doğar doğmaz patlaması yanlış okunurdu —
+        /// "faz değişti" değil "bu böyle geldi" denmeli.
+        /// </summary>
+        public void StartAtPhaseTwo()
+        {
+            if (Boss == null || Phase >= 2) return;
+            Phase = 2;
+            _attack = null; _repeatsLeft = 0; _chained = null;
+            if (Boss.SplitsOnPhaseTwo) Split();
             Paint();
         }
 

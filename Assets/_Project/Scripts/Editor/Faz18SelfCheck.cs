@@ -94,11 +94,22 @@ namespace TekCan.EditorTools
             var final = Boss(t, root6, son);
             İlerlet(final, 3);
 
+            // ⚠️ SIRAYLA geliyorlar, hepsi birden değil (Enes: "her biri rastgele
+            //    şekilde çıkmalı"). Dördü aynı anda gelseydi final bir boss savaşı
+            //    değil bir kalabalık olurdu.
             int rakip = 0;
             foreach (var e in Enemy.All) if (e != null && e.SummonedRival) rakip++;
-            failed += Check(ref total, $"⚠️ faz 3'te ÖNCEKİ BOSS'LAR çağrıldı ({rakip} tane)",
-                            rakip == BossKind.All.Length - 1, rakip);
+            failed += Check(ref total, "⚠️ faz 3'te rakipler SIRAYLA geliyor (aynı anda 1)",
+                            rakip == 1, rakip);
             failed += Check(ref total, "⚠️ çağıran boss UYKUYA geçti", final.Dormant, 0f);
+
+            // ⚠️ Gelen rakip FAZ 2 gücünde — "yendiğinden güçlü" (Enes). Güç
+            //    havuzdan değil, en geniş dağarcığıyla İLK SANİYEDEN gelmesinden.
+            Enemy ilkRakip = null;
+            foreach (var e in Enemy.All) if (e != null && e.SummonedRival) ilkRakip = e;
+            failed += Check(ref total, "⚠️ rakip FAZ 2 gücüyle geliyor (yendiğinden güçlü)",
+                            ilkRakip != null && ilkRakip.Phase >= 2,
+                            ilkRakip != null ? ilkRakip.Phase : 0);
 
             // ── 7) ⚠️ UYKUDAKİ BOSS VURULMUYOR ──
             //    Vurulabilseydi oyuncu rakipleri es geçip doğrudan onu döverdi ve
@@ -145,12 +156,22 @@ namespace TekCan.EditorTools
                             final.TimeLeft <= rejenÖnce + 0.001f, final.TimeLeft - rejenÖnce);
 
             // ── 9) ⚠️ RAKİPLER ÖLÜNCE BOSS UYANIYOR ──
-            foreach (var e in Enemy.All.ToArray())
-                if (e != null && e.SummonedRival) Object.DestroyImmediate(e.gameObject);
-            Enemy.All.RemoveAll(e => e == null);
+            // ⚠️ DÖRDÜNÜ DE sırayla geçmek gerekiyor. Biri ölünce SIRADAKİ geliyor;
+            //    boss ancak kuyruk bitince uyanıyor. Testin tek bir öldürmeyle
+            //    "uyandı" demesi, sıra mekaniğini hiç sınamamak olurdu.
+            int gelen = 1, guard18 = 0;
+            while (final.Dormant && guard18++ < 20)
+            {
+                foreach (var e in Enemy.All.ToArray())
+                    if (e != null && e.SummonedRival) Object.DestroyImmediate(e.gameObject);
+                Enemy.All.RemoveAll(e => e == null);
 
-            final.TickBossPassives(0.1f);
-            failed += Check(ref total, "⚠️ rakipler ölünce boss UYANIYOR", !final.Dormant, 0f);
+                final.TickBossPassives(0.1f);
+                if (final.Dormant) gelen++;
+            }
+            failed += Check(ref total, $"⚠️ DÖRT rakip de sırayla geldi ({gelen})",
+                            gelen == BossKind.All.Length - 1, gelen);
+            failed += Check(ref total, "⚠️ kuyruk bitince boss UYANIYOR", !final.Dormant, 0f);
 
             float uyanıkÖnce = final.TimeLeft;
             final.TakeDamage(2f);
@@ -175,11 +196,54 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "faz 3 en az 4 saldırı (Enes: taban, hedef değil)",
                             faz3.Length >= 4, faz3.Length);
 
+            // ⚠️ Güvenli yer artık boss'un DİBİ DEĞİL, haritada RASTGELE bir nokta
+            //    (Enes). Göbek olsaydı cevap "boss'a koş" refleksine dönerdi.
             bool haritaSaldırısı = false;
             foreach (var a in faz3)
-                if (a.Angle >= 360f && a.RangeMul >= 6f && a.InnerRadius > 0f) haritaSaldırısı = true;
-            failed += Check(ref total, "⚠️ TÜM HARİTAYA vuran, MİNİK GÜVENLİ noktalı saldırı var",
+                if (a.Angle >= 360f && a.RangeMul >= 6f && a.SafeSpotRadius > 0f) haritaSaldırısı = true;
+            failed += Check(ref total, "⚠️ TÜM HARİTAYA vuran, RASTGELE güvenli noktalı saldırı var",
                             haritaSaldırısı, 0f);
+
+            // ⚠️ Ve nokta GERÇEKTEN rastgele — sabit olsaydı ilk denemede ezberlenir
+            //    ve "rastgele" iddiası sessizce yalan olurdu. Aynı boss'ta iki ayrı
+            //    hazırlık farklı nokta vermeli.
+            //    ⚠️ Saldırıyı teste DAYATMIYORUZ: ilk yazışımda `SetAttack` ile ulti'yi
+            //    zorlayıp `EnterWindup` çağırmıştım, ama `EnterWindup` sıradaki
+            //    saldırıyı KENDİ SEÇİYOR ve dayattığımı eziyordu — nokta hiç
+            //    güncellenmiyordu ve test "rastgele değil" diyordu. Suç kurgudaydı.
+            //    Doğrusu: üretimin kendi seçimini çevir, güvenli noktası OLAN
+            //    hazırlıkları örnekle.
+            var (rootS, clockS) = Kur(t);
+            var nokta = Boss(t, rootS, son);
+            İlerlet(nokta, 3);
+
+            var enterWindup = typeof(Enemy).GetMethod("EnterWindup",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var noktalar = new System.Collections.Generic.HashSet<string>();
+            bool hepsiİçeride = true;
+            for (int i = 0; i < 60; i++)
+            {
+                enterWindup.Invoke(nokta, null);
+                if (nokta.CurrentSafeSpotRadius <= 0f) continue;   // bu saldırıda yok
+
+                noktalar.Add($"{nokta.CurrentSafeSpot.x:0.0}|{nokta.CurrentSafeSpot.z:0.0}");
+
+                var dd = new Vector2(nokta.CurrentSafeSpot.x - Bootstrap.ArenaCenter.x,
+                                     nokta.CurrentSafeSpot.z - Bootstrap.ArenaCenter.z);
+                if (dd.magnitude > t.arenaRadius) hepsiİçeride = false;
+            }
+
+            failed += Check(ref total, $"⚠️ güvenli nokta GERÇEKTEN rastgele ({noktalar.Count} farklı yer)",
+                            noktalar.Count >= 4, noktalar.Count);
+
+            // ⚠️ Ve HEPSİ arenanın içinde. Dışarıda bir nokta seçilseydi oyuncu
+            //    oraya YETİŞEMEZ ve saldırı kaçınılamaz bir ceza olurdu — üstelik
+            //    arena sınırı bu oyunda yeni (Enes bildirdi), yani tam da yeni
+            //    kuralla çelişebilecek bir yer.
+            failed += Check(ref total, "⚠️ güvenli noktaların HEPSİ arena içinde (ulaşılabilir)",
+                            hepsiİçeride, 0f);
+            Temizle(rootS);
 
             // ⚠️ Ve o saldırının hazırlığı MUTLAK ve UZUN olmalı: arenanın öbür
             //    ucundan boss'un dibine KOŞMAN gerekiyor. Çarpanla verilseydi
@@ -218,6 +282,7 @@ namespace TekCan.EditorTools
                         // ÖZGÜN: halka / simit / açıklık / zincir / büyük hamle.
                         // "Sıradan koni değil" olan her şey.
                         if (a18.Angle >= 360f || a18.InnerRadius > 0f || a18.SafeAngle > 0f
+                            || a18.SafeSpotRadius > 0f       // haritada rastgele güvenli nokta
                             || a18.Then != null || a18.Lunge > 2f) özgün++;
                     }
 
@@ -291,7 +356,8 @@ namespace TekCan.EditorTools
         static string Imza(BossAttack a) =>
             $"{a.RangeMul:0.00}|{a.Angle:0.0}|{a.InnerRadius:0.00}|{a.SafeAngle:0.0}"
           + $"|{a.WindupMul:0.00}|{a.WindupSeconds:0.00}|{a.CostMul:0.00}|{a.Repeat}"
-          + $"|{a.Lunge:0.00}|{a.MinPlayerRange:0.0}|{a.MaxPlayerRange:0.0}|{a.Then != null}";
+          + $"|{a.Lunge:0.00}|{a.MinPlayerRange:0.0}|{a.MaxPlayerRange:0.0}|{a.Then != null}"
+          + $"|{a.SafeSpotRadius:0.00}";
 
         static float Fark(Color a, Color b) =>
             Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b);
