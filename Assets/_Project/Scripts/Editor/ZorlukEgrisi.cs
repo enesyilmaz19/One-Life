@@ -79,6 +79,7 @@ namespace TekCan.EditorTools
                           $"hasat=%{t.harvestRate * 100f:0} dövüş akışı={t.drainInCombat}/sn " +
                           $"darbe={t.enemyFullHitCost}sn hız={t.moveSpeed}");
             sb.AppendLine("⚠️ oda KOMPOZİSYONU üretimden okunuyor; yalnızca dövüş modelleniyor");
+            sb.AppendLine("⚠️ SUNAK ODASI (S): düşman yok ve SAAT DURUYOR — tek bedeli aldıkların");
             sb.AppendLine($"⚠️ SUNAK: {t.altarMaxPurchases} alım × 3 sunak, taban {t.altarBasePrice:0} sn, " +
                           $"artış ×{t.altarPriceGrowth:0.0} — SUNAK ODASINDA (S), bölgede bir kez");
             sb.AppendLine($"   hasat +{t.altarHarvestStep:0.00}/alım (tavan %{t.harvestRateCap * 100f:0}) · " +
@@ -113,14 +114,13 @@ namespace TekCan.EditorTools
                         Ölçüm ö;
                         if (sunakOdası)
                         {
-                            // Kazanç yok; yalnızca odada geçen süre kadar AKIŞ.
-                            // ⚠️ Formül KOPYALANMIYOR, `SunakOdasıAkışı` üretimin
-                            // dövüş-dışı kuralını (bölge çarpanı + arka plan emişi
-                            // dahil) aynen kullanıyor. Kopyalasaydım bölge kuralı
-                            // değişince rapor sessizce eskirdi.
-                            float akış = SunakOdasıAkışı(t);
-                            ö = new Ölçüm { Sayı = 0, Kazanç = 0f, Yürüme = akış,
-                                            Dövüş = 0f, Darbe = 0f, Aura = 0f, Net = -akış };
+                            // ⚠️ SAAT DURUYOR (Enes kararı): kazanç da yok, MASRAF da yok.
+                            //    Odanın tek bedeli sunakta ÖDEDİĞİN saniye.
+                            //    İlk sürümde burayı akış maliyetiyle modellemiştim —
+                            //    tasarım değişti, model onu takip etmek ZORUNDA. Etmeseydi
+                            //    ayar turu var olmayan bir masrafa göre kadran çevirirdi.
+                            ö = new Ölçüm { Sayı = 0, Kazanç = 0f, Yürüme = 0f,
+                                            Dövüş = 0f, Darbe = 0f, Aura = 0f, Net = 0f };
                         }
                         else ö = OdayıÖlç(t, r, oda, b, d);
 
@@ -180,25 +180,6 @@ namespace TekCan.EditorTools
 
         // ⚠️ Masraf KIRILIMI şart: toplam masrafa bakıp "zor" demek teşhis değil.
         // Suçlunun hangi kalem olduğu ancak ayrıştırınca görünüyor.
-        /// <summary>
-        /// Sunak odasının saf akış maliyeti.
-        ///
-        /// ⚠️ Odanın BÜTÜN FİKRİ bu sayı: düşman yok ama dövüş dışı akış devrede,
-        /// yani "alsam mı almasam mı" demek en pahalıya patlıyor. Girişten çıkışa
-        /// yürüme + sunak halkasında geçirilen süre (dolaşma katsayısı 2.2).
-        ///
-        /// Akış kuralı `OdayıÖlç`'ün kullandığının AYNISI — bölge çarpanı ve arka
-        /// plan emişi dahil. İki ayrı formül olsaydı biri güncellenip öteki
-        /// unutulurdu; bu projede ölçüm aracının eskimesi iki kez yanlış teşhise
-        /// götürdü.
-        /// </summary>
-        static float SunakOdasıAkışı(Tuning t)
-        {
-            float yol = Vector3.Distance(Bootstrap.Entrance(t), Bootstrap.Exit(t));
-            float süre = yol / Mathf.Max(0.1f, t.moveSpeed) * 2.2f;   // sunağa uğrayıp çıkıyorsun
-            return (t.drainOutOfCombat * Region.Drain + Region.Background) * süre;
-        }
-
         struct Ölçüm
         {
             public int Sayı;

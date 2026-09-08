@@ -131,10 +131,12 @@ Her boss'ta olacaklar:
 
 Bölgenin **boss'tan hemen önceki** odası. Düşman yok, üç sunak var, çıkış baştan açık.
 
-⚠️ **Bu oda dinlenme DEĞİL, oyunun EN PAHALI odası** — ve bunun için tek satır yeni
-kural yazılmadı. Dövüş dışı akış zaten **2.5/sn**, dövüştekinin (1.0/sn) iki buçuk
-katı. "Alsam mı almasam mı" demek burada en pahalıya patlıyor. Yasa bu baskıyı zaten
-kuruyordu; oda onu **görünür** yaptı.
+⚠️ **SAATİN DURDUĞU TEK YER** *(Enes kararı — ilk tasarımım tam tersiydi)*.
+Oyunun tamamı zaman baskısı; baskı altında alışveriş yapmak "karar vermek" değil,
+**panikle almak ya da hiç almamak** olur. Saat durunca alışveriş gerçek bir karar.
+
+⚠️ Sömürüye açık değil: odada düşman, hasat, hiçbir kazanç yok. Sonsuza kadar
+beklemek hiçbir şey kazandırmıyor — bu bir duraklama, açık değil.
 
 ⚠️ **Boss'tan hemen önce** olması kasıtlı: alışverişi bir sınavın eşiğinde
 yapıyorsun, yani *"ne kadar hazırım"* sorusu somut bir düşmana bakarak soruluyor.
@@ -149,11 +151,14 @@ Sunaklar her çift odada çıkıyordu: bölge başına ~9 alım. Artık tek oda:
 `Zorluk eğrisi raporu` sunak odasını artık modelliyor (`S` satırı: 0 düşman,
 net −21 sn). Ölçülen sonuç:
 
-| | eskiden | şimdi |
+| | eskiden | şimdi *(saat durunca)* |
 |---|---|---|
 | bölge başına alım tavanı | 27 | **9** |
-| koşu boyu alım | 39 | **24** |
-| koşu sonu hasar | 27,5 (**×7,9**) | **17,9** (×5,1) |
+| koşu boyu alım | 39 | **31** |
+| koşu sonu hasar | 27,5 (**×7,9**) | **~22** (×6,3) |
+
+*(Saat durunca oda bedava oldu, yani alım gücü bir miktar geri geldi — akış
+maliyetiyle 24 alımdı, şimdi 31. Enflasyonun birinci ayağı yine de kırık.)*
 
 Buff enflasyonunun **birinci ayağı yapısal olarak kapandı** — sayı ayarıyla değil,
 odanın kendisiyle. İkinci ayak (fiyatın odalar arası sıfırlanması) hâlâ açık.
@@ -165,8 +170,11 @@ odanın kendisiyle. İkinci ayak (fiyatın odalar arası sıfırlanması) hâlâ
 > uzunluğu kadranı.
 
 ##### 🎮 Playtest — Faz 19
-- [ ] **Oda pahalı hissettiriyor mu?** Amaç: acele etmen. Rahat geliyorsa akış az
+- [ ] **Saatin durması hissediliyor mu?** Ekranda "SAAT DURDU" yazıyor — nefes
+      aldırıyor mu, yoksa oyunun ritmini mi kesiyor
 - [ ] **Boss'tan önce olması doğru mu?** Yoksa bölge ortasında mı olmalı
+- [ ] ⚠️ **Alışveriş artık gerçekten karar mı?** Baskı kalkınca "hepsini al"a mı
+      dönüştü — dönüştüyse fiyat eğrisi kadranı
 - [ ] **Üç sunak yeterli mi?** Az geliyorsa `altarMaxPurchases`
 - [ ] **Zeminin açılması oda tipini söylüyor mu**, yoksa fark etmiyor musun
 

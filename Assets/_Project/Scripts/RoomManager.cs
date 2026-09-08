@@ -112,11 +112,12 @@ namespace TekCan
         ///
         /// Enes: *"şu sunak ve buff alma kısımları için ayrı bir oda tasarlayalım."*
         ///
-        /// ⚠️ Bu oda DİNLENME DEĞİL, oyunun EN PAHALI odası — ve bunun için tek
-        /// satır yeni kural yazılmadı. Dövüş dışı akış zaten 2.5/sn, dövüştekinin
-        /// (1.0/sn) iki buçuk katı. Yani düşünmek, dolaşmak, "alsam mı almasam mı"
-        /// demek burada en pahalıya patlıyor. Yasa zaten bu baskıyı kuruyordu;
-        /// oda onu görünür hale getiriyor.
+        /// ⚠️ **SAATİN DURDUĞU TEK YER** (Enes kararı). Oyunun tamamı zaman baskısı;
+        /// baskı altında alışveriş yapmak "karar vermek" değil, panikle almak ya da
+        /// hiç almamak olur. Saat durunca alışveriş GERÇEK bir karar haline geliyor.
+        ///
+        /// ⚠️ Sömürüye açık değil: odada düşman, hasat, hiçbir kazanç yok. Sonsuza
+        /// kadar beklemek hiçbir şey kazandırmıyor — yani bu bir duraklama, açık değil.
         ///
         /// ⚠️ Ve boss'tan HEMEN ÖNCE: alışverişi bir sınavın eşiğinde yapıyorsun,
         /// yani "ne kadar hazırım" sorusu somut bir düşmana bakarak soruluyor.
@@ -272,6 +273,13 @@ namespace TekCan
             // taşınıyordu. Sıfırlama, ezmeden ÖNCE ve TEK yerde olmalı.
             if (Region.Current != null) Bootstrap.SetGroundColor(Region.Current.GroundColor);
 
+            // ⚠️ Dondurma HER ODA GİRİŞİNDE kaldırılıyor — dallardan ÖNCE, tek yerde.
+            // Sunak odası aşağıda tekrar kuruyor. Kaldırmayı yalnızca "sunaktan
+            // çıkarken" yapsaydım ölüm, restart ve bölge atlama yollarının hepsinde
+            // ayrı ayrı hatırlamam gerekirdi — ve biri unutulunca saat KALICI olarak
+            // donardı. Zemin renginde aynı hatayı bir kez yaptım, aynısını tekrarlamıyorum.
+            if (Clock.Instance != null) Clock.Instance.Frozen = false;
+
             if (IsBossRoom)
             {
                 PlaceBoss();
@@ -285,6 +293,7 @@ namespace TekCan
                 // kuralı zaten "canlı düşman yok" diyor ve burada baştan doğru.
                 PlaceExit();
                 PlaceAltars();
+                if (Clock.Instance != null) Clock.Instance.Frozen = true;
 
                 // ⚠️ Oda tipi EKRANDAN okunmalı, Console'dan değil. Zemin bölgenin
                 // renginden aydınlatılıyor: "burada dövüş yok" bilgisi kapıdan
@@ -293,7 +302,7 @@ namespace TekCan
                 Bootstrap.SetGroundColor(Color.Lerp(Region.Current.GroundColor,
                                                     new Color(0.55f, 0.52f, 0.42f), 0.45f));
                 Debug.Log($"[Tek Can] SUNAK ODASI — bölge {RegionIndex + 1}. " +
-                          "Düşman yok, ama akış dövüştekinin 2.5 katı: burada düşünmek pahalı.");
+                          "Düşman yok, SAAT DURDU. Alışveriş burada gerçek bir karar.");
             }
             else { PlaceEnemies(); PlaceExit(); PlaceAltars(); }
 

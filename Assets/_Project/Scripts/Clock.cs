@@ -26,6 +26,15 @@ namespace TekCan
         public bool Dead { get; private set; }
         public bool InCombat { get; private set; }
 
+        /// <summary>
+        /// Akış durdurulmuş mu — SUNAK ODASI kuruyor, `RoomManager` yönetiyor.
+        ///
+        /// ⚠️ Bir zamanlar DURGUN silahı için vardı ve silahla birlikte silinmişti.
+        /// Geri geldi ama SAHİBİ BAŞKA: artık bir MEKÂN özelliği, silah değil.
+        /// Sahibi tek olduğu için "kim dondurdu" sorusu hiç doğmuyor.
+        /// </summary>
+        public bool Frozen { get; set; }
+
         // ── koşu boyunca yükseltilebilen değerler ────────────────────────────
         // ⚠️ Bunlar Tuning'den KOPYALANIR, Tuning'e YAZILMAZ. ScriptableObject
         // çalışma anında değiştirilirse editörde kalıcı olur ve bir sonraki koşu
@@ -122,6 +131,16 @@ namespace TekCan
 
             RunTime += dt;
             InCombat = AnyLivingEnemyNear();
+
+            // ⚠️ SUNAK ODASINDA AKIŞ DURUYOR (Enes kararı, Faz 19).
+            // `RunTime` yine ilerliyor: geçen SÜRE gerçek, akmayan şey oyuncunun
+            // KAYNAĞI. İkisini karıştırmak ölçüm araçlarını bozardı.
+            //
+            // ⚠️ Yasayı bozmuyor: ikinci bir para birimi doğmuyor, yalnızca bir
+            // odada harcama olmuyor. Ve orada kazanç da yok — bekleyerek elde
+            // edilecek hiçbir şey olmadığı için "sonsuza kadar dur" bir sömürü
+            // değil, sadece bir duraklama.
+            if (Frozen) return;
 
             // ⚠️ BÖLGE KURALI buradan giriyor. Dövüş dışı akış çarpanı (DARALMA) ve
             // arka plan emişi (SIZINTI) — ikisi de saatten geçiyor, çünkü yasa o.

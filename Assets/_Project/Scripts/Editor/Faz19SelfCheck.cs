@@ -8,10 +8,14 @@ namespace TekCan.EditorTools
     /// Faz 19 — SUNAK ODASI. Enes: *"şu sunak ve buff alma kısımları için ayrı bir
     /// oda tasarlayalım."*
     ///
-    /// ⚠️ Odanın fikri: dinlenme DEĞİL, oyunun EN PAHALI odası. Dövüş dışı akış
-    /// zaten 2.5/sn, dövüştekinin (1.0/sn) iki buçuk katı — yani "alsam mı almasam
-    /// mı" demek burada en pahalıya patlıyor. Tek satır yeni kural yazılmadı;
-    /// yasa bu baskıyı zaten kuruyordu, oda onu görünür yaptı.
+    /// ⚠️ Odanın fikri: **SAATİN DURDUĞU TEK YER** (Enes kararı). Oyunun tamamı
+    /// zaman baskısı; baskı altında alışveriş yapmak "karar vermek" değil, panikle
+    /// almak ya da hiç almamak olur. Saat durunca alışveriş GERÇEK bir karar oluyor.
+    ///
+    /// ⚠️ İlk sürümde odayı tam TERSİ tasarlamıştım (en pahalı oda). Enes çevirdi.
+    /// Bu denetim o yüzden "bedeli var mı" değil "saat DURUYOR mu" diye soruyor —
+    /// ve donmanın odadan ÇIKINCA kalktığını da ölçüyor: kalıcı donma sessiz ve
+    /// yıkıcı olurdu, oyun zamansız kalır ve hiçbir şey hata vermezdi.
     ///
     /// Yan fayda ölçülüyor: sunaklar eskiden HER ÇİFT ODADA çıkıyordu ve buff
     /// matematiği oradan patlıyordu (39 alım, hasar ×7,9). Tek odaya inince
@@ -97,11 +101,36 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️ yükseltme sunağı BAŞKA odada çıkmıyor",
                             başkaOdadaSunak == 0, başkaOdadaSunak);
 
-            // ── 6) ⚠️ ODA BEDAVA DEĞİL — burada beklemek dövüşten PAHALI ──
-            //    Odanın bütün fikri bu. Ölçü: dövüş dışı akış, dövüştekinden büyük mü.
-            failed += Check(ref total, "⚠️ sunak odasında beklemek DÖVÜŞTEN pahalı",
-                            t.drainOutOfCombat > t.drainInCombat * 1.5f,
-                            t.drainOutOfCombat / t.drainInCombat);
+            // ── 6) ⚠️ ODADA SAAT DURUYOR — odanın bütün fikri (Enes kararı) ──
+            //    ⚠️ ÖZELLİK değil ETKİ: "Frozen true mu" değil, SAAT GERÇEKTEN
+            //    AKMIYOR MU. Bayrağa bakmak, `Tick`'in onu okumayı unutması
+            //    ihtimalini test etmezdi.
+            goToRoom.Invoke(rm, new object[] { sunakOdaNo });
+            float durgunÖnce = clock.Seconds;
+            clock.Tick(3f);                              // dt dışarıdan (tuzak 3)
+            failed += Check(ref total, "⚠️ sunak odasında SAAT DURUYOR",
+                            Mathf.Approximately(clock.Seconds, durgunÖnce),
+                            durgunÖnce - clock.Seconds);
+
+            // ── 6b) ⚠️ VE ODADAN ÇIKINCA GERİ AKIYOR ──
+            //    Kalıcı donma sessiz ve yıkıcı olurdu: oyun bir anda zamansız
+            //    kalır ve hiçbir şey hata vermez.
+            goToRoom.Invoke(rm, new object[] { 1 });
+            float akanÖnce = clock.Seconds;
+            clock.Tick(3f);
+            failed += Check(ref total, "⚠️ odadan çıkınca saat GERİ AKIYOR",
+                            clock.Seconds < akanÖnce - 0.01f, akanÖnce - clock.Seconds);
+
+            // ── 6c) ⚠️ BOSS ODASINDA da akıyor — sunak boss'un HEMEN ÖNÜNDE ──
+            //    Dondurmayı yalnızca "sunaktan çıkarken" kaldırsaydım, sunaktan
+            //    sonraki oda boss odası olduğu için boss dövüşü zamansız geçerdi.
+            goToRoom.Invoke(rm, new object[] { t.roomsPerRegion });
+            float bossÖnce = clock.Seconds;
+            clock.Tick(3f);
+            failed += Check(ref total, "⚠️ BOSS odasında saat akıyor (donma taşınmıyor)",
+                            clock.Seconds < bossÖnce - 0.01f, bossÖnce - clock.Seconds);
+
+            goToRoom.Invoke(rm, new object[] { sunakOdaNo });
 
             // ── 7) ⚠️ ALIM TAVANI GERÇEKTEN DÜŞTÜ (buff matematiği) ──
             //    Eskiden çift odalarda ~3 sunak × 3 alım; şimdi bölgede tek oda.

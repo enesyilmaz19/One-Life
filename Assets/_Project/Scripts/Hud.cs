@@ -79,7 +79,7 @@ namespace TekCan
             DrawAltarPrompt();
 
             GUI.Label(new Rect(12f, Screen.height - 26f, 900f, 20f),
-                "WASD · Sol tık · Shift/Space dash · dash+saldırı = DASH-ATAK · E sunak · 1-4 silah" +
+                "WASD · Sol tık · Shift/Space dash · dash+saldırı = DASH-ATAK · SAĞ TIK özel · E sunak · 1-5 silah" +
                 "   ‖ TEST: B boss · N bölge · F5 saati doldur · F6 SIFIRDAN · F1-F4 profil" +
                 (SaveFile.TestJumpUsed ? "   ⚠️ koşu kirli — kayda yazılmıyor" : ""), _small);
         }
@@ -110,8 +110,25 @@ namespace TekCan
                 _small.normal.textColor = Color.white;
             }
 
+            // ⚠️ Saatin durduğu GÖRÜNMELİ. Oyunun tek kaynağı saat; durduğunu
+            // söylemezsek oyuncu ya fark etmez (odanın bütün değeri kaybolur) ya da
+            // HUD bozuldu sanır.
+            //
+            // ⚠️ Bu blok bir kez `if (gaining)` İÇİNE düşmüştü: derleniyordu, kapılar
+            // yeşildi, ama sunak odasında hasat olmadığı için etiket HİÇ görünmezdi.
+            // HUD test edilmiyor — yani buradaki hatayı yalnızca okumak yakalar.
+            if (_clock.Frozen)
+            {
+                _mid.normal.textColor = new Color(0.6f, 0.9f, 1f);
+                GUI.Label(new Rect(0f, Screen.height * 0.42f, Screen.width, 40f),
+                          "SAAT DURDU — sunak odası", _mid);
+                _mid.normal.textColor = Color.white;
+            }
+
             r.y += 78f;
-            GUI.Label(r, _clock.InCombat ? "dövüşte" : "DÖVÜŞ DIŞI — saat hızlı iniyor", _small);
+            // Sunak odasında "saat hızlı iniyor" yazmak düpedüz yalan olurdu.
+            GUI.Label(r, _clock.Frozen ? "sunak odası — akış yok"
+                       : _clock.InCombat ? "dövüşte" : "DÖVÜŞ DIŞI — saat hızlı iniyor", _small);
 
             r.y += 24f;
 
