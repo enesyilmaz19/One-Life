@@ -23,7 +23,12 @@ namespace TekCan
         float _hurtFlash;
         Vector3 _knockback;
 
-        float _specialCd;
+        // ⚠️ HER SİLAHIN AYRI bekleme süresi. Tek `float` idi ve Enes yakaladı:
+        // "her bir silahın ayrı cd si olacak, ortak olmuş sanırım." Ortak sayaç
+        // kombo oynanışını doğrudan öldürüyordu — bir silahın özelini kullanmak
+        // ötekilerinkini de kilitliyordu. Ve HACİZ'in özelinin "gözükmemesi" de
+        // buydu: başka silahın bekleme süresi onu yutuyordu.
+        float[] _specialCd = new float[TekCan.Weapon.All.Length];
         Vector3 _dashStart;          // İPOTEK dash'i buraya işaret bırakıyor
 
         TrailRenderer _dashTrail;    // yalnızca dash boyunca çizer, bkz. BuildDashTrail
@@ -83,13 +88,38 @@ namespace TekCan
             _dashTrail.emitting = false;   // yalnızca dash sırasında
         }
 
+        /// <summary>
+        /// ⚠️ ARENA SINIRI — TEK YERDE, `LateUpdate`'te.
+        ///
+        /// Enes: *"arenanın sınırı yok aq."* Oyuncuda hiçbir kısıt yoktu; düşmanların
+        /// zaten vardı (`Enemy.ChaseMove`'daki `tavan`).
+        ///
+        /// ⚠️ Neden `Move()` içinde değil: oyuncuyu HAREKET ETTİREN üç yol var —
+        /// yürüme, dash ve geri itilme. Üçüne ayrı ayrı kısıt koysaydım biri
+        /// unutulurdu ve tam da o yoldan dışarı çıkılırdı. `LateUpdate` o karedeki
+        /// bütün hareketlerden SONRA çalışıyor: hangi yol olursa olsun yakalıyor.
+        /// </summary>
+        void LateUpdate()
+        {
+            if (_t == null) return;
+
+            Vector3 merkez = Bootstrap.ArenaCenter;
+            Vector3 d = transform.position - merkez;
+            d.y = 0f;                                   // tuzak 2: y yatay hesaba karışmasın
+            if (d.magnitude <= _t.arenaRadius) return;
+
+            d = d.normalized * _t.arenaRadius;
+            transform.position = new Vector3(merkez.x + d.x, transform.position.y, merkez.z + d.z);
+            _knockback = Vector3.zero;                  // duvara yapışıp titremesin
+        }
+
         void Update()
         {
             if (_t == null || (Clock.Instance != null && Clock.Instance.Dead)) return;
 
             _dashCd -= Time.deltaTime;
             _iFrames -= Time.deltaTime;
-            _specialCd -= Time.deltaTime;
+            for (int i = 0; i < _specialCd.Length; i++) _specialCd[i] -= Time.deltaTime;
             TickHurt();
             ReadWeaponSwap();
 
@@ -107,7 +137,7 @@ namespace TekCan
 
             // ⚠️ Özel saldırı normal saldırıdan ÖNCE okunuyor: ikisi de basılıysa
             // pahalı ve bekleme süreli olan kazanmalı, yoksa oyuncu onu kaçırır.
-            if (ReadSpecial() && _specialCd <= 0f) { StartSpecial(input); return; }
+            if (ReadSpecial() && _specialCd[_weaponIndex] <= 0f) { StartSpecial(input); return; }
 
             if (ReadAttack()) { StartAttack(input); return; }
 
@@ -184,7 +214,12 @@ namespace TekCan
         }
 
         /// <summary>Öz-denetim ve HUD için: özel saldırı hazır mı, değilse ne kadar kaldı.</summary>
-        public float SpecialCooldownLeft => Mathf.Max(0f, _specialCd);
+        public float SpecialCooldownLeft => Mathf.Max(0f, _specialCd[_weaponIndex]);
+
+        /// <summary>HUD için: belirli bir silahın bekleme süresi (hepsi ayrı).</summary>
+        public float SpecialCooldownOf(int weaponIndex) =>
+            weaponIndex >= 0 && weaponIndex < _specialCd.Length
+                ? Mathf.Max(0f, _specialCd[weaponIndex]) : 0f;
 
         /// <summary>
         /// Sağ tık saldırısı. ⚠️ Kendi isabet yolunu YAZMIYOR — `StrikeCone`'dan
@@ -205,7 +240,7 @@ namespace TekCan
                 clock.Spend(sp.Cost);
             }
 
-            _specialCd = sp.Cooldown;
+            _specialCd[_weaponIndex] = sp.Cooldown;
             _attackTimer = Weapon.Duration(_t);      // taahhüt: özel de bir savurma
             _attackHitDone = true;                   // vuruş BURADA indi, TickAttack tekrarlamasın
 

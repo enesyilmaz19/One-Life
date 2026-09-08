@@ -145,11 +145,54 @@ namespace TekCan
                          $"   ·   hasar {_clock.AttackDamage:0.0}", _small);
             _small.normal.textColor = Color.white;
 
+            DrawSpecialHint();
             DrawRevivals();
             DrawRoomLedger();
             DrawBossPhase();
             DrawWeaponBar();
             DrawProfile();
+        }
+
+        /// <summary>
+        /// Kuşanılan silahın özel saldırısı NE YAPIYOR.
+        ///
+        /// ⚠️ Enes: *"her bir silahın sağ tıkı ne yapıyo, bi tek ipoteği anladım."*
+        /// Yalnızca ADI yazıyordu ("İCRA", "UZUN VADE") ve ad hiçbir şey anlatmıyor.
+        /// İPOTEK'in anlaşılmasının sebebi görseldi: yere halka koyuyor, ne yaptığı
+        /// ekranda. Görselden anlaşılmayanı YAZIYLA söylemek, hiç söylememekten iyi.
+        ///
+        /// Kalıcı çözüm animasyon/VFX fazında: her özelin kendi hareketi olacak.
+        /// </summary>
+        void DrawSpecialHint()
+        {
+            var pc = _player;
+            if (pc == null) return;
+            var sp = pc.Weapon.Special(_t);
+            if (sp == null) return;
+
+            float cd = pc.SpecialCooldownLeft;
+            _small.normal.textColor = cd > 0.05f ? new Color(0.55f, 0.55f, 0.6f)
+                                                 : new Color(0.95f, 0.9f, 0.55f);
+            GUI.Label(new Rect(0f, Screen.height - 108f, Screen.width, 20f),
+                      $"[sağ tık] {sp.Name} — {SpecialNeYapar(sp)}   " +
+                      (cd > 0.05f ? $"({cd:0.0} sn)" : "HAZIR"), _small);
+            _small.normal.textColor = Color.white;
+        }
+
+        /// <summary>
+        /// Özelin ne yaptığını KENDİ VERİSİNDEN anlatıyor — elle yazılmış metin
+        /// listesi değil. Liste olsaydı yeni bir özel eklendiğinde sessizce eskir
+        /// ve ekran yalan söylerdi (`Weapon.Category` ile aynı gerekçe).
+        /// </summary>
+        static string SpecialNeYapar(WeaponSpecial sp)
+        {
+            if (sp.GroundDelay > 0f) return $"yere GENİŞ işaret, {sp.GroundDelay:0.0} sn sonra patlar";
+            if (sp.Angle >= 360f) return "ÇEVRENDEKİ HERKESE vurur";
+            if (sp.DamagePerDistance > 0f) return "hedef UZAKLAŞTIKÇA daha sert vurur";
+            if (sp.Cost > 0f && sp.KillRefundMul > 0f)
+                return $"{sp.Cost:0.0} sn öder, ÖLDÜRÜRSEN {sp.KillRefundMul:0}× geri alır";
+            if (sp.Cost > 0f) return $"{sp.Cost:0.0} sn ödeyip çok sert vurur";
+            return "ağır tek vuruş";
         }
 
         /// <summary>
@@ -324,8 +367,17 @@ namespace TekCan
                 // burada ayrı bir sınıflandırma yazsaydım silah değişince eskirdi.
                 string tek = weapons[i].Category(_t);
 
-                GUI.Label(new Rect(x + i * w, y, w, 40f),
-                          $"{i + 1}  {weapons[i].Name}\n{tek} {mult}", _small);
+                // ⚠️ Bekleme süresi HER SİLAHIN KENDİSİNE ait ve hepsi ayrı yazılıyor.
+                // Ortak sayaç varken ekran da tek sayı gösteriyordu — Enes "ortak
+                // olmuş sanırım" derken HUD onu doğruluyordu.
+                var sp = weapons[i].Special(_t);
+                float cd = pc.SpecialCooldownOf(i);
+                string özel = sp == null ? ""
+                    : cd > 0.05f ? $"\n[sağ] {sp.Name} {cd:0.0}s"
+                                 : $"\n[sağ] {sp.Name}";
+
+                GUI.Label(new Rect(x + i * w, y, w, 56f),
+                          $"{i + 1}  {weapons[i].Name}\n{tek} {mult}{özel}", _small);
             }
             _small.normal.textColor = Color.white;
 

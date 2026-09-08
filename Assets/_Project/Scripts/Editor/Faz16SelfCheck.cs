@@ -101,6 +101,28 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️ özel kullanınca BEKLEME başlıyor",
                             pc.SpecialCooldownLeft > 0.1f, pc.SpecialCooldownLeft);
 
+            // ── 5b) ⚠️ BEKLEME SÜRESİ SİLAHA AİT, ORTAK DEĞİL ──
+            //    Enes bunu oyunda yakaladı: *"her bir silahın ayrı cd si olacak,
+            //    ortak olmuş sanırım."* Haklıydı — tek bir `float` vardı, yani bir
+            //    silahın özelini kullanmak ÖTEKİLERİNKİNİ de kilitliyordu. Kombo
+            //    oynanışını doğrudan öldüren bir hataydı ve HACİZ'in özelinin
+            //    "gözükmemesi" de buydu: başka silahın beklemesi onu yutuyordu.
+            //    ⚠️ ÖZELLİK değil ETKİ: alan tipine bakmıyor, BİR SİLAHI KULLANIP
+            //    ÖTEKİNİN hazır kaldığını ölçüyor.
+            ResetSpecial(pc);
+            ClearEnemies();
+            pc.SetWeapon(Index<ConeBlade>());
+            startSpecial.Invoke(pc, new object[] { Vector3.forward });
+            float koniBekleme = pc.SpecialCooldownLeft;
+
+            pc.SetWeapon(Index<Iflas>());
+            failed += Check(ref total, "⚠️ bekleme SİLAHA AİT — biri kullanılınca öteki HAZIR",
+                            pc.SpecialCooldownLeft <= 0.01f, pc.SpecialCooldownLeft);
+
+            pc.SetWeapon(Index<ConeBlade>());
+            failed += Check(ref total, "geri dönünce KONİ hâlâ beklemede (sayaç kaybolmuyor)",
+                            pc.SpecialCooldownLeft > koniBekleme - 0.1f, pc.SpecialCooldownLeft);
+
             // ── 6) ⚠️ FAİZLİ · İCRA: ISKALAYINCA ÖDÜYORSUN ──
             //    ⚠️ İlk yazışımda hedef VARKEN net saati ölçüyordum ve test düştü:
             //    bedel ödendi ama hasat onu fazlasıyla örtüyordu (bahis kazanılınca
@@ -214,9 +236,10 @@ namespace TekCan.EditorTools
             return önce - e.TimeLeft;
         }
 
+        /// <summary>Bütün silahların bekleme sürelerini sıfırla — her biri AYRI.</summary>
         static void ResetSpecial(PlayerController pc) =>
             typeof(PlayerController).GetField("_specialCd", BindingFlags.NonPublic | BindingFlags.Instance)
-                                    .SetValue(pc, 0f);
+                                    .SetValue(pc, new float[Weapon.All.Length]);
 
         static int Index<T>() where T : Weapon =>
             System.Array.FindIndex(Weapon.All, w => w is T);

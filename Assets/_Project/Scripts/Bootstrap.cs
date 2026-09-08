@@ -237,6 +237,26 @@ namespace TekCan
         /// Üç sunağı odanın ortasına halka hâlinde koyar. Yerleşimin TEK kaynağı —
         /// `RoomManager` de testler de buradan geçiyor.
         /// </summary>
+        /// <summary>
+        /// Arenanın KENARI — görünür halka.
+        ///
+        /// ⚠️ Enes: *"arenanın sınırı yok aq."* Haklıydı: oyuncuda hiçbir kısıt
+        /// yoktu, düşmanlarda vardı. Yani zeminden çıkıp boşlukta yürüyebiliyordun.
+        ///
+        /// ⚠️ Ve bu, F3 profilinin (arena ×0.68) NİYE ANLAŞILMADIĞINI da açıklıyor:
+        /// arena küçülüyordu ama görünür bir kenar olmadığı için değişen hiçbir şey
+        /// GÖRÜNMÜYORDU. Bir kadranı göremiyorsan onu ayarlayamazsın.
+        ///
+        /// Oda köküne bağlanıyor: oda yeniden kurulunca (A/B profili arena boyunu
+        /// değiştirdiğinde) halka da yeni boyla doğuyor.
+        /// </summary>
+        public static void SpawnArenaEdge(Tuning t, Transform parent)
+        {
+            Arc.Spawn(ArenaCenter, Quaternion.identity, t.arenaRadius, 360f,
+                      new Color(0.55f, 0.6f, 0.75f, 0.13f), 9999f).transform
+               .SetParent(parent != null ? parent : null);
+        }
+
         public static void SpawnAltarRing(Tuning t, Transform player, Transform parent)
         {
             var kinds = new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash };

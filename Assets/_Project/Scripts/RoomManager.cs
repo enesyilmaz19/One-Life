@@ -274,6 +274,13 @@ namespace TekCan
             // taşınıyordu. Sıfırlama, ezmeden ÖNCE ve TEK yerde olmalı.
             if (Region.Current != null) Bootstrap.SetGroundColor(Region.Current.GroundColor);
 
+            // ⚠️ ARENA KENARI her odada çiziliyor. Enes: "arenanın sınırı yok aq."
+            // Oda köküne bağlı olması kasıtlı: A/B profili arena boyunu değiştirip
+            // odayı yeniden kurunca halka da YENİ boyla doğuyor — yani F3'ün ne
+            // yaptığı artık GÖRÜNÜYOR. Enes "F1-F4'ün farkını anlamadım" derken
+            // sebeplerden biri buydu: değişen şeyin görünür bir sınırı yoktu.
+            Bootstrap.SpawnArenaEdge(_t, _roomRoot.transform);
+
             // ⚠️ Dondurma HER ODA GİRİŞİNDE kaldırılıyor — dallardan ÖNCE, tek yerde.
             // Sunak odası aşağıda tekrar kuruyor. Kaldırmayı yalnızca "sunaktan
             // çıkarken" yapsaydım ölüm, restart ve bölge atlama yollarının hepsinde
