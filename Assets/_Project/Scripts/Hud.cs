@@ -221,7 +221,8 @@ namespace TekCan
                       $"sunak −{rm.RoomSpent:0.0}    NET {gerçekNet:+0.0;-0.0}" +
                       // ⚠️ Ağır oda burada da yazmalı: ekrandaki kötü NET'in sebebi
                       // eğri mi oda mı — ikisi aynı satırda ayrılsın.
-                      (rm.RoomElites > 0 ? $"    ⚠️ AĞIR ODA ({rm.RoomElites})" : "") +
+                      (rm.RoomHuge > 0 ? $"    ⚠️ İRİ ODASI ({rm.RoomHuge}+{rm.RoomArmored})"
+                       : rm.RoomArmored > 0 ? $"    ⚠️ AĞIR ODA ({rm.RoomArmored})" : "") +
                       (rm.RoomGranted > 0.05f ? $"    (test bağışı +{rm.RoomGranted:0.0} hariç)" : ""),
                       _small);
             _small.normal.textColor = Color.white;

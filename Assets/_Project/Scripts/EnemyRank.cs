@@ -3,82 +3,96 @@ using UnityEngine;
 namespace TekCan
 {
     /// <summary>
-    /// Düşman RÜTBESİ — türün üstüne binen ince katman.
-    /// `EnemyKind` *hangi soruyu sorduğunu* söyler, rütbe *bu sefer ne kadar ağır olduğunu.*
+    /// Düşman RÜTBESİ — türün üstüne binen katman.
+    /// `EnemyKind` *hangi soruyu sorduğunu* söyler, rütbe *ne kadar ağır olduğunu.*
     ///
     /// ⚠️ NEDEN YENİ TÜR DEĞİL: 7 tür × 3 rütbe = 21 alt sınıf olurdu. Rütbe türün
-    /// kimliğini değiştirmiyor, AĞIRLIĞINI değiştiriyor — o yüzden türle ÇARPILIYOR,
-    /// türün yerine geçmiyor. KASA zırhlıyken de KASA'dır.
+    /// kimliğini değiştirmiyor, türle ÇARPILIYOR. KASA zırhlıyken de KASA.
     ///
-    /// ⚠️ ZIRHLI İLE İRİ AYNI ŞEY DEĞİL — birleştirmek ikisini de öldürür:
+    /// ═══ 2026-09-02 YENİDEN TASARIM — Enes: *"iri ve zırhlı ayrışmıyor" ═══
     ///
-    ///   İRİ    → havuzu büyük, akışı normal.
-    ///            Uzun sürer ama sonunda DAHA ÇOK öder. Saniye başına gelirin AYNI.
-    ///            Sattığı şey: **TAAHHÜT.** "Bunu bitirmeye kalkışayım mı?"
+    /// İlk tasarımda ikisi de "havuz" ekseninde duruyordu (biri yavaş akan zaman,
+    /// öteki büyük havuz) ve oyunda AYNI ŞEY gibi hissediliyorlardı. Enes farkı
+    /// başka yere koydu ve doğrusu o: **ikisi farklı EKSENDE olmalı.**
     ///
-    ///   ZIRHLI → havuzu normal, hasar zamana daha yavaş çevriliyor.
-    ///            Uzun sürer ve toplamda AYNI öder — yani saniye başına gelirin DÜŞER.
-    ///            Sattığı şey: **TEMPO.** "Bunu şimdi mi kesmeliyim?"
+    ///   ZIRHLI → **MİKTAR ekseni.** Her türden olabilir, sadece çok canlı ve yavaş.
+    ///            Odada **birkaç tane**. Değiştirdiği şey TEMPO: oda uzuyor,
+    ///            hedef sırası önem kazanıyor. Sıradan ama sürekli.
     ///
-    /// Enes ikisini ayrı ayrı söyledi ("zırhlı ya da daha çok canlı"). Tek bir "elit"
-    /// rütbesinde toplasaydım iki farklı soru tek dolgu düşmana inerdi — ve `EnemyKind`
-    /// zaten tam bunu yasaklıyor: *"yalnızca daha çok can olan bir tür çeşitlilik değil."*
+    ///   İRİ    → **KİMLİK ekseni.** Mini boss: türünün kendi imzası KAT KAT
+    ///            büyütülmüş hâli. Birkaç odada bir, ve odada **TEK**.
+    ///            İri SIZINTI seni kasıp kavurur, iri KASA servet öder, iri
+    ///            ZAMANAŞIMI göz açıp kapayana kadar şişer.
+    ///            Değiştirdiği şey ÖNCELİK: odada ondan başka bir şey yok.
     ///
-    /// ⚠️ Rütbe GÖRÜNMEK ZORUNDA. Zırhlı düşman normal görünürse oyuncu "niye ölmüyor
-    /// bu" diye sorar ve cevabı ekranda yoktur — dersler 7/10'un tam hatası. Zırh soğuk
-    /// ve mat, İRİ iri. İkisi de mekaniğin ne yaptığını söylüyor.
+    /// Fark bu yüzden gerçek: ZIRHLI'yı görünce *"bu oda uzun sürecek"* dersin,
+    /// İRİ'yi görünce *"önce şunu halletmeliyim"*. Aynı cümleyi kurdurmuyorlar.
+    ///
+    /// ⚠️ Rütbe GÖRÜNMEK ZORUNDA (ders 10). Zırh soğuk ve mat, İRİ gövdesiyle
+    /// bağırıyor — normalin 1.6 katı ve hazırlığı yavaş, yani boss gibi okunuyor.
     /// </summary>
     public abstract class EnemyRank
     {
         public abstract string Name { get; }
 
-        /// <summary>Havuz çarpanı — İRİ'nin kadranı.</summary>
+        /// <summary>Havuz çarpanı — "daha çok can".</summary>
         public virtual float PoolMultiplier(Tuning t) => 1f;
 
         /// <summary>
-        /// Hasarın zamana çevrilme oranı. &lt;1 = havuzu daha YAVAŞ akıyor.
-        /// Hasat akan zamanla orantılı olduğu için toplam ödeme değişmez, sadece
-        /// daha uzun sürer: saf tempo vergisi.
+        /// TÜRÜN KENDİ İMZASININ çarpanı — İRİ'nin kadranı.
+        ///
+        /// ⚠️ İRİ'yi "büyük ZIRHLI"dan ayıran tek şey bu. Yalnızca havuz büyütseydim
+        /// iki rütbe yine aynı eksende olurdu ve Enes'in bildirdiği hata aynen
+        /// dururdu. Mini boss demek, TÜRÜN NE YAPTIĞININ katlanması demek:
+        /// SIZINTI'nın emişi, SİGORTA'nın yarıçapı, MÜBAŞİR'in tebligat sıklığı,
+        /// ZAMANAŞIMI'nın büyüme hızı.
         /// </summary>
-        public virtual float DrainMultiplier(Tuning t) => 1f;
+        public virtual float TraitMultiplier(Tuning t) => 1f;
 
         public virtual float SpeedMultiplier => 1f;
         public virtual float ScaleMultiplier => 1f;
 
+        /// <summary>Hazırlık süresi çarpanı — İRİ boss gibi AĞIR telegraf ediyor.</summary>
+        public virtual float WindupMultiplier => 1f;
+
         /// <summary>Tür rengini rütbeye göre kaydırır. Kimlik kalsın, ağırlık okunsun.</summary>
         public virtual Color Shade(Color kindColor) => kindColor;
 
-        /// <summary>Normal dışındaki her rütbe. HUD ve öz-denetim için.</summary>
         public virtual bool IsElite => false;
+
+        /// <summary>Odada yalnızca BİR tane olabilir mi (mini boss kuralı).</summary>
+        public virtual bool SoloInRoom => false;
 
         public static readonly EnemyRank Normal = new NormalRank();
         public static readonly EnemyRank Armored = new ArmoredRank();
-        public static readonly EnemyRank Heavy = new HeavyRank();
+        public static readonly EnemyRank Huge = new HugeRank();
 
-        public static readonly EnemyRank[] All = { Normal, Armored, Heavy };
+        public static readonly EnemyRank[] All = { Normal, Armored, Huge };
     }
 
-    /// <summary>Rütbesiz — kıyas noktası. Diğer ikisi buna göre okunuyor.</summary>
+    /// <summary>Rütbesiz — kıyas noktası.</summary>
     public sealed class NormalRank : EnemyRank
     {
         public override string Name => "";
     }
 
     /// <summary>
-    /// ZIRHLI — zamanı çok daha yavaş akıyor. Havuzu normal, ama her vuruş ondan
-    /// daha az koparıyor. Aynı parayı çok daha uzun sürede ödüyor.
+    /// ZIRHLI — **çok canlı ve yavaş.** Her türden olabilir, odada birkaç tane.
     ///
-    /// Bu, oyunun yasasında **gelir vergisidir**: saat sen vururken de işliyor,
-    /// yani saniye başına düşen hasat düşünce dövüş kârdan masrafa kayıyor.
-    /// Cevabı "daha çok vur" değil, "buna girmeye değer mi".
+    /// Enes'in tarifi birebir: *"zırhlı tüm çeşitlerden olabilir, sadece daha çok
+    /// canı var ve daha yavaş gidiyor."* İmzası değişmiyor — SIZINTI zırhlıyken de
+    /// aynı hızda emiyor, sadece daha uzun yaşıyor.
     ///
-    /// Biraz yavaş — zırh ağırdır, ve oyuncuya kaçma seçeneği bırakması gerekiyor.
+    /// ⚠️ Yavaşlık şart: çok canlı AMA normal hızda olsaydı, cezası "uzun sürüyor"
+    /// değil "kaçamıyorum" olurdu. Yavaşlık oyuncuya BIRAKIP GİTME seçeneği
+    /// bırakıyor — ve o seçenek zırhın sorduğu asıl soru: *değer mi?*
     /// </summary>
     public sealed class ArmoredRank : EnemyRank
     {
         public override string Name => "ZIRHLI";
-        public override float DrainMultiplier(Tuning t) => t.armoredDrainMultiplier;
-        public override float SpeedMultiplier => 0.85f;
+        public override float PoolMultiplier(Tuning t) => t.armoredPoolMultiplier;
+        public override float SpeedMultiplier => 0.7f;
+        public override float ScaleMultiplier => 1.12f;
         public override bool IsElite => true;
 
         // Soğuk ve mat. ⚠️ KAÇAK'ın "soluyor" rengi beyaza doğru açılıyor; zırh ters
@@ -88,23 +102,33 @@ namespace TekCan
     }
 
     /// <summary>
-    /// İRİ — havuzu kat kat büyük, akışı normal. Uzun sürer ama tamamını öder.
+    /// İRİ — **mini boss.** Türünün imzası kat kat büyütülmüş hâli. Odada TEK,
+    /// ve yalnızca birkaç odada.
     ///
-    /// Bu bir vergi değil, **taahhüt**: girersen kârlısın, yarıda bırakırsan
-    /// harcadığın zaman gider. KASA'nın sorduğu soruyu her türe taşıyor.
+    /// Enes: *"İriler mini boss gibi, birkaç odada gelecek, normal mobların çok
+    /// gelişmiş hali gibi."*
     ///
-    /// İri ve yavaş: tehdidi kaçamaması değil, seni ORADA TUTMASI.
+    /// ⚠️ "Gelişmiş" DAHA ÇOK CAN DEĞİL — o zaten ZIRHLI'nın işi. İRİ'nin
+    /// gelişmişliği türün NE YAPTIĞININ katlanmasında: iri SIZINTI zamanını
+    /// kasıp kavurur, iri SİGORTA yarım odayı kapatır, iri MÜBAŞİR tebligatı
+    /// yağdırır, iri KASA servet öder. Havuz da büyük ama asıl olay o değil.
+    ///
+    /// Boss gibi okunması için hazırlığı YAVAŞ: gövde büyük, telegraf uzun,
+    /// yani adil. Güçlü bir şeyin okunur olması gerekiyor.
     /// </summary>
-    public sealed class HeavyRank : EnemyRank
+    public sealed class HugeRank : EnemyRank
     {
         public override string Name => "İRİ";
-        public override float PoolMultiplier(Tuning t) => t.heavyPoolMultiplier;
-        public override float SpeedMultiplier => 0.78f;
-        public override float ScaleMultiplier => 1.32f;
+        public override float PoolMultiplier(Tuning t) => t.hugePoolMultiplier;
+        public override float TraitMultiplier(Tuning t) => t.hugeTraitMultiplier;
+        public override float SpeedMultiplier => 0.8f;
+        public override float ScaleMultiplier => 1.6f;
+        public override float WindupMultiplier => 1.35f;      // boss gibi ağır telegraf
         public override bool IsElite => true;
+        public override bool SoloInRoom => true;
 
-        // Asıl işaret BOYUT. Renk yalnızca bir tık koyulaşıyor — tür kimliği
-        // (KASA sarısı, SIZINTI moru) kalabalıkta okunur kalmalı.
-        public override Color Shade(Color kindColor) => Color.Lerp(kindColor, Color.black, 0.22f);
+        // Asıl işaret BOYUT ve YAVAŞ HAZIRLIK. Renk yalnızca koyulaşıyor — tür
+        // kimliği (KASA sarısı, SIZINTI moru) kalabalıkta okunur kalmalı.
+        public override Color Shade(Color kindColor) => Color.Lerp(kindColor, Color.black, 0.28f);
     }
 }

@@ -181,15 +181,23 @@ namespace TekCan
                  "Dash-atağa uygulanmaz — dibine girene cevap odur.")]
         public float hacizMinRange = 3.2f;
 
-        [Header("── DÜŞMAN RÜTBESİ (Faz 14) ──")]
-        [Tooltip("ZIRHLI: hasarın zamana çevrilme oranı. 0.45 = havuzu %55 daha yavaş akar. " +
-                 "Havuz DEĞİŞMEZ — toplam ödeme aynı kalır, sadece daha uzun sürer.")]
-        public float armoredDrainMultiplier = 0.45f;
-        [Tooltip("İRİ: havuz çarpanı. Akış normal, yani sonunda bu kadar FAZLA öder.")]
-        public float heavyPoolMultiplier = 2.2f;
-        [Tooltip("Kaç odada bir ağır oda gelir. 3 = her üçüncü oda. " +
-                 "0 veya altı = rütbe kapalı. Seyrek olmalı: her odada olsaydı yeni taban olurdu.")]
-        public int eliteRoomInterval = 3;
+        [Header("── DÜŞMAN RÜTBESİ (Faz 17) ──")]
+        // ⚠️ ZIRHLI = MİKTAR ekseni, İRİ = KİMLİK ekseni. İlk tasarımda ikisi de
+        // havuz ekseninde durup aynı hissettiriyordu (Enes: "ayrışmıyor").
+        [Tooltip("ZIRHLI: havuz çarpanı — 'daha çok can'. Yaygın, odada birkaç tane olur.")]
+        public float armoredPoolMultiplier = 2.0f;
+        [Tooltip("ZIRHLI: kaç yuvada bir. 3 = her üçüncü düşman. 0 = kapalı.")]
+        public int armoredEverySlot = 3;
+
+        [Tooltip("İRİ: havuz çarpanı. Mini boss, o yüzden ZIRHLI'dan da kalın.")]
+        public float hugePoolMultiplier = 4.0f;
+        [Tooltip("İRİ: TÜRÜN İMZASININ çarpanı — onu 'büyük zırhlı'dan ayıran tek şey bu. " +
+                 "SIZINTI'nın emişi, SİGORTA'nın yarıçapı, MÜBAŞİR'in sıklığı, " +
+                 "ZAMANAŞIMI'nın büyüme hızı hep bununla katlanıyor.")]
+        public float hugeTraitMultiplier = 2.5f;
+        [Tooltip("İRİ: kaç odada bir mini boss çıkar. 4 = her dördüncü oda. " +
+                 "O odada YALNIZCA BİR tane olur. 0 = kapalı.")]
+        public int hugeRoomInterval = 4;
 
         [Header("── BOSS TÜRLERİ (Faz 12) ──")]
         [Tooltip("SİMSAR: durduğun yere bıraktığı işaretin yarıçapı")]

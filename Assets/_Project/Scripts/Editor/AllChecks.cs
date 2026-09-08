@@ -86,9 +86,9 @@ namespace TekCan.EditorTools
             sb.AppendLine(Line("Faz 13 öz-denetim", f13 == 0, f13 == 0 ? "geçti" : $"{f13} başarısız"));
             problems += f13;
 
-            int f14 = Faz14SelfCheck.Execute();
-            sb.AppendLine(Line("Faz 14 öz-denetim", f14 == 0, f14 == 0 ? "geçti" : $"{f14} başarısız"));
-            problems += f14;
+            int f17 = Faz17SelfCheck.Execute();
+            sb.AppendLine(Line("Faz 17 öz-denetim", f17 == 0, f17 == 0 ? "geçti" : $"{f17} başarısız"));
+            problems += f17;
 
             int audit = TuningAudit.Execute();
             sb.AppendLine(audit == 0

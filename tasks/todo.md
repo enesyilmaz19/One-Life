@@ -28,13 +28,32 @@ Enes'in raporundan çıkan **yapılacaklar**. ✅ olanlar bu oturumda yapıldı.
 - [ ] **Her silaha ÖZEL dash-atak** — Enes: *"burada çok belli olmuyor neyin ne yaptığı"*
 - [ ] KONİ buff'ı — ⏸️ İPOTEK nerf'i sonrası **yeniden hissedilsin**, sonra karar
 
-#### 🔴 FAZ 17 — Rütbe yeniden tasarımı *(mevcut ayrım çöktü)*
+#### ✅ FAZ 17 — Rütbe yeniden tasarımı — **KOD BİTTİ, PLAYTEST BEKLİYOR**
 > Enes: *"iri ve zırhlı ayrışmıyor. mantığı farklı olmalı."*
 
-- [ ] **ZIRHLI** — her türden olabilir, sadece **daha çok can** + **daha yavaş**.
-      Bir odada **birkaç tane** olabilir *(şu anki "yavaş akan zaman" mantığı gidiyor)*
-- [ ] **İRİ** — **mini boss**: birkaç odada bir, normal mobun **çok gelişmiş** hali,
-      odada **tek**
+Haklıydı: ikisi de **havuz ekseninde** duruyordu (biri yavaş akan zaman, öteki büyük
+havuz) — sayıları farklıydı ama **sorusu aynıydı**. Yeni ayrım farklı EKSENLER:
+
+| | eksen | ne yapar | odada | sordurduğu cümle |
+|---|---|---|---|---|
+| **ZIRHLI** | **MİKTAR** | ×2 can, ×0.7 hız. İmzaya **dokunmaz** | **birkaç tane** | *"bu oda uzun sürecek"* |
+| **İRİ** | **KİMLİK** | ×4 can + türün imzası **×2.5** | **TEK** | *"önce şunu halletmeliyim"* |
+
+- [x] ZIRHLI — çok can + yavaş, her türden, her 3. yuva
+- [x] İRİ — mini boss, her 4. oda, odada tek, gövde ×1.6, **boss gibi ağır telegraf**
+- [x] İmza katlanması dört kancada birden: SIZINTI emişi · SİGORTA yarıçapı ·
+      MÜBAŞİR tebligat sıklığı · ZAMANAŞIMI büyüme hızı
+- [x] ⚠️ ZAMANAŞIMI tavanı katlanMIYOR — "tek düşman koşuyu bitiremez" güvenliği duruyor
+- [x] Oda defteri ikisini **ayrı** sayıyor (İRİ ODASI / AĞIR ODA)
+- [x] Faz 17 öz-denetimi **22/22**
+
+##### 🎮 Playtest — Faz 17
+- [ ] **ZIRHLI ile İRİ artık ayrışıyor mu?** ZIRHLI görünce *"uzun sürecek"*,
+      İRİ görünce *"önce bunu"* demeli. Hâlâ aynıysa eksen ayrımı da yetmedi
+- [ ] **İRİ gerçekten mini boss gibi mi?** Ağır telegrafı adil mi, yoksa yavaş mı
+- [ ] **İRİ SIZINTI / İRİ SİGORTA'ya dikkat** — imza ×2.5 katlanıyor, bunlar en sert ikisi
+- [ ] **Odada 2 zırhlı çok mu?** `armoredEverySlot` = 3 (her 3. yuva)
+- [ ] **Her 4. odada mini boss sık mı?** `hugeRoomInterval` = 4
 
 #### 🔴 FAZ 18 — Boss yeniden tasarımı *(en büyük iş)*
 > Enes: *"bosslar çok farklı hissettirmedi."*

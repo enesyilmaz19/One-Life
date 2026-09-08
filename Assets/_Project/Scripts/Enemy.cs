@@ -86,9 +86,13 @@ namespace TekCan
         // Boss yalnızca "kalın bir düşman" olmasın: daha hızlı, daha az uyarı verir,
         // daha geniş vurur ve darbesi çok daha pahalıdır. Menzili de gövdesi kadar uzun,
         // yoksa dev bir yaratık burnunun dibinden ıskalıyor gibi görünür.
+        /// <summary>Öz-denetim için: gerçek hazırlık süresi (formül kopyalanmasın).</summary>
+        public float CurrentWindup => WindupDuration;
+
         float WindupDuration => _t.enemyWindupDuration
                               * (Hollow ? _t.enemyHollowWindupMultiplier : 1f)
-                              * (IsBoss ? _t.bossWindupMultiplier : 1f);
+                              * (IsBoss ? _t.bossWindupMultiplier : 1f)
+                              * Rank.WindupMultiplier;   // İRİ: boss gibi ağır telegraf
         float AttackAngle => _t.enemyAttackAngle * (IsBoss ? _t.bossAttackAngleMultiplier : 1f);
         float AttackRange => _t.enemyAttackRange + (IsBoss ? Radius : 0f);
         /// <summary>
@@ -114,9 +118,15 @@ namespace TekCan
         /// ZAMANAŞIMI'nın büyüme çarpanı — yaşadığı süreyle artıyor.
         /// ⚠️ TAVANLI: tavansız bırakılsaydı uzun bir odada tek düşman koşuyu bitirirdi.
         /// Ceza öteleme için, imkânsızlık için değil.
+        ///
+        /// ⚠️ İRİ büyüme HIZINI katlıyor, TAVANI değil. Tavan "tek düşman koşuyu
+        /// bitiremez" güvenliği; onu da katlasaydım mini boss o güvenliği delerdi.
+        /// Hızın katlanması "çok gelişmiş hal"i zaten veriyor: tavana çok daha
+        /// çabuk varıyor.
         /// </summary>
         public float Growth => Kind.GrowthPerSecond <= 0f ? 1f
-                             : Mathf.Min(_t.lapseGrowthCap, 1f + Kind.GrowthPerSecond * _aliveTime);
+                             : Mathf.Min(_t.lapseGrowthCap,
+                                         1f + Kind.GrowthPerSecond * Rank.TraitMultiplier(_t) * _aliveTime);
 
         float _aliveTime;
 
@@ -551,7 +561,7 @@ namespace TekCan
             // saat sen vururken de işlediği için dövüş kârdan masrafa kayabiliyor.
             // (Havuzu küçültseydim ödülü de kısardım ve zırh "daha az veren düşman"
             // olurdu — bambaşka, çok daha kötü bir şey.)
-            float drained = Mathf.Min(damage * Rank.DrainMultiplier(_t), TimeLeft);
+            float drained = Mathf.Min(damage, TimeLeft);
             TimeLeft -= drained;
 
             var clock = Clock.Instance;
@@ -612,7 +622,7 @@ namespace TekCan
 
             float aura = (Boss != null ? Boss.AuraDrain(_t, Phase)
                                        : (IsBoss ? _t.bossAuraDrain : 0f))
-                       + Kind.AuraDrain(_t);
+                       + Kind.AuraDrain(_t) * Rank.TraitMultiplier(_t);   // İRİ SIZINTI
             if (aura <= 0f) return;
 
             Clock.Instance?.Spend(aura * dt);
@@ -683,7 +693,7 @@ namespace TekCan
             // MÜBAŞİR: uzaktan tebligat — durduğun YERE bırakıyor, yaklaşmıyor.
             // Bu güne kadar bütün düşmanlar yakın dövüştü, yani "uzak dur" bedava
             // bir cevaptı; bu onu bozuyor.
-            float tebligat = Kind.RangedMarkInterval(_t);
+            float tebligat = Kind.RangedMarkInterval(_t) / Rank.TraitMultiplier(_t);   // İRİ: sık
             if (tebligat <= 0f || _player == null) return;
 
             _kindMarkTimer -= dt;
@@ -732,7 +742,7 @@ namespace TekCan
             foreach (var e in All)
             {
                 if (e == null || e == this || e.Hollow) continue;
-                float r = e.Kind.ProtectRadius(_t);
+                float r = e.Kind.ProtectRadius(_t) * e.Rank.TraitMultiplier(_t);   // İRİ SİGORTA
                 if (r <= 0f) continue;
 
                 // ⚠️ YATAY mesafe — y'nin yatay hesaba karışması bu projede dört kez yandı.

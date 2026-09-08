@@ -63,14 +63,19 @@ namespace TekCan
         public float RoomHitCost { get; private set; }
 
         /// <summary>
-        /// Bu odada kaç RÜTBELİ düşman vardı (ZIRHLI/İRİ).
+        /// Bu odadaki ZIRHLI ve İRİ sayısı — AYRI tutuluyor.
         ///
         /// ⚠️ Defterin bunu söylemesi ŞART. Enes odaları *"giden zamana bakarak"*
         /// yorumluyor; ağır oda daha çok saniye yer ve bunu söyleyen bir şey olmazsa
-        /// o fark zorluk eğrisi sanılır. Ölçüm aracının eksik bıraktığı şey, teşhisi
-        /// bozar — bu projede iki kez yanlış teşhise buradan gidildi.
+        /// o fark zorluk eğrisi sanılır. Bu projede iki kez yanlış teşhise buradan gidildi.
+        ///
+        /// ⚠️ İkisi TEK SAYIDA toplanmıyor: bir mini boss'un yediği zamanla üç
+        /// zırhlının yediği zaman aynı şey değil, ve defterin işi tam olarak
+        /// zamanın NEREYE gittiğini ayırmak.
         /// </summary>
-        public int RoomElites { get; private set; }
+        public int RoomArmored { get; private set; }
+        public int RoomHuge { get; private set; }
+        public int RoomElites => RoomArmored + RoomHuge;
 
         void CloseLedger()
         {
@@ -91,7 +96,8 @@ namespace TekCan
             RoomClosedAt = Time.unscaledTime;
 
             string bağış = RoomGranted > 0.05f ? $" · ⚠️ bağış +{RoomGranted:0.0} (test)" : "";
-            string ağır = RoomElites > 0 ? $" · ⚠️ AĞIR ODA ({RoomElites} rütbeli)" : "";
+            string ağır = RoomHuge > 0 ? $" · ⚠️ İRİ ODASI ({RoomHuge} mini boss, {RoomArmored} zırhlı)"
+                       : RoomArmored > 0 ? $" · ⚠️ AĞIR ODA ({RoomArmored} zırhlı)" : "";
             Debug.Log($"[ODA HESABI] bölge {RegionIndex + 1} oda {Room} ({Layout.Name}){ağır} — " +
                       $"hasat +{RoomHarvest:0.0} · akış −{RoomDrain:0.0} · " +
                       $"darbe −{RoomHitCost:0.0} · sunak −{RoomSpent:0.0} · " +
@@ -298,11 +304,12 @@ namespace TekCan
             int count = Mathf.RoundToInt(_t.roomBaseCount + _t.roomCountGrowth * (Room - 1));
             float poolMult = Mathf.Pow(_t.roomPoolGrowth, Room - 1);
 
-            RoomElites = 0;
+            RoomArmored = 0; RoomHuge = 0;
             for (int i = 0; i < count; i++)
             {
                 var rütbe = PickRank(Room, i);
-                if (rütbe.IsElite) RoomElites++;
+                if (rütbe == EnemyRank.Huge) RoomHuge++;
+                else if (rütbe.IsElite) RoomArmored++;
                 Bootstrap.SpawnEnemyAt(_t, Layout.Position(_t, i, count), _player, _cam,
                                        poolMult, boss: false, kind: PickKind(Room, i),
                                        parent: _roomRoot.transform, rank: rütbe);
@@ -469,13 +476,24 @@ namespace TekCan
             // Öğretim odalarında rütbe yok — önce temel dövüş otursun.
             if (RegionIndex == 0 && room <= _t.plainRoomCount) return EnemyRank.Normal;
 
-            if (_t.eliteRoomInterval <= 0) return EnemyRank.Normal;              // kapalı
-            if ((room + RegionIndex) % _t.eliteRoomInterval != 0) return EnemyRank.Normal;
-            if (index % 3 != 0) return EnemyRank.Normal;                         // odanın üçte biri
+            // ── İRİ: mini boss. SEYREK oda, ve o odada TEK ──
+            // `index == 0` kuralı `SoloInRoom`'un uygulaması: yuva sıfır alır,
+            // gerisi alamaz. İki mini boss aynı odada olsaydı "mini boss" değil
+            // "iri düşman dalgası" olurdu — Enes'in ayırdığı şey tam da bu.
+            bool iriOdası = _t.hugeRoomInterval > 0
+                         && (room + RegionIndex) % _t.hugeRoomInterval == 0;
+            if (iriOdası && index == 0) return EnemyRank.Huge;
 
-            // İkisi dönüşümlü: aynı odada ikisi birden çıkmasın, oyuncu ikisini
-            // ayrı ayrı öğrensin (biri tempo vergisi, öteki taahhüt — farklı dersler).
-            return (room + RegionIndex) % 2 == 0 ? EnemyRank.Armored : EnemyRank.Heavy;
+            // ── ZIRHLI: yaygın. Aynı odada BİRKAÇ TANE olabilir ──
+            // Enes: "zırhlılarda bir odada birkaç tane olabilir." Bu yüzden odaya
+            // değil YUVAYA bağlı: oda ne kadar kalabalıksa o kadar zırhlı çıkıyor,
+            // yani kalabalık odalar kendiliğinden daha uzun sürüyor.
+            // ⚠️ İRİ odasında da çıkabilir — mini boss'un yanında koruma olması
+            // onu daha çok mini boss yapıyor, daha az değil.
+            if (_t.armoredEverySlot > 0 && index % _t.armoredEverySlot == 0)
+                return EnemyRank.Armored;
+
+            return EnemyRank.Normal;
         }
 
         /// <summary>HUD için.</summary>
