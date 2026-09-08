@@ -201,7 +201,30 @@ namespace TekCan
         public void TickPush(float dt)
         {
             if (_push.sqrMagnitude < 0.0001f) { _push = Vector3.zero; return; }
-            transform.position += _push * dt;
+
+            var next = transform.position + _push * dt;
+
+            // ⚠️ İTME ASLA KAÇIŞA SEBEP OLAMAZ — ve arena dışına çıkaramaz.
+            //
+            // `ChaseMove` düşmanı hep oyuncuya doğru yürüttüğü için `Enemy`'de hiç
+            // sınır kontrolü yoktu; ihtiyaç da yoktu. Geri itme onları DIŞARI
+            // sürükleyen ilk şey, yani sınırı ilk gerektiren şey de bu.
+            //
+            // Sonucu ters yüz bir ceza olurdu: kaçan KAÇAK'ı FAİZLİ ile vurunca
+            // onu kaçış yarıçapının dışına iterdin — yani oyunun EN PAHALI silahının
+            // (savurma başına saniye ödüyor) EN İYİ vuruşu düşmanı kaçırtır ve
+            // zamanını götürürdü. Kaçmak, kaçağın seni geçmesi olmalı; senin ona
+            // iyi vurman değil.
+            float tavan = Fleeing ? _t.runnerEscapeRadius - 0.5f : _t.arenaRadius;
+            var düz = new Vector2(next.x, next.z);
+            if (düz.magnitude > tavan)
+            {
+                düz = düz.normalized * tavan;
+                next.x = düz.x;
+                next.z = düz.y;
+            }
+
+            transform.position = next;
             _push = Vector3.Lerp(_push, Vector3.zero, 11f * dt);
             if (_push.sqrMagnitude < 0.0001f) _push = Vector3.zero;
         }

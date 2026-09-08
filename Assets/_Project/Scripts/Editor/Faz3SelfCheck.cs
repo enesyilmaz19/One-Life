@@ -271,6 +271,26 @@ namespace TekCan.EditorTools
                             Vector3.Dot((itilen.transform.position - itilenÖnce).normalized,
                                         Vector3.forward) > 0.5f, 0f);
 
+            // ⚠️ İTME KAÇIŞA SEBEP OLAMAZ — ters yüz cezanın kapısı.
+            //    Kaçan KAÇAK'ı FAİZLİ ile vurunca onu kaçış yarıçapının DIŞINA
+            //    itiyordum: en pahalı silahın en iyi vuruşu düşmanı kaçırtıp
+            //    zamanını götürüyordu. ⚠️ Ölçü bayrak değil KONUM: itmeden sonra
+            //    hâlâ kaçış eşiğinin içinde mi.
+            ClearEnemies();
+            pc.SetWeapon(faizliIndex);
+            var kaçak = MakeEnemy(t, pGo.transform,
+                                  new Vector3(0f, Bootstrap.ArenaCenter.y, t.runnerEscapeRadius - 0.8f));
+            kaçak.Init(t, pGo.transform, null, 0.05f, false, EnemyKind.Runner);  // havuzu düşük → kaçıyor
+            kaçak.TakeDamage(0.01f);                                            // kaçış durumu otursun
+            kaçak.Push(Vector3.forward, 40f);                                   // sert savur
+            for (int i = 0; i < 30; i++) kaçak.TickPush(0.05f);
+
+            float merkezMesafe = new Vector2(kaçak.transform.position.x,
+                                             kaçak.transform.position.z).magnitude;
+            failed += Check(ref total, "⚠️ İTME kaçış yarıçapının DIŞINA çıkaramıyor",
+                            merkezMesafe < t.runnerEscapeRadius, merkezMesafe);
+            ClearEnemies();
+
             // KONİ savurmuyor — ağırlık FAİZLİ'nin kimliği, herkesin özelliği değil
             ClearEnemies();
             pc.SetWeapon(0);
