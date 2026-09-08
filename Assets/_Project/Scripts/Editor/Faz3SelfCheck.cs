@@ -467,6 +467,12 @@ namespace TekCan.EditorTools
             }
             ClearEnemies();
             YaylariTemizle();
+            // ⚠️ İPOTEK'in dash'i artık BAŞLANGIÇ noktasına işaret bırakıyor
+            // (`DashLeavesMark`). Sayaç sıfırlanmazsa sonraki İPOTEK testi
+            // "hasar veremiyor" der ve suç yine testin kurgusunda olur.
+            foreach (var m in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include))
+                Object.DestroyImmediate(m.gameObject);
+            GroundMark.ResetLiens();
 
             // ── 6b) ⚠️ HER SİLAHA TUŞLA ULAŞILABİLİYOR MU — ders 11'in silah hali ──
             //    Tuşlar 1-4 diye SABİT yazılıydı; kadro 5'e çıkınca beşinci silah
@@ -520,8 +526,13 @@ namespace TekCan.EditorTools
                 failed += Check(ref total, $"{pc.Weapon.Name} HASAR VEREBİLİYOR",
                                 target.TimeLeft < poolBefore - 0.001f, poolBefore - target.TimeLeft);
 
+                // ⚠️ İşareti yok etmek SAYACI düşürmüyor (üretimde `TearDown`/
+                // `ResetStatics` düşürüyor, `OnDestroy` DEĞİL — Unity edit modda o
+                // kancayı çağırmıyor). İşaret yok edilen her yerde sayaç da
+                // sıfırlanmalı, yoksa sonraki test ipotek koyamıyor.
                 foreach (var m in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include))
                     Object.DestroyImmediate(m.gameObject);   // tuzak 1: ertelenmez, hemen
+                GroundMark.ResetLiens();
             }
 
             // ── 8) ⚠️ BÜYÜK DÜŞMAN YÜZEYİNDEN VURULABİLİYOR MU (Enes: "bossa vururken buglanıyor")

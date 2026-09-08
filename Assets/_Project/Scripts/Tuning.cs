@@ -127,6 +127,23 @@ namespace TekCan
         // Unity tanımadığı anahtarı yok sayıyor, temizlemek için asset'i ezmek
         // gerekirdi ve o da Inspector'daki bütün his ayarlarını silerdi.
 
+        [Header("── SAĞ TIK ÖZEL SALDIRILARI (Faz 16) ──")]
+        // ⚠️ Bekleme süreleri BİLEREK farklı (Enes: "silahtan silaha süresi değişir").
+        // Aynı olsaydı özel saldırı silahın değil oyuncunun ritmi olurdu.
+        [Tooltip("KONİ · SÜPÜRME — çevrendeki herkese")]
+        public float specialCooldownCone = 7f;
+        [Tooltip("FAİZLİ · İCRA — ağır peşin bedel, öldürünce 3 kat iade")]
+        public float specialCooldownFaizli = 9f;
+        [Tooltip("HACİZ · UZUN VADE — hasar uzaklıkla artar")]
+        public float specialCooldownHaciz = 6f;
+        [Tooltip("İPOTEK · HACİZ İHBARI — geniş ve geç patlayan işaret")]
+        public float specialCooldownIpotek = 8f;
+        [Tooltip("İFLAS · KAPANIŞ — saatinden öde, sert vur")]
+        public float specialCooldownIflas = 10f;
+        [Tooltip("İFLAS · KAPANIŞ'ın saniye bedeli. ⚠️ Ödediğin saniye saatini " +
+                 "düşürdüğü için İFLAS zaten sertleşiyor — bedel BİZZAT buff.")]
+        public float iflasClosureCost = 8f;
+
         [Tooltip("İPOTEK: yer vuruşunun olgunlaşma süresi (saniye). Kaçma penceresi bu.")]
         public float ipotekDelay = 0.85f;
         [Tooltip("İPOTEK: yer vuruşunun yarıçapı")]

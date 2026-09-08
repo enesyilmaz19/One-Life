@@ -19,6 +19,51 @@ namespace TekCan
     /// edilmişti, testler yeşildi çünkü hiçbiri *"bu silah vurabiliyor mu"* diye
     /// sormuyordu). Ders `tasks/lessons.md`'de; silah gitti, ders kaldı.
     /// </summary>
+    /// <summary>
+    /// Sağ tık saldırısı — silahın İKİNCİ hamlesi. `BossAttack` ile aynı desen:
+    /// veri sınıfı, davranış değil. `PlayerController` bunu okuyup uyguluyor,
+    /// yani silah adı geçen tek yer yine `Weapon.cs`.
+    ///
+    /// ⚠️ TASARIM KURALI: özel saldırı, silahın ZATEN SORDUĞU SORUYU güçlendirir;
+    /// yeni bir soru AÇMAZ. Açsaydı beş silah on silah gibi davranırdı ve hiçbiri
+    /// kendi kimliğini taşımazdı — TAKSİT'in elenme sebebinin aynısı.
+    /// </summary>
+    public sealed class WeaponSpecial
+    {
+        public string Name = "";
+
+        /// <summary>Kaç saniyede bir kullanılabilir — silahtan silaha değişir (Enes).</summary>
+        public float Cooldown = 6f;
+
+        public float RangeMul = 1f;
+        /// <summary>Mutlak derece. 360 = çevrende halka.</summary>
+        public float Angle = 0f;             // 0 = silahın kendi açısı
+        public int MaxTargets = int.MaxValue;
+
+        public float DamageMul = 1f;
+        public float HarvestMul = 1f;
+        public float Knockback = 0f;
+
+        /// <summary>Peşin bedel (saniye). Kullanmadan ödenir; ödeyemiyorsan çalışmaz.</summary>
+        public float Cost = 0f;
+
+        /// <summary>Öldürünce bedelin bu katı geri gelir. 0 = iade yok.</summary>
+        public float KillRefundMul = 0f;
+
+        /// <summary>&gt;0 ise koni değil GECİKMELİ YER VURUŞU bırakır (İPOTEK).</summary>
+        public float GroundDelay = 0f;
+        public float GroundRadius = 0f;
+
+        /// <summary>
+        /// &gt;0 ise hasar hedefin UZAKLIĞIYLA artar (HACİZ).
+        /// Silahın sorusunu tersine çeviriyor: "yaklaşmalı mıyım" → "UZAKLAŞ".
+        /// </summary>
+        public float DamagePerDistance = 0f;
+
+        /// <summary>Ekrandaki yayın rengi — silahın kendi tonundan ayrışsın diye.</summary>
+        public Color Tint = new Color(1f, 1f, 1f, 0.5f);
+    }
+
     public abstract class Weapon
     {
         public abstract string Name { get; }
@@ -59,6 +104,27 @@ namespace TekCan
         /// büyütmek, OLMAYANIN yerini tutmuyor.
         /// </summary>
         public virtual float Knockback(Tuning t) => 0f;
+
+        /// <summary>Sağ tık saldırısı. null = yok (hiçbir silahta olmamalı).</summary>
+        public virtual WeaponSpecial Special(Tuning t) => null;
+
+        // ── DASH-ATAK KİMLİĞİ ────────────────────────────────────────────────
+        // Enes: *"her bir silahın özel dash attack olsun, burada çok belli olmuyor
+        // neyin ne yaptığı."*
+        //
+        // ⚠️ Beş silaha beş yeni davranış YAZILMADI: ikisinin dash'i zaten kendi
+        // kimliğini taşıyor (KONİ süpürüyor, İFLAS saate göre sertleşiyor). Yalnızca
+        // AYRIŞMAYAN üçüne kanca eklendi. Olanı tekrar yazmak, olmayanı eklemekten
+        // daha kötü — beşi de "özel" görünür ama üçü aynı şeyi yapardı.
+
+        /// <summary>Dash NİŞANIN TERSİNE gider (HACİZ) — mesafeyi geri kazanmak için.</summary>
+        public virtual bool DashBackwards => false;
+
+        /// <summary>Dash-atak isabet ederse savurma bedeli geri gelir (FAİZLİ).</summary>
+        public virtual bool DashRefundsCost => false;
+
+        /// <summary>Dash BAŞLANGIÇ noktasına ipotek bırakır (İPOTEK) — kaçarken tuzak.</summary>
+        public virtual bool DashLeavesMark => false;
 
         /// <summary>
         /// &gt;0 ise bu mesafeden YAKINDAKİNE vuramaz — menzilli silahın ölü bölgesi.
@@ -129,6 +195,16 @@ namespace TekCan
     {
         public override string Name => "KONİ";
         public override Color Tint => new Color(0.65f, 0.9f, 1f, 0.42f);
+
+        /// SÜPÜRME — çevrendeki HERKESE. Sorusu "kaç kişiye birden vurabilirim";
+        /// halka o sorunun azamisi. Konumlanmayı ödüllendiriyor: topla, sonra bas.
+        public override WeaponSpecial Special(Tuning t) => _s ??= new WeaponSpecial
+        {
+            Name = "SÜPÜRME", Cooldown = t.specialCooldownCone,
+            Angle = 360f, RangeMul = 1.5f, DamageMul = 1.15f, Knockback = 5f,
+            Tint = new Color(0.65f, 0.95f, 1f, 0.5f)
+        };
+        WeaponSpecial _s;
         // MaxTargets sınırsız, HarvestMultiplier 1 — dengenin sıfır noktası.
     }
 
@@ -152,6 +228,24 @@ namespace TekCan
         public override float HitStopMultiplier => 2.4f;
         public override float ShakeMultiplier => 2.6f;
         public override float Knockback(Tuning t) => t.faizliKnockback;   // asıl "oturtan" şey
+
+        /// İCRA — bahsi büyütüyor. Peşin bedel ağır, hasar çok, öldürürsen ÜÇ KAT
+        /// geri geliyor. Sorusu değişmiyor ("bu savurma tutar mı"), sadece bedeli
+        /// ve ödülü büyüyor. Iskalarsan doğrudan ömründen gidiyor.
+        public override WeaponSpecial Special(Tuning t) => _s ??= new WeaponSpecial
+        {
+            Name = "İCRA", Cooldown = t.specialCooldownFaizli,
+            MaxTargets = 1, Angle = t.singleTargetAngle * 0.8f, RangeMul = 1.3f,
+            DamageMul = 3.2f, HarvestMul = 1.2f, Knockback = t.faizliKnockback * 1.8f,
+            Cost = t.faizliSwingCost * 6f, KillRefundMul = 3f,
+            Tint = new Color(1f, 0.8f, 0.25f, 0.6f)
+        };
+        WeaponSpecial _s;
+
+        /// ⚠️ Dash-atak isabet ederse savurma bedeli GERİ GELİYOR. FAİZLİ'nin sorusu
+        /// "tutar mı"; dash onu en zor haliyle soruyor (hareket halinde, tek hedef)
+        /// ve doğru cevabı ödüllendiriyor.
+        public override bool DashRefundsCost => true;
 
         public override bool OnSwingStart(Clock clock, Tuning t)
         {
@@ -193,6 +287,23 @@ namespace TekCan
         public override float Angle(Tuning t) => t.singleTargetAngle * 0.6f;  // dar: nişan
         public override float MinRange(Tuning t) => t.hacizMinRange;          // ölü bölge
         public override float Duration(Tuning t) => t.attackDuration * 1.15f; // nişan alıyor
+
+        /// UZUN VADE — hasar hedefin UZAKLIĞIYLA artıyor. Silahın sorusunu
+        /// ("yaklaşmalı mıyım") tersine çevirip cevabını veriyor: UZAKLAŞ.
+        /// Ölü bölgesi olan silahın en uzaktan en sert vurması, mesafe bandını
+        /// ceza olmaktan çıkarıp SİLAH haline getiriyor.
+        public override WeaponSpecial Special(Tuning t) => _s ??= new WeaponSpecial
+        {
+            Name = "UZUN VADE", Cooldown = t.specialCooldownHaciz,
+            MaxTargets = 1, Angle = t.singleTargetAngle * 0.45f, RangeMul = 1.5f,
+            DamageMul = 0.8f, DamagePerDistance = 0.42f, HarvestMul = 1.1f,
+            Tint = new Color(0.55f, 1f, 0.7f, 0.55f)
+        };
+        WeaponSpecial _s;
+
+        /// ⚠️ Dash NİŞANIN TERSİNE. Menzilli silahın derdi mesafeyi KAYBETMEK;
+        /// dash onu geri kazandırıyor. Diğerlerinde dash saldırı, burada KONUM.
+        public override bool DashBackwards => true;
     }
 
     /// <summary>
@@ -223,6 +334,23 @@ namespace TekCan
         public override float GroundMarkDelay(Tuning t) => t.ipotekDelay;
         public override float GroundMarkRadius(Tuning t) => t.ipotekRadius;
         public override float Damage(Tuning t, float baseDamage) => baseDamage * t.ipotekDamageMult;
+
+        /// HACİZ İHBARI — çok geniş, çok geç patlayan işaret. Sorusu aynı ("nereye
+        /// gidecekler") ama UFKU uzuyor: 0.85 saniye sonrasını değil, iki katını
+        /// tahmin edeceksin. Geniş olması affediciliği değil, tahminin ödülü.
+        public override WeaponSpecial Special(Tuning t) => _s ??= new WeaponSpecial
+        {
+            Name = "HACİZ İHBARI", Cooldown = t.specialCooldownIpotek,
+            GroundDelay = t.ipotekDelay * 2.1f, GroundRadius = t.ipotekRadius * 2f,
+            RangeMul = 1f, DamageMul = 2.4f, HarvestMul = 1f,
+            Tint = new Color(1f, 0.45f, 0.95f, 0.5f)
+        };
+        WeaponSpecial _s;
+
+        /// ⚠️ Dash BAŞLADIĞIN yere ipotek bırakıyor — kaçarken kurulan tuzak.
+        /// Silahın sorusu tahmin; dash onu KENDİ KAÇIŞINLA soruyor: peşinden
+        /// gelenler senin bıraktığın yere basıyor.
+        public override bool DashLeavesMark => true;
     }
 
     /// <summary>
@@ -252,6 +380,22 @@ namespace TekCan
         // vuruyordu ve eğrisi hissedilmiyordu. Hızlı olması eğriyi görünür kılıyor:
         // dipte hem sert hem seri, yani gerçekten "son çare" gibi çalışıyor.
         public override float Duration(Tuning t) => t.attackDuration * 0.8f;
+
+        /// KAPANIŞ — saatinden büyük bir parça ödüyorsun ve çok sert vuruyorsun.
+        ///
+        /// ⚠️ Bedeli ayrı bir "güçlenme" mekaniği DEĞİL: ödediğin saniye saatini
+        /// düşürüyor, saat düşünce İFLAS zaten sertleşiyor. Yani bedel BİZZAT
+        /// buff'ın kendisi. İkinci bir sistem yazmadan silahın sorusunu bir
+        /// EYLEME çeviriyor: "ne kadar dibe inmeye cesaretin var" artık bir tuş.
+        public override WeaponSpecial Special(Tuning t) => _s ??= new WeaponSpecial
+        {
+            Name = "KAPANIŞ", Cooldown = t.specialCooldownIflas,
+            MaxTargets = 1, Angle = t.singleTargetAngle * 1.4f, RangeMul = 1.2f,
+            DamageMul = 2.6f, HarvestMul = 1.3f, Knockback = 6f,
+            Cost = t.iflasClosureCost,
+            Tint = new Color(1f, 0.3f, 0.25f, 0.6f)
+        };
+        WeaponSpecial _s;
 
         public override float DesperationMultiplier(float seconds, Tuning t)
         {

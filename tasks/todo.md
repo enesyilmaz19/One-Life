@@ -22,11 +22,44 @@ Enes'in raporundan çıkan **yapılacaklar**. ✅ olanlar bu oturumda yapıldı.
 - [x] ⚖️ HACİZ menzil ×2.6 → ×3.4
 - [x] 🔬 Buff matematiği *(aşağıda)*
 
-#### 🔴 FAZ 16 — Silah derinliği ⬅️ **SIRADAKİ**
-- [ ] **Sağ tık: her silaha ikinci saldırı**, birkaç saniyede bir. Bekleme süresi
-      silahtan silaha değişir
-- [ ] **Her silaha ÖZEL dash-atak** — Enes: *"burada çok belli olmuyor neyin ne yaptığı"*
+#### ✅ FAZ 16 — Silah derinliği — **KOD BİTTİ, PLAYTEST BEKLİYOR**
+
+**Sağ tık** (kolda Y/üçgen). Her özel, silahın ZATEN sorduğu soruyu güçlendiriyor —
+yeni soru açmıyor. Açsaydı beş silah on silah gibi davranırdı (TAKSİT'in elenme sebebi).
+
+| silah | sorusu | ÖZEL (sağ tık) | bekleme |
+|---|---|---|---|
+| KONİ | kaç kişiye birden | **SÜPÜRME** — çevrendeki HERKESE, halka | 7 sn |
+| FAİZLİ | bu savurma tutar mı | **İCRA** — ağır peşin bedel, ×3.2 hasar, öldürünce **3 kat iade** | 9 sn |
+| HACİZ | yaklaşmalı mıyım | **UZUN VADE** — hasar UZAKLIKLA artıyor *(cevabı: uzaklaş)* | 6 sn |
+| İPOTEK | nereye gidecekler | **HACİZ İHBARI** — 2× geniş, 2× geç *(ufku uzatıyor)* | 8 sn |
+| İFLAS | ne kadar dibe inerim | **KAPANIŞ** — saatinden öde, sert vur | 10 sn |
+
+⚠️ KAPANIŞ'ın bedeli ayrı bir "güçlenme" mekaniği DEĞİL: ödediğin saniye saati
+düşürüyor, saat düşünce İFLAS zaten sertleşiyor. **Bedel bizzat buff.**
+
+##### Dash kimlikleri
+⚠️ Beş silaha beş yeni davranış YAZILMADI: ikisinin dash'i zaten kendi kimliğini
+taşıyor (KONİ süpürüyor, İFLAS saate göre sertleşiyor). Yalnızca **ayrışmayan üçüne**
+kanca eklendi — olanı tekrar yazmak, olmayanı eklemekten kötü.
+
+- **HACİZ** → dash NİŞANIN TERSİNE. Menzillinin derdi mesafeyi kaybetmek; dash onu
+  geri kazandırıyor. Diğerlerinde dash saldırı, burada **konum**
+- **FAİZLİ** → dash-atak TUTARSA savurma bedeli iade. "Tutar mı" sorusu en zor
+  haliyle soruluyor ve doğru cevap ödüllendiriliyor
+- **İPOTEK** → dash BAŞLADIĞIN yere ipotek bırakıyor — kaçarken kurulan tuzak
+
+- [x] Faz 16 öz-denetimi **19/19**
 - [ ] KONİ buff'ı — ⏸️ İPOTEK nerf'i sonrası **yeniden hissedilsin**, sonra karar
+
+##### 🎮 Playtest — Faz 16
+- [ ] **Beş özel, beş farklı şey mi yapıyor?** Yoksa "hepsi büyük vuruş" mu
+- [ ] **Bekleme süreleri doğru mu?** 6-10 sn arası. Çok sık = spam, çok seyrek = unutulur
+- [ ] **İCRA'yı ıskalamak canını yakıyor mu?** Yakmalı — bahis o
+- [ ] **UZUN VADE uzaktan vurmayı ÖĞRETİYOR mu?**
+- [ ] **KAPANIŞ'ı basmaya cesaret edebiliyor musun?** Etmiyorsan bedel fazla
+- [ ] **Dash'ler artık ayrışıyor mu?** Özellikle HACİZ'in geri dash'i — kafa karıştırıyor mu
+- [ ] **Kombo kuruluyor mu?** Silah değiştir → özel → dash zinciri akıyor mu
 
 #### 🔴 FAZ 20 — SİLAHA ÖZEL YÜKSELTMELER
 > Enes: *"hem genel geliştirme olduğu gibi silaha özel geliştirmeler de olsun,

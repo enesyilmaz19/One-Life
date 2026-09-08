@@ -23,6 +23,9 @@ namespace TekCan
         float _hurtFlash;
         Vector3 _knockback;
 
+        float _specialCd;
+        Vector3 _dashStart;          // İPOTEK dash'i buraya işaret bırakıyor
+
         TrailRenderer _dashTrail;    // yalnızca dash boyunca çizer, bkz. BuildDashTrail
         bool _dashAttackQueued;
         int _weaponIndex;
@@ -86,6 +89,7 @@ namespace TekCan
 
             _dashCd -= Time.deltaTime;
             _iFrames -= Time.deltaTime;
+            _specialCd -= Time.deltaTime;
             TickHurt();
             ReadWeaponSwap();
 
@@ -100,6 +104,10 @@ namespace TekCan
             }
 
             if (Attacking) { TickAttack(input); return; }
+
+            // ⚠️ Özel saldırı normal saldırıdan ÖNCE okunuyor: ikisi de basılıysa
+            // pahalı ve bekleme süreli olan kazanmalı, yoksa oyuncu onu kaçırır.
+            if (ReadSpecial() && _specialCd <= 0f) { StartSpecial(input); return; }
 
             if (ReadAttack()) { StartAttack(input); return; }
 
@@ -165,6 +173,80 @@ namespace TekCan
             // yavaşlatan şey mekanik değil SARSINTIYDI — her tuşa basışta ekran
             // zıplayınca kombo akmıyor, tökezliyor. Ses kalıyor, sarsıntı gidiyor.
             Sfx.Swing();
+        }
+
+        static bool ReadSpecial()
+        {
+            var m = Mouse.current;
+            if (m != null && m.rightButton.wasPressedThisFrame) return true;
+            var gp = Gamepad.current;
+            return gp != null && gp.buttonNorth.wasPressedThisFrame;
+        }
+
+        /// <summary>Öz-denetim ve HUD için: özel saldırı hazır mı, değilse ne kadar kaldı.</summary>
+        public float SpecialCooldownLeft => Mathf.Max(0f, _specialCd);
+
+        /// <summary>
+        /// Sağ tık saldırısı. ⚠️ Kendi isabet yolunu YAZMIYOR — `StrikeCone`'dan
+        /// geçiyor, tıpkı normal savurma ve dash-atak gibi. İkinci bir isabet kodu
+        /// olsaydı biri düzeltilip öteki unutulurdu; bu projede "aynı kavramın her
+        /// ölçümü" dersi zaten iki kez alındı.
+        /// </summary>
+        void StartSpecial(Vector3 input)
+        {
+            var sp = Weapon.Special(_t);
+            if (sp == null) return;
+
+            // Ödeyemiyorsan çalışmıyor — FAİZLİ'nin savurma kuralının aynısı.
+            var clock = Clock.Instance;
+            if (sp.Cost > 0f)
+            {
+                if (clock == null || clock.Seconds <= sp.Cost) return;
+                clock.Spend(sp.Cost);
+            }
+
+            _specialCd = sp.Cooldown;
+            _attackTimer = Weapon.Duration(_t);      // taahhüt: özel de bir savurma
+            _attackHitDone = true;                   // vuruş BURADA indi, TickAttack tekrarlamasın
+
+            Vector3 aim = AimDirection(input);
+            if (aim.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(aim);
+
+            Sfx.Swing();
+
+            // ── yer vuruşu olan özel (İPOTEK · HACİZ İHBARI) ──
+            if (sp.GroundDelay > 0f)
+            {
+                Vector3 hedef = CursorGround(out Vector3 nokta)
+                              ? nokta
+                              : transform.position + transform.forward * Weapon.Range(_t) * sp.RangeMul;
+                Vector3 delta = hedef - transform.position;
+                delta.y = 0f;
+                float menzil = Weapon.Range(_t) * sp.RangeMul;
+                if (delta.magnitude > menzil) delta = delta.normalized * menzil;
+
+                GroundMark.SpawnLien(_t, transform.position + delta, sp.GroundRadius, sp.GroundDelay,
+                                     WeaponDamage() * sp.DamageMul,
+                                     Weapon.HarvestMultiplier * sp.HarvestMul, transform.parent);
+                return;
+            }
+
+            float range = Weapon.Range(_t) * sp.RangeMul;
+            float angle = sp.Angle > 0f ? sp.Angle : Weapon.Angle(_t);
+
+            Arc.Spawn(transform.position, transform.rotation, range, angle,
+                      sp.Tint, _t.swingArcLife * 1.6f, scaleFrom: 0.5f, scaleTo: 1f);
+            SwingsSpawned++;
+
+            StrikeCone(range, angle, WeaponDamage() * sp.DamageMul,
+                       _t.hitStopDuration * 1.6f * Weapon.HitStopMultiplier,
+                       _t.hitShake * 1.8f * Weapon.ShakeMultiplier,
+                       sp.MaxTargets, Weapon.HarvestMultiplier * sp.HarvestMul,
+                       out int hits, out int kills,
+                       minRange: 0f, special: sp);
+
+            // Öldürme iadesi (FAİZLİ · İCRA): bahsi kazandıysan bedelin katı geri geliyor.
+            if (kills > 0 && sp.KillRefundMul > 0f) clock?.Add(sp.Cost * sp.KillRefundMul * kills);
         }
 
         static bool ReadAttack()
@@ -248,6 +330,18 @@ namespace TekCan
         void StartDash(Vector3 input)
         {
             _dashDir = input.sqrMagnitude > 0.0001f ? input.normalized : transform.forward;
+
+            // ⚠️ HACİZ nişanın TERSİNE dash atıyor. Menzilli silahın derdi mesafeyi
+            // KAYBETMEK; dash onu geri kazandırıyor. Diğerlerinde dash bir saldırı,
+            // burada bir KONUM hamlesi — silahın sorusu ("yaklaşmalı mıyım") dash'te
+            // de sorulmuş oluyor.
+            if (Weapon.DashBackwards)
+            {
+                Vector3 nişan = AimDirection(input);
+                if (nişan.sqrMagnitude > 0.0001f) _dashDir = -nişan.normalized;
+            }
+
+            _dashStart = transform.position;
             _dashTimer = _t.dashDuration;
             _dashCd = Clock.Instance != null ? Clock.Instance.DashCooldown : _t.dashCooldown;
             _iFrames = _t.iFrameDuration;
@@ -307,6 +401,18 @@ namespace TekCan
                        _t.hitStopDuration * 1.4f * Weapon.HitStopMultiplier,
                        _t.hitShake * 1.5f * Weapon.ShakeMultiplier,
                        Weapon.DashTargets, Weapon.HarvestMultiplier, out int hits, out int kills);
+
+            // ⚠️ FAİZLİ: dash-atak TUTARSA savurma bedeli geri geliyor. Silahın
+            // sorusu "tutar mı"; dash onu en zor haliyle soruyor (hareket halinde,
+            // tek hedef) ve doğru cevabı ödüllendiriyor.
+            if (Weapon.DashRefundsCost && hits > 0) Clock.Instance?.Add(_t.faizliSwingCost);
+
+            // ⚠️ İPOTEK: dash BAŞLADIĞIN yere işaret bırakıyor — kaçarken kurulan
+            // tuzak. Peşinden gelenler senin bıraktığın yere basıyor.
+            if (Weapon.DashLeavesMark && GroundMark.ActiveLiens <= 0)
+                GroundMark.SpawnLien(_t, _dashStart, Weapon.GroundMarkRadius(_t),
+                                     Weapon.GroundMarkDelay(_t), WeaponDamage(),
+                                     Weapon.HarvestMultiplier, transform.parent);
 
             Weapon.OnStrike(Clock.Instance, _t, hits, kills);
         }
@@ -489,7 +595,7 @@ namespace TekCan
 
         void StrikeCone(float range, float angleDeg, float damage, float hitStop, float shake,
                         int maxTargets, float harvestMult, out int hits, out int kills,
-                        float minRange = 0f)
+                        float minRange = 0f, WeaponSpecial special = null)
         {
             hits = 0; kills = 0;
             float half = angleDeg * 0.5f;
@@ -508,8 +614,9 @@ namespace TekCan
                 if (nearest != null)
                 {
                     bool wasHollow = nearest.Hollow;
-                    nearest.Push(nearest.transform.position - transform.position, Weapon.Knockback(_t));
-                    nearest.TakeDamage(damage, harvestMult);
+                    nearest.Push(nearest.transform.position - transform.position,
+                                 special != null ? special.Knockback : Weapon.Knockback(_t));
+                    nearest.TakeDamage(MesafeliHasar(damage, nearest, special), harvestMult);
                     hits = 1;
                     if (wasHollow) kills = 1;          // boş düşmana vuruş öldürür
                 }
@@ -522,8 +629,9 @@ namespace TekCan
                     if (!InHitCone(e, range, half, out _, minRange)) continue;
 
                     bool wasHollow = e.Hollow;
-                    e.Push(e.transform.position - transform.position, Weapon.Knockback(_t));
-                    e.TakeDamage(damage, harvestMult);
+                    e.Push(e.transform.position - transform.position,
+                           special != null ? special.Knockback : Weapon.Knockback(_t));
+                    e.TakeDamage(MesafeliHasar(damage, e, special), harvestMult);
                     hits++;
                     if (wasHollow) kills++;
                 }
@@ -535,6 +643,22 @@ namespace TekCan
                 HitStop.Freeze(hitStop);
                 IsoCamera.Shake(shake);
             }
+        }
+
+        /// <summary>
+        /// HACİZ · UZUN VADE: hasar hedefin UZAKLIĞIYLA artıyor.
+        ///
+        /// ⚠️ Ölçü YÜZEYE, merkeze değil — bu projede menzilin ve ölü bölgenin
+        /// ölçüsü de öyle. Merkeze ölçseydim iri düşman aynı mesafede daha çok
+        /// hasar yerdi ve sebebi görünmezdi (ders 9: aynı kavram, aynı ölçüm).
+        /// </summary>
+        float MesafeliHasar(float damage, Enemy e, WeaponSpecial special)
+        {
+            if (special == null || special.DamagePerDistance <= 0f || e == null) return damage;
+            Vector3 to = e.transform.position - transform.position;
+            to.y = 0f;
+            float yüzey = Mathf.Max(0f, to.magnitude - e.Radius);
+            return damage * (1f + yüzey * special.DamagePerDistance);
         }
 
         /// <summary>

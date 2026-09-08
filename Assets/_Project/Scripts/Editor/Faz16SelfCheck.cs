@@ -1,0 +1,261 @@
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+
+namespace TekCan.EditorTools
+{
+    /// <summary>
+    /// Faz 16 — sağ tık özel saldırıları + silaha özel dash kimlikleri.
+    ///
+    /// Enes: *"her bir silahta sağ klik yapınca ayrı bir saldırı daha yapsın,
+    /// birkaç saniyede bir kullanılabilen (silahtan silaha süresi değişir)"* ve
+    /// *"her bir silahın özel dash attack olsun, burada çok belli olmuyor neyin
+    /// ne yaptığı."*
+    ///
+    /// ⚠️ TASARIM KURALI ve bu denetimin kalbi: özel saldırı silahın ZATEN
+    /// SORDUĞU SORUYU güçlendirir, yeni bir soru AÇMAZ. Açsaydı beş silah on
+    /// silah gibi davranırdı — TAKSİT'in elenme sebebinin aynısı.
+    /// </summary>
+    public static class Faz16SelfCheck
+    {
+        [MenuItem("Tek Can/Faz 16 öz-denetimi çalıştır (özel saldırılar)")]
+        public static void Run()
+        {
+            int failures = Execute();
+            if (Application.isBatchMode) EditorApplication.Exit(failures == 0 ? 0 : 1);
+        }
+
+        public static int Execute()
+        {
+            int failed = 0, total = 0;
+
+            var t = ScriptableObject.CreateInstance<Tuning>();
+            t.startSeconds = 400f;
+            t.enemyTimePool = 200f;      // tek vuruşta boşalmasın, hasar ölçülebilsin
+            t.attackDamage = 4f;
+            t.enemyDecayPerSecond = 0f;
+            Region.Reset();
+
+            var root = new GameObject("faz16-check");
+            var clock = root.AddComponent<Clock>();
+            clock.Init(t, root.transform);
+
+            var pGo = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            pGo.transform.position = Bootstrap.ArenaCenter;
+            pGo.transform.rotation = Quaternion.LookRotation(Vector3.forward);
+            var pc = pGo.AddComponent<PlayerController>();
+            pc.Init(t, null);
+
+            var startSpecial = typeof(PlayerController).GetMethod("StartSpecial",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            var dashStrike = typeof(PlayerController).GetMethod("DashStrike",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+            // ── 1) ⚠️ HER SİLAHIN özel saldırısı VAR (ders 11: tanımlı ≠ var) ──
+            int eksik = 0;
+            foreach (var w in Weapon.All) if (w.Special(t) == null) eksik++;
+            failed += Check(ref total, "⚠️ HER SİLAHIN özel saldırısı var", eksik == 0, eksik);
+
+            // ── 2) ⚠️ BEKLEME SÜRELERİ FARKLI (Enes: silahtan silaha değişir) ──
+            //    Aynı olsalardı özel saldırı silahın değil OYUNCUNUN ritmi olurdu.
+            var süreler = new System.Collections.Generic.HashSet<float>();
+            foreach (var w in Weapon.All) süreler.Add(w.Special(t).Cooldown);
+            failed += Check(ref total, "⚠️ bekleme süreleri silahtan silaha FARKLI",
+                            süreler.Count == Weapon.All.Length, süreler.Count);
+
+            // ── 3) ⚠️ ÖZELLER FARKLI SORU SORUYOR — silah ölçüsünün aynısı ──
+            int aynı = 0;
+            for (int a = 0; a < Weapon.All.Length; a++)
+                for (int b = a + 1; b < Weapon.All.Length; b++)
+                    if (Soru(Weapon.All[a].Special(t)) == Soru(Weapon.All[b].Special(t)))
+                    {
+                        aynı++;
+                        Debug.LogError($"     aynı özel: {Weapon.All[a].Name} = {Weapon.All[b].Name}");
+                    }
+            failed += Check(ref total, "⚠️ özel saldırılar FARKLI SORU soruyor", aynı == 0, aynı);
+
+            // ── 4) ⚠️ KONİ · SÜPÜRME: ARKANDAKİNE de vuruyor (halka ETKİSİ) ──
+            pc.SetWeapon(Index<ConeBlade>());
+            ClearEnemies();
+            var arkadaki = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter - Vector3.forward * 1.6f);
+            float arkaÖnce = arkadaki.TimeLeft;
+            startSpecial.Invoke(pc, new object[] { Vector3.forward });
+            failed += Check(ref total, "⚠️ SÜPÜRME ARKANDAKİNE de vuruyor (halka)",
+                            arkadaki.TimeLeft < arkaÖnce - 0.001f, arkaÖnce - arkadaki.TimeLeft);
+
+            // Normal savurma arkadakine VURMUYOR — özel gerçekten farklı bir şey
+            ClearEnemies();
+            ResetSpecial(pc);
+            var arka2 = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter - Vector3.forward * 1.6f);
+            float arka2Önce = arka2.TimeLeft;
+            typeof(PlayerController).GetMethod("Strike", BindingFlags.NonPublic | BindingFlags.Instance)
+                                    .Invoke(pc, null);
+            failed += Check(ref total, "normal savurma arkadakine vurmuyor (özel gerçekten farklı)",
+                            Mathf.Approximately(arka2.TimeLeft, arka2Önce), arka2Önce - arka2.TimeLeft);
+
+            // ── 5) ⚠️ BEKLEME SÜRESİ İŞLİYOR — art arda basılamıyor ──
+            ClearEnemies();
+            ResetSpecial(pc);
+            var hedef = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.4f);
+            startSpecial.Invoke(pc, new object[] { Vector3.forward });
+            failed += Check(ref total, "⚠️ özel kullanınca BEKLEME başlıyor",
+                            pc.SpecialCooldownLeft > 0.1f, pc.SpecialCooldownLeft);
+
+            // ── 6) ⚠️ FAİZLİ · İCRA: ISKALAYINCA ÖDÜYORSUN ──
+            //    ⚠️ İlk yazışımda hedef VARKEN net saati ölçüyordum ve test düştü:
+            //    bedel ödendi ama hasat onu fazlasıyla örtüyordu (bahis kazanılınca
+            //    kârlı olması ZATEN doğru tasarım). Yani ölçüm yanlıştı, silah değil.
+            //    Peşin bedelin ölçüsü ISKA: hedefsiz savur, saat düşmeli.
+            //    Bu aynı zamanda silahın kimliği — "tutar mı" sorusunun bedeli.
+            pc.SetWeapon(Index<Faizli>());
+            ResetSpecial(pc);
+            ClearEnemies();
+            float saatÖnce = clock.Seconds;
+            startSpecial.Invoke(pc, new object[] { Vector3.forward });
+            float icraBedeli = saatÖnce - clock.Seconds;
+            failed += Check(ref total, "⚠️ İCRA ISKALAYINCA da ödüyor (bahis gerçek)",
+                            icraBedeli > 0.5f, icraBedeli);
+            failed += Check(ref total, "İCRA'nın bedeli normal savurmadan AĞIR",
+                            icraBedeli > t.faizliSwingCost * 2f, icraBedeli / t.faizliSwingCost);
+
+            // Ve TUTARSA kârlı — bahsi kazanmanın karşılığı olmalı
+            ResetSpecial(pc);
+            ClearEnemies();
+            MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.4f);
+            float tutanÖnce = clock.Seconds;
+            startSpecial.Invoke(pc, new object[] { Vector3.forward });
+            failed += Check(ref total, "⚠️ İCRA TUTARSA kârlı (bahis kazanıldı)",
+                            clock.Seconds > tutanÖnce, clock.Seconds - tutanÖnce);
+
+            // ── 7) ⚠️ HACİZ · UZUN VADE: UZAKTAKİNE DAHA ÇOK vuruyor ──
+            //    Silahın sorusunu ("yaklaşmalı mıyım") tersine çeviriyor. ⚠️ ÖZELLİK
+            //    değil ETKİ: "DamagePerDistance > 0 mu" değil, iki mesafede inen
+            //    hasar farklı mı.
+            pc.SetWeapon(Index<Haciz>());
+            float yakınHasar = HacizHasari(t, pc, pGo, startSpecial, 4f);
+            float uzakHasar = HacizHasari(t, pc, pGo, startSpecial, 9f);
+            failed += Check(ref total, "⚠️ UZUN VADE uzaktakine DAHA ÇOK vuruyor",
+                            uzakHasar > yakınHasar * 1.3f, uzakHasar / Mathf.Max(0.001f, yakınHasar));
+
+            // ── 8) ⚠️ İPOTEK · HACİZ İHBARI: daha GENİŞ ve daha GEÇ ──
+            var ipotek = System.Array.Find(Weapon.All, w => w is Ipotek);
+            var ihbar = ipotek.Special(t);
+            failed += Check(ref total, "⚠️ HACİZ İHBARI normalden GENİŞ",
+                            ihbar.GroundRadius > ipotek.GroundMarkRadius(t) * 1.5f, ihbar.GroundRadius);
+            failed += Check(ref total, "⚠️ HACİZ İHBARI daha GEÇ patlıyor (ufuk uzuyor)",
+                            ihbar.GroundDelay > ipotek.GroundMarkDelay(t) * 1.5f, ihbar.GroundDelay);
+
+            // ── 9) ⚠️ İFLAS · KAPANIŞ: saatten ÖDÜYOR (bedel bizzat buff) ──
+            pc.SetWeapon(Index<Iflas>());
+            ResetSpecial(pc);
+            ClearEnemies();
+            MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.4f);
+            float iflasÖnce = clock.Seconds;
+            startSpecial.Invoke(pc, new object[] { Vector3.forward });
+            float ödenen = iflasÖnce - clock.Seconds;
+            failed += Check(ref total, "⚠️ KAPANIŞ saatten ÖDÜYOR", ödenen > 0.5f, ödenen);
+
+            // ⚠️ Ve ödemek İFLAS'ı GERÇEKTEN sertleştiriyor — bedel ayrı bir buff
+            //    mekaniği değil, saatin düşmesinin kendisi.
+            var iflasW = System.Array.Find(Weapon.All, w => w is Iflas);
+            failed += Check(ref total, "⚠️ ödemek İFLAS'ı sertleştiriyor (bedel = buff)",
+                            iflasW.DesperationMultiplier(clock.Seconds, t)
+                            > iflasW.DesperationMultiplier(clock.Seconds + ödenen, t) - 0.0001f, 0f);
+
+            // ── 10) ⚠️ DASH KİMLİKLERİ — üçü ayrışıyor mu ──
+            failed += Check(ref total, "⚠️ HACİZ dash'i NİŞANIN TERSİNE",
+                            System.Array.Find(Weapon.All, w => w is Haciz).DashBackwards, 0f);
+            failed += Check(ref total, "⚠️ FAİZLİ dash'i bedeli İADE ediyor",
+                            System.Array.Find(Weapon.All, w => w is Faizli).DashRefundsCost, 0f);
+            failed += Check(ref total, "⚠️ İPOTEK dash'i İZ bırakıyor",
+                            ipotek.DashLeavesMark, 0f);
+
+            int kimlikli = 0;
+            foreach (var w in Weapon.All)
+                if (w.DashBackwards || w.DashRefundsCost || w.DashLeavesMark) kimlikli++;
+            failed += Check(ref total, "dash kimlikleri ÜÇ silaha özel (ikisinin dash'i zaten ayrı)",
+                            kimlikli == 3, kimlikli);
+
+            // ⚠️ İPOTEK dash'i GERÇEKTEN iz bırakıyor mu — ETKİ
+            pc.SetWeapon(Index<Ipotek>());
+            ClearEnemies();
+            TemizleIsaretler();
+            int öncekiİşaret = MarkCount();
+            dashStrike.Invoke(pc, null);
+            failed += Check(ref total, "⚠️ İPOTEK dash'i GERÇEKTEN iz bırakıyor (etki)",
+                            MarkCount() > öncekiİşaret, MarkCount() - öncekiİşaret);
+            TemizleIsaretler();
+
+            ClearEnemies();
+            Object.DestroyImmediate(pGo);
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(t);
+            Clock.Reset(); Region.Reset();
+
+            if (failed == 0) Debug.Log($"[Faz 16 öz-denetim] ✅ {total}/{total} GEÇTİ");
+            else Debug.LogError($"[Faz 16 öz-denetim] ❌ {total} kontrolden {failed} tanesi BAŞARISIZ");
+            return failed;
+        }
+
+        /// <summary>Özel saldırının SORDUĞU SORU — adı değil. Silah ölçüsünün aynısı.</summary>
+        static string Soru(WeaponSpecial s) =>
+            $"halka={s.Angle >= 360f}|tek={s.MaxTargets == 1}|yer={s.GroundDelay > 0f}"
+          + $"|bedelli={s.Cost > 0f}|iade={s.KillRefundMul > 0f}|mesafeli={s.DamagePerDistance > 0f}";
+
+        /// <summary>HACİZ özelinin belirli mesafede indirdiği hasar — ETKİ ölçümü.</summary>
+        static float HacizHasari(Tuning t, PlayerController pc, GameObject pGo,
+                                 MethodInfo startSpecial, float mesafe)
+        {
+            ClearEnemies();
+            ResetSpecial(pc);
+            var e = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * mesafe);
+            float önce = e.TimeLeft;
+            startSpecial.Invoke(pc, new object[] { Vector3.forward });
+            return önce - e.TimeLeft;
+        }
+
+        static void ResetSpecial(PlayerController pc) =>
+            typeof(PlayerController).GetField("_specialCd", BindingFlags.NonPublic | BindingFlags.Instance)
+                                    .SetValue(pc, 0f);
+
+        static int Index<T>() where T : Weapon =>
+            System.Array.FindIndex(Weapon.All, w => w is T);
+
+        static int MarkCount() =>
+            Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include).Length;
+
+        static void TemizleIsaretler()
+        {
+            foreach (var m in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include))
+                Object.DestroyImmediate(m.gameObject);
+            GroundMark.ResetLiens();     // yok etmek sayacı düşürmüyor (edit modda OnDestroy yok)
+        }
+
+        static Enemy MakeEnemy(Tuning t, Transform player, Vector3 pos)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            go.transform.position = pos;
+            go.transform.localScale = Bootstrap.EnemyScale;
+            var e = go.AddComponent<Enemy>();
+            e.Init(t, player, null);
+            return e;
+        }
+
+        static void ClearEnemies()
+        {
+            foreach (var e in Enemy.All.ToArray())
+                if (e != null) Object.DestroyImmediate(e.gameObject);
+            Enemy.All.Clear();
+            foreach (var a in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include))
+                Object.DestroyImmediate(a.gameObject);
+        }
+
+        static int Check(ref int total, string name, bool ok, float actual)
+        {
+            total++;
+            if (ok) Debug.Log($"  ✅ {name}");
+            else Debug.LogError($"  ❌ {name}  (gerçek: {actual})");
+            return ok ? 0 : 1;
+        }
+    }
+}
