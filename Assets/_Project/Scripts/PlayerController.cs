@@ -217,17 +217,9 @@ namespace TekCan
             // ── yer vuruşu olan özel (İPOTEK · HACİZ İHBARI) ──
             if (sp.GroundDelay > 0f)
             {
-                Vector3 hedef = CursorGround(out Vector3 nokta)
-                              ? nokta
-                              : transform.position + transform.forward * Weapon.Range(_t) * sp.RangeMul;
-                Vector3 delta = hedef - transform.position;
-                delta.y = 0f;
-                float menzil = Weapon.Range(_t) * sp.RangeMul;
-                if (delta.magnitude > menzil) delta = delta.normalized * menzil;
-
-                GroundMark.SpawnLien(_t, transform.position + delta, sp.GroundRadius, sp.GroundDelay,
-                                     WeaponDamage() * sp.DamageMul,
-                                     Weapon.HarvestMultiplier * sp.HarvestMul, transform.parent);
+                PlaceGroundMark(Weapon.Range(_t) * sp.RangeMul, sp.GroundRadius, sp.GroundDelay,
+                                WeaponDamage() * sp.DamageMul,
+                                Weapon.HarvestMultiplier * sp.HarvestMul);
                 return;
             }
 
@@ -524,19 +516,8 @@ namespace TekCan
             // gidecekler" sorusu ancak bekleyince gerçek bir soru.
             if (GroundMark.ActiveLiens > 0) return;
 
-            Vector3 hedef = CursorGround(out Vector3 nokta)
-                          ? nokta
-                          : transform.position + transform.forward * Weapon.Range(_t);
-
-            Vector3 delta = hedef - transform.position;
-            delta.y = 0f;                                  // tuzak 2: y yatay hesaba karışmasın
-            float menzil = Weapon.Range(_t);
-            if (delta.magnitude > menzil) delta = delta.normalized * menzil;
-
-            GroundMark.SpawnLien(_t, transform.position + delta,
-                                 Weapon.GroundMarkRadius(_t), Weapon.GroundMarkDelay(_t),
-                                 WeaponDamage(), Weapon.HarvestMultiplier,
-                                 transform.parent);
+            PlaceGroundMark(Weapon.Range(_t), Weapon.GroundMarkRadius(_t),
+                            Weapon.GroundMarkDelay(_t), WeaponDamage(), Weapon.HarvestMultiplier);
 
             // Silah "savurdu" sayılıyor: iska/isabet ayrımı işaretin KENDİSİNDE
             // çözülüyor, burada değil. Bedeli olan silahlar yine ödemesini alıyor.
@@ -643,6 +624,32 @@ namespace TekCan
                 HitStop.Freeze(hitStop);
                 IsoCamera.Shake(shake);
             }
+        }
+
+        /// <summary>
+        /// Yer işaretini nişan noktasına koyar — MENZİLE KIRPARAK.
+        ///
+        /// ⚠️ TEK YER. Normal İPOTEK savurması ve HACİZ İHBARI özeli aynı hesabı
+        /// yapıyordu ve iki kopya duruyordu: biri düzeltilip öteki unutulurdu.
+        /// Bu projede nişan ile vuruşun ayrışması ÜÇ KEZ hata üretti; aynı kapıyı
+        /// dördüncü kez açmaya gerek yok.
+        ///
+        /// Kırpma şart: kırpmasaydım imleci ekranın ucuna götürüp arenanın öbür
+        /// ucuna vurabilirdin ve "menzil" diye bir şey kalmazdı.
+        /// </summary>
+        void PlaceGroundMark(float menzil, float yarıçap, float gecikme,
+                             float hasar, float hasat)
+        {
+            Vector3 hedef = CursorGround(out Vector3 nokta)
+                          ? nokta
+                          : transform.position + transform.forward * menzil;
+
+            Vector3 delta = hedef - transform.position;
+            delta.y = 0f;                                  // tuzak 2: y yatay hesaba karışmasın
+            if (delta.magnitude > menzil) delta = delta.normalized * menzil;
+
+            GroundMark.SpawnLien(_t, transform.position + delta, yarıçap, gecikme,
+                                 hasar, hasat, transform.parent);
         }
 
         /// <summary>

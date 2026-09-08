@@ -151,6 +151,24 @@ namespace TekCan.EditorTools
                               $"Dipte ×{dipte:0.00} → {dipNet:+0.0;-0.0} sn/düşman.");
             }
 
+            // ⚠️ SAĞ TIK ÖZELLERİ BU TABLODA HİÇ YOK (Faz 16). Beş silahın da
+            // ikinci bir hamlesi var; bazısı peşin ödüyor, bazısı öldürünce iade
+            // veriyor, biri halka vuruyor. Tablo yalnızca NORMAL savurmayı ölçüyor.
+            // Sustuğunu söylemezse rakamlar olduğundan emin görünür — bu araç
+            // ayar oturumunun teşhis kaynağı, ve eksik modelleme bu projede iki
+            // kez yanlış teşhise götürdü.
+            sb.AppendLine();
+            sb.AppendLine("  ⚠️ ÖZEL SALDIRILAR (sağ tık) BU TABLODA MODELLENMİYOR:");
+            foreach (var w in Weapon.All)
+            {
+                var sp = w.Special(t);
+                if (sp == null) continue;
+                string bedel = sp.Cost > 0f ? $"peşin −{sp.Cost:0.0}sn" : "bedelsiz";
+                string iade = sp.KillRefundMul > 0f ? $", öldürünce ×{sp.KillRefundMul:0.0} iade" : "";
+                sb.AppendLine($"     {w.Name,-8} {sp.Name,-14} her {sp.Cooldown:0}sn · " +
+                              $"hasar ×{sp.DamageMul:0.0} · {bedel}{iade}");
+            }
+
             foreach (var w in Weapon.All)
                 if (w.MinRange(t) > 0f || w.GroundMarkDelay(t) > 0f)
                     sb.AppendLine($"  ⚠️ {w.Name} bu tabloda EKSİK ölçülüyor: simülasyon MESAFEYİ " +
