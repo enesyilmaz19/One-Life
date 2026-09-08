@@ -108,6 +108,33 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️ UYKUDAKİ boss VURULMUYOR",
                             Mathf.Approximately(final.TimeLeft, uykuÖnce), uykuÖnce - final.TimeLeft);
 
+            // ── 7b) ⚠️ UYKUDAKİ BOSS SALDIRMIYOR ve ZAMAN EMMİYOR ──
+            //    İlk yazışımda uykuyu yalnızca `TakeDamage` içinde kapatmıştım;
+            //    `Update`'in geri kalanı çalışmaya devam ediyordu. Yani uykudaki
+            //    boss kovalıyor, vuruyor ve aurasıyla emiyordu — üstelik
+            //    vurulamıyordu: ÖLDÜRÜLEMEZ BİR SALDIRGAN. En kötü bileşim, ve
+            //    belge yorumu "vurmuyor" dediği için gözden kaçmaya en açık olanı.
+            float auraÖnce = clock6.Seconds;
+            final.ApplyAura(3f);
+            failed += Check(ref total, "⚠️ UYKUDAKİ boss ZAMAN EMMİYOR",
+                            Mathf.Approximately(clock6.Seconds, auraÖnce),
+                            auraÖnce - clock6.Seconds);
+
+            var update = typeof(Enemy).GetMethod("Update",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            var yerÖnce = final.transform.position;
+            for (int i = 0; i < 5; i++) update.Invoke(final, null);
+            failed += Check(ref total, "⚠️ UYKUDAKİ boss KOVALAMIYOR",
+                            Vector3.Distance(final.transform.position, yerÖnce) < 0.01f,
+                            Vector3.Distance(final.transform.position, yerÖnce));
+            failed += Check(ref total, "⚠️ UYKUDAKİ boss SALDIRIYA geçmiyor",
+                            final.CurrentState == Enemy.State.Chase, (int)final.CurrentState);
+
+            // Ve uyku GÖRÜNÜYOR — dokunulmaz bir şeye vurmak sessiz olmamalı
+            failed += Check(ref total, "⚠️ UYKU ekranda GÖRÜNÜYOR (renk ayrışıyor)",
+                            Fark(final.KindColor, UykuRengi(final)) > 0.2f,
+                            Fark(final.KindColor, UykuRengi(final)));
+
             // ── 8) ⚠️ UYKUDAKİ BOSS PASİFLERİNİ İŞLETMİYOR ──
             //    Rejenerasyonu uykuda işleseydi rakiplerle dövüşürken arkada
             //    sessizce dolan bir boss olurdu — dövüş kazanılamaz hale gelirdi.
@@ -169,6 +196,13 @@ namespace TekCan.EditorTools
             else Debug.LogError($"[Faz 18 öz-denetim] ❌ {total} kontrolden {failed} tanesi BAŞARISIZ");
             return failed;
         }
+
+        static float Fark(Color a, Color b) =>
+            Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b);
+
+        /// <summary>`Paint()`'teki uyku formülünün AYNISI — kopyalanmıyor, ithal ediliyor.</summary>
+        static Color UykuRengi(Enemy e) =>
+            Color.Lerp(e.KindColor, new Color(0.25f, 0.25f, 0.3f), 0.72f);
 
         static bool AynıAdlar(BossAttack[] a, BossAttack[] b)
         {

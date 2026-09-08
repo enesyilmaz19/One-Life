@@ -255,6 +255,20 @@ namespace TekCan
         {
             if (_t == null || _player == null) return;
 
+            // ⚠️ UYKU HER ŞEYİ DURDURUR — ve pasifler ÖNCE çalışır çünkü UYANDIRAN onlar.
+            //
+            // İlk yazışımda uykuyu yalnızca `TakeDamage` ve `TickBossPassives`
+            // içinde kapatmıştım. `Update`'in geri kalanı çalışmaya devam ediyordu:
+            // uykudaki boss KOVALIYOR, VURUYOR ve aurasıyla zaman EMİYORDU — üstelik
+            // vurulamıyordu. Yani ÖLDÜRÜLEMEZ BİR SALDIRGAN. Belge yorumu
+            // "vurulmuyor, vurmuyor, kovalamıyor" diyordu; kod yalnızca birincisini
+            // yapıyordu. Yorumun doğru olması kodun doğru olduğu anlamına gelmiyor.
+            if (Dormant)
+            {
+                TickBossPassives(Time.deltaTime);   // rakipler öldü mü diye BURASI bakıyor
+                if (Dormant) return;                // hâlâ uykuda: akış, aura, saldırı YOK
+            }
+
             bool wasHollow = Hollow;
 
             if (_flashTimer > 0f)
@@ -700,7 +714,12 @@ namespace TekCan
         /// </summary>
         public void ApplyAura(float dt)
         {
-            if (Hollow || _t == null) return;
+            // ⚠️ UYKU KURALI BURADA DA. `Update` uykudayken bu metodu zaten
+            // çağırmıyor — ama koruma yalnızca ORADA olsaydı kural TEK BİR
+            // ÇAĞIRANDA yaşardı; başka bir yol açılınca sessizce delinirdi.
+            // Bu projede aynı ders `SaveFile.Flush`'ta alınmıştı: kural, bütün
+            // çağıranların geçtiği YERE konur, çağıranlardan birine değil.
+            if (Dormant || Hollow || _t == null) return;
 
             float aura = (Boss != null ? Boss.AuraDrain(_t, Phase)
                                        : (IsBoss ? _t.bossAuraDrain : 0f))
@@ -1088,6 +1107,10 @@ namespace TekCan
             if (_flashTimer > 0f) c = Color.white;                                  // isabet aldı
             else if (_state == State.Windup || _state == State.Strike) c = WindupColor;  // saldırıyor
             else if (Hollow) c = HollowColor;
+            // ⚠️ UYKU GÖRÜNMELİ. Dokunulmaz bir şeye vuran oyuncu sebebini
+            // ekranda görmeli, yoksa "boss bugged" der. Soluk ve donuk: "burada
+            // ama şu an senin işin değil".
+            else if (Dormant) c = Color.Lerp(KindColor, new Color(0.25f, 0.25f, 0.3f), 0.72f);
             else if (Fleeing) c = Color.Lerp(KindColor, Color.white, 0.45f);        // kaçıyor: soluyor
             else c = KindColor;                                                     // tür + rütbe rengi
 
