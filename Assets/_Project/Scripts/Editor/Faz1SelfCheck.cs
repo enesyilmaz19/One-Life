@@ -1,3 +1,4 @@
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -159,6 +160,41 @@ namespace TekCan.EditorTools
             foreach (var a in Object.FindObjectsByType<Arc>(FindObjectsInactive.Include)) Object.DestroyImmediate(a.gameObject);
             if (e3Go != null) Object.DestroyImmediate(e3Go);
             if (e2Go != null) Object.DestroyImmediate(e2Go);
+            // ── ⚠️ ARENA SINIRI — oyuncu dışarı ÇIKAMIYOR ──
+            //    Enes bildirdi: *"arenanın sınırı yok aq."* Oyuncuda hiçbir kısıt
+            //    yoktu; düşmanların zaten vardı. Kural oyunun en temel fiziği ve
+            //    kapısı yoktu — bir daha sessizce kaybolmasın.
+            //
+            //    ⚠️ ÖZELLİK değil ETKİ: "clamp kodu var mı" değil, oyuncuyu
+            //    ARENANIN DIŞINA KOYUP geri çekilip çekilmediğine bakıyor. Ve
+            //    üretimin kendi yolundan (`LateUpdate`) geçiyor — testin kendi
+            //    kısıtını yazması, kısıtın orada olduğunu değil testin çalıştığını
+            //    doğrulardı.
+            var lateUpdate = typeof(PlayerController).GetMethod("LateUpdate",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+            pGo.transform.position = new Vector3(t.arenaRadius * 3f, Bootstrap.ArenaCenter.y, 0f);
+            lateUpdate.Invoke(pc, null);
+            var dışarı = new Vector2(pGo.transform.position.x - Bootstrap.ArenaCenter.x,
+                                     pGo.transform.position.z - Bootstrap.ArenaCenter.z);
+            failed += Check(ref total, "⚠️ oyuncu ARENA DIŞINA çıkamıyor",
+                            dışarı.magnitude <= t.arenaRadius + 0.01f, dışarı.magnitude);
+
+            // İçerideyken dokunulmuyor — kısıt hareketi boğmamalı
+            var içeriKonum = new Vector3(t.arenaRadius * 0.5f, Bootstrap.ArenaCenter.y, 0f);
+            pGo.transform.position = içeriKonum;
+            lateUpdate.Invoke(pc, null);
+            failed += Check(ref total, "arena İÇİNDE hareket serbest (kısıt boğmuyor)",
+                            Vector3.Distance(pGo.transform.position, içeriKonum) < 0.001f,
+                            Vector3.Distance(pGo.transform.position, içeriKonum));
+
+            // ⚠️ Ve çıkış kapısı SINIRIN İÇİNDE olmalı — dışarıda kalsaydı oyuncu
+            //    odayı asla bitiremezdi ve sınır oyunu kilitlerdi.
+            float çıkışMesafe = new Vector2(Bootstrap.Exit(t).x - Bootstrap.ArenaCenter.x,
+                                            Bootstrap.Exit(t).z - Bootstrap.ArenaCenter.z).magnitude;
+            failed += Check(ref total, "⚠️ ÇIKIŞ sınırın içinde (sınır oyunu kilitlemiyor)",
+                            çıkışMesafe < t.arenaRadius, t.arenaRadius - çıkışMesafe);
+
             Object.DestroyImmediate(pGo);
             Object.DestroyImmediate(root);
             Enemy.All.Clear();
