@@ -164,6 +164,14 @@ namespace TekCan.EditorTools
                             çıkan.Count >= EnemyRank.All.Length, çıkan.Count);
             failed += Check(ref total, "⚠️ İRİ odada TEK (mini boss kuralı)",
                             enÇokİri == 1, enÇokİri);
+
+            // ⚠️ Teklik kuralı RÜTBENİN KENDİ ALANINDAN geliyor mu, yoksa
+            // `RoomManager`'a gömülü mü? İlk yazışımda gömülüydü ve `SoloInRoom`
+            // tanımlı olduğu hâlde HİÇ OKUNMUYORDU — davranışı yönettiğini iddia
+            // eden ama yönetmeyen bir alan. Kapının bunu görmesi lazım, yoksa
+            // özellik bir dahaki sefere yine sessizce ölür.
+            failed += Check(ref total, "İRİ'nin teklik kuralı KENDİ alanında (SoloInRoom)",
+                            EnemyRank.Huge.SoloInRoom && !EnemyRank.Armored.SoloInRoom, 0f);
             failed += Check(ref total, "⚠️ ZIRHLI odada BİRKAÇ tane olabiliyor",
                             enÇokZırhlı >= 2, enÇokZırhlı);
 

@@ -75,7 +75,6 @@ namespace TekCan
         /// </summary>
         public int RoomArmored { get; private set; }
         public int RoomHuge { get; private set; }
-        public int RoomElites => RoomArmored + RoomHuge;
 
         void CloseLedger()
         {
@@ -476,13 +475,16 @@ namespace TekCan
             // Öğretim odalarında rütbe yok — önce temel dövüş otursun.
             if (RegionIndex == 0 && room <= _t.plainRoomCount) return EnemyRank.Normal;
 
-            // ── İRİ: mini boss. SEYREK oda, ve o odada TEK ──
-            // `index == 0` kuralı `SoloInRoom`'un uygulaması: yuva sıfır alır,
-            // gerisi alamaz. İki mini boss aynı odada olsaydı "mini boss" değil
-            // "iri düşman dalgası" olurdu — Enes'in ayırdığı şey tam da bu.
+            // ── İRİ: mini boss. SEYREK oda, ve KENDİ KURALINA göre odada TEK ──
+            // ⚠️ Teklik kuralı `EnemyRank.Huge.SoloInRoom`'dan OKUNUYOR, buraya
+            // `index == 0` diye gömülmüyor. İlk yazışımda gömmüştüm ve `SoloInRoom`
+            // tanımlı ama HİÇ OKUNMAYAN bir özellik olarak kalmıştı: davranışı
+            // yönettiğini iddia eden ama yönetmeyen bir alan. Bir rütbeye
+            // `SoloInRoom = true` yazan kişi hiçbir şeyin değişmediğini görürdü.
+            // İki mini boss aynı odada olsaydı "mini boss" değil "iri dalga" olurdu.
             bool iriOdası = _t.hugeRoomInterval > 0
                          && (room + RegionIndex) % _t.hugeRoomInterval == 0;
-            if (iriOdası && index == 0) return EnemyRank.Huge;
+            if (iriOdası && (index == 0 || !EnemyRank.Huge.SoloInRoom)) return EnemyRank.Huge;
 
             // ── ZIRHLI: yaygın. Aynı odada BİRKAÇ TANE olabilir ──
             // Enes: "zırhlılarda bir odada birkaç tane olabilir." Bu yüzden odaya
