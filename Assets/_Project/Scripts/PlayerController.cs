@@ -791,7 +791,13 @@ namespace TekCan
         {
             if (Invulnerable) return 0f;
 
+            // ⚠️ GERÇEKTEN İNEN miktar ölçülüyor, istenen değil. Saatinde 2 saniye
+            // kalmışken 4 saniyelik darbe yersen boss 4 değil 2 almıştır — nemesis
+            // defterine 4 yazmak, olmayan bir alacağı hesabına geçirmek olurdu.
+            // (Projenin kuralı: ÖZELLİK değil ETKİ. Burada da geçerli.)
+            float öncekiSaat = Clock.Instance != null ? Clock.Instance.Seconds : 0f;
             Clock.Instance?.Spend(secondsCost, fromHit: true);   // oda hesabında AYRI sayılıyor
+            float inen = Clock.Instance != null ? öncekiSaat - Clock.Instance.Seconds : secondsCost;
             HitStop.Freeze(_t.hitStopDuration * 1.5f);
             IsoCamera.Shake(_t.hurtShake);
 
@@ -802,7 +808,7 @@ namespace TekCan
             if (away.sqrMagnitude > 0.0001f) _knockback = away.normalized * _t.playerKnockback;
             Paint();
 
-            return secondsCost;
+            return inen;
         }
 
         void TickHurt()

@@ -93,6 +93,14 @@ namespace TekCan.EditorTools
                             yeni.NemesisDebt > 0.01f, yeni.NemesisDebt);
             failed += Check(ref total, "hesabı temiz boss'un borcu YOK",
                             Mathf.Approximately(temiz.NemesisDebt, 0f), temiz.NemesisDebt);
+
+            // ⚠️ GÖZLE GÖRÜLÜR olmalı — `TASARIM.md`'nin kendi şartı: "tekrar karşına
+            //    çıktığında gözle görülür şekilde değişmiş olur." İlk yazışımda
+            //    yalnızca HUD satırı vardı, gövde aynıydı: mekanik doğru, gövde yalan.
+            failed += Check(ref total, "⚠️ borçlu boss GÖVDESİYLE de büyük (görsel yalan yok)",
+                            yeni.Radius > temiz.Radius * 1.05f, yeni.Radius / temiz.Radius);
+            failed += Check(ref total, "ama ekrana sığıyor (ölçek KÖKLE büyüyor, doğrusal değil)",
+                            yeni.Radius < temiz.Radius * 1.7f, yeni.Radius / temiz.Radius);
             Temizle(root4);
 
             // ── 5) ⚠️ TAVAN TUTUYOR — kalıcı ölüm bir DUVAR olmamalı ──

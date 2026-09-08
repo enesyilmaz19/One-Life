@@ -228,6 +228,20 @@ namespace TekCan
             // Ölçek rütbeden SONRA yakalanıyor: `_baseScale` isabet darbesinin ve
             // `Radius`'un dayanağı, İRİ'nin gövdesi ikisine de yansımalı.
             if (Rank.ScaleMultiplier != 1f) transform.localScale *= Rank.ScaleMultiplier;
+
+            // ⚠️ NEMESİS GÖRÜNMELİ. `TASARIM.md` bunu açıkça istiyor: "tekrar karşına
+            // çıktığında GÖZLE GÖRÜLÜR ŞEKİLDE değişmiş olur." İlk yazışımda yalnızca
+            // HUD satırı koymuştum — yani boss sessizce şişiyordu ve fark yalnızca
+            // yazıdan anlaşılıyordu. Mekanik doğru, gövde yalan (ders 10).
+            //
+            // ⚠️ Ölçek havuzun KÖKÜYLE büyüyor, doğrusal değil: borç iki katına
+            // çıkınca gövde iki katına çıksaydı ekrana sığmazdı ve isabet yarıçapı
+            // (`Radius`) da onunla saçmalardı.
+            if (NemesisDebt > 0.05f)
+            {
+                float oran = 1f + NemesisDebt / Mathf.Max(0.01f, TimeLeft - NemesisDebt);
+                transform.localScale *= Mathf.Min(1.6f, Mathf.Sqrt(oran));
+            }
             _baseScale = transform.localScale;
             _renderer = GetComponentInChildren<Renderer>();
             All.Add(this);
