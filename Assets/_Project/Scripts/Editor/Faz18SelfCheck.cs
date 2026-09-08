@@ -189,6 +189,66 @@ namespace TekCan.EditorTools
                     failed += Check(ref total, $"⚠️ harita saldırısının hazırlığı MUTLAK ve uzun ({a.WindupSeconds:0.0} sn)",
                                     a.WindupSeconds >= 1.5f, a.WindupSeconds);
 
+            // ── 12) ⚠️ ENES'İN DAĞARCIK YAPISI — her boss, her faz ──
+            //
+            //    "Her birinde özgün bir mekanik, genel bir düz saldırı ve menzilli
+            //     saldırı (faz değişince güçlenen), özgün EN AZ 2 saldırı...
+            //     3-4-5 bosslarında en az 3-4 özgün saldırı olacak."
+            //
+            //    ⚠️ Bu kuralı ELLE SAYMAK yeterli değil: yeni bir saldırı eklerken
+            //    ya da bir tanesini değiştirirken sessizce bozulur. Kapıya
+            //    çevriliyor, ve "en az" TABAN olarak okunuyor (Enes: "iki tane
+            //    yapıp bırakmayabilirsin, istediğin kadar ekleyebilirsin").
+            for (int bi = 0; bi < BossKind.All.Length; bi++)
+            {
+                var b18 = BossKind.All[bi];
+                for (int faz = 1; faz <= b18.PhaseCount; faz++)
+                {
+                    var liste = b18.Attacks(faz);
+                    int düz = 0, menzilli = 0, özgün = 0;
+
+                    foreach (var a18 in liste)
+                    {
+                        // DÜZ: yakın, dar-orta koni, süsü yok. Her boss'un klasiği.
+                        bool sade = a18.InnerRadius <= 0f && a18.SafeAngle <= 0f
+                                 && a18.Then == null && a18.Angle < 360f;
+                        if (sade && a18.RangeMul <= 1.6f) düz++;
+                        if (a18.RangeMul >= 2f && a18.Angle > 0f && a18.Angle < 60f) menzilli++;
+
+                        // ÖZGÜN: halka / simit / açıklık / zincir / büyük hamle.
+                        // "Sıradan koni değil" olan her şey.
+                        if (a18.Angle >= 360f || a18.InnerRadius > 0f || a18.SafeAngle > 0f
+                            || a18.Then != null || a18.Lunge > 2f) özgün++;
+                    }
+
+                    failed += Check(ref total, $"  {b18.Name} faz {faz}: DÜZ saldırı var", düz >= 1, düz);
+                    failed += Check(ref total, $"  {b18.Name} faz {faz}: MENZİLLİ saldırı var",
+                                    menzilli >= 1, menzilli);
+
+                    // Boss 3-4-5 (sıra 2,3,4) taban 3; ilk ikisi taban 2.
+                    int taban = bi >= 2 ? 3 : 2;
+                    failed += Check(ref total, $"  {b18.Name} faz {faz}: ÖZGÜN ≥{taban} (var: {özgün})",
+                                    özgün >= taban, özgün);
+                }
+
+                // ⚠️ Her faz bir ÖNCEKİNDEN farklı olmalı — hem GELİŞMİŞ hem YENİ.
+                //    "Aynı saldırı ama daha çok hasar" faz değildir.
+                for (int faz = 2; faz <= b18.PhaseCount; faz++)
+                {
+                    var önceki = b18.Attacks(faz - 1);
+                    var şimdiki = b18.Attacks(faz);
+                    bool yeniVar = false;
+                    foreach (var y in şimdiki)
+                    {
+                        bool bulundu = false;
+                        foreach (var e18 in önceki) if (e18.Name == y.Name) bulundu = true;
+                        if (!bulundu) yeniVar = true;
+                    }
+                    failed += Check(ref total, $"  {b18.Name} faz {faz}: YENİ saldırı eklendi",
+                                    yeniVar, 0f);
+                }
+            }
+
             Object.DestroyImmediate(t);
             Clock.Reset(); Region.Reset(); Enemy.All.Clear();
 
