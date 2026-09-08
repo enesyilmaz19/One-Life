@@ -202,6 +202,11 @@ namespace TekCan
                  "Dash-atağa uygulanmaz — dibine girene cevap odur.")]
         public float hacizMinRange = 3.2f;
 
+        [Tooltip("SON BOSS faz 3: çağırdığı önceki boss'ların havuz çarpanı. " +
+                 "⚠️ Kısık olmalı — onlar YANKI, tam boss değil. 1.0 olsaydı final " +
+                 "dört boss dövüşü üst üste olurdu.")]
+        public float rivalPoolMultiplier = 0.45f;
+
         [Header("── DÜŞMAN RÜTBESİ (Faz 17) ──")]
         // ⚠️ ZIRHLI = MİKTAR ekseni, İRİ = KİMLİK ekseni. İlk tasarımda ikisi de
         // havuz ekseninde durup aynı hissettiriyordu (Enes: "ayrışmıyor").

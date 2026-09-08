@@ -148,6 +148,56 @@ namespace TekCan
         /// </summary>
         public virtual float GroundMarkInterval(int phase) => 0f;
 
+        // ── ÇAĞIRMA (Faz 18) ──────────────────────────────────────────────────
+        // Enes: *"bossların faz 2'sine koymadığın düşman çağırma özelliğini de ekle."*
+        //
+        // ⚠️ Çağırma neden YALNIZCA boss'a ait: sıradan odalarda düşmanlar DOĞMUYOR,
+        // oda kurulurken yerleştiriliyor (RoomManager'ın kuralı). Doğurma böylece
+        // bir kural değil BOSS'UN İMZASI oluyor — pusudan gelen düşmanın ucuzluğu
+        // yalnızca boss dövüşünde, ve orada da bir tehdit olarak.
+        //
+        // ⚠️ Ve YALNIZCA FAZ 2+: faz 1'de de çağırsaydı dövüşün ilk yarısı zaten
+        // kalabalık başlar, faz geçişi bir ARTIŞ olarak okunmazdı.
+
+        /// <summary>Kaç saniyede bir yardım çağırıyor (0 = çağırmıyor).</summary>
+        public virtual float SummonInterval(int phase) => 0f;
+
+        /// <summary>Her çağrıda kaç düşman.</summary>
+        public virtual int SummonCount(int phase) => 2;
+
+        /// <summary>
+        /// Çağırdığı tür — boss'un SUÇUYLA uyumlu olmalı.
+        /// ⚠️ Rastgele düşman çağırmak "boss zorlaştı" olurdu; kendi türünü
+        /// çağırmak "boss kendini çoğaltıyor" oluyor ve mekaniği anlatıyor.
+        /// </summary>
+        public virtual EnemyKind SummonKind => EnemyKind.Basic;
+
+        /// <summary>
+        /// Aynı anda en fazla kaç çağrılmış düşman yaşayabilir.
+        /// ⚠️ TAVAN ŞART: tavansız çağırma, oyuncu yavaş oynadığında odayı
+        /// doldurup dövüşü matematiksel olarak kazanılamaz yapardı. Boss'un
+        /// baskısı ARTMALI, dövüş imkânsızlaşmamalı.
+        /// </summary>
+        public virtual int SummonMaxAlive => 4;
+
+        // ── FAZ SAYISI (Faz 18) ───────────────────────────────────────────────
+
+        /// <summary>Kaç fazı var. Son boss'ta 3 (Enes kararı).</summary>
+        public virtual int PhaseCount => 2;
+
+        /// <summary>
+        /// Bu fazda ÖNCEKİ BOSS'LARI çağırıyor mu (0 = hiç).
+        ///
+        /// Enes: *"son bossa faz 3 ekleyelim; onda da ilk önce önceki bossların
+        /// her birini çağırsın, hepsi ölünce kendisi gelsin."*
+        ///
+        /// ⚠️ Çağıranın kendisi o sırada UYKUDA: vurulmuyor, vurmuyor. Yoksa
+        /// oyuncu beş boss'la aynı anda dövüşürdü ve bu bir final değil bir
+        /// kaza olurdu. Uyku aynı zamanda ANLATI: adam öne geçmiyor, borcunu
+        /// tahsil ettirmek için adamlarını gönderiyor.
+        /// </summary>
+        public virtual int SummonsRivalsInPhase => 0;
+
         /// <summary>
         /// Bu fazın saldırı dağarcığı. Sırayla dönülüyor (deterministik — "bu saldırı mı
         /// zor, ben mi kötü oynadım" cevaplanabilir kalsın).
@@ -178,6 +228,12 @@ namespace TekCan
             public override float AuraDrain(Tuning t, int phase)
                 => phase >= 2 ? 0f : t.bossAuraDrain;
             public override float SpeedMultiplier(int phase) => phase >= 2 ? 1.55f : 1f;
+
+            // Faz 2'de ADAMLARINI çağırıyor — "zorla alan" adam yalnız gelmez.
+            // SIZINTI çağırıyor: emmeyi BIRAKTIĞI faz bu, emme işini onlar sürdürüyor.
+            public override float SummonInterval(int phase) => phase >= 2 ? 7f : 0f;
+            public override EnemyKind SummonKind => EnemyKind.Leak;
+            public override int SummonCount(int phase) => 2;
 
             // Zorla alan adam: yaklaşır, kapatır, tekrar vurur.
             public override BossAttack[] Attacks(int phase) => phase >= 2
@@ -217,6 +273,13 @@ namespace TekCan
             // Yaşadığı sürece ne çalarsan çal az eder; faz 2'de HİÇ etmez.
             // "Acele et" değil, "onu bitirmeden zenginleşemezsin" diyor.
             public override float PlayerHarvest(int phase) => phase >= 2 ? 0f : 0.45f;
+
+            // Faz 2'de SİGORTA çağırıyor: onlar da geliri kapatıyor, yani boss
+            // öldükten sonra bile kesinti bir süre sürüyor. Suçun devri.
+            public override float SummonInterval(int phase) => phase >= 2 ? 8f : 0f;
+            public override EnemyKind SummonKind => EnemyKind.Insurer;
+            public override int SummonCount(int phase) => 2;
+            public override int SummonMaxAlive => 3;
             public override float AuraDrain(Tuning t, int phase) => t.bossAuraDrain * 0.5f;
 
             // Önce ÖLÇER (ince ışın, hattından çık), sonra ölçmeyi bırakıp BİÇER.
@@ -270,6 +333,14 @@ namespace TekCan
             public override bool SplitsOnPhaseTwo => true;
             public override float AuraDrain(Tuning t, int phase) => t.bossAuraDrain * 0.6f;
 
+            // Faz 2'de KASA çağırıyor — kefilin işi TEMİNAT göstermek, kasa da
+            // teminatın kendisi. Vurarak hiçbir şey alamadığın şeyler odaya doluyor:
+            // "bunları öldürmeye değer mi" sorusu boss dövüşünün ortasında soruluyor.
+            public override float SummonInterval(int phase) => phase >= 2 ? 9f : 0f;
+            public override EnemyKind SummonKind => EnemyKind.Vault;
+            public override int SummonCount(int phase) => 1;
+            public override int SummonMaxAlive => 2;
+
             // Kefil seni KENDİNE ÇEKER: dibi güvenli, uzağı ölüm. Faz 2'de ikisi birden
             // yaptığında iki güvenli bölge arasında koşuşturmak zorunda kalıyorsun.
             public override BossAttack[] Attacks(int phase) => phase >= 2
@@ -322,9 +393,71 @@ namespace TekCan
             public override float RegenPerSecond(Tuning t, int phase)
                 => phase >= 2 ? t.usurerRegenPerSecond : 0f;
 
+            // ── FAZ 3 (Enes kararı) ───────────────────────────────────────────
+            // "Son bossa faz 3 ekleyelim; onda da ilk önce önceki bossların her
+            //  birini çağırsın, hepsi ölünce kendisi gelsin."
+            //
+            // ⚠️ Bu, karakterin kendisi: MURABAHACI hiç kendi eliyle tahsil etmez.
+            // Faz 1'de senedini gösterir, faz 2'de faiz işletir, faz 3'te
+            // ADAMLARINI YOLLAR. Öne ancak onlar bittiğinde çıkıyor — ve o an
+            // oyunun bütün alacaklıları üzerinde ölmüş oluyor.
+            public override int PhaseCount => 3;
+            public override int SummonsRivalsInPhase => 3;
+
+            // Faz 2'de sıradan yardım: ZAMANAŞIMI. Borcun kendisi gibi, yaşadıkça
+            // büyüyorlar — "acele et" baskısını mekanikle söylüyor.
+            public override float SummonInterval(int phase) => phase == 2 ? 7.5f : 0f;
+            public override EnemyKind SummonKind => EnemyKind.Lapse;
+            public override int SummonCount(int phase) => 2;
+            public override int SummonMaxAlive => 4;
+
+            // Faz 3'te rejenerasyon SÜRÜYOR ama uykudayken işlemiyor
+            // (`TickBossPassives` uykuyu pasiflerden ÖNCE kesiyor) — yani
+            // rakiplerle dövüşürken arkada sessizce dolan bir boss yok.
+
             // Son boss: en geniş dağarcık. Borç İŞLER — taksitler peş peşe gelir,
             // bir cevaba yerleşmene izin vermez.
-            public override BossAttack[] Attacks(int phase) => phase >= 2
+            public override BossAttack[] Attacks(int phase) => phase >= 3
+                ? new[]
+                {
+                    // ── FAZ 3: her şeyin gelişmişi + TÜM HARİTA ──
+                    // ⚠️ TÜM HARİTAYA vuran saldırı, minik güvenli noktayla (Enes).
+                    //    Simit: göbeği güvenli. Yarıçap arenayı aşıyor, yani
+                    //    KAÇACAK YER YOK — tek cevap boss'un DİBİNE girmek.
+                    //    Hazırlık MUTLAK ve uzun: arenanın öbür ucundan koşman gerek.
+                    new BossAttack { Name = "TAM TASFİYE", RangeMul = 9f, Angle = 360f,
+                                     InnerRadius = 2.6f, WindupSeconds = 2.2f,
+                                     CostMul = 2.2f, Tint = Ring },
+
+                    // GELİŞMİŞ: zincir üçe çıktı — halka, simit, sonra açıklık.
+                    // Üç ayrı cevabı SIRAYLA vermen gerekiyor, tek bir yere
+                    // yerleşmek imkânsız.
+                    new BossAttack { Name = "BİLEŞİK FAİZ++", RangeMul = 2.4f, Angle = 360f,
+                                     WindupSeconds = 0.9f, CostMul = 1.4f, Tint = Ring,
+                                     Then = new BossAttack { Name = "…SİMİT", RangeMul = 3.2f,
+                                         Angle = 360f, InnerRadius = 2.2f, WindupSeconds = 0.7f,
+                                         CostMul = 1.3f, Tint = Donut,
+                                         Then = new BossAttack { Name = "…AÇIKLIK", RangeMul = 2.8f,
+                                             Angle = 360f, SafeAngle = 80f, WindupSeconds = 1.2f,
+                                             CostMul = 1.3f, Tint = Ring } } },
+
+                    // YENİ: dört ışın peş peşe — SİMSAR'ın işini kendi yapıyor
+                    new BossAttack { Name = "SON İHTAR", RangeMul = 3.4f, Angle = 22f,
+                                     Repeat = 4, WindupMul = 0.55f, CostMul = 1.1f, Tint = Beam },
+
+                    // GELİŞMİŞ: uzaktan kapatıp süpürüyor, sonra halka
+                    new BossAttack { Name = "İCRA++", RangeMul = 2.6f, Angle = 110f,
+                                     Lunge = 5.5f, MinPlayerRange = 4f, CostMul = 1.5f,
+                                     Tint = Cone,
+                                     Then = new BossAttack { Name = "…KAPANIŞ", RangeMul = 1.5f,
+                                         Angle = 360f, WindupMul = 0.8f, CostMul = 1.4f,
+                                         Tint = Ring } },
+
+                    // YENİ: yakın düz vuruş — her boss'un "klasik" atağı da gelişmeli
+                    new BossAttack { Name = "VADE++", RangeMul = 1.5f, Angle = 140f,
+                                     Lunge = 2.2f, CostMul = 1.3f, Tint = Cone },
+                }
+                : phase >= 2
                 ? new[]
                 {
                     // YENİ: ÜÇ kez arka arkaya, hazırlığı kısa. Bir kez kaçmak yetmiyor
@@ -385,6 +518,14 @@ namespace TekCan
             public override float GroundMarkInterval(int phase) => phase >= 2 ? 1.1f : 2.0f;
             public override float AuraDrain(Tuning t, int phase) => t.bossAuraDrain * 0.4f;
             public override float SpeedMultiplier(int phase) => phase >= 2 ? 1.2f : 0.85f;
+
+            // Faz 2'de MÜBAŞİR çağırıyor: onlar da uzaktan yere vuruyor, yani
+            // "durduğun yer satılık" tehdidi üçe katlanıyor. Aracı adamın işi
+            // zaten kendi vurmak değil, VURDURMAK.
+            public override float SummonInterval(int phase) => phase >= 2 ? 8.5f : 0f;
+            public override EnemyKind SummonKind => EnemyKind.Bailiff;
+            public override int SummonCount(int phase) => 2;
+            public override int SummonMaxAlive => 3;
 
             // Kendisi yavaş ve uzaktan iş görüyor; asıl baskı yerdeki işaretlerden.
             public override BossAttack[] Attacks(int phase) => phase >= 2

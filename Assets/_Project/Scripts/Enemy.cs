@@ -64,8 +64,30 @@ namespace TekCan
         /// </summary>
         public bool IsBoss => Boss != null;
 
-        /// <summary>1 veya 2. Faz geçişi `CheckPhase`'de.</summary>
+        /// <summary>1, 2 ya da 3 (son boss). Faz geçişi `CheckPhase`'de.</summary>
         public int Phase { get; private set; } = 1;
+
+        /// <summary>
+        /// UYKUDA — vurulmuyor, vurmuyor, kovalamıyor.
+        ///
+        /// Son boss faz 3'te önceki boss'ları çağırıyor ve onlar ölene kadar
+        /// kendisi geri çekiliyor (Enes: *"hepsi ölünce kendisi gelsin"*).
+        /// ⚠️ Uyku olmadan oyuncu BEŞ boss'la aynı anda dövüşürdü — final değil
+        /// kaza olurdu. Uyku aynı zamanda ANLATI: adam öne geçmiyor, borcunu
+        /// tahsil ettirmek için adamlarını gönderiyor.
+        /// </summary>
+        public bool Dormant { get; private set; }
+
+        /// <summary>
+        /// Bu, son boss'un çağırdığı bir RAKİP mi.
+        /// ⚠️ Faz değiştirmiyorlar: çağrılan boss da faz 2'ye geçip kendi
+        /// yardımını çağırsaydı zincirleme bir doğum patlaması olurdu. Onlar
+        /// birer YANKI, tam boss değil.
+        /// </summary>
+        public bool SummonedRival { get; private set; }
+
+        /// <summary>Son boss'un çağırdığı rakip olarak işaretle — havuzu da kısılır.</summary>
+        public void MarkAsSummonedRival() => SummonedRival = true;
 
         /// <summary>
         /// ⚠️ Havuz FULLENDİ mi — fullendiyse artık KREDİ, vurunca HASAT VERMEZ.
@@ -604,6 +626,11 @@ namespace TekCan
         /// </param>
         public void TakeDamage(float damage, float harvestMult = 1f)
         {
+            // ⚠️ UYKUDAKİ boss VURULMUYOR. Vurulabilseydi oyuncu rakipleri es
+            // geçip doğrudan onu döverdi — "hepsi ölünce kendisi gelsin" kuralı
+            // sessizce anlamsızlaşırdı.
+            if (Dormant) return;
+
             if (Hollow)
             {
                 Kill();                        // tek atımlık
@@ -705,7 +732,41 @@ namespace TekCan
         /// </summary>
         public void TickBossPassives(float dt)
         {
-            if (Boss == null || Hollow || _t == null) return;
+            if (Boss == null || _t == null) return;
+
+            // ⚠️ UYKU, PASİFLERDEN ÖNCE. Uykudayken rejenerasyon, tebligat ve
+            // çağırma İŞLEMEZ — yoksa oyuncu rakiplerle dövüşürken arkada sessizce
+            // güçlenen bir boss olurdu ve dövüş kazanılamaz hale gelirdi.
+            if (Dormant)
+            {
+                // Rakiplerin hepsi öldü mü → boss uyanıyor.
+                foreach (var e in All)
+                    if (e != null && e != this && e.SummonedRival) return;
+
+                Dormant = false;
+                Arc.Spawn(transform.position, transform.rotation, Radius * 7f, 360f,
+                          new Color(Boss.Tint.r, Boss.Tint.g, Boss.Tint.b, 0.8f), 0.9f,
+                          scaleFrom: 0.2f, scaleTo: 2.6f);
+                Sfx.Slam();
+                Debug.Log($"[Tek Can] {Boss.Name} UYANDI — adamları bitti, kendisi geliyor.");
+                Paint();
+                return;
+            }
+
+            if (Hollow) return;
+
+            // ── ÇAĞIRMA (faz 2+) ──────────────────────────────────────────────
+            // Enes: "bossların faz 2'sine düşman çağırma özelliğini de ekle."
+            float çağrıAralık = Boss.SummonInterval(Phase);
+            if (çağrıAralık > 0f)
+            {
+                _summonTimer -= dt;
+                if (_summonTimer <= 0f)
+                {
+                    _summonTimer = çağrıAralık;
+                    Çağır();
+                }
+            }
 
             // MURABAHACI faz 2: vurmadığın her saniye havuzu doluyor. Ondan HIZLI
             // olmak zorundasın. Krediyi doldurmak hasat vermiyor, dövüşü uzatıyor.
@@ -817,7 +878,8 @@ namespace TekCan
         /// </summary>
         void CheckPhase()
         {
-            if (Boss == null || Phase >= 2) return;
+            // ⚠️ Çağrılan rakipler faz değiştirmiyor — zincirleme doğum olmasın.
+            if (Boss == null || SummonedRival || Phase >= Boss.PhaseCount) return;
 
             if (Boss.RefillsOnEmpty)
             {
@@ -825,15 +887,91 @@ namespace TekCan
                 TimeLeft = _startingPool;      // FULLENİR
                 OnCredit = true;               // ...ama artık sahte para
             }
-            else if (TimeLeft > _startingPool * Boss.PhaseTwoAt) return;
+            else if (Phase == 1 && TimeLeft > _startingPool * Boss.PhaseTwoAt) return;
+            else if (Phase >= 2 && TimeLeft > 0f) return;   // faz 3 havuz bitince
 
-            EnterPhaseTwo();
+            AdvancePhase();
         }
 
-        void EnterPhaseTwo()
+        float _summonTimer;
+
+        /// <summary>
+        /// Yardım çağır. ⚠️ TAVANLI: tavansız çağırma, oyuncu yavaş oynadığında
+        /// odayı doldurup dövüşü matematiksel olarak kazanılamaz yapardı. Boss'un
+        /// baskısı ARTMALI, dövüş imkânsızlaşmamalı.
+        ///
+        /// ⚠️ Çağrılanlar boss'un KENDİ TÜRÜ — rastgele düşman "boss zorlaştı"
+        /// olurdu; kendi türünü çağırmak "boss kendini çoğaltıyor" oluyor ve
+        /// mekaniği ANLATIYOR.
+        /// </summary>
+        void Çağır()
         {
-            Phase = 2;
+            int canlı = 0;
+            foreach (var e in All) if (e != null && e.Summoned) canlı++;
+            if (canlı >= Boss.SummonMaxAlive) return;
+
+            int adet = Mathf.Min(Boss.SummonCount(Phase), Boss.SummonMaxAlive - canlı);
+            for (int i = 0; i < adet; i++)
+            {
+                // Boss'un ETRAFINDA doğuyorlar — oyuncunun üstünde değil.
+                // Üstünde doğsalardı kaçınılamaz hasar olurdu; bu oyunda her
+                // tehdidin bir cevabı olmak zorunda.
+                float açı = (360f / Mathf.Max(1, adet)) * i * Mathf.Deg2Rad;
+                var yer = transform.position + new Vector3(Mathf.Cos(açı), 0f, Mathf.Sin(açı)) * (Radius + 2.2f);
+                yer.y = Bootstrap.ArenaCenter.y;
+
+                var yeni = Bootstrap.SpawnEnemyAt(_t, yer, _player, null,
+                                                  poolMultiplier: 0.55f, boss: false,
+                                                  kind: Boss.SummonKind, parent: transform.parent);
+                if (yeni != null) yeni.MarkAsSummoned();
+            }
+            Sfx.Slam();
+        }
+
+        /// <summary>Boss'un çağırdığı yardımcı mı — tavan sayımı bunu kullanıyor.</summary>
+        public bool Summoned { get; private set; }
+        public void MarkAsSummoned() => Summoned = true;
+
+        /// <summary>
+        /// FAZ 3: önceki boss'ların hepsini çağır, kendin UYKUYA çekil.
+        /// Enes: *"ilk önce önceki bossların her birini çağırsın, hepsi ölünce
+        /// kendisi gelsin."*
+        ///
+        /// ⚠️ Rakipler YANKI, tam boss değil: havuzları kısılmış ve faz
+        /// değiştirmiyorlar. Tam boss olsalardı final dört ayrı boss dövüşü
+        /// olurdu — Enes'in istediği "hepsi ölünce kendisi gelsin", dört boss
+        /// dövüşü üst üste değil.
+        /// </summary>
+        void ÇağırRakipleri()
+        {
+            Dormant = true;
+
+            int n = BossKind.All.Length - 1;      // kendisi hariç
+            for (int i = 0; i < n; i++)
+            {
+                float açı = (360f / Mathf.Max(1, n)) * i * Mathf.Deg2Rad;
+                var yer = transform.position + new Vector3(Mathf.Cos(açı), 0f, Mathf.Sin(açı)) * (Radius + 4f);
+                yer.y = Bootstrap.ArenaCenter.y;
+
+                var rakip = Bootstrap.SpawnEnemyAt(_t, yer, _player, null,
+                                                   poolMultiplier: _t.rivalPoolMultiplier, boss: true,
+                                                   parent: transform.parent,
+                                                   bossKind: BossKind.All[i]);
+                if (rakip != null) rakip.MarkAsSummonedRival();
+            }
+
+            Debug.Log($"[Tek Can] {Boss.Name} FAZ 3 — dört alacaklısını da çağırdı. " +
+                      "Hepsi ölmeden kendisine dokunamazsın.");
+            Paint();
+        }
+
+        void AdvancePhase()
+        {
+            Phase++;
             PhaseTwoAnnouncement = Time.unscaledTime;
+
+            // ⚠️ FAZ 3: önceki boss'ları çağır ve UYKUYA çekil (son boss).
+            if (Boss.SummonsRivalsInPhase == Phase) ÇağırRakipleri();
 
             // Dağarcık değişti: sıradaki saldırı YENİ listeden seçilsin.
             _attack = null;
