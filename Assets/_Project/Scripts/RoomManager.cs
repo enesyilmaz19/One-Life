@@ -106,6 +106,22 @@ namespace TekCan
         }
 
         public bool IsBossRoom => Room >= _t.roomsPerRegion;
+
+        /// <summary>
+        /// SUNAK ODASI — boss'tan hemen önceki oda. Düşman YOK, yalnızca sunaklar.
+        ///
+        /// Enes: *"şu sunak ve buff alma kısımları için ayrı bir oda tasarlayalım."*
+        ///
+        /// ⚠️ Bu oda DİNLENME DEĞİL, oyunun EN PAHALI odası — ve bunun için tek
+        /// satır yeni kural yazılmadı. Dövüş dışı akış zaten 2.5/sn, dövüştekinin
+        /// (1.0/sn) iki buçuk katı. Yani düşünmek, dolaşmak, "alsam mı almasam mı"
+        /// demek burada en pahalıya patlıyor. Yasa zaten bu baskıyı kuruyordu;
+        /// oda onu görünür hale getiriyor.
+        ///
+        /// ⚠️ Ve boss'tan HEMEN ÖNCE: alışverişi bir sınavın eşiğinde yapıyorsun,
+        /// yani "ne kadar hazırım" sorusu somut bir düşmana bakarak soruluyor.
+        /// </summary>
+        public bool IsAltarRoom => _t.roomsPerRegion >= 3 && Room == _t.roomsPerRegion - 1;
         public bool Cleared { get; private set; }
         public RoomLayout Layout { get; private set; }
 
@@ -249,11 +265,35 @@ namespace TekCan
             // Oyuncu girişte başlar; oda bir YOL, girişten çıkışa gideceksin.
             if (_player != null) _player.position = Bootstrap.Entrance(_t);
 
+            // ⚠️ Zemin HER ODADA bölge rengine dönüyor — dallara serpmek yerine
+            // tek yerde. Sunak odası bunu aşağıda kendi rengiyle EZİYOR. İlk
+            // yazışımda rengi yalnızca "normal oda" dalına koymuştum ve sunak
+            // odasından SONRAKİ oda boss odasıydı: aydınlık zemin boss dövüşüne
+            // taşınıyordu. Sıfırlama, ezmeden ÖNCE ve TEK yerde olmalı.
+            if (Region.Current != null) Bootstrap.SetGroundColor(Region.Current.GroundColor);
+
             if (IsBossRoom)
             {
                 PlaceBoss();
                 // Son bölge değilse boss odasının da çıkışı var: devrilince zincir sürüyor.
                 if (!IsLastRegion) PlaceExit();
+            }
+            else if (IsAltarRoom)
+            {
+                // Düşman yok — `OnCleared` ilk karede kendiliğinden çalışıp kapıyı
+                // açıyor. Ayrı bir "kapı açık doğsun" kuralı YAZILMADI: temizlik
+                // kuralı zaten "canlı düşman yok" diyor ve burada baştan doğru.
+                PlaceExit();
+                PlaceAltars();
+
+                // ⚠️ Oda tipi EKRANDAN okunmalı, Console'dan değil. Zemin bölgenin
+                // renginden aydınlatılıyor: "burada dövüş yok" bilgisi kapıdan
+                // girer girmez geliyor, oyuncu düşman aramak zorunda kalmıyor.
+                // Bölge kimliği korunuyor — renk değişmiyor, sadece açılıyor.
+                Bootstrap.SetGroundColor(Color.Lerp(Region.Current.GroundColor,
+                                                    new Color(0.55f, 0.52f, 0.42f), 0.45f));
+                Debug.Log($"[Tek Can] SUNAK ODASI — bölge {RegionIndex + 1}. " +
+                          "Düşman yok, ama akış dövüştekinin 2.5 katı: burada düşünmek pahalı.");
             }
             else { PlaceEnemies(); PlaceExit(); PlaceAltars(); }
 
@@ -352,7 +392,12 @@ namespace TekCan
             if (IsCheckpointRoom)
                 Bootstrap.SpawnRepairAltar(_t, _player, _roomRoot.transform);
 
-            if (Room % 2 != 0) return;
+            // ⚠️ Sunaklar artık YALNIZCA sunak odasında. Eskiden her ÇİFT odada
+            // çıkıyordu: alışveriş bir olay değil, arka plan gürültüsüydü — ve
+            // fiyatlar her odada sıfırlandığı için bölge başına ~9 alım oluyordu.
+            // Buff matematiği zaten oradan patlıyordu (39 alım, hasar ×7,9).
+            // Tek odaya inince alışveriş bir KARAR ANI haline geliyor.
+            if (!IsAltarRoom) return;
             Bootstrap.SpawnAltarRing(_t, _player, _roomRoot.transform);
         }
 

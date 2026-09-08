@@ -127,8 +127,38 @@ Her boss'ta olacaklar:
 - [ ] **Son boss:** kendi mekaniği + **önceki tüm boss'ların mekanikleri** +
       **tüm haritaya vuran, minik güvenli noktası olan** bir yetenek
 
-#### 🔴 FAZ 19 — Sunak odası
-- [ ] Sunak/buff alma için **ayrı oda tasarımı** *(şu an dövüş odasının içinde)*
+#### ✅ FAZ 19 — Sunak odası — **KOD BİTTİ, PLAYTEST BEKLİYOR**
+
+Bölgenin **boss'tan hemen önceki** odası. Düşman yok, üç sunak var, çıkış baştan açık.
+
+⚠️ **Bu oda dinlenme DEĞİL, oyunun EN PAHALI odası** — ve bunun için tek satır yeni
+kural yazılmadı. Dövüş dışı akış zaten **2.5/sn**, dövüştekinin (1.0/sn) iki buçuk
+katı. "Alsam mı almasam mı" demek burada en pahalıya patlıyor. Yasa bu baskıyı zaten
+kuruyordu; oda onu **görünür** yaptı.
+
+⚠️ **Boss'tan hemen önce** olması kasıtlı: alışverişi bir sınavın eşiğinde
+yapıyorsun, yani *"ne kadar hazırım"* sorusu somut bir düşmana bakarak soruluyor.
+
+- [x] Zemin aydınlanıyor — oda tipi **ekrandan** okunuyor, Console'dan değil
+- [x] Sunaklar artık **yalnızca** bu odada *(eskiden her çift odada)*
+- [x] Faz 19 öz-denetimi **8/8**
+
+##### 🔬 Yan fayda — buff matematiğine doğrudan vuruyor
+Sunaklar her çift odada çıkıyordu: bölge başına ~9 alım. Artık tek oda:
+
+| | bölge başına alım tavanı |
+|---|---|
+| eskiden | 27 |
+| şimdi | **9** |
+
+Buff matematiğindeki *"39 alım, hasar ×7,9"* sorununun **birinci ayağı** böylece
+yapısal olarak kapandı. İkinci ayak (fiyatın odalar arası sıfırlanması) hâlâ açık.
+
+##### 🎮 Playtest — Faz 19
+- [ ] **Oda pahalı hissettiriyor mu?** Amaç: acele etmen. Rahat geliyorsa akış az
+- [ ] **Boss'tan önce olması doğru mu?** Yoksa bölge ortasında mı olmalı
+- [ ] **Üç sunak yeterli mi?** Az geliyorsa `altarMaxPurchases`
+- [ ] **Zeminin açılması oda tipini söylüyor mu**, yoksa fark etmiyor musun
 
 #### 📝 Not — animasyon fazına
 > Enes: *"düşmanların oyun içi animasyonları ile ne yapıldığı anlaşılır diye ümit

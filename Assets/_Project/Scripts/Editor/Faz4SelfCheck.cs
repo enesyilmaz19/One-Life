@@ -28,7 +28,12 @@ namespace TekCan.EditorTools
 
             var t = ScriptableObject.CreateInstance<Tuning>();
             t.startSeconds = 500f;
-            t.roomsPerRegion = 3;            // kısa bölge: oda 1, 2, sonra boss odası
+            // ⚠️ 3 idi ve Faz 19'da kırıldı: sunak odası boss'tan önceki oda olunca
+            // oda 2 DÜŞMANSIZ hale geldi, "oda 2 daha kalabalık" testi ise oradan
+            // düşman okuyordu. Fixture üretimin oda zincirini VARSAYIYORDU.
+            // 4'e çıkarıldı: oda 1-2 dövüş, oda 3 sunak, oda 4 boss — yani zincirin
+            // her tipi temsil ediliyor, ve testler tipi ÜRETİMDEN soruyor.
+            t.roomsPerRegion = 4;
             // ⚠️ TEK bölge: bu denetim koşunun yapısını sınıyor (boss = son, kazanma orada).
             // Bölge ZİNCİRİ Faz 10'un konusu ve orada sınanıyor.
             t.regionsPerAct = 1;
@@ -74,10 +79,13 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️ temizlenince çıkış AÇILIYOR",
                             gate != null && gate.IsOpen, 1);
 
-            // 5) Odalar sertleşiyor
+            // 5) Odalar sertleşiyor — DÖVÜŞ odaları arasında
+            //    ⚠️ Oda tipi üretimden soruluyor (`IsAltarRoom`), teste gömülmüyor:
+            //    zincir değişince test yine kırılır ama YANLIŞ yerden değil.
             wm.NextRoom();
+            while (wm.IsAltarRoom) { KillAll(); Tick(wm); wm.NextRoom(); }
             int w2 = Enemy.All.Count;
-            float pool2 = Enemy.All[0].TimeLeft;
+            float pool2 = Enemy.All.Count > 0 ? Enemy.All[0].TimeLeft : 0f;
             failed += Check(ref total, "oda 2 daha kalabalık", w2 > w1, w2 - w1);
             failed += Check(ref total, "oda 2 düşmanı daha dayanıklı", pool2 > pool1, pool2 - pool1);
 
@@ -89,9 +97,13 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️ eski odadan hayalet düşman kalmadı", hayalet == 0, hayalet);
 
             // 7) Boss odası
+            //    ⚠️ "Bir sonraki oda boss" VARSAYIMI kaldırıldı: Faz 19'da araya
+            //    sunak odası girdi ve `NextRoom()` boss'a değil ona götürüyordu.
+            //    Zincirin uzunluğu üretimden geliyor (`roomsPerRegion`), teste
+            //    gömülü sayıdan değil — yoksa her yeni oda tipi bu testi kırar.
             KillAll();
-            wm.NextRoom();
-            failed += Check(ref total, "3. oda BOSS odası", wm.IsBossRoom, wm.Room);
+            GoToRoom(wm, t.roomsPerRegion);
+            failed += Check(ref total, "son oda BOSS odası", wm.IsBossRoom, wm.Room);
             failed += Check(ref total, "⚠️ boss odasında çıkış YOK (bölge orada bitiyor)",
                             Object.FindFirstObjectByType<ExitGate>() == null, 0);
             var boss = Enemy.All.Count > 0 ? Enemy.All[0] : null;
