@@ -1094,6 +1094,14 @@ namespace TekCan
         {
             if (Boss == null || Phase >= 2) return;
             Phase = 2;
+
+            // ⚠️ Gelişini DUYUR. Duyuru mekanizması zaten var (faz geçişi onu
+            // kullanıyor); rakip sahneye çıkarken kullanmasaydı oyunun en önemli
+            // dövüşünde ekranda HİÇBİR ŞEY yazmazdı — kim geldiğini Console'dan
+            // öğrenmesi beklenirdi. Var olan yolu kullanmak, yeni bir duyuru
+            // sistemi yazmaktan hem küçük hem tutarlı.
+            PhaseTwoAnnouncement = Time.unscaledTime;
+
             _attack = null; _repeatsLeft = 0; _chained = null;
             if (Boss.SplitsOnPhaseTwo) Split();
             Paint();

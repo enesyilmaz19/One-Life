@@ -297,6 +297,23 @@ namespace TekCan
         /// </summary>
         void DrawBossPhase()
         {
+            // ⚠️ UYKUDAKİ BOSS AÇIKLANMALI. Oyuncu vuruyor, hasar inmiyor, hiçbir
+            // şey yazmıyor → "bug" der. Enes'in sorduğu şey buydu. Kalıcı satır,
+            // çünkü durum da kalıcı: rakipler bitene kadar sürüyor.
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || !e.Dormant || e.Boss == null) continue;
+                int kalan = 0;
+                foreach (var r in Enemy.All) if (r != null && r.SummonedRival) kalan++;
+
+                _mid.normal.textColor = new Color(0.65f, 0.65f, 0.75f);
+                GUI.Label(new Rect(0f, Screen.height * 0.36f, Screen.width, 34f),
+                          $"{e.Boss.Name} ARKADA BEKLİYOR — önce alacaklıları" +
+                          (kalan > 0 ? "" : "  ·  geliyor…"), _mid);
+                _mid.normal.textColor = Color.white;
+                break;
+            }
+
             var rm = RoomManager.Instance;
             var boss = rm?.BossInRoom();
             if (boss == null || boss.Boss == null || boss.Phase < 2) return;
