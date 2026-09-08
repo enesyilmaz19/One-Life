@@ -51,6 +51,16 @@ namespace TekCan
         public virtual float ShakeMultiplier => 1f;
 
         /// <summary>
+        /// Vurduğunu ne kadar GERİ SAVURUYOR (birim/sn).
+        ///
+        /// ⚠️ Ağırlık hissinin en büyük parçası buydu ve oyunda HİÇ YOKTU: düşmanı
+        /// iten bir şey yoktu, yalnızca oyuncu itiliyordu. İlk denemede hit-stop ve
+        /// sarsıntıyı büyüttüm, Enes yine *"oturtmuyor"* dedi — çünkü var olanı
+        /// büyütmek, OLMAYANIN yerini tutmuyor.
+        /// </summary>
+        public virtual float Knockback(Tuning t) => 0f;
+
+        /// <summary>
         /// &gt;0 ise bu mesafeden YAKINDAKİNE vuramaz — menzilli silahın ölü bölgesi.
         ///
         /// ⚠️ Yalnızca NORMAL savurmaya uygulanıyor, dash-atağa değil. Sebebi tasarım:
@@ -139,8 +149,9 @@ namespace TekCan
         // uzuyor, ekran daha çok sarsılıyor, hasar da artıyor. Üçü birlikte tek
         // vuruşu olay yapıyor — tek hedefli silahın varlık sebebi bu.
         public override float Damage(Tuning t, float baseDamage) => baseDamage * t.faizliDamageMult;
-        public override float HitStopMultiplier => 1.9f;
-        public override float ShakeMultiplier => 2.2f;
+        public override float HitStopMultiplier => 2.4f;
+        public override float ShakeMultiplier => 2.6f;
+        public override float Knockback(Tuning t) => t.faizliKnockback;   // asıl "oturtan" şey
 
         public override bool OnSwingStart(Clock clock, Tuning t)
         {

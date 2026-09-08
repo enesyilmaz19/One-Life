@@ -247,6 +247,43 @@ namespace TekCan.EditorTools
             YaylariTemizle();
             pc.SetWeapon(hacizIndex);
 
+            // ── 6g) ⚠️ FAİZLİ VURDUĞUNU GERİ SAVURUYOR MU — "oturtma"nın ölçüsü ──
+            //    Enes iki kez *"oturtmuyor"* dedi. İlkinde hit-stop ve sarsıntıyı
+            //    büyütmüştüm — yani VAR OLANI. Eksik olan şey düşmanı İTMEKTİ ve
+            //    oyunda onu yapan hiçbir şey yoktu. ⚠️ Ölçülen ÖZELLİK değil ETKİ:
+            //    "Knockback > 0 mu" değil, DÜŞMAN YERİNDEN OYNADI MI.
+            ClearEnemies();
+            YaylariTemizle();
+            int faizliIndex = System.Array.IndexOf(Weapon.All,
+                System.Array.Find(Weapon.All, w => w is Faizli));
+            pc.SetWeapon(faizliIndex);
+
+            var itilen = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f);
+            Vector3 itilenÖnce = itilen.transform.position;
+            pc.Weapon.OnSwingStart(clock, t);
+            strike.Invoke(pc, null);
+            itilen.TickPush(0.1f);            // dt dışarıdan (tuzak 3)
+
+            failed += Check(ref total, "⚠️ FAİZLİ vurduğunu GERİ SAVURUYOR (oturtma)",
+                            (itilen.transform.position - itilenÖnce).magnitude > 0.05f,
+                            (itilen.transform.position - itilenÖnce).magnitude);
+            failed += Check(ref total, "savrulma OYUNCUDAN UZAĞA (içine çekmiyor)",
+                            Vector3.Dot((itilen.transform.position - itilenÖnce).normalized,
+                                        Vector3.forward) > 0.5f, 0f);
+
+            // KONİ savurmuyor — ağırlık FAİZLİ'nin kimliği, herkesin özelliği değil
+            ClearEnemies();
+            pc.SetWeapon(0);
+            var itilmeyen = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f);
+            Vector3 itilmeyenÖnce = itilmeyen.transform.position;
+            strike.Invoke(pc, null);
+            itilmeyen.TickPush(0.1f);
+            failed += Check(ref total, "KONİ savurmuyor (ağırlık FAİZLİ'ye özel)",
+                            (itilmeyen.transform.position - itilmeyenÖnce).magnitude < 0.01f,
+                            (itilmeyen.transform.position - itilmeyenÖnce).magnitude);
+            ClearEnemies();
+            YaylariTemizle();
+
             // ── 6f) ⚠️ İPOTEK SAVURMA YAYI ÇİZMEMELİ ──
             //    Enes bildirdi: *"ipotekte iki alan açılıyor, ilk bastığımızda çıkan
             //    koni hasar vurmuyor."* Yay koşulsuz çiziliyordu — ekranda kocaman

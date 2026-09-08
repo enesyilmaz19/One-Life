@@ -22,11 +22,37 @@ Enes'in raporundan çıkan **yapılacaklar**. ✅ olanlar bu oturumda yapıldı.
 - [x] ⚖️ HACİZ menzil ×2.6 → ×3.4
 - [x] 🔬 Buff matematiği *(aşağıda)*
 
-#### 🔴 FAZ 16 — Silah derinliği
+#### 🔴 FAZ 16 — Silah derinliği ⬅️ **SIRADAKİ**
 - [ ] **Sağ tık: her silaha ikinci saldırı**, birkaç saniyede bir. Bekleme süresi
       silahtan silaha değişir
 - [ ] **Her silaha ÖZEL dash-atak** — Enes: *"burada çok belli olmuyor neyin ne yaptığı"*
 - [ ] KONİ buff'ı — ⏸️ İPOTEK nerf'i sonrası **yeniden hissedilsin**, sonra karar
+
+#### 🔴 FAZ 20 — SİLAHA ÖZEL YÜKSELTMELER
+> Enes: *"hem genel geliştirme olduğu gibi silaha özel geliştirmeler de olsun,
+> bunları da ekleme planı yapalım."*
+
+Şu an üç sunak var ve üçü de **genel**: hasat / hasar / dash. Yani hangi silahı
+taşıdığın alışverişi hiç değiştirmiyor — silah seçimi dövüşte bir karar, sunakta
+hiç karar değil.
+
+- [ ] **Dördüncü sunak: KUŞANDIĞIN SİLAHA ait.** Ne sattığı silaha göre değişir:
+      FAİZLİ → savurma bedeli düşer · KONİ → açı genişler · HACİZ → menzil uzar ·
+      İPOTEK → gecikme kısalır · İFLAS → panik eşiği yükselir
+- [ ] ⚠️ **Yasayı bozmadan:** fiyat yine saniye, kazanç yine saniye
+- [ ] ⚠️ **Silah değiştirince yükseltme KAYBOLMAZ** — silaha yazılır, koşu boyunca
+      durur. Yoksa "yanlış silaha yatırım yaptım" cezası doğar ve kombo oynanışı
+      (Faz 16) cezalandırılmış olur
+- [ ] Denge: genel yükseltmeler zaten ×7,9 büyüyor *(buff matematiği)*. Silaha özel
+      olanlar **tavanlı** girmeli, yoksa ikinci bir tavansız eksen açılır
+
+#### 📝 Not — asset fazına (2)
+> Enes: *"ayrışıyorlar can olarak falan, sadece assetler geldiğinde ayrımı daha
+> belirgin yapmamız lazım."*
+
+Faz 17 ayrımı MEKANİK olarak çözdü (farklı eksen) ve Enes doğruladı. Kalan iş
+GÖRSEL: ZIRHLI ile İRİ silüetten ayrılmalı — ZIRHLI *kalın*, İRİ *büyük ve ağır*.
+Şu an ikisi de aynı kapsül, sadece boy ve renk farkı var.
 
 #### ✅ FAZ 17 — Rütbe yeniden tasarımı — **KOD BİTTİ, PLAYTEST BEKLİYOR**
 > Enes: *"iri ve zırhlı ayrışmıyor. mantığı farklı olmalı."*

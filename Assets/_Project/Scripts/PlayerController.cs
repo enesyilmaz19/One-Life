@@ -158,7 +158,13 @@ namespace TekCan
             if (index < 0 || index >= TekCan.Weapon.All.Length || index == _weaponIndex) return;
             _weaponIndex = index;
             _attackTimer = 0f;                                    // yarım savurma taşınmasın
-            IsoCamera.Shake(_t.hitShake * 0.4f);
+
+            // ⚠️ Eskiden burada ekran sarsılıyordu. Enes: *"silahlar arası geçişi
+            // daha hızlı yapabilmeliyiz, kombolar için."* Geçiş KODDA zaten anlıktı
+            // (Update'in en başında okunuyor, dash ve saldırı dönüşlerinden ÖNCE);
+            // yavaşlatan şey mekanik değil SARSINTIYDI — her tuşa basışta ekran
+            // zıplayınca kombo akmıyor, tökezliyor. Ses kalıyor, sarsıntı gidiyor.
+            Sfx.Swing();
         }
 
         static bool ReadAttack()
@@ -502,6 +508,7 @@ namespace TekCan
                 if (nearest != null)
                 {
                     bool wasHollow = nearest.Hollow;
+                    nearest.Push(nearest.transform.position - transform.position, Weapon.Knockback(_t));
                     nearest.TakeDamage(damage, harvestMult);
                     hits = 1;
                     if (wasHollow) kills = 1;          // boş düşmana vuruş öldürür
@@ -515,6 +522,7 @@ namespace TekCan
                     if (!InHitCone(e, range, half, out _, minRange)) continue;
 
                     bool wasHollow = e.Hollow;
+                    e.Push(e.transform.position - transform.position, Weapon.Knockback(_t));
                     e.TakeDamage(damage, harvestMult);
                     hits++;
                     if (wasHollow) kills++;

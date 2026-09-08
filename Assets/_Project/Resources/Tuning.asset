@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37080aea3a7c9e54da4c499d39779c0e, type: 3}
   m_Name: Tuning
   m_EditorClassIdentifier: Assembly-CSharp::TekCan.Tuning
-  startSeconds: 60
+  startSeconds: 110
   drainInCombat: 1
   drainOutOfCombat: 2.5
   combatRadius: 12

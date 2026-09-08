@@ -116,9 +116,11 @@ namespace TekCan
         public float singleTargetAngle = 45f;
         [Tooltip("FAİZLİ: her savurmanın peşin bedeli (saniye). Iska pahalı olsun diye var.")]
         public float faizliSwingCost = 0.5f;
-        [Tooltip("FAİZLİ: hasar çarpanı. Tek hedefli silahın 'tek ama sert' iddiası — " +
-                 "hit-stop ×1.9 ve sarsıntı ×2.2 ile birlikte çalışıyor.")]
-        public float faizliDamageMult = 1.45f;
+        [Tooltip("FAİZLİ: hasar çarpanı. Tek hedefli silahın 'tek ama sert' iddiası.")]
+        public float faizliDamageMult = 1.6f;
+        [Tooltip("FAİZLİ: vurduğunu ne kadar geri savurur (birim/sn). " +
+                 "⚠️ Ağırlık hissinin ASIL kaynağı — hit-stop ve sarsıntı tek başına yetmedi.")]
+        public float faizliKnockback = 9f;
         // VADELİ kaldırıldı (2026-09-02): FAİZLİ ile aynı soruyu soruyordu ve
         // `Denge simülasyonu`nda HER düşman sayısında geride kalıyordu (+2,8 / +5,9).
         // `vadeliDamageMult` ve `vadeliCost` asset'te ölü anahtar olarak kalıyor —
@@ -139,7 +141,7 @@ namespace TekCan
         // koşunun ZAYIF BANTTA başladığını gerçek asset'ten doğruluyor.
         [Tooltip("İFLAS: bu saatin ÜSTÜNDE en zayıf hâlinde (saniye). " +
                  "startSeconds'ten BÜYÜK olmamalı, yoksa silah baştan güçlü başlar.")]
-        public float iflasSafeSeconds = 60f;
+        public float iflasSafeSeconds = 80f;
         [Tooltip("İFLAS: bu saatin ALTINDA en güçlü hâlinde (saniye)")]
         public float iflasPanicSeconds = 15f;
         [Tooltip("İFLAS: dipteki hasar çarpanı. Güvendeki çarpan 0.7 (silahın kimliği).")]

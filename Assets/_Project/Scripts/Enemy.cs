@@ -178,6 +178,34 @@ namespace TekCan
 
         void OnDestroy() => All.Remove(this);
 
+        // ── GERİ İTME ────────────────────────────────────────────────────────
+        // ⚠️ Enes: *"faizli kodu mu oturtmuyor."* Hit-stop ve sarsıntıyı büyütmüştüm
+        // ama asıl eksik BU'ydu: ağır bir vuruş vurduğu şeyi HAREKET ETTİRİR, ve
+        // oyunda düşmanı iten hiçbir şey yoktu. Var olanı büyütmek, olmayanın
+        // yerini tutmuyor.
+        Vector3 _push;
+
+        /// <summary>Silahın darbesiyle geri savrul. Yatay — y karışmasın (tuzak 2).</summary>
+        public void Push(Vector3 dir, float force)
+        {
+            if (force <= 0f) return;
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.0001f) return;
+            _push = dir.normalized * force;
+        }
+
+        /// <summary>Öz-denetim için: şu an savruluyor mu.</summary>
+        public bool BeingPushed => _push.sqrMagnitude > 0.0001f;
+
+        /// <summary>⚠️ dt DIŞARIDAN — editör modunda `Time.deltaTime` 0 (tuzak 3).</summary>
+        public void TickPush(float dt)
+        {
+            if (_push.sqrMagnitude < 0.0001f) { _push = Vector3.zero; return; }
+            transform.position += _push * dt;
+            _push = Vector3.Lerp(_push, Vector3.zero, 11f * dt);
+            if (_push.sqrMagnitude < 0.0001f) _push = Vector3.zero;
+        }
+
         void Update()
         {
             if (_t == null || _player == null) return;
@@ -237,6 +265,10 @@ namespace TekCan
         void TickState()
         {
             _stateTimer -= Time.deltaTime;
+
+            // ⚠️ Savrulma DURUMDAN BAĞIMSIZ: hazırlıktayken de vurulunca savrulmalı,
+            // yoksa "ağır darbe" yalnızca kovalarken görünür ve tesadüfi hissedilir.
+            TickPush(Time.deltaTime);
 
             switch (_state)
             {
