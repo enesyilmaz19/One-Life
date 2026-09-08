@@ -146,13 +146,23 @@ yapıyorsun, yani *"ne kadar hazırım"* sorusu somut bir düşmana bakarak soru
 ##### 🔬 Yan fayda — buff matematiğine doğrudan vuruyor
 Sunaklar her çift odada çıkıyordu: bölge başına ~9 alım. Artık tek oda:
 
-| | bölge başına alım tavanı |
-|---|---|
-| eskiden | 27 |
-| şimdi | **9** |
+`Zorluk eğrisi raporu` sunak odasını artık modelliyor (`S` satırı: 0 düşman,
+net −21 sn). Ölçülen sonuç:
 
-Buff matematiğindeki *"39 alım, hasar ×7,9"* sorununun **birinci ayağı** böylece
-yapısal olarak kapandı. İkinci ayak (fiyatın odalar arası sıfırlanması) hâlâ açık.
+| | eskiden | şimdi |
+|---|---|---|
+| bölge başına alım tavanı | 27 | **9** |
+| koşu boyu alım | 39 | **24** |
+| koşu sonu hasar | 27,5 (**×7,9**) | **17,9** (×5,1) |
+
+Buff enflasyonunun **birinci ayağı yapısal olarak kapandı** — sayı ayarıyla değil,
+odanın kendisiyle. İkinci ayak (fiyatın odalar arası sıfırlanması) hâlâ açık.
+
+> 🔴 **YAN ETKİ — ayar turuna not:** ORTA seviye oyuncu artık **1. bölge boss'unda**
+> ölüyor (alarak bile). Sunak odası 21 sn yiyor ve hiç gelir vermiyor. Zorluk
+> Enes'in *"iyi olmuş"* dediği yerdeydi; bu oda onu bir tık yukarı itmiş olabilir.
+> Playtest'te hissedilmezse sorun yok, hissedilirse `drainOutOfCombat` ya da oda
+> uzunluğu kadranı.
 
 ##### 🎮 Playtest — Faz 19
 - [ ] **Oda pahalı hissettiriyor mu?** Amaç: acele etmen. Rahat geliyorsa akış az

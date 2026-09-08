@@ -80,7 +80,7 @@ namespace TekCan.EditorTools
                           $"darbe={t.enemyFullHitCost}sn hız={t.moveSpeed}");
             sb.AppendLine("⚠️ oda KOMPOZİSYONU üretimden okunuyor; yalnızca dövüş modelleniyor");
             sb.AppendLine($"⚠️ SUNAK: {t.altarMaxPurchases} alım × 3 sunak, taban {t.altarBasePrice:0} sn, " +
-                          $"artış ×{t.altarPriceGrowth:0.0} — ve fiyat HER ODA SIFIRLANIYOR");
+                          $"artış ×{t.altarPriceGrowth:0.0} — SUNAK ODASINDA (S), bölgede bir kez");
             sb.AppendLine($"   hasat +{t.altarHarvestStep:0.00}/alım (tavan %{t.harvestRateCap * 100f:0}) · " +
                           $"hasar +{t.altarDamageStep:0.0}/alım (TAVAN YOK)");
             sb.AppendLine();
@@ -103,21 +103,40 @@ namespace TekCan.EditorTools
                 {
                     for (int oda = 1; oda <= t.roomsPerRegion; oda++)
                     {
-                        var ö = OdayıÖlç(t, r, oda, b, d);
-                        saat += ö.Net;
+                        // ⚠️ SUNAK ODASI (Faz 19): boss'tan önceki odada DÜŞMAN YOK.
+                        //    Rapor bunu modellemek ZORUNDA — modellemeseydi tam da
+                        //    ölçmek için var olduğu şeyde (yükseltme ekonomisi)
+                        //    yanılırdı: olmayan düşmandan hasat sayar, odanın saf
+                        //    akış maliyetini görmez, alımları yanlış odalara dağıtır.
+                        bool sunakOdası = t.roomsPerRegion >= 3 && oda == t.roomsPerRegion - 1;
 
+                        Ölçüm ö;
+                        if (sunakOdası)
+                        {
+                            // Kazanç yok; yalnızca odada geçen süre kadar AKIŞ.
+                            // ⚠️ Formül KOPYALANMIYOR, `SunakOdasıAkışı` üretimin
+                            // dövüş-dışı kuralını (bölge çarpanı + arka plan emişi
+                            // dahil) aynen kullanıyor. Kopyalasaydım bölge kuralı
+                            // değişince rapor sessizce eskirdi.
+                            float akış = SunakOdasıAkışı(t);
+                            ö = new Ölçüm { Sayı = 0, Kazanç = 0f, Yürüme = akış,
+                                            Dövüş = 0f, Darbe = 0f, Aura = 0f, Net = -akış };
+                        }
+                        else ö = OdayıÖlç(t, r, oda, b, d);
+
+                        saat += ö.Net;
                         tYürüme += ö.Yürüme; tDövüş += ö.Dövüş; tDarbe += ö.Darbe; tAura += ö.Aura;
 
-                        // ⚠️ SUNAK ODASI: `RoomManager.PlaceAltars` iki odada bir koyuyor.
-                        //    Ve sunaklar HER ODA YENİDEN DOĞUYOR — yani `_bought`
-                        //    sıfırlanıyor, fiyat tabana dönüyor. Model bunu birebir
-                        //    taklit ediyor; asıl bulgu da bu olabilir.
+                        // ⚠️ ALIŞVERİŞ ARTIK TEK ODADA. Eskiden her ÇİFT odada oluyordu
+                        //    ve fiyat her odada tabana dönüyordu: bölge başına ~27 alım.
+                        //    Faz 19 onu 9'a indirdi. Rapor bu değişikliği taklit etmezse
+                        //    ayar turu hâlâ eski ekonomiye bakarak karar verir.
                         float harcandı = 0f;
-                        if (alış.Alıyor && oda % 2 == 0 && oda < t.roomsPerRegion)
+                        if (alış.Alıyor && sunakOdası)
                             harcandı = Alışverişi(t, ref d, ref saat, alış.Rezerv);
                         tAlım += harcandı;
 
-                        string boss = oda >= t.roomsPerRegion ? "B" : " ";
+                        string boss = oda >= t.roomsPerRegion ? "B" : sunakOdası ? "S" : " ";
                         sb.AppendLine($"  {r + 1,3} {oda,3}{boss} {ö.Sayı,6} | " +
                                       $"{ö.Kazanç,6:0.0}  {ö.Net,+6:0.0} | " +
                                       $"{ö.Yürüme,6:0.0} {ö.Dövüş,5:0.0} {ö.Darbe,5:0.0} {ö.Aura,4:0.0} | " +
@@ -161,6 +180,25 @@ namespace TekCan.EditorTools
 
         // ⚠️ Masraf KIRILIMI şart: toplam masrafa bakıp "zor" demek teşhis değil.
         // Suçlunun hangi kalem olduğu ancak ayrıştırınca görünüyor.
+        /// <summary>
+        /// Sunak odasının saf akış maliyeti.
+        ///
+        /// ⚠️ Odanın BÜTÜN FİKRİ bu sayı: düşman yok ama dövüş dışı akış devrede,
+        /// yani "alsam mı almasam mı" demek en pahalıya patlıyor. Girişten çıkışa
+        /// yürüme + sunak halkasında geçirilen süre (dolaşma katsayısı 2.2).
+        ///
+        /// Akış kuralı `OdayıÖlç`'ün kullandığının AYNISI — bölge çarpanı ve arka
+        /// plan emişi dahil. İki ayrı formül olsaydı biri güncellenip öteki
+        /// unutulurdu; bu projede ölçüm aracının eskimesi iki kez yanlış teşhise
+        /// götürdü.
+        /// </summary>
+        static float SunakOdasıAkışı(Tuning t)
+        {
+            float yol = Vector3.Distance(Bootstrap.Entrance(t), Bootstrap.Exit(t));
+            float süre = yol / Mathf.Max(0.1f, t.moveSpeed) * 2.2f;   // sunağa uğrayıp çıkıyorsun
+            return (t.drainOutOfCombat * Region.Drain + Region.Background) * süre;
+        }
+
         struct Ölçüm
         {
             public int Sayı;
