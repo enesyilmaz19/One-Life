@@ -29,6 +29,15 @@ namespace TekCan
         // ötekilerinkini de kilitliyordu. Ve HACİZ'in özelinin "gözükmemesi" de
         // buydu: başka silahın bekleme süresi onu yutuyordu.
         float[] _specialCd = new float[TekCan.Weapon.All.Length];
+
+        // ── SERİ VURUŞ (İFLAS · TASFİYE) ──────────────────────────────────────
+        // ⚠️ Coroutine YOK. Bu projede zaman güdümlü her şey `dt`'yi DIŞARIDAN
+        // alıyor (`Arc.Step`, `Mote.Step`, `Enemy.TickPush`) — sebebi editör
+        // modunda `Time.deltaTime`in 0 olması ve etkinin ölçülememesi. Coroutine
+        // yazsaydım seri vuruş TEST EDİLEMEZ olurdu.
+        int _flurryLeft;
+        float _flurryTimer;
+        WeaponSpecial _flurrySpecial;
         Vector3 _dashStart;          // İPOTEK dash'i buraya işaret bırakıyor
 
         TrailRenderer _dashTrail;    // yalnızca dash boyunca çizer, bkz. BuildDashTrail
@@ -120,6 +129,7 @@ namespace TekCan
             _dashCd -= Time.deltaTime;
             _iFrames -= Time.deltaTime;
             for (int i = 0; i < _specialCd.Length; i++) _specialCd[i] -= Time.deltaTime;
+            TickFlurry(Time.deltaTime);
             TickHurt();
             ReadWeaponSwap();
 
@@ -258,22 +268,63 @@ namespace TekCan
                 return;
             }
 
+            // ⚠️ SERİ VURUŞ (İFLAS · TASFİYE): ilk vuruş HEMEN iniyor, gerisi
+            // sayaçla. "Bas ve bekle" hissi olmasın — silahın kimliği HIZ.
+            SpecialStrike(sp);
+            if (sp.Hits > 1)
+            {
+                _flurrySpecial = sp;
+                _flurryLeft = sp.Hits - 1;
+                _flurryTimer = sp.HitInterval;
+                _attackTimer = sp.HitInterval * sp.Hits;   // seri boyunca taahhüt
+            }
+        }
+
+        /// <summary>
+        /// Seri vuruşun bir adımı. ⚠️ `dt` DIŞARIDAN — projenin kuralı.
+        /// Öz-denetim bunu çevirip "yedi vuruş GERÇEKTEN indi mi" diye soruyor;
+        /// coroutine olsaydı yalnızca "başladı mı" sorulabilirdi.
+        /// </summary>
+        public void TickFlurry(float dt)
+        {
+            if (_flurryLeft <= 0 || _flurrySpecial == null) return;
+
+            _flurryTimer -= dt;
+            if (_flurryTimer > 0f) return;
+
+            _flurryTimer = _flurrySpecial.HitInterval;
+            _flurryLeft--;
+            SpecialStrike(_flurrySpecial);
+            if (_flurryLeft <= 0) _flurrySpecial = null;
+        }
+
+        /// <summary>Öz-denetim için: seri vuruşta kaç vuruş kaldı.</summary>
+        public int FlurryLeft => _flurryLeft;
+
+        /// <summary>
+        /// Özelin TEK bir vuruşu. Seri de tek de buradan geçiyor — iki ayrı vuruş
+        /// kodu olsaydı biri düzeltilip öteki unutulurdu.
+        /// </summary>
+        void SpecialStrike(WeaponSpecial sp)
+        {
             float range = Weapon.Range(_t) * sp.RangeMul;
             float angle = sp.Angle > 0f ? sp.Angle : Weapon.Angle(_t);
 
             Arc.Spawn(transform.position, transform.rotation, range, angle,
-                      sp.Tint, _t.swingArcLife * 1.6f, scaleFrom: 0.5f, scaleTo: 1f);
+                      sp.Tint, _t.swingArcLife * (sp.Hits > 1 ? 0.7f : 1.6f),
+                      scaleFrom: sp.Hits > 1 ? 0.85f : 0.5f, scaleTo: 1f);
             SwingsSpawned++;
 
             StrikeCone(range, angle, WeaponDamage() * sp.DamageMul,
-                       _t.hitStopDuration * 1.6f * Weapon.HitStopMultiplier,
-                       _t.hitShake * 1.8f * Weapon.ShakeMultiplier,
+                       _t.hitStopDuration * (sp.Hits > 1 ? 0.35f : 1.6f) * Weapon.HitStopMultiplier,
+                       _t.hitShake * (sp.Hits > 1 ? 0.5f : 1.8f) * Weapon.ShakeMultiplier,
                        sp.MaxTargets, Weapon.HarvestMultiplier * sp.HarvestMul,
                        out int hits, out int kills,
                        minRange: 0f, special: sp);
 
             // Öldürme iadesi (FAİZLİ · İCRA): bahsi kazandıysan bedelin katı geri geliyor.
-            if (kills > 0 && sp.KillRefundMul > 0f) clock?.Add(sp.Cost * sp.KillRefundMul * kills);
+            if (kills > 0 && sp.KillRefundMul > 0f)
+                Clock.Instance?.Add(sp.Cost * sp.KillRefundMul * kills);
         }
 
         static bool ReadAttack()

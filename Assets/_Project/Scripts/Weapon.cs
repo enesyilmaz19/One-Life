@@ -18,7 +18,13 @@ namespace TekCan
     /// o silah "özelliği değil ETKİYİ test et" dersini öğretti (tamamen kırık teslim
     /// edilmişti, testler yeşildi çünkü hiçbiri *"bu silah vurabiliyor mu"* diye
     /// sormuyordu). Ders `tasks/lessons.md`'de; silah gitti, ders kaldı.
+    ///
+    /// ⚠️ Bu yorum `Weapon` sınıfına ait; aşağıdaki `WeaponSpecial` araya SONRADAN
+    /// girdi (Faz 16) ve bir süre yorumu sahiplenmiş görünüyordu. Sınıf sırası
+    /// değişince belgenin de taşınması gerekiyor — yoksa dosyayı açan kişi yanlış
+    /// sınıfın gerekçesini okur.
     /// </summary>
+
     /// <summary>
     /// Sağ tık saldırısı — silahın İKİNCİ hamlesi. `BossAttack` ile aynı desen:
     /// veri sınıfı, davranış değil. `PlayerController` bunu okuyup uyguluyor,
@@ -59,6 +65,18 @@ namespace TekCan
         /// Silahın sorusunu tersine çeviriyor: "yaklaşmalı mıyım" → "UZAKLAŞ".
         /// </summary>
         public float DamagePerDistance = 0f;
+
+        /// <summary>
+        /// Kaç vuruş arka arkaya (1 = tek vuruş) ve aralarındaki saniye.
+        ///
+        /// ⚠️ İFLAS'ın kimliği bu: oyunun EN HIZLI silahı, o yüzden özeli de
+        /// "büyük tek vuruş" değil SERİ olmalı (Enes kararı). İlk yazdığımda ona
+        /// da ağır bir tek vuruş vermiştim — silahın ne olduğuna değil, "özel
+        /// saldırı böyle olur"a bakmışım. Özel, silahın kendi karakterinin
+        /// abartılmışı olmalı; onu tersine çeviren değil.
+        /// </summary>
+        public int Hits = 1;
+        public float HitInterval = 0.09f;
 
         /// <summary>Ekrandaki yayın rengi — silahın kendi tonundan ayrışsın diye.</summary>
         public Color Tint = new Color(1f, 1f, 1f, 0.5f);
@@ -387,12 +405,19 @@ namespace TekCan
         /// düşürüyor, saat düşünce İFLAS zaten sertleşiyor. Yani bedel BİZZAT
         /// buff'ın kendisi. İkinci bir sistem yazmadan silahın sorusunu bir
         /// EYLEME çeviriyor: "ne kadar dibe inmeye cesaretin var" artık bir tuş.
+        /// TASFİYE — arka arkaya çok hızlı vuruşlar. Silahın kendi karakterinin
+        /// abartılmışı: İFLAS oyunun en hızlı silahı, özeli de SERİ.
+        ///
+        /// ⚠️ Bedeli YOK ve olmamalı. İFLAS zaten saat düştükçe sertleşiyor; seri
+        /// vuruş dipteyken kendiliğinden korkunç oluyor. Üstüne bir de saniye
+        /// bedeli koysaydım iki ceza üst üste binerdi ve silah "dipte güçlü" değil
+        /// "dipte kullanılamaz" olurdu — kimliğinin tam tersi.
         public override WeaponSpecial Special(Tuning t) => _s ??= new WeaponSpecial
         {
-            Name = "KAPANIŞ", Cooldown = t.specialCooldownIflas,
-            MaxTargets = 1, Angle = t.singleTargetAngle * 1.4f, RangeMul = 1.2f,
-            DamageMul = 2.6f, HarvestMul = 1.3f, Knockback = 6f,
-            Cost = t.iflasClosureCost,
+            Name = "TASFİYE", Cooldown = t.specialCooldownIflas,
+            MaxTargets = 1, Angle = t.singleTargetAngle * 1.2f, RangeMul = 1.1f,
+            Hits = t.iflasFlurryHits, HitInterval = t.iflasFlurryInterval,
+            DamageMul = 0.62f, HarvestMul = 1f, Knockback = 2f,
             Tint = new Color(1f, 0.3f, 0.25f, 0.6f)
         };
         WeaponSpecial _s;

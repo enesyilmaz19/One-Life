@@ -167,22 +167,46 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️ HACİZ İHBARI daha GEÇ patlıyor (ufuk uzuyor)",
                             ihbar.GroundDelay > ipotek.GroundMarkDelay(t) * 1.5f, ihbar.GroundDelay);
 
-            // ── 9) ⚠️ İFLAS · KAPANIŞ: saatten ÖDÜYOR (bedel bizzat buff) ──
+            // ── 9) ⚠️ İFLAS · TASFİYE: SERİ VURUŞ ──
+            //    Enes: *"kendisi hızlı saldıran silahımız, sağ tıkı da üst üste
+            //    çok hızlı saldırılar yapmasını sağlasın."*
+            //
+            //    ⚠️ İlk yazdığımda İFLAS'a da AĞIR TEK VURUŞ vermiştim — silahın ne
+            //    olduğuna değil "özel saldırı böyle olur"a bakmışım. Özel, silahın
+            //    KENDİ karakterinin abartılmışı olmalı; onu tersine çeviren değil.
+            var iflasW = System.Array.Find(Weapon.All, w => w is Iflas);
+            failed += Check(ref total, "⚠️ TASFİYE SERİ vuruş (silahın kimliği HIZ)",
+                            iflasW.Special(t).Hits >= 5, iflasW.Special(t).Hits);
+
+            //    ⚠️ ÖZELLİK değil ETKİ: "Hits 7 mi" değil, YEDİ VURUŞ GERÇEKTEN
+            //    İNİYOR MU. Seri `TickFlurry(dt)` ile çevriliyor — coroutine
+            //    yazsaydım editörde bunu ölçemezdim, yalnızca "başladı mı"
+            //    sorabilirdim (projenin `Step(dt)` kuralı).
             pc.SetWeapon(Index<Iflas>());
             ResetSpecial(pc);
             ClearEnemies();
-            MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.4f);
-            float iflasÖnce = clock.Seconds;
-            startSpecial.Invoke(pc, new object[] { Vector3.forward });
-            float ödenen = iflasÖnce - clock.Seconds;
-            failed += Check(ref total, "⚠️ KAPANIŞ saatten ÖDÜYOR", ödenen > 0.5f, ödenen);
+            var kurban = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.2f);
+            float kurbanÖnce = kurban.TimeLeft;
 
-            // ⚠️ Ve ödemek İFLAS'ı GERÇEKTEN sertleştiriyor — bedel ayrı bir buff
-            //    mekaniği değil, saatin düşmesinin kendisi.
-            var iflasW = System.Array.Find(Weapon.All, w => w is Iflas);
-            failed += Check(ref total, "⚠️ ödemek İFLAS'ı sertleştiriyor (bedel = buff)",
-                            iflasW.DesperationMultiplier(clock.Seconds, t)
-                            > iflasW.DesperationMultiplier(clock.Seconds + ödenen, t) - 0.0001f, 0f);
+            startSpecial.Invoke(pc, new object[] { Vector3.forward });
+            float ilkVuruştanSonra = kurban.TimeLeft;
+            failed += Check(ref total, "⚠️ TASFİYE'nin İLK vuruşu HEMEN iniyor (bekleme hissi yok)",
+                            ilkVuruştanSonra < kurbanÖnce - 0.001f, kurbanÖnce - ilkVuruştanSonra);
+
+            var sp2 = iflasW.Special(t);
+            for (int i = 0; i < sp2.Hits + 2; i++) pc.TickFlurry(sp2.HitInterval + 0.001f);
+
+            failed += Check(ref total, "⚠️ TASFİYE'nin TÜM vuruşları indi (etki)",
+                            kurban.TimeLeft < ilkVuruştanSonra - 0.001f,
+                            ilkVuruştanSonra - kurban.TimeLeft);
+            failed += Check(ref total, "seri BİTİYOR (sonsuza kadar vurmuyor)",
+                            pc.FlurryLeft == 0, pc.FlurryLeft);
+
+            // Seri, İFLAS'a ÖZEL — diğerlerinin özeli tek vuruş
+            int seriSayısı = 0;
+            foreach (var w in Weapon.All) if (w.Special(t).Hits > 1) seriSayısı++;
+            failed += Check(ref total, "seri vuruş İFLAS'a özel (kimlik dağılmıyor)",
+                            seriSayısı == 1, seriSayısı);
 
             // ── 10) ⚠️ DASH KİMLİKLERİ — üçü ayrışıyor mu ──
             failed += Check(ref total, "⚠️ HACİZ dash'i NİŞANIN TERSİNE",
@@ -222,7 +246,8 @@ namespace TekCan.EditorTools
         /// <summary>Özel saldırının SORDUĞU SORU — adı değil. Silah ölçüsünün aynısı.</summary>
         static string Soru(WeaponSpecial s) =>
             $"halka={s.Angle >= 360f}|tek={s.MaxTargets == 1}|yer={s.GroundDelay > 0f}"
-          + $"|bedelli={s.Cost > 0f}|iade={s.KillRefundMul > 0f}|mesafeli={s.DamagePerDistance > 0f}";
+          + $"|bedelli={s.Cost > 0f}|iade={s.KillRefundMul > 0f}|mesafeli={s.DamagePerDistance > 0f}"
+          + $"|seri={s.Hits > 1}";   // İFLAS'ın kimlik ekseni
 
         /// <summary>HACİZ özelinin belirli mesafede indirdiği hasar — ETKİ ölçümü.</summary>
         static float HacizHasari(Tuning t, PlayerController pc, GameObject pGo,

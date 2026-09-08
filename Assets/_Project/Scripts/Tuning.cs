@@ -138,11 +138,13 @@ namespace TekCan
         public float specialCooldownHaciz = 6f;
         [Tooltip("İPOTEK · HACİZ İHBARI — geniş ve geç patlayan işaret")]
         public float specialCooldownIpotek = 8f;
-        [Tooltip("İFLAS · KAPANIŞ — saatinden öde, sert vur")]
+        [Tooltip("İFLAS · TASFİYE — arka arkaya seri vuruş")]
         public float specialCooldownIflas = 10f;
-        [Tooltip("İFLAS · KAPANIŞ'ın saniye bedeli. ⚠️ Ödediğin saniye saatini " +
-                 "düşürdüğü için İFLAS zaten sertleşiyor — bedel BİZZAT buff.")]
-        public float iflasClosureCost = 8f;
+        [Tooltip("İFLAS · TASFİYE kaç vuruş yapıyor. Silahın kimliği HIZ, " +
+                 "o yüzden özeli de seri (Enes kararı).")]
+        public int iflasFlurryHits = 7;
+        [Tooltip("İFLAS · TASFİYE vuruşları arası saniye")]
+        public float iflasFlurryInterval = 0.075f;
 
         [Tooltip("İPOTEK: yer vuruşunun olgunlaşma süresi (saniye). Kaçma penceresi bu.")]
         public float ipotekDelay = 0.85f;

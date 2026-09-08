@@ -33,10 +33,17 @@ yeni soru açmıyor. Açsaydı beş silah on silah gibi davranırdı (TAKSİT'in
 | FAİZLİ | bu savurma tutar mı | **İCRA** — ağır peşin bedel, ×3.2 hasar, öldürünce **3 kat iade** | 9 sn |
 | HACİZ | yaklaşmalı mıyım | **UZUN VADE** — hasar UZAKLIKLA artıyor *(cevabı: uzaklaş)* | 6 sn |
 | İPOTEK | nereye gidecekler | **HACİZ İHBARI** — 2× geniş, 2× geç *(ufku uzatıyor)* | 8 sn |
-| İFLAS | ne kadar dibe inerim | **KAPANIŞ** — saatinden öde, sert vur | 10 sn |
+| İFLAS | ne kadar dibe inerim | **TASFİYE** — arka arkaya **7 seri vuruş** | 10 sn |
 
-⚠️ KAPANIŞ'ın bedeli ayrı bir "güçlenme" mekaniği DEĞİL: ödediğin saniye saati
-düşürüyor, saat düşünce İFLAS zaten sertleşiyor. **Bedel bizzat buff.**
+⚠️ **TASFİYE'nin bedeli YOK ve olmamalı** (Enes: *"kendisi hızlı saldıran silahımız,
+sağ tıkı da üst üste çok hızlı saldırılar yapmasını sağlasın"*). İFLAS zaten saat
+düştükçe sertleşiyor; seri vuruş dipteyken kendiliğinden korkunç oluyor. Üstüne
+saniye bedeli koysaydım iki ceza üst üste biner ve silah *"dipte güçlü"* değil
+*"dipte kullanılamaz"* olurdu — kimliğinin tam tersi.
+
+> **Ders:** ilk yazdığımda İFLAS'a da ağır tek vuruş vermiştim. Silahın **ne olduğuna**
+> değil, *"özel saldırı böyle olur"*a bakmışım. Özel, silahın kendi karakterinin
+> **abartılmışı** olmalı; onu tersine çeviren değil.
 
 ##### Dash kimlikleri
 ⚠️ Beş silaha beş yeni davranış YAZILMADI: ikisinin dash'i zaten kendi kimliğini
@@ -114,7 +121,15 @@ havuz) — sayıları farklıydı ama **sorusu aynıydı**. Yeni ayrım farklı 
 - [ ] **Odada 2 zırhlı çok mu?** `armoredEverySlot` = 3 (her 3. yuva)
 - [ ] **Her 4. odada mini boss sık mı?** `hugeRoomInterval` = 4
 
-#### 🔴 FAZ 18 — Boss yeniden tasarımı *(en büyük iş)*
+#### 🔴 FAZ 18 — Boss yeniden tasarımı *(en büyük iş)* ⬅️ **SIRADAKİ**
+
+> ⚠️ Enes'in EK talimatları (2026-09-02):
+> - *"özgün saldırı için en az iki dedim; iki tane yapıp bırakmayabilirsin. İstersen
+>   ve 'aha bak bu da uyar' dersen istediğin kadar ekleyebilirsin."* → **2 ve 3-4
+>   bir TABAN, hedef değil.**
+> - **Son boss'a FAZ 3:** önce önceki boss'ların HER BİRİNİ çağırıyor; hepsi ölünce
+>   kendisi geliyor. Yine yeni özgün saldırılar + öncekilerin gelişmiş hâli.
+> - **Boss'ların faz 2'sine DÜŞMAN ÇAĞIRMA** eklenecek *(atlanmıştı)*.
 > Enes: *"bosslar çok farklı hissettirmedi."*
 
 Her boss'ta olacaklar:
