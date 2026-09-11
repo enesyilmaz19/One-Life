@@ -316,21 +316,17 @@ namespace TekCan
             public override string Crime => "artık kaçamazsın";
             public override Color Tint => new Color(0.85f, 0.3f, 0.25f);
 
-            // ⚠️ İLK BOSS EN ZAYIF OLMALI. Enes: *"aga ilk boss 2.sinden daha
-            // güçlü durmuş."* Haklıydı ve sebebi ortadaydı: TAHSİLDAR TAM aura
-            // emiyordu (1.0×) — beşinin en yükseği — ve bedel çarpanları da
-            // en ağırıydı. Emme ve bedel artık boss sırasıyla TIRMANIYOR;
-            // `Faz12SelfCheck` bunu bir kural olarak tutuyor, göz kararı değil.
+            // ⚠️ İLK BOSS EN ZAYIF OLMALI (Enes: *"ilk boss 2.sinden daha güçlü
+            // durmuş"*). Emme ve bedel boss sırasıyla TIRMANIYOR; kapı tutuyor.
             public override float AuraDrain(Tuning t, int phase)
                 => phase >= 2 ? 0f : t.bossAuraDrain * 0.55f;
 
             // Faz 1: yanındayken emer → uzak dur, vur, çekil.
             // Faz 2: EMMEYİ BIRAKIR ama kovalar → uzak durmak işe yaramaz.
-            // Aynı tehdidin daha çoğu değil; BAŞKA bir soru.
+            // İMZA MEKANİĞİNİN GÜÇLENMESİ bu: aynı tehdidin daha çoğu değil,
+            // BAŞKA bir soru — ve hızı kadranı ölçülüyor.
             public override float SpeedMultiplier(int phase) => phase >= 2 ? 1.45f : 1f;
 
-            // Faz 2'de ADAMLARINI çağırıyor — "zorla alan" adam yalnız gelmez.
-            // SIZINTI: emmeyi BIRAKTIĞI faz bu, emme işini onlar sürdürüyor.
             public override float SummonInterval(int phase) => phase >= 2 ? 7f : 0f;
             public override EnemyKind SummonKind => EnemyKind.Leak;
             public override int SummonCount(int phase) => 2;
@@ -338,60 +334,77 @@ namespace TekCan
             public override BossAttack[] Attacks(int phase) => phase >= 2
                 ? new[]
                 {
-                    // DÜZ (gelişmiş): artık küçük bir hamlesi de var
-                    new BossAttack { Name = "HACİZ+", RangeMul = 1.3f, Angle = 130f,
-                                     Lunge = 2.5f, MinPlayerRange = 2.8f,
-                                     CostMul = 1.2f, Tint = Cone },
+                    // DÜZ (gelişmiş): iki kez, daha geniş
+                    new BossAttack { Name = "EL KOYMA", RangeMul = 1.1f, Angle = 165f,
+                                     Repeat = 2, WindupMul = 0.7f, CostMul = 1.15f,
+                                     MaxPlayerRange = 4.5f, Tint = Cone },
 
                     // MENZİLLİ (gelişmiş): iki ışın peş peşe
                     new BossAttack { Name = "İHBARNAME+", RangeMul = 3f, Angle = 24f,
                                      Repeat = 2, MinPlayerRange = 3f, WindupMul = 0.7f,
                                      CostMul = 1.05f, Tint = Beam },
 
-                    // ÖZGÜN ① HALKA (gelişmiş): büyüdü ve İKİ KEZ iniyor
+                    // ÖZGÜN HALKA ① (gelişmiş): İKİ KEZ iniyor, daha geniş
                     new BossAttack { Name = "TAHSİL+", RangeMul = 1.4f, Angle = 360f,
                                      Repeat = 2, WindupMul = 0.8f, CostMul = 1.25f, Tint = Ring },
 
-                    // ÖZGÜN ② HAMLE (gelişmiş): daha uzaktan, daha sert
+                    // ÖZGÜN HALKA ② (gelişmiş): erişimi 2.0 → 2.6, arena kadar
+                    new BossAttack { Name = "KUŞATMA+", RangeMul = 2.6f, Angle = 360f,
+                                     WindupMul = 1.3f, CostMul = 1.3f, Tint = Ring },
+
+                    // ÖZGÜN HAMLE ① (gelişmiş): atılış 4.5 → 5.5
                     new BossAttack { Name = "ZORLA ALIM+", RangeMul = 2.4f, Angle = 70f,
                                      Lunge = 5.5f, MinPlayerRange = 4.5f, WindupMul = 1.15f,
                                      CostMul = 1.3f, Tint = Cone },
 
-                    // YENİ: hamle + halka birlikte — atlıyor ve İNDİĞİ YERDE patlıyor.
-                    // İki imzasını tek harekette birleştiriyor; faz 2'nin kazandığı şey
-                    // yeni bir sayı değil, iki cevabı AYNI ANDA vermek zorunda kalman.
+                    // ÖZGÜN HAMLE ② (gelişmiş): 3.0 → 3.8 ve artık İKİ KEZ
+                    new BossAttack { Name = "YAKA PAÇA+", RangeMul = 2f, Angle = 170f,
+                                     Lunge = 3.8f, MinPlayerRange = 3f, Repeat = 2,
+                                     WindupMul = 0.85f, CostMul = 1.15f, Tint = Cone },
+
+                    // ÖZGÜN YENİ: iki imzası TEK harekette. Atlıyor ve İNDİĞİ YERDE
+                    // halka patlatıyor — hamlenin cevabı (yana kaç) ile halkanın
+                    // cevabını (uzaklaş) aynı anda vermen gerekiyor.
                     new BossAttack { Name = "KELEPÇE", RangeMul = 1.6f, Angle = 360f,
                                      Lunge = 6f, MinPlayerRange = 5f, WindupMul = 1.3f,
                                      CostMul = 1.35f, Tint = Ring },
 
-                    // YENİ: dibindeyken hızlı çifte vuruş — yaklaşmak da bedava değil
-                    new BossAttack { Name = "EL KOYMA", RangeMul = 1.1f, Angle = 165f,
-                                     Repeat = 2, WindupMul = 0.7f, CostMul = 0.95f,
-                                     MaxPlayerRange = 4.5f, Tint = Cone },
+                    // ÖZGÜN YENİ: yakın mesafede ağır hamle — dibine girmek de bedava değil
+                    new BossAttack { Name = "HACİZ+", RangeMul = 1.3f, Angle = 130f,
+                                     Lunge = 2.5f, MinPlayerRange = 2.8f,
+                                     CostMul = 1.2f, Tint = Cone },
                 }
                 : new[]
                 {
-                    // DÜZ · TAHSİLDAR: GENİŞ ve ağır. Zorla alan adam kavrar,
-                    // yana kaçmayı zorlaştırır.
+                    // DÜZ · TAHSİLDAR: GENİŞ ve ağır. Zorla alan adam kavrar.
                     new BossAttack { Name = "HACİZ", RangeMul = 1.2f, Angle = 135f,
                                      WindupMul = 1.15f, CostMul = 1.05f, Tint = Cone },
 
-                    // MENZİLLİ: uzaktan dar ışın — "uzak dur" bedava bir cevap olmasın.
+                    // MENZİLLİ: "uzak dur" bedava bir cevap olmasın.
                     new BossAttack { Name = "İHBARNAME", RangeMul = 2.6f, Angle = 26f,
                                      MinPlayerRange = 3f, WindupMul = 0.85f,
                                      CostMul = 0.95f, Tint = Beam },
 
-                    // ÖZGÜN ① HALKA — "uzaklaş". Oyunun ilk kaçış sorusu, ve en
-                    // okunaklısı: ilk boss bunu öğretiyor, sonrakiler üstüne kuruyor.
+                    // ÖZGÜN HALKA ① — "uzaklaş". Oyunun ilk kaçış sorusu.
                     new BossAttack { Name = "TAHSİL", RangeMul = 1.1f, Angle = 360f,
                                      WindupMul = 1.4f, CostMul = 1.15f, Tint = Ring },
 
-                    // ÖZGÜN ② HAMLE — "geri çekilmek kurtarmaz, YANA kaç".
-                    // ⚠️ YALNIZCA UZAKTAN: yakından yapılınca oyuncunun üstünden
-                    // aşıp ıskalıyordu (Enes bildirdi).
+                    // ÖZGÜN HALKA ② — aynı soru, çok daha büyük yarıçapla:
+                    // "uzaklaş" cevabı bu kez GERÇEKTEN koşmayı gerektiriyor.
+                    new BossAttack { Name = "KUŞATMA", RangeMul = 2f, Angle = 360f,
+                                     WindupMul = 1.5f, CostMul = 1.1f, Tint = Ring },
+
+                    // ÖZGÜN HAMLE ① — "geri çekilmek kurtarmaz, YANA kaç".
+                    // ⚠️ YALNIZCA UZAKTAN: yakından yapılınca üstünden aşıyordu.
                     new BossAttack { Name = "ZORLA ALIM", RangeMul = 2.2f, Angle = 70f,
                                      Lunge = 4.5f, MinPlayerRange = 4.5f, WindupMul = 1.25f,
                                      CostMul = 1.1f, Tint = Cone },
+
+                    // ÖZGÜN HAMLE ② — kısa ama GENİŞ atılış: yana kaçacak
+                    // alan bırakmıyor, orta mesafenin cevabını kapatıyor.
+                    new BossAttack { Name = "YAKA PAÇA", RangeMul = 1.9f, Angle = 150f,
+                                     Lunge = 3f, MinPlayerRange = 3f, WindupMul = 0.95f,
+                                     CostMul = 1f, Tint = Cone },
                 };
         }
 
@@ -401,11 +414,11 @@ namespace TekCan
             public override string Crime => "zamanın artık hiçbir şey etmiyor";
             public override Color Tint => new Color(0.85f, 0.7f, 0.25f);
 
-            // Yaşadığı sürece ne çalarsan çal az eder; faz 2'de HİÇ etmez.
+            // İMZA MEKANİĞİ: yaşadığı sürece ne çalarsan çal az eder; faz 2'de HİÇ etmez.
             public override float PlayerHarvest(int phase) => phase >= 2 ? 0f : 0.45f;
-            public override float AuraDrain(Tuning t, int phase) => t.bossAuraDrain * 0.75f;
+            public override float AuraDrain(Tuning t, int phase)
+                => t.bossAuraDrain * (phase >= 2 ? 0.9f : 0.75f);
 
-            // Faz 2'de SİGORTA çağırıyor: onlar da geliri kapatıyor.
             public override float SummonInterval(int phase) => phase >= 2 ? 8f : 0f;
             public override EnemyKind SummonKind => EnemyKind.Insurer;
             public override int SummonCount(int phase) => 2;
@@ -414,25 +427,34 @@ namespace TekCan
             public override BossAttack[] Attacks(int phase) => phase >= 2
                 ? new[]
                 {
+                    // DÜZ (gelişmiş): geniş ve iki kez
+                    new BossAttack { Name = "KESİNTİ+", RangeMul = 1.25f, Angle = 120f,
+                                     Repeat = 2, CostMul = 1.2f, Tint = Cone },
+
                     // MENZİLLİ (gelişmiş)
                     new BossAttack { Name = "DEĞER BİÇME+", RangeMul = 2.8f, Angle = 22f,
                                      WindupMul = 0.8f, CostMul = 1.25f, Tint = Beam },
 
-                    // DÜZ (gelişmiş)
-                    new BossAttack { Name = "KESİNTİ+", RangeMul = 1.25f, Angle = 120f,
-                                     Repeat = 2, CostMul = 1.2f, Tint = Cone },
-
-                    // ÖZGÜN ① SAĞANAK (gelişmiş): dört ölçüm peş peşe
+                    // ÖZGÜN SAĞANAK ① (gelişmiş): üç ölçüm → DÖRT
                     new BossAttack { Name = "REZERV", RangeMul = 2.8f, Angle = 26f,
                                      Repeat = 4, WindupMul = 0.55f, CostMul = 0.95f, Tint = Beam },
 
-                    // ÖZGÜN ② AYNA (gelişmiş): dilim genişledi
-                    new BossAttack { Name = "AMORTİSMAN+", RangeMul = 1.7f, Angle = 110f,
+                    // ÖZGÜN SAĞANAK ② (gelişmiş): yakın sağanak da dörde çıktı
+                    new BossAttack { Name = "SAYIM+", RangeMul = 1.5f, Angle = 115f,
+                                     Repeat = 4, WindupMul = 0.5f, CostMul = 1f, Tint = Cone },
+
+                    // ÖZGÜN AYNA ① (gelişmiş): dilim 90° → 125°, yan boşluk daraldı
+                    new BossAttack { Name = "AMORTİSMAN+", RangeMul = 1.7f, Angle = 125f,
                                      Mirrored = true, WindupMul = 0.9f, CostMul = 1.45f,
                                      Tint = Cone },
 
-                    // YENİ: iki imza birlikte — ayna, ÜÇ KEZ. Bir kez yana kaçmak
-                    // yetmiyor ve geri çekilme yolu da kapalı.
+                    // ÖZGÜN AYNA ② (gelişmiş): uzak ayna genişledi
+                    new BossAttack { Name = "ÇİFTE KAYIT+", RangeMul = 3f, Angle = 60f,
+                                     Mirrored = true, MinPlayerRange = 3.5f, WindupMul = 0.85f,
+                                     CostMul = 1.3f, Tint = Beam },
+
+                    // ÖZGÜN YENİ: iki imza birlikte — ayna, ÜÇ KEZ. Bir kez yana
+                    // kaçmak yetmiyor ve geri çekilme yolu da kapalı.
                     new BossAttack { Name = "TAM EKSPERTİZ", RangeMul = 2.6f, Angle = 46f,
                                      Mirrored = true, Repeat = 3, WindupMul = 0.6f,
                                      CostMul = 1.15f, Tint = Beam },
@@ -444,27 +466,36 @@ namespace TekCan
                 }
                 : new[]
                 {
+                    // DÜZ · EKSPER: DAR ve HIZLI. Ölçer ve keser; ucuz ama sık.
+                    new BossAttack { Name = "KESİNTİ", RangeMul = 1f, Angle = 65f,
+                                     WindupMul = 0.7f, CostMul = 0.95f, Tint = Cone },
+
                     // MENZİLLİ: ince ve UZUN — hattında durmak cezalı
                     new BossAttack { Name = "DEĞER BİÇME", RangeMul = 2.4f, Angle = 24f,
                                      WindupMul = 0.9f, CostMul = 1.3f, Tint = Beam },
 
-                    // DÜZ · EKSPER: DAR ve HIZLI. Ölçer ve keser; ucuz ama sık.
-                    // TAHSİLDAR'ın geniş-ağır vuruşunun tam tersi.
-                    new BossAttack { Name = "KESİNTİ", RangeMul = 1f, Angle = 65f,
-                                     WindupMul = 0.7f, CostMul = 0.95f, Tint = Cone },
-
-                    // ÖZGÜN ① SAĞANAK — "bir kez kaçmak yetmiyor". Üç ölçüm peş peşe,
-                    // aralarında boss dönüyor, yani hat her seferinde kayıyor.
+                    // ÖZGÜN SAĞANAK ① — "bir kez kaçmak yetmiyor". Aralarında
+                    // boss dönüyor, yani hat her seferinde kayıyor.
                     new BossAttack { Name = "ÇİFT EKSPERTİZ", RangeMul = 2.4f, Angle = 28f,
                                      Repeat = 3, WindupMul = 0.7f, CostMul = 1.05f, Tint = Beam },
 
-                    // ÖZGÜN ② AYNA — ÖN ve ARKA. Koninin iki cevabı vardı (yana kaç
-                    // ya da geri çekil); bunun tek cevabı var. "Değer biçen adam
-                    // iki uçtan ölçer" — ve TAHSİLDAR'ın öğrettiği "geri çekil"
-                    // refleksi ikinci boss'ta ilk kez ceza alıyor.
+                    // ÖZGÜN SAĞANAK ② — aynı soru YAKIN mesafede: geniş, hızlı,
+                    // üç kez. Dibinde durup vurmanın cevabı.
+                    new BossAttack { Name = "SAYIM", RangeMul = 1.3f, Angle = 110f,
+                                     Repeat = 3, WindupMul = 0.6f, CostMul = 0.9f, Tint = Cone },
+
+                    // ÖZGÜN AYNA ① — ÖN ve ARKA. Koninin iki cevabı vardı (yana kaç
+                    // ya da geri çekil); bunun tek cevabı var. TAHSİLDAR'ın
+                    // öğrettiği "geri çekil" refleksi ikinci boss'ta ceza alıyor.
                     new BossAttack { Name = "AMORTİSMAN", RangeMul = 1.4f, Angle = 90f,
                                      Mirrored = true, WindupMul = 1.1f, CostMul = 1.35f,
                                      Tint = Cone },
+
+                    // ÖZGÜN AYNA ② — uzaktan, dar iki hat. "Hattından çık" ile
+                    // "geri çekilme" aynı anda soruluyor.
+                    new BossAttack { Name = "ÇİFTE KAYIT", RangeMul = 2.6f, Angle = 50f,
+                                     Mirrored = true, MinPlayerRange = 3.5f, WindupMul = 0.9f,
+                                     CostMul = 1.2f, Tint = Beam },
                 };
         }
 
@@ -475,10 +506,13 @@ namespace TekCan
             public override Color Tint => new Color(0.45f, 0.75f, 0.85f);
 
             public override bool RefillsOnEmpty => true;
-            public override bool SplitsOnPhaseTwo => true;
-            public override float AuraDrain(Tuning t, int phase) => t.bossAuraDrain * 0.9f;
 
-            // Faz 2'de KASA çağırıyor — kefilin işi TEMİNAT göstermek.
+            // İMZA MEKANİĞİ: faz 2'de İKİYE bölünüyor ve emmesi artıyor —
+            // iki gövde, iki güvenli göbek, iki kat emme.
+            public override bool SplitsOnPhaseTwo => true;
+            public override float AuraDrain(Tuning t, int phase)
+                => t.bossAuraDrain * (phase >= 2 ? 1.1f : 0.9f);
+
             public override float SummonInterval(int phase) => phase >= 2 ? 9f : 0f;
             public override EnemyKind SummonKind => EnemyKind.Vault;
             public override int SummonCount(int phase) => 1;
@@ -495,22 +529,32 @@ namespace TekCan
                     new BossAttack { Name = "SENET+", RangeMul = 3f, Angle = 24f,
                                      Repeat = 2, WindupMul = 0.7f, CostMul = 1.2f, Tint = Beam },
 
-                    // ÖZGÜN ① SİMİT (gelişmiş): büyüdü, güvenli göbek DARALDI
+                    // ÖZGÜN SİMİT ① (gelişmiş): göbek 2.4 → 1.7
                     new BossAttack { Name = "TEMİNAT+", RangeMul = 3.6f, Angle = 360f,
                                      InnerRadius = 1.7f, WindupSeconds = 1.05f,
                                      CostMul = 1.5f, Tint = Donut },
 
-                    // ÖZGÜN ① SİMİT (dar hâli): küçük, hızlı, göbeği iğne deliği
+                    // ÖZGÜN SİMİT ② (gelişmiş): göbek 1.4 → 1.1, iğne deliği
                     new BossAttack { Name = "ORTAK HESAP+", RangeMul = 2.6f, Angle = 360f,
-                                     InnerRadius = 1.2f, WindupSeconds = 1f,
+                                     InnerRadius = 1.1f, WindupSeconds = 1f,
                                      CostMul = 1.35f, Tint = Donut },
 
-                    // ÖZGÜN ② ÇEKİM (gelişmiş): daha geniş, daha sert çekiyor
+                    // ÖZGÜN SİMİT ③ (gelişmiş): dilimli simit genişledi, göbeği daraldı
+                    new BossAttack { Name = "REHİN+", RangeMul = 3.8f, Angle = 160f,
+                                     InnerRadius = 1.3f, WindupSeconds = 1f,
+                                     CostMul = 1.4f, Tint = Donut },
+
+                    // ÖZGÜN ÇEKİM ① (gelişmiş): çekiş 7 → 9
                     new BossAttack { Name = "ZİNCİRLEME SORUMLULUK+", RangeMul = 4f, Angle = 170f,
                                      Pull = 9f, MinPlayerRange = 3.5f, WindupSeconds = 0.9f,
                                      CostMul = 0.95f, Tint = Donut },
 
-                    // YENİ: her yönden çeken halka. Kaçacak yön yok — nereye
+                    // ÖZGÜN ÇEKİM ② (gelişmiş): yakın çekim 4.5 → 5.5 ve alanı genişledi
+                    new BossAttack { Name = "İCAZET+", RangeMul = 1.7f, Angle = 240f,
+                                     Pull = 5.5f, WindupSeconds = 0.9f, CostMul = 1.3f,
+                                     Tint = Donut },
+
+                    // ÖZGÜN YENİ: HER YÖNDEN çeken halka. Kaçacak yön yok — nereye
                     // kaçarsan kaç içeri alınıyorsun, sonra yakın vuruşları seni
                     // orada buluyor. "Müteselsil kefalet": hepsi birbirine bağlı.
                     new BossAttack { Name = "MÜTESELSİL", RangeMul = 3f, Angle = 360f,
@@ -528,25 +572,36 @@ namespace TekCan
                     new BossAttack { Name = "SENET", RangeMul = 2.6f, Angle = 26f,
                                      Repeat = 2, WindupMul = 0.75f, CostMul = 1.15f, Tint = Beam },
 
-                    // ÖZGÜN ① SİMİT — "uzaklaş" değil "YAKLAŞ". Oyuncunun ilk iki
-                    // boss'ta öğrendiği refleks burada onu öldürüyor.
+                    // ÖZGÜN SİMİT ① — "uzaklaş" değil "YAKLAŞ". İlk iki boss'ta
+                    // öğrenilen refleks burada öldürüyor.
                     // ⚠️ Hazırlık MUTLAK: göbeğe KOŞACAK süre lazım.
                     new BossAttack { Name = "TEMİNAT", RangeMul = 3f, Angle = 360f,
                                      InnerRadius = 2.4f, WindupSeconds = 1.2f,
                                      CostMul = 1.4f, Tint = Donut },
 
-                    // ÖZGÜN ① SİMİT (küçük hâli): aynı soru, çok daha dar cevapla
+                    // ÖZGÜN SİMİT ② — aynı soru, çok daha dar cevapla
                     new BossAttack { Name = "ORTAK HESAP", RangeMul = 2.2f, Angle = 360f,
                                      InnerRadius = 1.4f, WindupSeconds = 0.95f,
                                      CostMul = 1.2f, Tint = Donut },
 
-                    // ÖZGÜN ② ÇEKİM — beşinci kaçış sorusu ve en sinsisi: kaçmak
+                    // ÖZGÜN SİMİT ③ — DİLİMLİ simit: göbeği güvenli AMA yalnızca
+                    // bir yöne açılıyor. "Yaklaş" ve "yana kaç" aynı anda.
+                    new BossAttack { Name = "REHİN", RangeMul = 3.2f, Angle = 140f,
+                                     InnerRadius = 1.8f, WindupSeconds = 1f,
+                                     CostMul = 1.3f, Tint = Donut },
+
+                    // ÖZGÜN ÇEKİM ① — beşinci kaçış sorusu ve en sinsisi: kaçmak
                     // İŞE YARAMIYOR, seni geri alıyor. Bedeli bilerek düşük;
-                    // tehdit hasar değil KONUM. Kefilin dibi zaten emiyor ve
-                    // KEFALET tam oradan çıkıyor.
+                    // tehdit hasar değil KONUM. Kefilin dibi zaten emiyor.
                     new BossAttack { Name = "ZİNCİRLEME SORUMLULUK", RangeMul = 3.4f, Angle = 140f,
                                      Pull = 7f, MinPlayerRange = 3.5f, WindupSeconds = 0.9f,
                                      CostMul = 0.75f, Tint = Donut },
+
+                    // ÖZGÜN ÇEKİM ② — yakın mesafede her yönden çekiyor: simidin
+                    // göbeğine sığındıysan seni oradan da çıkarıyor.
+                    new BossAttack { Name = "İCAZET", RangeMul = 1.6f, Angle = 360f,
+                                     Pull = 4.5f, WindupSeconds = 0.9f, CostMul = 1.1f,
+                                     Tint = Donut },
                 };
         }
 
@@ -556,12 +611,12 @@ namespace TekCan
             public override string Crime => "durduğun yeri satıyor";
             public override Color Tint => new Color(0.8f, 0.45f, 0.9f);
 
-            // ⚠️ Diğerlerinden farkı: SANA GELMİYOR, durduğun YERE geliyor.
+            // İMZA MEKANİĞİ: sana gelmiyor, DURDUĞUN YERE geliyor — ve faz 2'de
+            // neredeyse iki kat sık geliyor.
             public override float GroundMarkInterval(int phase) => phase >= 2 ? 1.1f : 2.0f;
             public override float AuraDrain(Tuning t, int phase) => t.bossAuraDrain * 1f;
             public override float SpeedMultiplier(int phase) => phase >= 2 ? 1.2f : 0.85f;
 
-            // Faz 2'de MÜBAŞİR çağırıyor: onlar da uzaktan yere vuruyor.
             public override float SummonInterval(int phase) => phase >= 2 ? 8.5f : 0f;
             public override EnemyKind SummonKind => EnemyKind.Bailiff;
             public override int SummonCount(int phase) => 2;
@@ -579,22 +634,38 @@ namespace TekCan
                     new BossAttack { Name = "AÇIK ARTIRMA+", RangeMul = 3f, Angle = 26f,
                                      Repeat = 2, WindupMul = 0.6f, CostMul = 1.25f, Tint = Beam },
 
-                    // ÖZGÜN ① AÇIKLIK (gelişmiş): kapı daraldı
+                    // ÖZGÜN AÇIKLIK ① (gelişmiş): kapı 90° → 62°
                     new BossAttack { Name = "KOMİSYON+", RangeMul = 3f, Angle = 360f,
                                      SafeAngle = 62f, WindupSeconds = 1.3f,
                                      CostMul = 1.5f, Tint = Ring },
 
-                    // ÖZGÜN ① AÇIKLIK (en geniş hâli): arena kadar erişim, iğne deliği kapı
+                    // ÖZGÜN AÇIKLIK ② (gelişmiş): yakın kapı 70° → 55°
+                    new BossAttack { Name = "TELLALLIK+", RangeMul = 1.7f, Angle = 360f,
+                                     SafeAngle = 55f, WindupSeconds = 1f,
+                                     CostMul = 1.4f, Tint = Ring },
+
+                    // ÖZGÜN AÇIKLIK ③ (gelişmiş): üç kez iniyor, kapı her seferinde
+                    // yeniden yer değiştiriyor (boss her hazırlıkta sana dönüyor)
+                    new BossAttack { Name = "İHALE+", RangeMul = 3.4f, Angle = 360f,
+                                     SafeAngle = 95f, Repeat = 3, WindupSeconds = 1.2f,
+                                     CostMul = 1.35f, Tint = Ring },
+
+                    // ÖZGÜN AÇIKLIK YENİ: en geniş erişim, İĞNE DELİĞİ kapı
                     new BossAttack { Name = "MÜZAYEDE", RangeMul = 3.4f, Angle = 360f,
                                      SafeAngle = 45f, WindupSeconds = 1.6f,
                                      CostMul = 1.55f, Tint = Ring },
 
-                    // ÖZGÜN ② GERİ SIÇRAMA (gelişmiş): daha geniş, daha uzağa kaçıyor
+                    // ÖZGÜN GERİ SIÇRAMA ① (gelişmiş): sıçrayış 5 → 7
                     new BossAttack { Name = "DEVİR+", RangeMul = 1.9f, Angle = 230f,
                                      Recoil = 7f, WindupMul = 0.8f, CostMul = 1.4f, Tint = Cone },
 
-                    // YENİ: iki kez vurup iki kez çekiliyor — peşinden gidersen
-                    // ikinciyi yiyorsun, gitmezsen yer işaretleri seni buluyor
+                    // ÖZGÜN GERİ SIÇRAMA ② (gelişmiş): uzak sıçrayış 3.5 → 5
+                    new BossAttack { Name = "KAÇAK MAL+", RangeMul = 3.2f, Angle = 36f,
+                                     Recoil = 5f, MinPlayerRange = 3f, WindupMul = 0.6f,
+                                     CostMul = 1.25f, Tint = Beam },
+
+                    // ÖZGÜN YENİ: iki kez vurup iki kez çekiliyor — peşinden
+                    // gidersen ikinciyi yiyorsun, gitmezsen yer işaretleri buluyor
                     new BossAttack { Name = "HARAÇ", RangeMul = 2.6f, Angle = 100f,
                                      Recoil = 4f, Repeat = 2, CostMul = 1.3f, Tint = Cone },
                 }
@@ -609,25 +680,36 @@ namespace TekCan
                     new BossAttack { Name = "AÇIK ARTIRMA", RangeMul = 2.8f, Angle = 30f,
                                      Repeat = 2, WindupMul = 0.8f, CostMul = 1.15f, Tint = Beam },
 
-                    // ÖZGÜN ① AÇIKLIK — "uzaklaş" da değil "yaklaş" da değil:
+                    // ÖZGÜN AÇIKLIK ① — "uzaklaş" da değil "yaklaş" da değil:
                     // ARKASINA GEÇ. Aracının işi seni yanlış tarafta tutmak.
                     // ⚠️ Hazırlık MUTLAK ve UZUN: arkasına KOŞMAN gerekiyor.
                     new BossAttack { Name = "KOMİSYON", RangeMul = 2.6f, Angle = 360f,
                                      SafeAngle = 90f, WindupSeconds = 1.5f,
                                      CostMul = 1.45f, Tint = Ring },
 
-                    // ÖZGÜN ① AÇIKLIK (yakın hâli): kısa hazırlık, dar alan,
-                    // dibindeyken de aynı soruyu soruyor
+                    // ÖZGÜN AÇIKLIK ② — yakın hâli: kısa hazırlık, dar alan,
+                    // dibindeyken de aynı soruyu soruyor.
                     new BossAttack { Name = "TELLALLIK", RangeMul = 1.6f, Angle = 360f,
                                      SafeAngle = 70f, WindupSeconds = 1f,
                                      CostMul = 1.3f, Tint = Ring },
 
-                    // ÖZGÜN ② GERİ SIÇRAMA — hamlenin TERSİ. "Kaç" değil "KOVALA".
-                    // ⚠️ SİMSAR'ın kendi mekaniğiyle birleşiyor: kovalarken
-                    // durduğun yere bıraktığı işaretlerin üstünden geçiyorsun.
-                    // Tek saldırıda iki mekanik birbirine soru soruyor.
+                    // ÖZGÜN AÇIKLIK ③ — İKİ KEZ iniyor ve boss arada sana dönüyor,
+                    // yani kapı YER DEĞİŞTİRİYOR. Bir kez arkasına geçmek yetmiyor.
+                    new BossAttack { Name = "İHALE", RangeMul = 3.2f, Angle = 360f,
+                                     SafeAngle = 110f, Repeat = 2, WindupSeconds = 1.3f,
+                                     CostMul = 1.25f, Tint = Ring },
+
+                    // ÖZGÜN GERİ SIÇRAMA ① — hamlenin TERSİ. "Kaç" değil "KOVALA".
+                    // ⚠️ Kendi mekaniğiyle birleşiyor: kovalarken durduğun yere
+                    // bıraktığı işaretlerin üstünden geçiyorsun.
                     new BossAttack { Name = "DEVİR", RangeMul = 1.6f, Angle = 200f,
                                      Recoil = 5f, WindupMul = 0.9f, CostMul = 1.35f, Tint = Cone },
+
+                    // ÖZGÜN GERİ SIÇRAMA ② — uzaktan vurup daha da uzaklaşıyor.
+                    // Menzilli silahın cevabı bile mesafe kapatmayı gerektiriyor.
+                    new BossAttack { Name = "KAÇAK MAL", RangeMul = 2.8f, Angle = 40f,
+                                     Recoil = 3.5f, MinPlayerRange = 3f, WindupMul = 0.7f,
+                                     CostMul = 1.1f, Tint = Beam },
                 };
         }
 
@@ -638,14 +720,15 @@ namespace TekCan
             public override Color Tint => new Color(0.55f, 0.35f, 0.8f);
 
             public override bool RefillsOnEmpty => true;
-            public override float AuraDrain(Tuning t, int phase) => t.bossAuraDrain * 1.2f;
+            public override float AuraDrain(Tuning t, int phase)
+                => t.bossAuraDrain * (phase >= 3 ? 1.55f : phase >= 2 ? 1.35f : 1.2f);
 
-            // Vurmadığın her saniye havuzu doluyor — ondan HIZLI olmak zorundasın.
+            // İMZA MEKANİĞİ: vurmadığın her saniye havuzu doluyor.
             public override float RegenPerSecond(Tuning t, int phase)
-                => phase >= 2 ? t.usurerRegenPerSecond : 0f;
+                => phase >= 3 ? t.usurerRegenPerSecond * 1.5f
+                 : phase >= 2 ? t.usurerRegenPerSecond : 0f;
 
-            // ── FAZ 3 (Enes kararı) ───────────────────────────────────────────
-            // ⚠️ Bu, karakterin kendisi: MURABAHACI hiç kendi eliyle tahsil etmez.
+            // ⚠️ Karakterin kendisi: MURABAHACI hiç kendi eliyle tahsil etmez.
             // Faz 1'de senedini gösterir, faz 2'de faiz işletir, faz 3'te
             // ADAMLARINI YOLLAR. Öne ancak onlar bittiğinde çıkıyor.
             public override int PhaseCount => 3;
@@ -665,14 +748,23 @@ namespace TekCan
                     // ve kalkması finalin anlamı: dört alacaklıyı da yendin,
                     // şimdi hepsi tek adamda karşında.
 
-                    // KENDİ ② (en sert hâli): TÜM HARİTA, minicik güvenli nokta
+                    // DÜZ (en sert hâli): iki kez, geniş
+                    new BossAttack { Name = "VADE++", RangeMul = 1.5f, Angle = 140f,
+                                     Repeat = 2, CostMul = 1.4f, Tint = Cone },
+
+                    // KENDİ ② NOKTA (en sert hâli): TÜM HARİTA, minicik güvenli nokta
                     new BossAttack { Name = "TAM TASFİYE", RangeMul = 9f, Angle = 360f,
                                      SafeSpotRadius = 2.6f, WindupSeconds = 2.2f,
                                      CostMul = 2.2f, Tint = Ring },
 
-                    // KENDİ ① ZİNCİR (üçlü): halka → simit → açıklık.
-                    // Üç ayrı cevabı SIRAYLA vermen gerekiyor — TAHSİLDAR'ın,
-                    // KEFİL'in ve SİMSAR'ın sorusu tek nefeste.
+                    // KENDİ ② NOKTA (gelişmiş): ÜÇ KEZ — her seferinde BAŞKA yer
+                    new BossAttack { Name = "İHTARNAME++", RangeMul = 5f, Angle = 360f,
+                                     SafeSpotRadius = 3f, Repeat = 3, WindupSeconds = 1.5f,
+                                     CostMul = 1.7f, Tint = Ring },
+
+                    // KENDİ ① ZİNCİR (dörtlü): halka → simit → açıklık → ayna.
+                    // Dört ayrı cevabı SIRAYLA vermen gerekiyor; TAHSİLDAR'ın,
+                    // KEFİL'in, SİMSAR'ın ve EKSPER'in sorusu tek nefeste.
                     new BossAttack { Name = "BİLEŞİK FAİZ++", RangeMul = 2.4f, Angle = 360f,
                                      WindupSeconds = 0.9f, CostMul = 1.5f, Tint = Ring,
                                      Then = new BossAttack { Name = "…SİMİT", RangeMul = 3.2f,
@@ -680,16 +772,10 @@ namespace TekCan
                                          CostMul = 1.4f, Tint = Donut,
                                          Then = new BossAttack { Name = "…AÇIKLIK", RangeMul = 2.8f,
                                              Angle = 360f, SafeAngle = 80f, WindupSeconds = 1.2f,
-                                             CostMul = 1.4f, Tint = Ring } } },
-
-                    // EKSPER'in SAĞANAK'ı — dört ışın peş peşe
-                    new BossAttack { Name = "SON İHTAR", RangeMul = 3.4f, Angle = 22f,
-                                     Repeat = 4, WindupMul = 0.55f, CostMul = 1.25f, Tint = Beam },
-
-                    // EKSPER'in AYNA'sı
-                    new BossAttack { Name = "SON EKSPERTİZ", RangeMul = 2f, Angle = 120f,
-                                     Mirrored = true, Repeat = 2, WindupMul = 0.85f,
-                                     CostMul = 1.5f, Tint = Cone },
+                                             CostMul = 1.4f, Tint = Ring,
+                                             Then = new BossAttack { Name = "…AYNA", RangeMul = 2f,
+                                                 Angle = 130f, Mirrored = true, WindupMul = 0.7f,
+                                                 CostMul = 1.35f, Tint = Cone } } } },
 
                     // TAHSİLDAR'ın HAMLE'si + halka kapanışı
                     new BossAttack { Name = "İCRA++", RangeMul = 2.6f, Angle = 110f,
@@ -699,17 +785,27 @@ namespace TekCan
                                          Angle = 360f, WindupMul = 0.8f, CostMul = 1.45f,
                                          Tint = Ring } },
 
-                    // KEFİL'in ÇEKİM'i
+                    // TAHSİLDAR'ın HALKA'sı — iki kez, arena kadar
+                    new BossAttack { Name = "SON KUŞATMA", RangeMul = 3f, Angle = 360f,
+                                     Repeat = 2, WindupMul = 1.2f, CostMul = 1.6f, Tint = Ring },
+
+                    // EKSPER'in SAĞANAK'ı — beş ışın peş peşe
+                    new BossAttack { Name = "SON İHTAR", RangeMul = 3.4f, Angle = 22f,
+                                     Repeat = 5, WindupMul = 0.55f, CostMul = 1.25f, Tint = Beam },
+
+                    // EKSPER'in AYNA'sı
+                    new BossAttack { Name = "SON EKSPERTİZ", RangeMul = 2f, Angle = 140f,
+                                     Mirrored = true, Repeat = 2, WindupMul = 0.85f,
+                                     CostMul = 1.5f, Tint = Cone },
+
+                    // KEFİL'in ÇEKİM'i — en sert çekiş
                     new BossAttack { Name = "SON TEMİNAT", RangeMul = 3.6f, Angle = 360f,
-                                     Pull = 8f, WindupSeconds = 1f, CostMul = 1.45f, Tint = Donut },
+                                     Pull = 10f, WindupSeconds = 1f, CostMul = 1.45f,
+                                     Tint = Donut },
 
                     // SİMSAR'ın GERİ SIÇRAMA'sı
                     new BossAttack { Name = "SON DEVİR", RangeMul = 2.2f, Angle = 240f,
-                                     Recoil = 6f, WindupMul = 0.8f, CostMul = 1.45f, Tint = Cone },
-
-                    // DÜZ (her boss'un klasiği de gelişmeli)
-                    new BossAttack { Name = "VADE++", RangeMul = 1.5f, Angle = 140f,
-                                     CostMul = 1.4f, Tint = Cone },
+                                     Recoil = 8f, WindupMul = 0.8f, CostMul = 1.45f, Tint = Cone },
                 }
                 : phase >= 2
                 ? new[]
@@ -718,40 +814,59 @@ namespace TekCan
                     new BossAttack { Name = "FAİZ", RangeMul = 1.15f, Angle = 150f,
                                      Repeat = 2, WindupMul = 0.6f, CostMul = 1.1f, Tint = Cone },
 
+                    // DÜZ ② (yeni): dibindeyken hızlı geniş vuruş
+                    new BossAttack { Name = "VADE+", RangeMul = 1.5f, Angle = 110f,
+                                     MaxPlayerRange = 4f, WindupMul = 0.9f,
+                                     CostMul = 1.35f, Tint = Cone },
+
                     // MENZİLLİ (gelişmiş)
                     new BossAttack { Name = "İBRAZ+", RangeMul = 3.2f, Angle = 24f,
                                      Repeat = 2, MinPlayerRange = 3.5f, WindupMul = 0.7f,
                                      CostMul = 1.3f, Tint = Beam },
 
-                    // ÖZGÜN ① ZİNCİR (gelişmiş): halka → HEMEN halka, ikisi de büyük
-                    new BossAttack { Name = "BİLEŞİK FAİZ+", RangeMul = 2.6f, Angle = 150f,
-                                     WindupSeconds = 0.9f, CostMul = 1.4f, Tint = Cone,
-                                     Then = new BossAttack { Name = "…ve TAKSİT+", RangeMul = 1.8f,
-                                         Angle = 250f, WindupSeconds = 0.9f, CostMul = 1.45f,
-                                         Tint = Cone } },
+                    // MENZİLLİ ② (yeni): en uzun ışın — geri sarma fazında
+                    // "uzaktan yıprat" cevabını da kapatıyor
+                    new BossAttack { Name = "MUACCELİYET", RangeMul = 3.6f, Angle = 30f,
+                                     MinPlayerRange = 4f, WindupMul = 1f,
+                                     CostMul = 1.4f, Tint = Beam },
 
-                    // ÖZGÜN ① ZİNCİR (yakın hâli): koni → halka
+                    // ÖZGÜN ZİNCİR ① (gelişmiş): halka ikiden ÜÇE çıktı
                     new BossAttack { Name = "İCRA+", RangeMul = 1.5f, Angle = 220f,
                                      WindupMul = 1.1f, CostMul = 1.5f, Tint = Cone,
                                      Then = new BossAttack { Name = "…ve KAPANIŞ", RangeMul = 1.4f,
                                          Angle = 100f, WindupMul = 0.8f, CostMul = 1.35f,
+                                         Tint = Cone,
+                                         Then = new BossAttack { Name = "…ve MASRAF+", RangeMul = 1.1f,
+                                             Angle = 280f, WindupMul = 0.6f, CostMul = 1.3f,
+                                             Tint = Cone } } },
+
+                    // ÖZGÜN ZİNCİR ② (gelişmiş): üç halkalı, uzak başlangıçlı
+                    new BossAttack { Name = "BİLEŞİK FAİZ+", RangeMul = 2.6f, Angle = 150f,
+                                     WindupSeconds = 0.9f, CostMul = 1.4f, Tint = Cone,
+                                     Then = new BossAttack { Name = "…ve TAKSİT+", RangeMul = 1.8f,
+                                         Angle = 250f, WindupSeconds = 0.9f, CostMul = 1.45f,
+                                         Tint = Cone,
+                                         Then = new BossAttack { Name = "…ve GECİKME", RangeMul = 2.2f,
+                                             Angle = 110f, WindupMul = 0.7f, CostMul = 1.35f,
+                                             Tint = Cone } } },
+
+                    // ÖZGÜN ZİNCİR ③ (gelişmiş): ışın sağanağı + arkasından koni
+                    new BossAttack { Name = "PROTESTO+", RangeMul = 3.4f, Angle = 26f,
+                                     Repeat = 2, MinPlayerRange = 3.5f, WindupMul = 0.7f,
+                                     CostMul = 1.35f, Tint = Beam,
+                                     Then = new BossAttack { Name = "…ve MASRAF", RangeMul = 1.5f,
+                                         Angle = 130f, WindupMul = 0.6f, CostMul = 1.3f,
                                          Tint = Cone } },
 
-                    // ÖZGÜN ② RASTGELE NOKTA (gelişmiş): erişimi büyüdü, nokta küçüldü
+                    // ÖZGÜN NOKTA ① (gelişmiş): erişim büyüdü, nokta küçüldü
                     new BossAttack { Name = "SÖZLEŞME+", RangeMul = 6.5f, Angle = 360f,
                                      SafeSpotRadius = 2.9f, WindupSeconds = 2.1f,
                                      CostMul = 1.9f, Tint = Ring },
 
-                    // YENİ: dibindeyken hızlı geniş vuruş — yaklaşmanın bedeli
-                    new BossAttack { Name = "VADE+", RangeMul = 1.5f, Angle = 110f,
-                                     MaxPlayerRange = 4f, WindupMul = 0.9f,
-                                     CostMul = 1.35f, Tint = Cone },
-
-                    // YENİ: üçlü zincir değil ama en uzun menzilli ışın —
-                    // geri sarma fazında uzaktan yıpratma cevabını da kapatıyor
-                    new BossAttack { Name = "MUACCELİYET", RangeMul = 3.6f, Angle = 30f,
-                                     MinPlayerRange = 4f, WindupMul = 1f,
-                                     CostMul = 1.4f, Tint = Beam },
+                    // ÖZGÜN NOKTA ② (gelişmiş): iki kez, her seferinde BAŞKA nokta
+                    new BossAttack { Name = "İHTARNAME+", RangeMul = 4.2f, Angle = 360f,
+                                     SafeSpotRadius = 3.4f, Repeat = 2, WindupSeconds = 1.6f,
+                                     CostMul = 1.5f, Tint = Ring },
                 }
                 : new[]
                 {
@@ -765,7 +880,7 @@ namespace TekCan
                                      Repeat = 2, MinPlayerRange = 3.5f, WindupMul = 0.8f,
                                      CostMul = 1.25f, Tint = Beam },
 
-                    // ÖZGÜN ① ZİNCİR — "bir cevaba yerleşemezsin". Borç İŞLER:
+                    // ÖZGÜN ZİNCİR ① — "bir cevaba yerleşemezsin". Borç İŞLER:
                     // her taksit bir öncekinin üstüne biniyor.
                     new BossAttack { Name = "İCRA", RangeMul = 1.6f, Angle = 200f,
                                      WindupMul = 1.2f, CostMul = 1.45f, Tint = Cone,
@@ -773,20 +888,36 @@ namespace TekCan
                                          Angle = 150f, WindupMul = 0.6f, CostMul = 1.2f,
                                          Tint = Cone } },
 
+                    // ÖZGÜN ZİNCİR ② — uzaktan başlayıp dibine kapanıyor
                     new BossAttack { Name = "BİLEŞİK FAİZ", RangeMul = 2.4f, Angle = 120f,
                                      WindupSeconds = 0.9f, CostMul = 1.35f, Tint = Cone,
                                      Then = new BossAttack { Name = "…ve TAKSİT", RangeMul = 1.5f,
                                          Angle = 240f, WindupMul = 0.7f, CostMul = 1.4f,
                                          Tint = Cone } },
 
-                    // ÖZGÜN ② RASTGELE NOKTA — dördüncü kaçış sorusu: "uzaklaş"
-                    // değil, "yaklaş" değil, "arkasına geç" değil — ORAYA YETİŞ.
+                    // ÖZGÜN ZİNCİR ③ — ışın, sonra HEMEN koni. Hattından çıktın,
+                    // şimdi yana kaçman gerek; iki farklı cevap arka arkaya.
+                    new BossAttack { Name = "PROTESTO", RangeMul = 3f, Angle = 34f,
+                                     MinPlayerRange = 3.5f, WindupMul = 0.8f,
+                                     CostMul = 1.3f, Tint = Beam,
+                                     Then = new BossAttack { Name = "…ve MASRAF", RangeMul = 1.3f,
+                                         Angle = 120f, WindupMul = 0.6f, CostMul = 1.2f,
+                                         Tint = Cone } },
+
+                    // ÖZGÜN NOKTA ① — dördüncü kaçış sorusu: "uzaklaş" değil,
+                    // "yaklaş" değil, "arkasına geç" değil — ORAYA YETİŞ.
                     // ⚠️ Faz 1'de daha küçük ve daha cömert; faz 3'te bütün
                     // haritayı yutuyor. Mekanik önce ÖĞRETİLİYOR, sonra silah
                     // oluyor — projedeki her özgün saldırının izlediği yol.
                     new BossAttack { Name = "SÖZLEŞME", RangeMul = 5f, Angle = 360f,
                                      SafeSpotRadius = 3.2f, WindupSeconds = 2f,
                                      CostMul = 1.7f, Tint = Ring },
+
+                    // ÖZGÜN NOKTA ② — daha küçük ama İKİ KEZ: nokta her inişte
+                    // yeniden seçiliyor, yani bir kez yetişmek yetmiyor.
+                    new BossAttack { Name = "İHTARNAME", RangeMul = 3.6f, Angle = 360f,
+                                     SafeSpotRadius = 4f, Repeat = 2, WindupSeconds = 1.6f,
+                                     CostMul = 1.4f, Tint = Ring },
                 };
         }
 

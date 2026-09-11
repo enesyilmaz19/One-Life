@@ -140,6 +140,42 @@ Yalnızca "kalın bir düşman" değil: daha hızlı (×1.25), daha az uyarı ve
 daha geniş vurur (koni ×1.5), darbesi çok daha pahalı (×2.2). Menzili gövdesi kadar uzun —
 yoksa dev bir yaratık burnunun dibinden ıskalıyor gibi görünüyordu.
 
+### ⚠️⚠️ FAZ ATLAYINCA ETKİLER GÜÇLENİR (2026-09-11, Enes)
+
+Enes: *"faz atlayınca etkilerinin güçlenmesini"* — ilk raporunda da vardı:
+*"faz değişiminde yeni özgün saldırılar eklenip hem mekanik hem de saldırılar
+güçlenecek."*
+
+**Kural, iki ayrı kapıyla tutuluyor:**
+
+① **Saldırılar.** Her şeklin bir sonraki fazdaki en sert örneği, öncekini
+geçmek zorunda. Ölçü: `bedel × erişim × tekrar × güvenli yerin DARALMASI`.
+Son çarpan kuralın kalbi — göbeği 2.4'ten 1.1'e düşen bir simit, erişimi
+aynı kaldıysa "güçlenmemiş" sayılırdı; oysa oyuncunun hissettiği asıl şey
+güvenli yerin daralmasıdır.
+
+② **Mekanik.** Boss'un imzasının toplam baskısı (emme · hız · hasat kesintisi ·
+geri sarma · yer işareti · çağırma · bölünme · rakip kapısı) faz başına
+artmak zorunda.
+
+⚠️ Mekanik tarafında **TOPLAM** ölçülüyor, kadranlar tek tek değil. Sebep
+tasarım: TAHSİLDAR faz 2'de emmeyi BIRAKIP hızlanıyor — "aynı tehdidin daha
+çoğu değil, BAŞKA bir soru". Her kadranın tek tek artmasını şart koşmak o
+takası yasaklardı.
+
+### ⚠️ ÖLÜ MEKANİK — alan dolu ama hiçbir şey değiştirmiyor
+
+Tırmanış kuralını yazarken iki sessiz ölüm yolu çıktı, ikisi de "yeşil test,
+bozuk oyun" üretirdi:
+
+- **Açıklık**, koni zaten arkaya ulaşmıyorsa (`Angle + SafeAngle ≤ 360`)
+  hiçbir şey değiştirmez — oyuncuya zaten güvende olduğu yeri yeşille
+  gösterip "mekanik var" sanmamıza yol açardı.
+- **Ayna**, koni 180°'den genişse anlamsızdır — ön ve arka zaten kapsanıyordur.
+
+Kapı ikisini de reddediyor. Bu, "mekanik doğru, etki yalan" hata ailesinin
+tasarım tarafındaki hâli.
+
 ### ⚠️⚠️ ÖZGÜN ŞEKİL TEK SAHİPLİDİR (2026-09-11, Enes)
 
 Enes: *"özgün diye her bossta aynı 'özgün' saldırıları koymuşsun neredeyse,

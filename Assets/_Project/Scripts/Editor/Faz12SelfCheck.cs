@@ -315,6 +315,92 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️⚠️ boss sırası boyunca EMME ve BEDEL tırmanıyor",
                             tersTırmanış == 0, tersTırmanış);
 
+            // ── 8e) ⚠️⚠️ FAZ ATLAYINCA ETKİLER GÜÇLENİYOR ────────────────────
+            //    Enes: *"faz atlayınca etkilerinin güçlenmesini [istiyorum]"* —
+            //    ilk raporunda da yazmıştı: *"faz değişiminde yeni özgün
+            //    saldırılar eklenip hem mekanik hem de saldırılar güçlenecek."*
+            //
+            //    ⚠️ Bu kural ELLE tutulamaz. Dağarcık 97 saldırıya çıktı; bir
+            //    sayıyı yanlış yöne çevirmek gözle görülmez, oyunda "faz 2 daha
+            //    kolay geldi" diye çıkar. Ve "+ koydum, demek ki güçlendi"
+            //    varsayımı bir AD kuralıdır, etki değil.
+            //
+            //    Ölçü her şekle AYNI formülle bakıyor: bedel × erişim × tekrar ×
+            //    güvenli yerin DARALMASI. Son çarpan olmasaydı göbeği 2.4'ten
+            //    1.1'e düşen bir simit "güçlenmemiş" sayılırdı — oysa oyuncunun
+            //    hissettiği asıl şey tam olarak o.
+            int gerileyen = 0;
+            foreach (var b in BossKind.All)
+                for (int f = 1; f < b.PhaseCount; f++)
+                {
+                    var önceki = ŞekilSertlikleri(b.Attacks(f));
+                    var sonraki = ŞekilSertlikleri(b.Attacks(f + 1));
+                    foreach (var kv in önceki)
+                    {
+                        if (!sonraki.TryGetValue(kv.Key, out float yeni)) continue;  // o fazda yok
+                        if (yeni <= kv.Value + 0.001f)
+                        {
+                            gerileyen++;
+                            Debug.LogError($"    {b.Name} {kv.Key}: faz {f} {kv.Value:0.0} → " +
+                                           $"faz {f + 1} {yeni:0.0} (GÜÇLENMEMİŞ)");
+                        }
+                    }
+
+                    // ZİNCİR bir şekil değil, UZUNLUK. Ayrıca ölçülüyor.
+                    int z1 = EnUzunZincir(b.Attacks(f)), z2 = EnUzunZincir(b.Attacks(f + 1));
+                    if (z1 > 1 && z2 <= z1)
+                    {
+                        gerileyen++;
+                        Debug.LogError($"    {b.Name} ZİNCİR: faz {f} {z1} halka → faz {f + 1} {z2}");
+                    }
+                }
+            failed += Check(ref total, "⚠️⚠️ her ŞEKİL bir sonraki fazda GÜÇLENİYOR",
+                            gerileyen == 0, gerileyen);
+
+            // ── 8f) ⚠️ BOSS'UN KENDİ MEKANİĞİ de faz başına güçleniyor ────────
+            //    Saldırılar güçlenip mekanik aynı kalsaydı faz geçişi "aynı adam,
+            //    daha sert vuruyor" olurdu. Enes'in istediği bu değil: mekanik de
+            //    tırmanmalı. Ölçü boss'un KENDİ yöntemlerinden okunuyor.
+            //
+            //    ⚠️ TEK TEK değil TOPLAM ölçülüyor, ve bu bilerek: TAHSİLDAR faz
+            //    2'de emmeyi BIRAKIP hızlanıyor — tasarımın kendisi bu ("aynı
+            //    tehdidin daha çoğu değil, BAŞKA bir soru"). Her kadranın tek tek
+            //    artmasını şart koşsaydım o takası yasaklamış olurdum. Kural şu:
+            //    boss bir kadranı bırakabilir, ama toplam baskı ARTMAK zorunda.
+            int mekanikGerileyen = 0;
+            foreach (var b in BossKind.All)
+            {
+                var ölçüler = new System.Collections.Generic.List<float>();
+                for (int f = 1; f <= b.PhaseCount; f++) ölçüler.Add(Baskı(b, t, f));
+                Debug.Log($"    {b.Name} mekanik baskısı: {string.Join(" → ", ölçüler.ConvertAll(x => x.ToString("0.00")))}");
+                for (int f = 1; f < ölçüler.Count; f++)
+                    if (ölçüler[f] <= ölçüler[f - 1] + 0.001f) mekanikGerileyen++;
+            }
+            failed += Check(ref total, "⚠️⚠️ boss'un MEKANİĞİ de faz başına güçleniyor",
+                            mekanikGerileyen == 0, mekanikGerileyen);
+
+            // ── 8g) ⚠️ ÖLÜ MEKANİK YOK — alan doldurulmuş ama işe yaramıyor ────
+            //    İki sessiz ölüm yolu var ve ikisi de "yeşil test, bozuk oyun"
+            //    üretirdi: ① arkada güvenli açıklık, ama koni zaten arkaya
+            //    ulaşmıyorsa açıklık hiçbir şey değiştirmez; ② ayna ön+arka
+            //    vurur, ama koni 180°'den genişse zaten her yeri vuruyordur.
+            int ölüMekanik = 0;
+            foreach (var a in TümSaldırılar())
+            {
+                if (a.SafeAngle > 0f && a.Angle + a.SafeAngle <= 360f)
+                {
+                    ölüMekanik++;
+                    Debug.LogError($"    {a.Name}: açıklık ÖLÜ (koni {a.Angle}° zaten arkaya ulaşmıyor)");
+                }
+                if (a.Mirrored && a.Angle >= 180f)
+                {
+                    ölüMekanik++;
+                    Debug.LogError($"    {a.Name}: ayna ÖLÜ (koni {a.Angle}° zaten her yeri vuruyor)");
+                }
+            }
+            failed += Check(ref total, "⚠️ açıklık ve ayna GERÇEKTEN bir şey değiştiriyor",
+                            ölüMekanik == 0, ölüMekanik);
+
             // ── 9) ⚠️ SİMİT gerçekten TERS soruyor — göbeği GÜVENLİ ──
             //    Bu, halkanın tersi. Çalışmazsa oyuncunun "uzaklaş" refleksi doğru olur
             //    ve saldırının varlık sebebi kalmaz.
@@ -802,6 +888,70 @@ namespace TekCan.EditorTools
             var c = mpb.GetColor("_BaseColor");
             return c.g > 0.7f && c.g > c.r + 0.3f;
         }
+
+        /// <summary>
+        /// Bir saldırının SERTLİĞİ. Bedel × erişim × tekrar × güvenli yerin
+        /// DARALMASI.
+        ///
+        /// ⚠️ Son çarpan olmazsa kural yarım kalırdı: göbeği 2.4'ten 1.1'e düşen
+        /// bir simit, erişimi aynı kaldıysa "güçlenmemiş" sayılırdı — oysa
+        /// oyuncunun hissettiği asıl şey tam olarak güvenli yerin daralması.
+        /// Bölenlerdeki taban değerler sıfıra bölmeyi değil, SAÇMA ÇARPANI
+        /// engelliyor (0.1'lik bir göbek 30× sertlik yazardı).
+        /// </summary>
+        static float Sertlik(BossAttack a)
+        {
+            float daralma = a.InnerRadius > 0f ? 3f / Mathf.Max(0.5f, a.InnerRadius)
+                          : a.SafeAngle > 0f ? 180f / Mathf.Max(20f, a.SafeAngle)
+                          : a.SafeSpotRadius > 0f ? 4f / Mathf.Max(1f, a.SafeSpotRadius)
+                          : 1f;
+            return a.CostMul * a.RangeMul * Mathf.Max(1, a.Repeat) * daralma;
+        }
+
+        /// <summary>Her şeklin bu fazdaki EN SERT örneği.</summary>
+        static System.Collections.Generic.Dictionary<string, float> ŞekilSertlikleri(BossAttack[] xs)
+        {
+            var d = new System.Collections.Generic.Dictionary<string, float>();
+            foreach (var a in xs)
+            {
+                string ş = Şekil(a);
+                float s = Sertlik(a);
+                if (!d.TryGetValue(ş, out float v) || s > v) d[ş] = s;
+            }
+            return d;
+        }
+
+        static int EnUzunZincir(BossAttack[] xs)
+        {
+            int en = 0;
+            foreach (var a in xs)
+            {
+                int n = 0;
+                for (var x = a; x != null; x = x.Then) n++;
+                if (n > en) en = n;
+            }
+            return en;
+        }
+
+        /// <summary>
+        /// Boss'un KENDİ mekaniğinin bu fazdaki baskısı — saldırıları değil,
+        /// imzasını ölçüyor (emme, hız, hasat kesintisi, geri sarma, yer
+        /// işareti, çağırma, bölünme, rakip kapısı).
+        ///
+        /// ⚠️ Boss'un kendi yöntemlerinden okunuyor, elle tutulan bir tablodan
+        /// değil: tablo olsaydı bir kadran değiştiğinde tablo eskir ve kapı
+        /// doğru kodu yanlış bulurdu (Faz 18'in "özgün" listesi tam olarak
+        /// böyle eskimişti).
+        /// </summary>
+        static float Baskı(BossKind b, Tuning t, int faz) =>
+              b.AuraDrain(t, faz)
+            + (b.SpeedMultiplier(faz) - 1f) * 2f
+            + (1f - b.PlayerHarvest(faz)) * 2f
+            + b.RegenPerSecond(t, faz) * 2f
+            + (b.GroundMarkInterval(faz) > 0f ? 3f / b.GroundMarkInterval(faz) : 0f)
+            + (b.SummonInterval(faz) > 0f ? 8f / b.SummonInterval(faz) : 0f)
+            + (b.SummonsRivalsInPhase == faz ? 6f : 0f)
+            + (b.SplitsOnPhaseTwo && faz >= 2 ? 2f : 0f);
 
         /// <summary>
         /// Saldırıyı ÖZELLİĞİNDEN bulur, indisinden değil.

@@ -10,6 +10,78 @@
 - [x] ✅ **Faz 10 playtest GEÇTİ** (2026-08-26) — bölgeler farklı hissettiriyor,
       zincir akıyor. **Zorluk çok yüksek, ayar ertelendi** *(Faz 10 bölümüne yazıldı)*
 
+### 🔧 PLAYTEST RAPORU 2026-09-11 ek — **DAĞARCIK + FAZ TIRMANIŞI**
+
+Enes: *"daha çok özgün saldırı istemiştim"* · *"faz atlayınca etkilerinin
+güçlenmesini"*. İkisinde de haklıydı — tabanda durmuştum.
+
+- [x] 🎭 **Dağarcık 69 → 97 saldırı.** "En az 2 / 3-4" bir TABANDI, hedef değil
+      (senin sözün: *"iki tane yapıp bırakmayabilirsin"*). Artık hepsi tabanın
+      belirgin üstünde:
+
+      | boss | faz 1 (özgün) | faz 2 (özgün) | faz 3 |
+      |---|---|---|---|
+      | ① TAHSİLDAR | 6 (4) | 8 (6) | — |
+      | ② EKSPER | 6 (4) | 8 (6) | — |
+      | ③ KEFİL | 7 (5) | 8 (6) | — |
+      | ④ SİMSAR | 7 (5) | 9 (7) | — |
+      | ⑤ MURABAHACI | 7 (5) | 9 (7) | **10 (9)** |
+
+      Yeni gelenler, hepsi kendi imzasının BAŞKA bir sorusu:
+      **KUŞATMA / YAKA PAÇA** (TAHSİLDAR) · **SAYIM / ÇİFTE KAYIT** (EKSPER) ·
+      **REHİN / İCAZET** (KEFİL — dilimli simit, yakın çekim) ·
+      **İHALE / KAÇAK MAL** (SİMSAR — kapısı YER DEĞİŞTİREN açıklık, uzaktan
+      vurup kaçan sıçrama) · **PROTESTO / İHTARNAME** (MURABAHACI — ışın→koni
+      zinciri, iki kez inen ve her seferinde BAŞKA yer seçen nokta) ·
+      **SON KUŞATMA** (faz 3).
+
+- [x] ⬆️ **Faz atlayınca etkiler güçleniyor — artık bir KURAL, göz kararı değil.**
+      Her şeklin bir sonraki fazdaki en sert örneği, öncekini geçmek zorunda.
+      Ölçü: **bedel × erişim × tekrar × güvenli yerin DARALMASI**.
+
+      Son çarpan kritik: göbeği 2.4'ten 1.1'e düşen bir simit, erişimi aynı
+      kalsa "güçlenmemiş" sayılırdı — oysa oyuncunun hissettiği asıl şey o.
+
+      Somut tırmanışlar: simit göbeği **2.4 → 1.7 → 1.1** · açıklık kapısı
+      **90° → 62° → 45°** · çekiş **7 → 9 → 10** · geri sıçrama **5 → 7 → 8** ·
+      sağanak **3 → 4 → 5** · hamle **4.5 → 6.0** · zincir **2 → 3 → 4 halka** ·
+      güvenli nokta **3.2 → 2.9 → 2.6**.
+
+- [x] ⬆️ **Boss'un MEKANİĞİ de faz başına güçleniyor** — ayrı kapı, boss'un
+      kendi yöntemlerinden okunuyor:
+
+      | boss | faz 1 → 2 → 3 |
+      |---|---|
+      | TAHSİLDAR | 0.61 → 2.04 |
+      | EKSPER | 1.93 → 3.99 |
+      | KEFİL | 0.99 → 4.10 |
+      | SİMSAR | 2.30 → 5.17 |
+      | MURABAHACI | 1.32 → 14.55 → **25.71** |
+
+      ⚠️ TOPLAM ölçülüyor, tek tek değil — TAHSİLDAR faz 2'de emmeyi BIRAKIP
+      hızlanıyor ("aynı tehdidin daha çoğu değil, başka bir soru"). Her kadranın
+      tek tek artmasını şart koşsaydım o takası yasaklamış olurdum.
+
+- [x] 🐛 **Ölü mekanik kapısı** — bunu yazarken iki sessiz ölüm yolu buldum:
+      arkadaki güvenli açıklık, koni zaten arkaya ulaşmıyorsa hiçbir şey
+      değiştirmez; ayna da koni 180°'den genişse anlamsız. İkisi de "yeşil
+      test, ölü mekanik" üretirdi. Kapı artık ikisini de reddediyor.
+
+**Kapılar 22/22 yeşil** (Faz 12: 53 → 66 kontrol). Tırmanış kuralını bilerek
+BOZUP kapının kırmızıya döndüğünü doğruladım — boş kural değil.
+
+#### 🎮 BU EKTE NE TEST EDİLİR
+
+1. Aynı boss'u iki kez dövüş — **aynı saldırıları görmemelisin**, liste büyüdü.
+2. **Faz 2'ye geçince** simidin güvenli göbeği ve açıklığın kapısı gözle
+   görülür şekilde DARALMALI, çekim seni daha sert almalı.
+3. **SİMSAR'ın İHALE'si**: kapı iki kez iniyor ve arada boss sana döndüğü için
+   **kapı yer değiştiriyor** — bir kez arkasına geçmek yetmemeli.
+4. **MURABAHACI'nın İHTARNAME'si**: güvenli nokta iki kez, her seferinde
+   **başka yerde**. Faz 3'te üç kez.
+5. **KEFİL'in REHİN'i**: simit ama dilimli — göbek güvenli, ama yalnızca bir
+   yöne açılıyor.
+
 ### 🔧 PLAYTEST RAPORU 2026-09-11 — **KOD BİTTİ, PLAYTEST BEKLİYOR**
 
 Enes'in yedi maddesi. Hepsi yapıldı; ikisi düşündüğümden derin çıktı.
