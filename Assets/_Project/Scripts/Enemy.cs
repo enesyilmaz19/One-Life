@@ -416,37 +416,49 @@ namespace TekCan
 
         int _attackCount;
 
-        int _menzilFaz = -1;
-        float _tetikMenzil;
+        int _dağarcıkFaz = -1;
+        BossAttack[] _dağarcık;
+
+        /// <summary>
+        /// Bu fazın saldırı dağarcığı — faz başına BİR KEZ alınıyor.
+        /// ⚠️ `Boss.Attacks()` her çağrıda YENİ dizi üretiyor; kareye bir
+        /// çağırmak çöp toplayıcıyı beslerdi.
+        /// </summary>
+        BossAttack[] Dağarcık
+        {
+            get
+            {
+                if (_dağarcıkFaz != Phase) { _dağarcıkFaz = Phase; _dağarcık = Boss.Attacks(Phase); }
+                return _dağarcık;
+            }
+        }
 
         /// <summary>
         /// Saldırıya GİRME mesafesi. Sıradan düşmanda kendi menzili; boss'ta
         /// o fazın EN UZUN erişimi.
         ///
-        /// ⚠️⚠️ Bu satır olmadan mesafeye göre saldırı seçmek İMKÂNSIZDI ve
-        /// Enes'in gördüğü şey tam olarak buydu: *"bosslarda uzakta olduğunda
-        /// menzilli saldıracak... mekaniği koymamışsın, sırayla hamlelerini
-        /// yapıyor gibi."* Eski koşul `<= AttackRange` idi — yani boss önce
-        /// YAKIN DÖVÜŞE kadar yürüyor, ancak orada saldırıya giriyordu.
-        /// "Uzaktayken" diye bir durum hiç oluşmuyordu; menzilli saldırılar
-        /// dekordu, oyuncunun dibinden savruluyorlardı.
+        /// ⚠️⚠️ Bu olmadan mesafeye göre saldırı seçmek İMKÂNSIZDI ve Enes'in
+        /// gördüğü şey tam olarak buydu: *"bosslarda uzakta olduğunda menzilli
+        /// saldıracak... mekaniği koymamışsın, sırayla hamlelerini yapıyor
+        /// gibi."* Eski koşul `<= AttackRange` idi — yani boss önce YAKIN
+        /// DÖVÜŞE kadar yürüyor, ancak orada saldırıya giriyordu. "Uzaktayken"
+        /// diye bir durum hiç oluşmuyordu; menzilli saldırılar dekordu.
         ///
-        /// ⚠️ Faz başına BİR KEZ hesaplanıyor: `Boss.Attacks()` her çağrıda
-        /// yeni dizi üretiyor, kareye bir okumak çöp toplayıcıyı beslerdi.
+        /// ⚠️ SONUÇ önbelleğe alınmıyor, yalnızca DAĞARCIK alınıyor. İlk
+        /// yazışımda sonucu faz başına bir kez hesaplıyordum — ama `AttackRange`
+        /// boss'ta `Radius`'u da içeriyor ve `Radius` isabet parlamasında
+        /// %28'e kadar şişiyor (bkz. `_flashTimer` ölçeklemesi). Yani boss tam
+        /// vurulduğu karede hesaplanan menzil BÜTÜN FAZ boyunca şişik kalırdı:
+        /// geçici bir titreşimi kalıcı bir hataya çeviren, klasik bayat önbellek.
         /// </summary>
         float TetikMenzili
         {
             get
             {
                 if (Boss == null) return AttackRange;
-                if (_menzilFaz != Phase)
-                {
-                    _menzilFaz = Phase;
-                    _tetikMenzil = AttackRange;
-                    foreach (var a in Boss.Attacks(Phase))
-                        _tetikMenzil = Mathf.Max(_tetikMenzil, AttackRange * a.RangeMul + a.Lunge);
-                }
-                return _tetikMenzil;
+                float r = AttackRange, en = r;
+                foreach (var a in Dağarcık) en = Mathf.Max(en, r * a.RangeMul + a.Lunge);
+                return en;
             }
         }
 
@@ -561,7 +573,15 @@ namespace TekCan
             Paint();
         }
 
-        static readonly System.Collections.Generic.List<BossAttack> _adaylar
+        /// <summary>
+        /// ⚠️ ÖRNEĞE ait, statik DEĞİL. Paylaşılan bir statik liste burada
+        /// teknik olarak güvenli olurdu (tek iş parçacığı, tek çağrı içinde
+        /// dolduruluyor ve okunuyor) — ama bu projede paylaşılan statik durum
+        /// iki kez sessiz hataya dönüştü (`Enemy.All`, `GroundMark.ActiveLiens`)
+        /// ve her ikisi de "güvenli görünüyordu". Boss sayısı bir avuç; bir
+        /// liste başına düşen bedel, o riski taşımaya değmez.
+        /// </summary>
+        readonly System.Collections.Generic.List<BossAttack> _adaylar
             = new System.Collections.Generic.List<BossAttack>();
 
         /// <summary>
@@ -620,7 +640,7 @@ namespace TekCan
                 return;
             }
 
-            var liste = Boss.Attacks(Phase);
+            var liste = Dağarcık;                 // faz başına tek dizi, kareye sıfır çöp
             float mesafe = FlatDistanceToPlayer();
             bool uzak = mesafe > AttackRange * BossAttack.UzakEşiği;
             int sıra = Mathf.Abs(_attackCount - 1);

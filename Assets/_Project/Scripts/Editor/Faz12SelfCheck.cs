@@ -772,6 +772,59 @@ namespace TekCan.EditorTools
             }
             Temizle(rootC);
 
+            // ── 16d) ⚠️⚠️ TEKRARLI saldırı GERÇEKTEN yeniden soruyor mu — ETKİ ──
+            //    Enes'e "İHTARNAME'nin noktası her inişte başka yerde" ve
+            //    "İHALE'nin kapısı yer değiştiriyor" diye söyledim. İkisi de
+            //    `EnterWindup`'ın tekrar dalından geçmesine bağlı — yani bir
+            //    İDDİA'ydılar, ölçüm değil. Bu projede tam olarak o boşluktan
+            //    dört hata çıktı; ikisi de artık ölçülüyor.
+
+            // ① Güvenli NOKTA her tekrarda yeniden seçiliyor
+            var (rootN, clockN, bossN) = Kur(t, Bul("MURABAHACI"));
+            var tekrarlıNokta = Ara(Bul("MURABAHACI").Attacks(1),
+                                    a => a.SafeSpotRadius > 0f && a.Repeat > 1);
+            failed += Check(ref total, "TEKRARLI güvenli-nokta saldırısı var",
+                            tekrarlıNokta != null, 1);
+            if (tekrarlıNokta != null)
+            {
+                zincir.SetValue(bossN, tekrarlıNokta);
+                hazırlık.Invoke(bossN, null);
+                Vector3 nokta1 = bossN.CurrentSafeSpot;
+                hazırlık.Invoke(bossN, null);          // TEKRAR dalı
+                Vector3 nokta2 = bossN.CurrentSafeSpot;
+
+                failed += Check(ref total, "⚠️ hâlâ AYNI saldırı (tekrar dalı saldırıyı değiştirmiyor)",
+                                bossN.CurrentAttack == tekrarlıNokta, 1);
+                failed += Check(ref total, "⚠️⚠️ güvenli nokta HER İNİŞTE yeniden seçiliyor",
+                                Vector3.Distance(nokta1, nokta2) > 0.5f,
+                                Vector3.Distance(nokta1, nokta2));
+            }
+            Temizle(rootN);
+
+            // ② AÇIKLIĞIN KAPISI yer değiştiriyor — boss her hazırlıkta sana dönüyor
+            var (rootK, clockK, bossK) = Kur(t, Bul("SİMSAR"));
+            var oyuncuK = rootK.transform.Find("player");
+            var tekrarlıKapı = Ara(Bul("SİMSAR").Attacks(1),
+                                   a => a.SafeAngle > 0f && a.Repeat > 1);
+            failed += Check(ref total, "TEKRARLI açıklık saldırısı var", tekrarlıKapı != null, 1);
+            if (tekrarlıKapı != null)
+            {
+                oyuncuK.position = bossK.transform.position + Vector3.forward * 3f;
+                zincir.SetValue(bossK, tekrarlıKapı);
+                hazırlık.Invoke(bossK, null);
+                Vector3 yön1 = bossK.transform.forward;
+
+                // Oyuncu KARŞI tarafa geçiyor: kapı arkada olduğuna göre
+                // boss dönmezse oyuncu aynı yerde güvende kalırdı.
+                oyuncuK.position = bossK.transform.position - Vector3.forward * 3f;
+                hazırlık.Invoke(bossK, null);          // TEKRAR dalı
+                Vector3 yön2 = bossK.transform.forward;
+
+                failed += Check(ref total, "⚠️⚠️ tekrarda boss YENİDEN dönüyor (kapı yer değiştiriyor)",
+                                Vector3.Dot(yön1, yön2) < -0.5f, Vector3.Dot(yön1, yön2));
+            }
+            Temizle(rootK);
+
             // ── 17) Bölge → boss eşlemesi ──
             bool eşleşme = true;
             for (int i = 0; i < BossKind.All.Length; i++)
