@@ -574,6 +574,118 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️⚠️ dağarcıktaki HER saldırı yüzeye çıkıyor (ölü saldırı yok)",
                             kapsamsız == 0, kapsamsız);
 
+            // ── 16c) ⚠️⚠️ ÜÇ YENİ ŞEKİL GERÇEKTEN ÇALIŞIYOR MU — ETKİ ────────
+            //    Enes'in "her bossta farklı olacak" şartını üç yeni şekille
+            //    karşıladım. Yalnızca "alanı dolu mu" diye sorsaydım, bu projenin
+            //    en pahalı hata türünü (mekanik doğru, etki yalan) YENİ bir
+            //    mekanikte tekrarlamış olurdum — dört kez oldu, dördünü de Enes
+            //    oyunda buldu. Üçü de burada ÖLÇÜLÜYOR.
+            var vuruş = typeof(Enemy).GetMethod("EnterStrike",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var zincir = typeof(Enemy).GetField("_chained",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var hazırlık = typeof(Enemy).GetMethod("EnterWindup",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // ① AYNA — ARKA da vuruyor, YANLAR güvende kalıyor
+            var (rootY, clockY, bossY) = Kur(t, Bul("EKSPER"));
+            var oyuncuY = rootY.transform.Find("player");
+            var ayna = Ara(Bul("EKSPER").Attacks(1), a => a.Mirrored);
+            failed += Check(ref total, "AYNA saldırısı bulundu", ayna != null, 1);
+
+            // Bulunamazsa KIRMIZI kontrol yeter; istisna atmak AllChecks'in
+            // kalan kapılarını da hiç ölçülmeden düşürürdü.
+            if (ayna != null) {
+                zincir.SetValue(bossY, ayna);    // üretimin kendi yolu
+                hazırlık.Invoke(bossY, null);
+                vuruş.Invoke(bossY, null);
+                float rY = bossY.CurrentStrikeRadius * 0.5f;
+
+                oyuncuY.position = bossY.transform.position + bossY.transform.forward * rY;
+                bool önY = bossY.PlayerInStrikeCone();
+                oyuncuY.position = bossY.transform.position - bossY.transform.forward * rY;
+                bool arkaY = bossY.PlayerInStrikeCone();
+                oyuncuY.position = bossY.transform.position + bossY.transform.right * rY;
+                bool yanY = bossY.PlayerInStrikeCone();
+
+                failed += Check(ref total, "⚠️ AYNA: ÖNDEKİ vuruluyor", önY, 1);
+                failed += Check(ref total, "⚠️ AYNA: ARKADAKİ de vuruluyor (geri çekilmek kurtarmıyor)",
+                                arkaY, 1);
+                failed += Check(ref total, "⚠️ AYNA: YANDAKİ kurtuluyor (yoksa halkadan farkı kalmaz)",
+                                !yanY, 0);
+            }
+            Temizle(rootY);
+
+            // ② GERİ SIÇRAMA — boss vuruş anında UZAKLAŞIYOR, arenada kalıyor
+            var (rootG, clockG, bossG) = Kur(t, Bul("SİMSAR"));
+            var oyuncuG = rootG.transform.Find("player");
+            var sıçra = Ara(Bul("SİMSAR").Attacks(1), a => a.Recoil > 0f);
+            failed += Check(ref total, "GERİ SIÇRAMA saldırısı bulundu", sıçra != null, 1);
+
+            oyuncuG.position = bossG.transform.position + Vector3.forward * 2f;
+            // Bulunamazsa KIRMIZI kontrol yeter; istisna atmak AllChecks'in
+            // kalan kapılarını da hiç ölçülmeden düşürürdü.
+            if (sıçra != null) {
+                zincir.SetValue(bossG, sıçra);
+                hazırlık.Invoke(bossG, null);
+                float önceMesafe = Vector3.Distance(bossG.transform.position, oyuncuG.position);
+                vuruş.Invoke(bossG, null);
+                float sonraMesafe = Vector3.Distance(bossG.transform.position, oyuncuG.position);
+
+                failed += Check(ref total, "⚠️ GERİ SIÇRAMA: boss GERÇEKTEN uzaklaşıyor (kovala)",
+                                sonraMesafe > önceMesafe + 1f, sonraMesafe - önceMesafe);
+
+                // ⚠️ ...ama arenadan ÇIKMIYOR. Çıksaydı boss erişilemez olurdu ve
+                //    dövüş kilitlenirdi — arena sınırı bu oyunda yeni (Enes bildirdi).
+                var dG = bossG.transform.position - Bootstrap.ArenaCenter; dG.y = 0f;
+                failed += Check(ref total, "⚠️ ...ve arenanın İÇİNDE kalıyor",
+                                dG.magnitude <= t.arenaRadius + 0.01f, dG.magnitude);
+            }
+            Temizle(rootG);
+
+            // ③ ÇEKİM — oyuncu GERÇEKTEN boss'a doğru YER DEĞİŞTİRİYOR
+            //    ⚠️ Zincirin SON halkası ölçülüyor: hız vektörü doğru yöne bakıyor
+            //    mu değil, oyuncunun KONUMU yaklaştı mı. `TickHurt` bu yüzden
+            //    `dt`'yi dışarıdan alıyor (CLAUDE.md tuzak 3).
+            var (rootC, clockC, bossC) = Kur(t, Bul("KEFİL"));
+            var oyuncuC = rootC.transform.Find("player");
+            var pcC = oyuncuC.gameObject.AddComponent<PlayerController>();
+            pcC.Init(t, null);
+
+            var çekim = Ara(Bul("KEFİL").Attacks(1), a => a.Pull > 0f);
+            failed += Check(ref total, "ÇEKİM saldırısı bulundu", çekim != null, 1);
+
+            oyuncuC.position = bossC.transform.position + Vector3.forward * 4f;
+            // Bulunamazsa KIRMIZI kontrol yeter; istisna atmak AllChecks'in
+            // kalan kapılarını da hiç ölçülmeden düşürürdü.
+            if (çekim != null) {
+                zincir.SetValue(bossC, çekim);
+                hazırlık.Invoke(bossC, null);
+                float çekimÖnce = Vector3.Distance(bossC.transform.position, oyuncuC.position);
+                vuruş.Invoke(bossC, null);
+                for (int i = 0; i < 20; i++) pcC.TickHurt(0.02f);   // dt dışarıdan
+                float çekimSonra = Vector3.Distance(bossC.transform.position, oyuncuC.position);
+
+                failed += Check(ref total, "⚠️⚠️ ÇEKİM: oyuncu GERÇEKTEN boss'a çekiliyor",
+                                çekimSonra < çekimÖnce - 0.5f, çekimÖnce - çekimSonra);
+
+                // ⚠️ Ve dash DOKUNULMAZLIĞI çekimden de korumalı: korumasaydı dash
+                //    "kaçtım ama yine de içeri alındım" olur ve vaadi delinirdi.
+                oyuncuC.position = bossC.transform.position + Vector3.forward * 4f;
+                typeof(PlayerController).GetField("_iFrames",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    .SetValue(pcC, 1f);
+                float dokunulmazÖnce = Vector3.Distance(bossC.transform.position, oyuncuC.position);
+                vuruş.Invoke(bossC, null);
+                for (int i = 0; i < 20; i++) pcC.TickHurt(0.02f);
+                float dokunulmazSonra = Vector3.Distance(bossC.transform.position, oyuncuC.position);
+
+                failed += Check(ref total, "⚠️ ÇEKİM dash DOKUNULMAZLIĞINI delmiyor",
+                                Mathf.Abs(dokunulmazSonra - dokunulmazÖnce) < 0.01f,
+                                dokunulmazÖnce - dokunulmazSonra);
+            }
+            Temizle(rootC);
+
             // ── 17) Bölge → boss eşlemesi ──
             bool eşleşme = true;
             for (int i = 0; i < BossKind.All.Length; i++)
@@ -689,6 +801,17 @@ namespace TekCan.EditorTools
             r.GetPropertyBlock(mpb);
             var c = mpb.GetColor("_BaseColor");
             return c.g > 0.7f && c.g > c.r + 0.3f;
+        }
+
+        /// <summary>
+        /// Saldırıyı ÖZELLİĞİNDEN bulur, indisinden değil.
+        /// ⚠️ `Attacks(1)[3]` yazmak kırılgan: liste sırası değişince test
+        /// sessizce BAŞKA bir saldırıyı ölçer ve yeşil kalır.
+        /// </summary>
+        static BossAttack Ara(BossAttack[] xs, System.Func<BossAttack, bool> şart)
+        {
+            foreach (var a in xs) if (şart(a)) return a;
+            return null;
         }
 
         static BossAttack İlkAçıklık(BossAttack[] xs)

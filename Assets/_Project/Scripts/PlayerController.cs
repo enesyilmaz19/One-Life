@@ -129,7 +129,7 @@ namespace TekCan
             _iFrames -= Time.deltaTime;
             for (int i = 0; i < _specialCd.Length; i++) _specialCd[i] -= Time.deltaTime;
             TickFlurry(Time.deltaTime);
-            TickHurt();
+            TickHurt(Time.deltaTime);
             ReadWeaponSwap();
 
             Vector3 input = ReadMove();
@@ -822,7 +822,12 @@ namespace TekCan
             if (d.sqrMagnitude > 0.0001f) _knockback = d.normalized * force;
         }
 
-        void TickHurt()
+        /// <summary>
+        /// ⚠️ `dt` DIŞARIDAN geliyor (CLAUDE.md tuzak 3). Editör modunda
+        /// `Time.deltaTime` 0 olduğu için içeriden okusaydı savrulma ve ÇEKİM
+        /// yalnızca "alan dolu mu" diye sorulabilirdi — ETKİ değil ÖZELLİK.
+        /// </summary>
+        public void TickHurt(float dt)
         {
             if (_hurtFlash > 0f)
             {
@@ -832,8 +837,8 @@ namespace TekCan
 
             if (_knockback.sqrMagnitude > 0.0001f)
             {
-                transform.position += _knockback * Time.deltaTime;
-                _knockback = Vector3.Lerp(_knockback, Vector3.zero, 12f * Time.deltaTime);
+                transform.position += _knockback * dt;
+                _knockback = Vector3.Lerp(_knockback, Vector3.zero, 12f * dt);
                 if (_knockback.sqrMagnitude < 0.0001f) _knockback = Vector3.zero;
             }
         }
