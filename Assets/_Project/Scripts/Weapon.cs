@@ -141,9 +141,6 @@ namespace TekCan
         /// <summary>Dash-atak isabet ederse savurma bedeli geri gelir (FAİZLİ).</summary>
         public virtual bool DashRefundsCost => false;
 
-        /// <summary>Dash BAŞLANGIÇ noktasına ipotek bırakır (İPOTEK) — kaçarken tuzak.</summary>
-        public virtual bool DashLeavesMark => false;
-
         /// <summary>
         /// &gt;0 ise bu mesafeden YAKINDAKİNE vuramaz — menzilli silahın ölü bölgesi.
         ///
@@ -368,7 +365,6 @@ namespace TekCan
         /// ⚠️ Dash BAŞLADIĞIN yere ipotek bırakıyor — kaçarken kurulan tuzak.
         /// Silahın sorusu tahmin; dash onu KENDİ KAÇIŞINLA soruyor: peşinden
         /// gelenler senin bıraktığın yere basıyor.
-        public override bool DashLeavesMark => true;
     }
 
     /// <summary>

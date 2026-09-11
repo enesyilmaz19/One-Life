@@ -168,10 +168,22 @@ namespace TekCan.EditorTools
                 //    + eskilerin gelişmiş hâli). Aynıysa "faz" diye bir şey yok demektir.
                 if (Dizi(f1) == Dizi(f2)) fazAynı++;
 
-                // Aynı boss içinde iki saldırı aynı soruyu soruyorsa biri gereksiz.
-                for (int i = 0; i < f1.Length; i++)
-                    for (int j = i + 1; j < f1.Length; j++)
-                        if (Soru(f1[i]) == Soru(f1[j])) kopya++;
+                // ⚠️ Aynı boss içinde iki saldırı aynı soruyu soruyorsa biri
+                // gereksiz — Enes: "hiçbir bossta birbirinin aynısı iki saldırı
+                // olmayacak." Tarama artık HER FAZI geziyor: faz 1'le sınırlı
+                // olduğu için faz 2 ve 3'teki kopyalar sessizce geçiyordu, ve
+                // Enes'in gördüğü tekrarların çoğu tam oradaydı.
+                for (int f = 1; f <= b.PhaseCount; f++)
+                {
+                    var liste = b.Attacks(f);
+                    for (int i = 0; i < liste.Length; i++)
+                        for (int j = i + 1; j < liste.Length; j++)
+                            if (Soru(liste[i]) == Soru(liste[j]))
+                            {
+                                kopya++;
+                                Debug.LogError($"    {b.Name} faz {f}: {liste[i].Name} ≡ {liste[j].Name}");
+                            }
+                }
             }
             failed += Check(ref total, "her saldırının adı var", adsız == 0, adsız);
             failed += Check(ref total, "⚠️ FAZ 2 dağarcığı faz 1'in AYNISI DEĞİL",
@@ -192,6 +204,116 @@ namespace TekCan.EditorTools
             }
             failed += Check(ref total, "⚠️ her boss faz 2'de YENİ bir saldırı kazanıyor",
                             yenisizFaz == 0, yenisizFaz);
+
+            // ── 8b) ⚠️⚠️ ÖZGÜN ŞEKİL TEK SAHİPLİ ─────────────────────────────
+            //    Enes: *"özgün diye her bossta aynı 'özgün' saldırıları koymuşsun
+            //    neredeyse, amk her bossta farklı olacak."*
+            //
+            //    ⚠️ Bu kapı yazılmadan önce beş boss'un beşi de halka + simit +
+            //    açıklık + hamle kullanıyordu; "özgün" sıfatı yalnızca ADIN
+            //    üstündeydi. Kural göz kararı tutulamaz — dağarcığa her dokunuşta
+            //    sessizce delinir. Ölçü burada duruyor.
+            //
+            //    ⚠️ İSTİSNA: MURABAHACI'nın FAZ 3'ü. "Son boss önceki tüm
+            //    bossların özelliğini de kullanabilsin" (Enes). İstisna faz 3'e
+            //    KİLİTLİ: faz 1-2'de de serbest olsaydı final bir TOPLAM değil
+            //    bir TEKRAR olurdu ve faz 3'ün anlamı kalmazdı.
+            int ihlal = 0;
+            var ihlalMetni = new System.Text.StringBuilder();
+            foreach (var b in BossKind.All)
+                for (int f = 1; f <= b.PhaseCount; f++)
+                {
+                    if (f >= 3) continue;                    // finalin toplama fazı
+                    foreach (var kök in b.Attacks(f))
+                        for (var a = kök; a != null; a = a.Then)
+                        {
+                            string ş = Şekil(a);
+                            foreach (var (şekil, sahip) in Tekel)
+                                if (ş == şekil && b.Name != sahip)
+                                {
+                                    ihlal++;
+                                    ihlalMetni.Append($" {b.Name}/{a.Name}={ş}(sahibi {sahip})");
+                                }
+                        }
+                }
+            if (ihlal > 0) Debug.LogError("    tekel ihlali:" + ihlalMetni);
+            failed += Check(ref total, "⚠️⚠️ her ÖZGÜN şeklin TEK sahibi var (faz 3 hariç)",
+                            ihlal == 0, ihlal);
+
+            // ZİNCİR bir şekil değil MODİFİKATÖR (`Then`), o yüzden `Şekil()`
+            // onu görmüyor — ama tekeli aynı: "bir cevaba yerleşemezsin" sorusu
+            // MURABAHACI'nın. Ayrı soruluyor, yoksa kuraldan sessizce kaçardı.
+            int zincirİhlali = 0;
+            foreach (var b in BossKind.All)
+                for (int f = 1; f <= b.PhaseCount && f < 3; f++)
+                    foreach (var a in b.Attacks(f))
+                        if (a.Then != null && b.Name != "MURABAHACI") zincirİhlali++;
+            failed += Check(ref total, "⚠️ ZİNCİR yalnızca MURABAHACI'da (faz 3 hariç)",
+                            zincirİhlali == 0, zincirİhlali);
+
+            // Tekelin öbür yarısı: sahip o şekli GERÇEKTEN kullanıyor mu.
+            // Yalnızca "başkası kullanmasın" denseydi kural boş listeyle de geçerdi.
+            int sahipsiz = 0;
+            foreach (var (şekil, sahip) in Tekel)
+            {
+                bool var = false;
+                var sb = Bul(sahip);
+                for (int f = 1; f <= 2; f++)
+                    foreach (var kök in sb.Attacks(f))
+                        for (var a = kök; a != null; a = a.Then)
+                            if (Şekil(a) == şekil) var = true;
+                if (!var) { sahipsiz++; Debug.LogError($"    {sahip} kendi imzasını ({şekil}) kullanmıyor"); }
+            }
+            failed += Check(ref total, "⚠️ her boss KENDİ imzasını gerçekten kullanıyor",
+                            sahipsiz == 0, sahipsiz);
+
+            // ── 8c) ⚠️ PAYLAŞILAN İKİLİ her fazda var — Enes'in şartı ─────────
+            //    "Her birinde özgün bir mekanik, genel bir DÜZ saldırı ve
+            //     MENZİLLİ saldırı." Ve mesafeye göre seçim geldiği için bu
+            //    artık bir üslup değil bir GEREKLİLİK: yakın bandı boş olan
+            //    boss dibindeyken çaresiz kalır.
+            int bandsız = 0;
+            foreach (var b in BossKind.All)
+                for (int f = 1; f <= b.PhaseCount; f++)
+                {
+                    bool yakın = false, uzakV = false;
+                    foreach (var a in b.Attacks(f))
+                    {
+                        if (a.HerBant) { yakın = true; uzakV = true; }
+                        else if (a.Uzak) uzakV = true;
+                        else yakın = true;
+                    }
+                    if (!yakın || !uzakV)
+                    {
+                        bandsız++;
+                        Debug.LogError($"    {b.Name} faz {f}: yakın={yakın} uzak={uzakV}");
+                    }
+                }
+            failed += Check(ref total, "⚠️ her boss'un HER fazında hem YAKIN hem UZAK saldırı var",
+                            bandsız == 0, bandsız);
+
+            // ── 8d) ⚠️⚠️ ZORLUK TIRMANIYOR — boss sırası bir SÖZ ──────────────
+            //    Enes: *"aga ilk boss 2.sinden daha güçlü durmuş :D"*
+            //    Haklıydı ve göz kararı bulunamazdı: TAHSİLDAR TAM aura emiyordu
+            //    (beşinin en yükseği) ve bedel çarpanları da en ağırıydı.
+            //    Oyuncunun doğrudan hissettiği iki kadran bunlar — ikisi de
+            //    boss sırasıyla ARTMAK zorunda.
+            float öncekiAura = -1f, öncekiBedel = -1f;
+            int tersTırmanış = 0;
+            foreach (var b in BossKind.All)
+            {
+                float aura = b.AuraDrain(t, 1);
+                float bedel = 0f;
+                foreach (var a in b.Attacks(1)) bedel += a.CostMul;
+                bedel /= b.Attacks(1).Length;
+
+                Debug.Log($"    {b.Name}: aura {aura:0.00} · ortalama bedel {bedel:0.00} · " +
+                          $"faz1 {b.Attacks(1).Length} saldırı");
+                if (aura < öncekiAura - 0.001f || bedel < öncekiBedel - 0.001f) tersTırmanış++;
+                öncekiAura = aura; öncekiBedel = bedel;
+            }
+            failed += Check(ref total, "⚠️⚠️ boss sırası boyunca EMME ve BEDEL tırmanıyor",
+                            tersTırmanış == 0, tersTırmanış);
 
             // ── 9) ⚠️ SİMİT gerçekten TERS soruyor — göbeği GÜVENLİ ──
             //    Bu, halkanın tersi. Çalışmazsa oyuncunun "uzaklaş" refleksi doğru olur
@@ -225,13 +347,17 @@ namespace TekCan.EditorTools
             //    Öne konsaydı boss hazırlık boyunca oyuncuya döndüğü için oyuncu
             //    DAİMA içinde kalır ve saldırı hiç isabet etmezdi — mekanik sessizce
             //    anlamsızlaşırdı. Bu kontrol tam olarak onu yakalıyor.
-            var açıklıklı = İlkAçıklık(son.Attacks(1)) ?? İlkAçıklık(son.Attacks(2));
-            failed += Check(ref total, "SON BOSS'un güvenli açıklıklı saldırısı var",
+            // ⚠️ Açıklığın sahibi artık SİMSAR (şekil tekeli). Mekanik SAHİBİNDE
+            //    ölçülüyor — son boss'ta aramak, tekel kuralından sonra kapıyı
+            //    yalnızca faz 3'e bakan bir kapıya çevirirdi.
+            var açıklıkBoss = Bul("SİMSAR");
+            var açıklıklı = İlkAçıklık(açıklıkBoss.Attacks(1)) ?? İlkAçıklık(açıklıkBoss.Attacks(2));
+            failed += Check(ref total, "AÇIKLIĞIN SAHİBİ (SİMSAR) o saldırıyı taşıyor",
                             açıklıklı != null, 1);
 
             if (açıklıklı != null)
             {
-                var (rootA, clockA, bossA) = Kur(t, son);
+                var (rootA, clockA, bossA) = Kur(t, açıklıkBoss);
                 var windup = typeof(Enemy).GetMethod("EnterWindup",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 var strike = typeof(Enemy).GetMethod("EnterStrike",
@@ -366,6 +492,88 @@ namespace TekCan.EditorTools
                 Object.DestroyImmediate(g.gameObject);
             Temizle(rootS);
 
+            // ── 16b) ⚠️⚠️ MESAFEYE GÖRE SALDIRI SEÇİMİ — ETKİ ────────────────
+            //    Enes: *"aga bosslarda uzakta olduğunda menzilli saldıracak,
+            //    yakında ise yakın saldırılarını yapacak mekaniği koymamışsın.
+            //    sırayla hamlelerini yapıyor gibi."*
+            //
+            //    ⚠️ Bu bir ÖZELLİK testi olamaz: eski kodda da `MinPlayerRange`
+            //    alanı VARDI, yani "mesafe filtresi var mı" diye sorsaydık test
+            //    yeşil yanar ve Enes'in gördüğü hata yerinde dururdu. Soru şu:
+            //    boss UZAKTAYKEN gerçekten uzak saldırı mı seçiyor.
+            var pick = typeof(Enemy).GetMethod("PickAttack",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var sayaç = typeof(Enemy).GetField("_attackCount",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            int yanlışBant = 0, kapsamsız = 0;
+            foreach (var b in BossKind.All)
+            {
+                var (rootM, clockM, bossM) = Kur(t, b);
+                var oyuncuM = rootM.transform.Find("player");
+                float menzil = bossM.CurrentStrikeRadius;   // saldırısızken temel menzil
+
+                // ① UZAKTA → uzak saldırı · YAKINDA → yakın saldırı
+                //    ⚠️ "Uzak" mesafesi boss'un KENDİ tetik menzilinden alınıyor,
+                //    testin uydurduğu bir sayıdan değil: ilk yazımda 4× menzil
+                //    yazmıştım ve HİÇBİR saldırı oraya erişemediği için test
+                //    üretimi değil kendi varsayımını ölçüyordu.
+                foreach (bool uzakta in new[] { false, true })
+                {
+                    float d = uzakta ? bossM.AttackTriggerRange * 0.9f : menzil * 0.6f;
+                    oyuncuM.position = bossM.transform.position + bossM.transform.forward * d;
+                    for (int i = 0; i < 12; i++)
+                    {
+                        sayaç.SetValue(bossM, i);
+                        pick.Invoke(bossM, null);
+                        var seçilen = bossM.CurrentAttack;
+                        if (seçilen == null || seçilen.HerBant) continue;   // alan: iki banda da uyar
+                        if (seçilen.Uzak != uzakta)
+                        {
+                            yanlışBant++;
+                            Debug.LogError($"    {b.Name} {(uzakta ? "UZAKTA" : "YAKINDA")} " +
+                                           $"→ {seçilen.Name} (menzil {seçilen.RangeMul:0.0})");
+                        }
+                    }
+                }
+
+                // ② ⚠️ HER SALDIRI YÜZEYE ÇIKIYOR mu. Enes: *"faz 2'deki yeni özgün
+                //    saldırıların hiçbirini yapmamışsın."* Aynı kökün ikinci yüzü:
+                //    tek sıra + uzun liste = sondakiler pratikte hiç gelmiyordu.
+                for (int f = 1; f <= b.PhaseCount; f++)
+                {
+                    var liste = b.Attacks(f);
+                    var görülenAd = new System.Collections.Generic.HashSet<string>();
+                    // Fazı otomatik özelliğin ARKA ALANINDAN kuruyoruz: üretime
+                    // yalnızca test için bir kapı açmak, o kapının oyunda da
+                    // açılabildiği anlamına gelirdi.
+                    typeof(Enemy).GetProperty("Phase").GetSetMethod(true)
+                                 .Invoke(bossM, new object[] { f });
+                    foreach (float çarpan in new[] { 0.5f, 1.2f, 2f, 3f, 5f, 7f })
+                    {
+                        oyuncuM.position = bossM.transform.position
+                                         + bossM.transform.forward * (menzil * çarpan);
+                        for (int i = 0; i < liste.Length * 2; i++)
+                        {
+                            sayaç.SetValue(bossM, i);
+                            pick.Invoke(bossM, null);
+                            if (bossM.CurrentAttack != null) görülenAd.Add(bossM.CurrentAttack.Name);
+                        }
+                    }
+                    foreach (var a in liste)
+                        if (!görülenAd.Contains(a.Name))
+                        {
+                            kapsamsız++;
+                            Debug.LogError($"    {b.Name} faz {f}: {a.Name} HİÇ seçilmiyor");
+                        }
+                }
+                Temizle(rootM);
+            }
+            failed += Check(ref total, "⚠️⚠️ UZAKTA menzilli, YAKINDA yakın saldırı seçiliyor",
+                            yanlışBant == 0, yanlışBant);
+            failed += Check(ref total, "⚠️⚠️ dağarcıktaki HER saldırı yüzeye çıkıyor (ölü saldırı yok)",
+                            kapsamsız == 0, kapsamsız);
+
             // ── 17) Bölge → boss eşlemesi ──
             bool eşleşme = true;
             for (int i = 0; i < BossKind.All.Length; i++)
@@ -385,19 +593,70 @@ namespace TekCan.EditorTools
             $"{b.SpeedMultiplier(2)}|{b.RegenPerSecond(t, 2)}|{b.AuraDrain(t, 1)}|{b.AuraDrain(t, 2)}";
 
         /// <summary>
+        /// Saldırının ŞEKLİ — yani oyuncuya sorduğu KAÇIŞ SORUSU.
+        /// ⚠️ Tek sahipli olanlar (`Sahip`) bu adlarla eşleşiyor.
+        /// </summary>
+        public static string Şekil(BossAttack a) =>
+              a.SafeSpotRadius > 0f ? "NOKTA(oraya yetiş)"
+            : a.InnerRadius > 0f    ? "SİMİT(yaklaş)"
+            : a.SafeAngle > 0f      ? "AÇIKLIK(arkasına geç)"
+            : a.Mirrored            ? "AYNA(yana kaç, geri değil)"
+            : a.Pull > 0f           ? "ÇEKİM(kaçmak işe yaramaz)"
+            : a.Recoil > 0f         ? "GERİ SIÇRAMA(kovala)"
+            : a.Lunge > 0f          ? "HAMLE(üstüne geliyor)"
+            : a.Repeat >= 3         ? "SAĞANAK(bir kez kaçmak yetmez)"
+            : a.Angle >= 360f       ? "HALKA(uzaklaş)"
+            : a.Angle > 0f && a.Angle < 40f ? "IŞIN(hattan çık)"
+                                    : "KONİ(yana kaç)";
+
+        /// <summary>
         /// Saldırının SORDUĞU SORU — adı değil. İki saldırı farklı ad taşıyıp aynı
         /// soruyu soruyorsa çeşitlilik sahtedir; test buna bakıyor.
+        ///
+        /// ⚠️ Eskiden imzada `menzil={RangeMul:0.0}` vardı ve KAÇAMAK oydu:
+        /// menzili 3.0 yerine 3.2 yazmak iki özdeş saldırıyı "farklı" gösteriyordu.
+        /// Enes oyunda gördü — *"hiçbir bossta birbirinin aynısı iki saldırı
+        /// olmayacak"*. Yerine oyuncunun GERÇEKTEN hissettiği şeyler kondu:
+        /// alanın açısı, güvenli yerin genişliği ve hangi mesafede soruluyor.
         /// </summary>
         static string Soru(BossAttack a)
         {
-            string şekil = a.InnerRadius > 0f ? "SİMİT(yaklaş)"
-                         : a.SafeAngle > 0f ? "AÇIKLIK(arkasına geç)"
-                         : a.Angle >= 360f ? "HALKA(uzaklaş)"
-                         : a.Angle > 0f && a.Angle < 40f ? "IŞIN(hattan çık)"
-                         : "KONİ(yana kaç)";
-            return $"{şekil}|tekrar={a.Repeat > 1}|zincir={a.Then != null}" +
-                   $"|hamle={a.Lunge > 0f}|menzil={a.RangeMul:0.0}";
+            string açı = a.Angle >= 360f ? "halka"
+                       : a.Angle >= 120f ? "geniş"
+                       : a.Angle >= 40f  ? "orta"
+                                         : "dar";
+
+            // Güvenli yerin genişliği: 2.4 birimlik göbekte rahat durursun,
+            // 1.2'lik göbek iğne deliğidir. Aynı şekil, BAŞKA problem.
+            float ölçü = a.InnerRadius > 0f ? a.InnerRadius
+                       : a.SafeAngle > 0f ? a.SafeAngle / 30f
+                       : a.SafeSpotRadius;
+            string bant = ölçü <= 0f ? "-"
+                        : ölçü < 1.6f ? "iğne"
+                        : ölçü < 2.3f ? "dar"
+                                      : "geniş";
+
+            return $"{Şekil(a)}|{açı}|{bant}|tekrar={a.Repeat > 1}" +
+                   $"|zincir={a.Then != null}|uzak={a.Uzak}|herBant={a.HerBant}";
         }
+
+        /// <summary>
+        /// TEK SAHİPLİ şekiller: hangi boss'un imzası hangisi.
+        /// ⚠️ Paylaşılan yalnızca KONİ ve IŞIN — Enes ikisini herkese şart
+        /// koştu ("genel bir düz saldırı ve menzilli saldırı"). Gerisi tekelli.
+        /// </summary>
+        static readonly (string şekil, string sahip)[] Tekel =
+        {
+            ("HALKA(uzaklaş)",            "TAHSİLDAR"),
+            ("HAMLE(üstüne geliyor)",     "TAHSİLDAR"),
+            ("SAĞANAK(bir kez kaçmak yetmez)", "EKSPER"),
+            ("AYNA(yana kaç, geri değil)",     "EKSPER"),
+            ("SİMİT(yaklaş)",             "KEFİL"),
+            ("ÇEKİM(kaçmak işe yaramaz)", "KEFİL"),
+            ("AÇIKLIK(arkasına geç)",     "SİMSAR"),
+            ("GERİ SIÇRAMA(kovala)",      "SİMSAR"),
+            ("NOKTA(oraya yetiş)",        "MURABAHACI"),
+        };
 
         static string Dizi(BossAttack[] xs)
         {
@@ -415,7 +674,7 @@ namespace TekCan.EditorTools
         {
             var liste = new System.Collections.Generic.List<BossAttack>();
             foreach (var b in BossKind.All)
-                for (int f = 1; f <= 2; f++)
+                for (int f = 1; f <= b.PhaseCount; f++)     // ⚠️ faz 3 DÂHİL
                     foreach (var a in b.Attacks(f))
                         for (var x = a; x != null; x = x.Then) liste.Add(x);
             return liste;

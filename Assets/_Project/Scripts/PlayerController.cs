@@ -38,7 +38,6 @@ namespace TekCan
         int _flurryLeft;
         float _flurryTimer;
         WeaponSpecial _flurrySpecial;
-        Vector3 _dashStart;          // İPOTEK dash'i buraya işaret bırakıyor
 
         TrailRenderer _dashTrail;    // yalnızca dash boyunca çizer, bkz. BuildDashTrail
         bool _dashAttackQueued;
@@ -440,7 +439,6 @@ namespace TekCan
                 if (nişan.sqrMagnitude > 0.0001f) _dashDir = -nişan.normalized;
             }
 
-            _dashStart = transform.position;
             _dashTimer = _t.dashDuration;
             _dashCd = Clock.Instance != null ? Clock.Instance.DashCooldown : _t.dashCooldown;
             _iFrames = _t.iFrameDuration;
@@ -506,13 +504,6 @@ namespace TekCan
             // sorusu "tutar mı"; dash onu en zor haliyle soruyor (hareket halinde,
             // tek hedef) ve doğru cevabı ödüllendiriyor.
             if (Weapon.DashRefundsCost && hits > 0) Clock.Instance?.Add(_t.faizliSwingCost);
-
-            // ⚠️ İPOTEK: dash BAŞLADIĞIN yere işaret bırakıyor — kaçarken kurulan
-            // tuzak. Peşinden gelenler senin bıraktığın yere basıyor.
-            if (Weapon.DashLeavesMark && GroundMark.ActiveLiens <= 0)
-                GroundMark.SpawnLien(_t, _dashStart, Weapon.GroundMarkRadius(_t),
-                                     Weapon.GroundMarkDelay(_t), WeaponDamage(),
-                                     Weapon.HarvestMultiplier, transform.parent);
 
             Weapon.OnStrike(Clock.Instance, _t, hits, kills);
         }
@@ -809,6 +800,26 @@ namespace TekCan
             Paint();
 
             return inen;
+        }
+
+        /// <summary>
+        /// KEFİL'in imzası: oyuncuyu KENDİNE çeker. "Borcu garantiye aldı" —
+        /// seni bıraktığı yerde bırakmıyor, yanına alıyor (ve orada emiyor).
+        ///
+        /// ⚠️ Geri itilmeyle AYNI kanalı kullanıyor (`_knockback`), ters yönde:
+        /// ikinci bir konum sürücüsü yazmak, arena sınırı ve dash'le iki ayrı
+        /// yerde uzlaşmak demekti. Aynı kanal = aynı sönümleme, aynı sınır.
+        ///
+        /// ⚠️ Dokunulmazken çekmiyor: dash hem darbeden hem ÇEKİMDEN kurtarmalı,
+        /// yoksa "dash'le kaçtım ama yine de içeri alındım" olur ve dash'in
+        /// vaadi delinir.
+        /// </summary>
+        public void Yank(Vector3 toward, float force)
+        {
+            if (Invulnerable) return;
+            Vector3 d = toward - transform.position;
+            d.y = 0f;
+            if (d.sqrMagnitude > 0.0001f) _knockback = d.normalized * force;
         }
 
         void TickHurt()

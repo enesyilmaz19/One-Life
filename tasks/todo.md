@@ -10,6 +10,91 @@
 - [x] ✅ **Faz 10 playtest GEÇTİ** (2026-08-26) — bölgeler farklı hissettiriyor,
       zincir akıyor. **Zorluk çok yüksek, ayar ertelendi** *(Faz 10 bölümüne yazıldı)*
 
+### 🔧 PLAYTEST RAPORU 2026-09-11 — **KOD BİTTİ, PLAYTEST BEKLİYOR**
+
+Enes'in yedi maddesi. Hepsi yapıldı; ikisi düşündüğümden derin çıktı.
+
+- [x] 🐛 **İPOTEK hayalet saldırısı** — *"hareket ederken arkamda ipoteğin düz
+      saldırıları çıkıyor, hasar vermiyor sadece efekti çıkıyo."*
+      Sebep: dash-atak `_dashStart`'a (yani ARKANA) bir ipotek bırakıyordu
+      (`DashLeavesMark`, benim eklediğim bir süs). Ve İPOTEK'te aynı anda
+      TEK ipotek yaşayabildiği için o hayalet, senin NİŞAN ALDIĞIN ipoteğin
+      yerini de çalıyordu. **İki şikâyet, tek sebep.** Kanca silindi —
+      silahın asıl dash kimliği (dash'te yer işareti değil DOĞRUDAN yay,
+      menzilli silahın yakın cevabı) zaten vardı ve yerinde duruyor.
+- [x] 🎯 **Boss'lar mesafeye göre saldırıyor** — *"uzakta menzilli, yakında
+      yakın... sırayla hamlelerini yapıyor gibi."*
+      ⚠️ İki ayrı hata vardı, ikincisi asıl olanıydı:
+      ① seçim listeyi SIRAYLA dönüyordu (mesafe filtresi birkaç saldırıdaydı);
+      ② **boss saldırıya ancak `AttackRange` içine girince giriyordu** — yani
+      önce yakın dövüşe kadar YÜRÜYOR, orada saldırıyordu. "Uzaktayken" diye
+      bir durum hiç oluşmuyordu; menzilli saldırılar dekordu.
+      Artık tetik menzili = o fazın EN UZUN erişimi, seçim de mesafe bandına
+      göre. 360°'lik alan saldırıları iki banda da uyuyor (yoksa finalin
+      TÜM HARİTA saldırısı, dibine yapışan oyuncuya karşı hiç yapılmazdı).
+- [x] 🎯 **Faz 2'nin yeni saldırıları artık yapılıyor** — aynı kökün ikinci yüzü.
+      Tek sıra + uzun liste = sondakiler ancak dövüş çok uzun sürerse geliyordu.
+      Kapı artık **her saldırının yüzeye çıktığını** ölçüyor (ölü saldırı yok).
+- [x] 🎭 **Her boss'un ÖZGÜN şekli artık gerçekten kendine ait** — *"özgün diye
+      her bossta aynı 'özgün' saldırıları koymuşsun."* Haklıydı: beşinin beşi de
+      halka + simit + açıklık + hamle kullanıyordu, "özgün" yalnızca ADIN
+      üstündeydi. **Şekil tekeli** kuruldu (kapı tutuyor):
+
+      | boss | imza ① | imza ② |
+      |---|---|---|
+      | ① TAHSİLDAR | **HALKA** — uzaklaş | **HAMLE** — üstüne geliyor |
+      | ② EKSPER | **SAĞANAK** — bir kez kaçmak yetmez | **AYNA** *(yeni)* — ön+arka vurur, geri çekilme yok |
+      | ③ KEFİL | **SİMİT** — yaklaş | **ÇEKİM** *(yeni)* — seni kendine alır |
+      | ④ SİMSAR | **AÇIKLIK** — arkasına geç | **GERİ SIÇRAMA** *(yeni)* — vurur ve çekilir, kovala |
+      | ⑤ MURABAHACI | **ZİNCİR** — yerleşemezsin | **RASTGELE NOKTA** — oraya yetiş |
+
+      Paylaşılan yalnızca **KONİ** ve **IŞIN** — ikisini sen herkese şart
+      koşmuştun ("genel bir düz saldırı ve menzilli saldırı").
+      **Tek istisna MURABAHACI'nın FAZ 3'ü:** orada hepsini kullanıyor
+      (senin kararın). İstisna faz 3'e kilitli — faz 1-2'de de serbest olsaydı
+      final bir TOPLAM değil bir TEKRAR olurdu.
+- [x] 🎭 **Aynı boss'ta iki özdeş saldırı yok** — eski ölçüde kaçamak vardı:
+      imzaya `menzil=3.0` yazılıyordu, yani 3.0 yerine 3.2 yazmak iki özdeş
+      saldırıyı "farklı" gösteriyordu. Ölçü artık oyuncunun HİSSETTİĞİ şeye
+      bakıyor (alanın açısı, güvenli yerin genişliği, hangi mesafede) ve
+      tarama **her fazı** geziyor — eskiden yalnızca faz 1'e bakıyordu, senin
+      gördüğün tekrarların çoğu tam da faz 2-3'teydi.
+- [x] ⚖️ **İlk boss artık ikincisinden zayıf** — *"aga ilk boss 2.sinden daha
+      güçlü durmuş :D"*. Sebebi ortadaydı: TAHSİLDAR **tam** aura emiyordu
+      (beşinin en yükseği) ve bedel çarpanları da en ağırıydı. Göz kararı
+      düzeltilemezdi, kural yazıldı — **emme ve ortalama bedel boss sırasıyla
+      tırmanmak zorunda**, kapı ölçüyor:
+
+      | boss | aura | ortalama bedel |
+      |---|---:|---:|
+      | TAHSİLDAR | 0.61 | 1.06 |
+      | EKSPER | 0.83 | 1.16 |
+      | KEFİL | 0.99 | 1.22 |
+      | SİMSAR | 1.10 | 1.28 |
+      | MURABAHACI | 1.32 | 1.39 |
+
+- [x] ⚖️ **Genel hareket hızı** 6 → **6.6** *(asset'ten — orada kayıtlı)*
+- [x] ⚖️ **FAİZLİ hasar** ×1.6 → **×1.75** *(asset'te yok, .cs varsayılanı geçerli)*
+
+**Kapılar:** 22/22 yeşil. Yeni kapılar: şekil tekeli · zincir tekeli · her fazda
+yakın+uzak bant · zorluk tırmanışı · **mesafeye göre seçim (etki)** · **ölü saldırı yok**.
+
+#### 🎮 NASIL TEST EDİLİR
+
+1. **İPOTEK** al (tuş 4), koşarken dash + saldırı yap → **arkanda hiçbir şey
+   çıkmamalı**. Sonra normal sol tıkla nişan al → ipotek **oraya** düşmeli ve
+   **hasar vermeli**. Eskiden hayalet yeri çalıyordu.
+2. **Boss dövüşünde uzakta dur** → artık sana uzaktan vuruyor (ışın/hamle/alan).
+   **Dibine gir** → yakın saldırılarına geçiyor. Eskiden ikisi de aynıydı.
+3. **Boss 1 ve boss 2'yi karşılaştır** — ilki gözle görülür şekilde daha hafif
+   olmalı.
+4. **Boss'ları sırayla gez ve saldırılara bak:** EKSPER'in ÖN+ARKA vuran
+   AMORTİSMAN'ı, KEFİL'in seni kendine çeken ZİNCİRLEME SORUMLULUK'u,
+   SİMSAR'ın vurup geri sıçrayan DEVİR'i **yalnızca o boss'ta** olmalı.
+5. Faz 2'ye geçir → **yeni adlar** görmelisin (KELEPÇE, REZERV, MÜTESELSİL,
+   MÜZAYEDE, HARAÇ…). Eskiden çoğu hiç gelmiyordu.
+6. **FAİZLİ** ve genel hareket: biraz daha akıcı/sert gelmeli.
+
 ### 📋 PLAYTEST RAPORU 2026-09-02 — SIRADAKİ İŞLER
 
 Enes'in raporundan çıkan **yapılacaklar**. ✅ olanlar bu oturumda yapıldı.

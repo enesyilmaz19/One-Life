@@ -384,7 +384,7 @@ namespace TekCan
                 case State.Chase:
                     _attackTimer -= Time.deltaTime;
                     ChaseMove();
-                    if (_attackTimer <= 0f && FlatDistanceToPlayer() <= AttackRange)
+                    if (_attackTimer <= 0f && FlatDistanceToPlayer() <= TetikMenzili)
                         EnterWindup();
                     break;
 
@@ -415,6 +415,43 @@ namespace TekCan
         }
 
         int _attackCount;
+
+        int _menzilFaz = -1;
+        float _tetikMenzil;
+
+        /// <summary>
+        /// Saldırıya GİRME mesafesi. Sıradan düşmanda kendi menzili; boss'ta
+        /// o fazın EN UZUN erişimi.
+        ///
+        /// ⚠️⚠️ Bu satır olmadan mesafeye göre saldırı seçmek İMKÂNSIZDI ve
+        /// Enes'in gördüğü şey tam olarak buydu: *"bosslarda uzakta olduğunda
+        /// menzilli saldıracak... mekaniği koymamışsın, sırayla hamlelerini
+        /// yapıyor gibi."* Eski koşul `<= AttackRange` idi — yani boss önce
+        /// YAKIN DÖVÜŞE kadar yürüyor, ancak orada saldırıya giriyordu.
+        /// "Uzaktayken" diye bir durum hiç oluşmuyordu; menzilli saldırılar
+        /// dekordu, oyuncunun dibinden savruluyorlardı.
+        ///
+        /// ⚠️ Faz başına BİR KEZ hesaplanıyor: `Boss.Attacks()` her çağrıda
+        /// yeni dizi üretiyor, kareye bir okumak çöp toplayıcıyı beslerdi.
+        /// </summary>
+        float TetikMenzili
+        {
+            get
+            {
+                if (Boss == null) return AttackRange;
+                if (_menzilFaz != Phase)
+                {
+                    _menzilFaz = Phase;
+                    _tetikMenzil = AttackRange;
+                    foreach (var a in Boss.Attacks(Phase))
+                        _tetikMenzil = Mathf.Max(_tetikMenzil, AttackRange * a.RangeMul + a.Lunge);
+                }
+                return _tetikMenzil;
+            }
+        }
+
+        /// <summary>Öz-denetim için: boss hangi mesafeden saldırıya giriyor.</summary>
+        public float AttackTriggerRange => TetikMenzili;
 
         /// <summary>
         /// Şu anki saldırı 360° mü — halka, yani yön kontrolü yok, UZAKLAŞMAK gerekiyor.
@@ -504,6 +541,14 @@ namespace TekCan
                 Arc.Spawn(transform.position, transform.rotation, StrikeInner, 360f,
                           new Color(0.45f, 1f, 0.55f, 0.35f), dur, transform);
 
+            // ⚠️ AYNA'nın ARKA dilimi de çizilmeli. Çizilmezse oyuncu "koni
+            // geliyor, geri çekil" der ve tam arkada ölür — mekanik doğru,
+            // sunum öldürücü (bu projenin en pahalı hata türü).
+            if (_attack != null && _attack.Mirrored && StrikeAngle < 360f)
+                Arc.Spawn(transform.position, transform.rotation * Quaternion.Euler(0f, 180f, 0f),
+                          StrikeRadius, StrikeAngle, TelegraphColor, dur, transform,
+                          scaleFrom: 0.25f, scaleTo: 1f, followYaw: 180f);
+
             // ⚠️ GÜVENLİ AÇIKLIK da görünmeli — arkada, yeşil. Görünmezse oyuncu
             // "halka geliyor, uzaklaş" der ve tam kaçamayacağı yerde ölür.
             // Boss'un ARKASINA bakan yönde çiziliyor.
@@ -516,10 +561,52 @@ namespace TekCan
             Paint();
         }
 
+        static readonly System.Collections.Generic.List<BossAttack> _adaylar
+            = new System.Collections.Generic.List<BossAttack>();
+
         /// <summary>
-        /// Sıradaki saldırı. Deterministik: aynı sıra hep aynı saldırıyı verir, böylece
-        /// "bu saldırı mı zor, ben mi kötü oynadım" cevaplanabilir kalıyor —
-        /// yerleşimlerde ve tür seçiminde uygulanan kuralın aynısı.
+        /// Uygun saldırıları `_adaylar`a topluyor. `uzak` verilmişse YALNIZCA o
+        /// mesafe sınıfı; verilmemişse sınıf aranmıyor (geri çekilme turu).
+        /// </summary>
+        bool Ayıkla(BossAttack[] liste, float mesafe, bool? uzak)
+        {
+            _adaylar.Clear();
+            foreach (var a in liste)
+            {
+                if (a.MinPlayerRange > 0f && mesafe < a.MinPlayerRange) continue;
+                if (a.MaxPlayerRange > 0f && mesafe > a.MaxPlayerRange) continue;
+
+                // ⚠️ ERİŞİM: saldırı oyuncuya GERÇEKTEN ulaşabiliyor mu. Eski sıra
+                // bunu hiç sormuyordu — boss 10 birim uzaktayken 1.0 menzilli bir
+                // koni savurup boşluğa vuruyordu. Enes'in gördüğü şey buydu:
+                // "sırayla hamlelerini yapıyor gibi".
+                if (mesafe > AttackRange * a.RangeMul + a.Lunge) continue;
+
+                // ⚠️ Alan saldırıları (halka / haritada güvenli nokta) bant
+                // ayrımından MUAF: yönsüzler, her mesafede aynı soruyu soruyorlar.
+                if (uzak.HasValue && !a.HerBant && a.Uzak != uzak.Value) continue;
+                _adaylar.Add(a);
+            }
+            return _adaylar.Count > 0;
+        }
+
+        /// <summary>
+        /// Sıradaki saldırı — MESAFEYE GÖRE. Enes: *"bosslarda uzakta olduğunda
+        /// menzilli saldıracak, yakında ise yakın saldırılarını yapacak mekaniği
+        /// koymamışsın; sırayla hamlelerini yapıyor gibi."*
+        ///
+        /// ⚠️ Haklıydı: eski hâl listeyi SIRAYLA dönüyordu ve mesafe filtresi
+        /// yalnızca birkaç saldırıda vardı, yani pratikte hiç iş görmüyordu.
+        ///
+        /// ⚠️ Bu aynı zamanda şu şikâyetin de sebebiydi: *"faz 2'deki yeni özgün
+        /// saldırıların hiçbirini yapmamışsın."* Tek sıra + uzun liste = listenin
+        /// sonundaki saldırılar ancak dövüş yeterince UZUN sürerse gelirdi; faz 2
+        /// çoğu zaman o kadar sürmüyor. Mesafe sınıfı listeyi ikiye böldüğü için
+        /// her sınıfın turu kısalıyor ve YENİ saldırılar yüzeye çıkıyor.
+        ///
+        /// Sıra içinde hâlâ deterministik ("bu saldırı mı zor, ben mi kötü
+        /// oynadım" cevaplanabilir kalsın) — rastgeleliği mesafe sağlıyor,
+        /// zar değil.
         /// </summary>
         void PickAttack()
         {
@@ -535,24 +622,16 @@ namespace TekCan
 
             var liste = Boss.Attacks(Phase);
             float mesafe = FlatDistanceToPlayer();
+            bool uzak = mesafe > AttackRange * BossAttack.UzakEşiği;
+            int sıra = Mathf.Abs(_attackCount - 1);
 
-            // ⚠️ MESAFE FİLTRESİ. Enes: "dash attack yaparken olduğum yerde durunca
-            // misliyor — uzaktayken dash attack yapsın, yakındayken normal vursun."
-            // Hamleli saldırı yakından yapılınca oyuncunun ÜSTÜNDEN aşıyordu.
-            // Sıra korunuyor: uygun olan İLK saldırıdan itibaren dönülüyor,
-            // böylece determinizm bozulmuyor.
-            int başlangıç = Mathf.Abs(_attackCount - 1) % liste.Length;
-            for (int i = 0; i < liste.Length; i++)
+            // ① mesafeye UYAN sınıf → ② erişebilen her şey → ③ hiçbiri olmazsa liste sırası
+            if (Ayıkla(liste, mesafe, uzak) || Ayıkla(liste, mesafe, null))
             {
-                var aday = liste[(başlangıç + i) % liste.Length];
-                if (aday.MinPlayerRange > 0f && mesafe < aday.MinPlayerRange) continue;
-                if (aday.MaxPlayerRange > 0f && mesafe > aday.MaxPlayerRange) continue;
-                SetAttack(aday);
+                SetAttack(_adaylar[sıra % _adaylar.Count]);
                 return;
             }
-
-            // Hiçbiri uymadıysa sıradakini yine de kullan — saldırısız kalmasın.
-            SetAttack(liste[başlangıç]);
+            SetAttack(liste[sıra % liste.Length]);
         }
 
         /// <summary>Saldırıyı kur — tekrar ve zincir durumu tek yerden ayarlanıyor.</summary>
@@ -582,10 +661,22 @@ namespace TekCan
             // HAMLE: mesafeyi vuruş anında kapatıyor. Geri çekilmek tek başına
             // cevap olmaktan çıkıyor — hazırlığı okuyup YANA kaçman gerekiyor.
             if (_attack != null && _attack.Lunge > 0f)
-                transform.position += _strikeDir * _attack.Lunge;
+                transform.position = ArenayaSığdır(transform.position + _strikeDir * _attack.Lunge);
+
+            // GERİ SIÇRAMA: hamlenin tersi. Vurur ve çekilir — "kaç" değil
+            // "KOVALA" diye sorar. ⚠️ Arenaya sığdırılıyor: sınıra sıçrayan
+            // boss dışarı çıkıp erişilmez olurdu.
+            if (_attack != null && _attack.Recoil > 0f)
+                transform.position = ArenayaSığdır(transform.position - _strikeDir * _attack.Recoil);
 
             Arc.Spawn(transform.position, transform.rotation,
                 StrikeRadius, StrikeAngle, StrikeColor, _t.enemyStrikeDuration * 1.6f);
+
+            // AYNA'nın arka yayı — vuruş anında da görünmeli, yoksa "beni ne vurdu"
+            // sorusu cevapsız kalır.
+            if (_attack != null && _attack.Mirrored && StrikeAngle < 360f)
+                Arc.Spawn(transform.position, transform.rotation * Quaternion.Euler(0f, 180f, 0f),
+                    StrikeRadius, StrikeAngle, StrikeColor, _t.enemyStrikeDuration * 1.6f);
             Paint();
 
             // Hasar yalnızca bu anda, kilitli yöne göre iner. Kaçtıysan ıskalar.
@@ -598,6 +689,14 @@ namespace TekCan
                 float inen = _player.GetComponent<PlayerController>()?.TakeHit(cost, transform.position) ?? 0f;
                 if (IsBoss) StolenFromPlayer += inen;
             }
+
+            // ÇEKİM: hasardan SONRA. Önce çekseydik oyuncuyu tehlikeye sürükleyip
+            // aynı karede cezalandırırdık — kaçınılamaz bir darbe olurdu. Sonra
+            // çekmek konumu bozuyor, darbeyi iki katlamıyor.
+            // ⚠️ Menzil şartı yok: çekim ISKALADIĞINDA da işliyor, asıl tehdidi
+            // bu zaten — vurmuyor, seni yerinden ediyor.
+            if (_attack != null && _attack.Pull > 0f && FlatDistanceToPlayer() <= StrikeRadius)
+                _player.GetComponent<PlayerController>()?.Yank(transform.position, _attack.Pull);
         }
 
         void EnterState(State s, float duration)
@@ -657,8 +756,14 @@ namespace TekCan
             float safe = _attack?.SafeAngle ?? 0f;
             if (safe > 0f && Vector3.Angle(-_strikeDir, to) <= safe * 0.5f) return false;
 
+            // AYNA: ön VE arka dilim. Hangisi daha yakınsa o sayılıyor — yanlar
+            // güvenli kalıyor, geri çekilmek kalmıyor.
+            float sapma = Vector3.Angle(_strikeDir, to);
+            if (_attack != null && _attack.Mirrored)
+                sapma = Mathf.Min(sapma, Vector3.Angle(-_strikeDir, to));
+
             // 360°'de yön kontrolü yok: her açı zaten içeride.
-            return StrikeAngle >= 360f || Vector3.Angle(_strikeDir, to) <= StrikeAngle * 0.5f;
+            return StrikeAngle >= 360f || sapma <= StrikeAngle * 0.5f;
         }
 
         /// <summary>Öz-denetim ve HUD için: şu an hangi saldırıyı yapıyor.</summary>
@@ -666,6 +771,22 @@ namespace TekCan
 
         /// <summary>Öz-denetim için: şu an yere vuruş yapıyor mu.</summary>
         public bool Slamming => _slamming;
+
+        /// <summary>
+        /// Hamle/geri sıçrama sonrası konumu arenanın İÇİNDE tutuyor.
+        /// ⚠️ Tek yerde: iki ayrı sıçrama iki ayrı sınır yorumu yapsaydı
+        /// biri er ya da geç dışarıda kalırdı (oyuncu tarafında bu hata
+        /// `LateUpdate` kelepçesiyle aynı sebeple tek noktada duruyor).
+        /// </summary>
+        Vector3 ArenayaSığdır(Vector3 p)
+        {
+            Vector3 d = p - Bootstrap.ArenaCenter;
+            d.y = 0f;
+            float sınır = _t.arenaRadius - Radius;
+            if (d.magnitude > sınır) p = Bootstrap.ArenaCenter + d.normalized * sınır;
+            p.y = transform.position.y;
+            return p;
+        }
 
         float FlatDistanceToPlayer() => FlatToPlayer().magnitude;
 

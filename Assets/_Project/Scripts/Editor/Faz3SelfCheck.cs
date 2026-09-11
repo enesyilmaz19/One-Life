@@ -467,9 +467,12 @@ namespace TekCan.EditorTools
             }
             ClearEnemies();
             YaylariTemizle();
-            // ⚠️ İPOTEK'in dash'i artık BAŞLANGIÇ noktasına işaret bırakıyor
-            // (`DashLeavesMark`). Sayaç sıfırlanmazsa sonraki İPOTEK testi
+            // ⚠️ İPOTEK normal savurmasında işaret bırakıyor ve aynı anda YALNIZCA
+            // BİR tanesi yaşayabiliyor. Sayaç sıfırlanmazsa sonraki İPOTEK testi
             // "hasar veremiyor" der ve suç yine testin kurgusunda olur.
+            // (Aynı tekillik kuralı Enes'in bildirdiği hatanın da yarısıydı:
+            //  dash'in arkada bıraktığı hayalet işaret, nişan alınan ipoteğin
+            //  yerini çalıyordu. O kanca silindi.)
             foreach (var m in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include))
                 Object.DestroyImmediate(m.gameObject);
             GroundMark.ResetLiens();

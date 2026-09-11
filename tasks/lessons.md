@@ -380,3 +380,53 @@ bitmesiydi.
   kullanılamadığı yere koymak, çıkış yolu olmamasıyla aynı şey.**
 - Reprodüksiyon `Faz9SelfCheck`'te ve **bayrağı değil DİSKTE NE YAZDIĞINI** ölçüyor:
   yaz, geri oku, bölge hâlâ 0 mı.
+
+---
+
+## Ders 13 — Mekanik VAR ama ULAŞILAMIYOR (2026-09-11)
+
+**Ne oldu:** Enes bildirdi: *"aga bosslarda uzakta olduğunda menzilli saldıracak,
+yakında ise yakın saldırılarını yapacak mekaniği koymamışsın. sırayla hamlelerini
+yapıyor gibi."*
+
+Koda baktım ve mesafe filtresi **vardı**: `BossAttack.MinPlayerRange` /
+`MaxPlayerRange`, üstelik uzun bir yorumla, Enes'in daha önceki bir şikâyetinden
+doğmuş. "Filtre var, demek ki birkaç saldırıya eklemem yeter" diye düşündüm.
+
+Asıl sebep bir üst katmandaydı: boss saldırıya **ancak `AttackRange` içine girince**
+giriyordu (`TickState` → `Chase`). Yani her dövüşte önce yakın dövüşe kadar
+**yürüyor**, saldırıyı orada başlatıyordu. *"Uzaktayken"* diye bir durum hiç
+oluşmuyordu. Menzili 3.4 olan ışın, oyuncunun burnunun dibinden savruluyordu.
+
+Mesafeye göre seçim yazmak **tek başına hiçbir şeyi değiştirmezdi** — seçim hep
+aynı mesafede yapılıyordu.
+
+**Kural:**
+
+> Bir mekanik "yok" diye bildirildiğinde, önce **var mı** diye bakma —
+> **çalıştırılabiliyor mu** diye bak. Koşulun kendisi doğru olabilir ama o koşula
+> hiç GELİNMİYOR olabilir. Girdiyi üreten katmana kadar geri git.
+
+**Somut savunma:**
+- Kapı ÖZELLİK değil ETKİ ölçüyor: *"`MinPlayerRange` alanı var mı"* diye sorsaydık
+  test **eski kodda da yeşil yanardı** ve Enes'in gördüğü hata yerinde dururdu.
+  Soru şu oldu: boss **uzaktayken** hangi saldırıyı **seçiyor**.
+- ⚠️ Ve o kapıyı ilk yazışımda kendi uydurduğum bir mesafeyle (4× menzil) kurdum;
+  oraya **hiçbir saldırı erişemiyordu**, yani test üretimi değil kendi varsayımını
+  ölçüyordu. Mesafe artık üretimin kendi `AttackTriggerRange`'inden alınıyor.
+  *(Ders 10'un aynısı: kapı üretimi İÇERİ ALIR, yeniden türetmez.)*
+- İkinci kapı: **dağarcıktaki her saldırı yüzeye çıkıyor mu.** Enes'in ikinci
+  şikâyeti (*"faz 2'deki yeni özgün saldırıların hiçbirini yapmamışsın"*) aynı kökün
+  öbür yüzüydü — ölü saldırı, olmayan saldırıdır.
+
+### Yan ders — ölçünün içindeki KAÇAMAK
+
+Aynı raporda: *"hiçbir bossta birbirinin aynısı iki saldırı olmayacak."* Bu kural
+zaten kapıdaydı ve **yeşildi.** Çünkü imzaya `menzil={RangeMul:0.0}` yazmıştım:
+menzili 3.0 yerine 3.2 yapmak iki özdeş saldırıyı "farklı" gösteriyordu.
+
+> Bir kuralı ölçerken imzaya **oyuncunun hissetmediği** bir alan koyma. O alan
+> kuralın kaçamağı olur ve kapı kendi kendini kandırır.
+
+Yerine oyuncunun gerçekten hissettiği şeyler kondu: alanın açısı, güvenli yerin
+genişliği, hangi mesafede sorulduğu.

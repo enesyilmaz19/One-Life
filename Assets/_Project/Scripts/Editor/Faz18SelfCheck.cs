@@ -279,11 +279,15 @@ namespace TekCan.EditorTools
                         if (sade && a18.RangeMul <= 1.6f) düz++;
                         if (a18.RangeMul >= 2f && a18.Angle > 0f && a18.Angle < 60f) menzilli++;
 
-                        // ÖZGÜN: halka / simit / açıklık / zincir / büyük hamle.
-                        // "Sıradan koni değil" olan her şey.
-                        if (a18.Angle >= 360f || a18.InnerRadius > 0f || a18.SafeAngle > 0f
-                            || a18.SafeSpotRadius > 0f       // haritada rastgele güvenli nokta
-                            || a18.Then != null || a18.Lunge > 2f) özgün++;
+                        // ÖZGÜN = "sıradan koni ya da ışın DEĞİL" olan her şey.
+                        // ⚠️ Şekil listesi burada TEKRAR YAZILMIYOR, `Faz12SelfCheck`
+                        // sınıflandırıcısı okunuyor. İlk hâlinde liste elle
+                        // yazılmıştı ve AYNA / ÇEKİM / GERİ SIÇRAMA eklenince
+                        // sessizce eskidi: üç boss'un yeni imzaları "özgün"
+                        // sayılmadı, kapı doğru kodu yanlış bulmaya başladı.
+                        string ş18 = Faz12SelfCheck.Şekil(a18);
+                        if (a18.Then != null
+                            || (!ş18.StartsWith("KONİ") && !ş18.StartsWith("IŞIN"))) özgün++;
                     }
 
                     failed += Check(ref total, $"  {b18.Name} faz {faz}: DÜZ saldırı var", düz >= 1, düz);

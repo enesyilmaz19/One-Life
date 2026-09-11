@@ -140,6 +140,72 @@ Yalnızca "kalın bir düşman" değil: daha hızlı (×1.25), daha az uyarı ve
 daha geniş vurur (koni ×1.5), darbesi çok daha pahalı (×2.2). Menzili gövdesi kadar uzun —
 yoksa dev bir yaratık burnunun dibinden ıskalıyor gibi görünüyordu.
 
+### ⚠️⚠️ ÖZGÜN ŞEKİL TEK SAHİPLİDİR (2026-09-11, Enes)
+
+Enes: *"özgün diye her bossta aynı 'özgün' saldırıları koymuşsun neredeyse,
+amk her bossta farklı olacak."*
+
+Haklıydı ve sebebi yazılış biçimindeydi: saldırılar ŞEKLE göre değil SAYIYA
+göre çeşitlendirilmişti. Beş boss'un beşi de halka + simit + açıklık + hamle
+kullanıyordu, farkları menzil ve bedel rakamlarıydı. "Özgün" sıfatı yalnızca
+ADIN üstünde duruyordu.
+
+Kural artık şu — ve `Faz12SelfCheck` onu ölçüyor, göz kararı değil:
+
+| boss | imza ① | imza ② | sorduğu soru |
+|---|---|---|---|
+| ① TAHSİLDAR | HALKA | HAMLE | uzaklaş · üstüne geliyor |
+| ② EKSPER | SAĞANAK | **AYNA** | bir kez kaçmak yetmez · yana kaç, GERİ değil |
+| ③ KEFİL | SİMİT | **ÇEKİM** | yaklaş · kaçmak işe yaramıyor |
+| ④ SİMSAR | AÇIKLIK | **GERİ SIÇRAMA** | arkasına geç · kovala |
+| ⑤ MURABAHACI | ZİNCİR | RASTGELE NOKTA | yerleşemezsin · oraya yetiş |
+
+Paylaşılan yalnızca **KONİ** (düz) ve **IŞIN** (menzilli) — ikisi Enes'in
+herkese koyduğu şart. **Tek istisna MURABAHACI'nın FAZ 3'ü:** orada hepsini
+kullanıyor ("son boss önceki tüm bossların özelliğini de kullanabilsin").
+İstisna faz 3'e KİLİTLİ — faz 1-2'de de serbest olsaydı final bir TOPLAM
+değil bir TEKRAR olurdu ve faz 3'ün anlamı kalmazdı.
+
+Üç şekil bu kural için YENİ yazıldı (AYNA · ÇEKİM · GERİ SIÇRAMA): dört boss'a
+ikişer imza düşürmek için dağarcıkta üç şekil eksikti. Sayı oynayarak
+kapatılabilecek bir eksik değildi.
+
+### ⚠️⚠️ BOSS MESAFEYE GÖRE SALDIRIR (2026-09-11, Enes)
+
+Enes: *"bosslarda uzakta olduğunda menzilli saldıracak, yakında ise yakın
+saldırılarını yapacak mekaniği koymamışsın. sırayla hamlelerini yapıyor gibi."*
+
+**İki ayrı hata vardı ve ikincisi asıl olanıydı.**
+
+① Seçim listeyi sırayla dönüyordu; mesafe filtresi (`MinPlayerRange`) yalnızca
+birkaç saldırıda vardı, yani pratikte iş görmüyordu.
+
+② **Boss saldırıya ancak kendi `AttackRange`'ine girince giriyordu.** Yani her
+dövüşte önce yakın dövüşe kadar YÜRÜYOR, saldırıya ancak orada başlıyordu.
+"Uzaktayken" diye bir durum hiç oluşmuyordu — menzilli saldırılar dekordu,
+menzili 3.4 olan bir ışın oyuncunun burnunun dibinden savruluyordu.
+
+Artık: **tetik menzili = o fazın en uzun erişimi**, seçim de mesafe bandına
+göre (uzak → ışın/hamle, yakın → koni). 360°'lik alan saldırıları **iki banda
+da** uyuyor: yönsüzler, erişimleri içinde her mesafede aynı soruyu soruyorlar.
+Ayrılsalardı somut bir hata çıkardı — finalin TÜM HARİTA saldırısı "menzilli"
+sayılır ve oyuncu dibine yapıştığında hiç yapılmazdı, yani imza hamlesi
+sarılarak iptal edilirdi.
+
+⚠️ Bu aynı zamanda *"faz 2'deki yeni özgün saldırıların hiçbirini
+yapmamışsın"* şikâyetinin de kökü: tek sıra + uzun liste = listenin sonundaki
+saldırılar ancak dövüş yeterince uzun sürerse geliyordu. Kapı artık
+**her saldırının yüzeye çıktığını** ölçüyor.
+
+### ⚠️ ZORLUK BOSS SIRASIYLA TIRMANIR (2026-09-11, Enes)
+
+Enes: *"aga ilk boss 2.sinden daha güçlü durmuş :D"*
+
+Doğruydu: TAHSİLDAR **tam** aura emiyordu (beşinin en yükseği) ve bedel
+çarpanları da en ağırıydı. Boss sırası bir SÖZ; göz kararıyla tutulamaz.
+Oyuncunun doğrudan hissettiği iki kadran — **emme** ve **ortalama bedel** —
+artık sırayla artmak zorunda ve kapı bunu ölçüyor.
+
 ### Boss: yere vuruş ✅ (2026-08-24)
 
 Enes: *"boss baya kolay, dümdüz durup saldırarak kesiyorum."*

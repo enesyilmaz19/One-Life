@@ -239,23 +239,37 @@ namespace TekCan.EditorTools
                             System.Array.Find(Weapon.All, w => w is Haciz).DashBackwards, 0f);
             failed += Check(ref total, "⚠️ FAİZLİ dash'i bedeli İADE ediyor",
                             System.Array.Find(Weapon.All, w => w is Faizli).DashRefundsCost, 0f);
-            failed += Check(ref total, "⚠️ İPOTEK dash'i İZ bırakıyor",
-                            ipotek.DashLeavesMark, 0f);
-
             int kimlikli = 0;
             foreach (var w in Weapon.All)
-                if (w.DashBackwards || w.DashRefundsCost || w.DashLeavesMark) kimlikli++;
-            failed += Check(ref total, "dash kimlikleri ÜÇ silaha özel (ikisinin dash'i zaten ayrı)",
-                            kimlikli == 3, kimlikli);
+                if (w.DashBackwards || w.DashRefundsCost) kimlikli++;
+            failed += Check(ref total, "dash kimlikleri İKİ silaha kanca gerektirdi (üçününki zaten ayrı)",
+                            kimlikli == 2, kimlikli);
 
-            // ⚠️ İPOTEK dash'i GERÇEKTEN iz bırakıyor mu — ETKİ
+            // ── ⚠️ İPOTEK'in dash kimliği: YER İŞARETİ DEĞİL, DOĞRUDAN YAY ──
+            //
+            // Enes: *"ipotek buga girmiş, hareket ederken arkamda ipoteğin düz
+            // saldırıları çıkıyor. hasar vermiyor sadece efekti çıkıyo."*
+            //
+            // Sebep benim eklediğim `DashLeavesMark`'tı: dash-atak oyuncunun
+            // BAŞLADIĞI noktaya — yani arkasına — bir ipotek bırakıyordu. Ve
+            // İPOTEK'te aynı anda TEK ipotek yaşayabildiği için o hayalet işaret
+            // oyuncunun NİŞAN ALDIĞI ipoteğin yerini de çalıyordu: iki şikâyet,
+            // tek sebep.
+            //
+            // Kanca silindi; silahın ASIL dash kimliği zaten belgeliydi ve
+            // yerinde duruyor — menzilli/yer silahının YAKIN CEVABI. Kapı artık
+            // onu ölçüyor: dash yay vuruyor ve GERİDE İŞARET BIRAKMIYOR.
             pc.SetWeapon(Index<Ipotek>());
             ClearEnemies();
             TemizleIsaretler();
             int öncekiİşaret = MarkCount();
+            int öncekiYay = pc.SwingsSpawned;
             dashStrike.Invoke(pc, null);
-            failed += Check(ref total, "⚠️ İPOTEK dash'i GERÇEKTEN iz bırakıyor (etki)",
-                            MarkCount() > öncekiİşaret, MarkCount() - öncekiİşaret);
+            failed += Check(ref total, "⚠️ İPOTEK dash'i DOĞRUDAN yay vuruyor (yakın cevabı)",
+                            pc.SwingsSpawned > öncekiYay,
+                            pc.SwingsSpawned - öncekiYay);
+            failed += Check(ref total, "⚠️ ...ve ARKASINA hayalet ipotek BIRAKMIYOR (Enes'in hatası)",
+                            MarkCount() == öncekiİşaret, MarkCount() - öncekiİşaret);
             TemizleIsaretler();
 
             ClearEnemies();

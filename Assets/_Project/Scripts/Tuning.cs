@@ -117,7 +117,7 @@ namespace TekCan
         [Tooltip("FAİZLİ: her savurmanın peşin bedeli (saniye). Iska pahalı olsun diye var.")]
         public float faizliSwingCost = 0.5f;
         [Tooltip("FAİZLİ: hasar çarpanı. Tek hedefli silahın 'tek ama sert' iddiası.")]
-        public float faizliDamageMult = 1.6f;
+        public float faizliDamageMult = 1.75f;
         [Tooltip("FAİZLİ: vurduğunu ne kadar geri savurur (birim/sn). " +
                  "⚠️ Ağırlık hissinin ASIL kaynağı — hit-stop ve sarsıntı tek başına yetmedi.")]
         public float faizliKnockback = 9f;
