@@ -97,8 +97,12 @@ namespace TekCan.EditorTools
             // ⚠️ SIRAYLA geliyorlar, hepsi birden değil (Enes: "her biri rastgele
             //    şekilde çıkmalı"). Dördü aynı anda gelseydi final bir boss savaşı
             //    değil bir kalabalık olurdu.
-            int rakip = 0;
-            foreach (var e in Enemy.All) if (e != null && e.SummonedRival) rakip++;
+            // ⚠️ GÖVDE değil BOSS sayılıyor: sıra rastgele ve KEFİL ilk gelirse doğar
+            //    doğmaz ikiye bölünüyor — ikisi de O rakip (Faz 24'ten beri ikizi de
+            //    yankı). Gövde saymak 4'te 1 ihtimalle kırmızı yanan titrek bir kapıydı.
+            var rakipler = new System.Collections.Generic.HashSet<BossKind>();
+            foreach (var e in Enemy.All) if (e != null && e.SummonedRival) rakipler.Add(e.Boss);
+            int rakip = rakipler.Count;
             failed += Check(ref total, "⚠️ faz 3'te rakipler SIRAYLA geliyor (aynı anda 1)",
                             rakip == 1, rakip);
             failed += Check(ref total, "⚠️ çağıran boss UYKUYA geçti", final.Dormant, 0f);

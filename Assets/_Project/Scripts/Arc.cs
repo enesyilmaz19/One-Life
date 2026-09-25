@@ -57,9 +57,18 @@ namespace TekCan
         /// dönüyordu — oyuncuya "buradasın, güvendesin" deyip vuruyordu.
         /// Görselin mekanikle çelişmesi bu projede en pahalı hata türü.
         /// </param>
+        /// <param name="scaled">
+        /// OYUN zamanıyla ilerle (hit-stop'ta dur). ⚠️ Bir ZAMANLAYICIYI gösteren her
+        /// yay için şart: düşman hazırlığı ve yer işareti `Time.deltaTime` ile sayıyor,
+        /// hit-stop'ta donuyor. Yay gerçek zamanla dolmaya devam ederse "yay dolunca
+        /// darbe iner" sözü tam oyuncu vururken bozuluyordu — yay bitiyor, darbe
+        /// ekranda hiçbir şey yokken iniyordu (denetim 2026-09-23). Süs yaylar
+        /// (isabet halkası, savurma) varsayılanda kalır: hit-stop'ta da sönsünler.
+        /// </param>
         public static Arc Spawn(Vector3 pos, Quaternion rot, float radius, float angleDeg,
                                 Color color, float life, Transform follow = null,
-                                float scaleFrom = 1f, float scaleTo = 1f, float followYaw = 0f)
+                                float scaleFrom = 1f, float scaleTo = 1f, float followYaw = 0f,
+                                bool scaled = false)
         {
             var go = new GameObject("Arc");
             go.transform.SetPositionAndRotation(pos + Vector3.up * 0.06f, rot);
@@ -82,13 +91,17 @@ namespace TekCan
             arc._scaleFrom = scaleFrom;
             arc._scaleTo = scaleTo;
             arc._followYaw = followYaw;
+            arc._scaled = scaled;
             go.transform.localScale = Vector3.one * scaleFrom;
             arc.Apply(1f);
             return arc;
         }
 
-        // unscaled: hit-stop sırasında da sönsün, yoksa donan karede takılı kalır
-        void LateUpdate() => Step(Time.unscaledDeltaTime);
+        bool _scaled;
+
+        // unscaled: hit-stop sırasında da sönsün, yoksa donan karede takılı kalır.
+        // Zamanlayıcı gösteren yaylar hariç (`scaled`) — onlar gösterdikleri şeyle donar.
+        void LateUpdate() => Step(_scaled ? Time.deltaTime : Time.unscaledDeltaTime);
 
         /// <summary>
         /// ⚠️ dt DIŞARIDAN alınıyor — `Enemy.ApplyAura` ile aynı gerekçe. Editör modunda

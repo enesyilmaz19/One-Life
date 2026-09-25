@@ -25,6 +25,9 @@ namespace TekCan
         Tuning _t;
         Transform _player, _cam;
         GameObject _roomRoot;
+
+        /// <summary>Şu anki odanın kökü — oda sökülünce içindekiler onunla gider.</summary>
+        public Transform RoomRoot => _roomRoot != null ? _roomRoot.transform : null;
         ExitGate _gate;
 
         /// <summary>1'den başlar. Bölgedeki kaçıncı oda.</summary>
@@ -179,6 +182,11 @@ namespace TekCan
             var s = SaveFile.Current;
             if (s == null || Clock.Instance == null) return;
 
+            // ⚠️ GEÇİCİ DÖNÜŞ sayarken checkpoint YAZILMAZ. O 10 saniye ödünç zaman;
+            // yazılsaydı başarılı dönüş seni tam da o birkaç saniyeye "geri veriyor",
+            // sonraki her ÇAĞRI da oraya atıyordu — eşya stoğu saniyeler içinde erirdi.
+            if (RevivalSystem.Instance != null && RevivalSystem.Instance.LastStandArmed) return;
+
             s.checkpointRoom = Room;
             s.checkpointRegion = RegionIndex;
             s.checkpointSeconds = Clock.Instance.Seconds;
@@ -226,7 +234,17 @@ namespace TekCan
 
             // ⚠️ Koşu YALNIZCA son bölgenin boss'u düşünce kazanılıyor. Öncekilerde
             // boss ölünce bölge biter ve çıkış açılır — zincir devam eder.
-            if (IsBossRoom && IsLastRegion) { Clock.Instance.Win(); return; }
+            if (IsBossRoom && IsLastRegion)
+            {
+                Clock.Instance.Win();
+
+                // ⚠️ Zafer DİSKE yazılıyor: koşu BİTTİ (`gameOver` = "koşu bitti", kaybı
+                // değil sonu anlatıyor). Yazılmazsa R ya da yeniden açış son checkpoint'e
+                // atıyor ve kazanılmış koşu sonsuza dek tekrar oynanıyordu (denetim 2026-09-23).
+                var s = SaveFile.Current;
+                if (s != null) { s.gameOver = true; SaveFile.Flush(); }
+                return;
+            }
 
             if (_gate != null) _gate.Open();
         }
@@ -254,7 +272,11 @@ namespace TekCan
 
             Room = Mathf.Max(1, index);
             Cleared = false;
-            Layout = RoomLayout.For(Room);
+            // ⚠️ Düşmanlı odalar 1'den başlıyor ve bölgeye göre KAYIYOR. `For(Room)`
+            // iken oda 5 (= HALKA) Faz 19'da düşmansız sunak odası oldu ve HALKA
+            // oyundan tamamen çıktı — tanımlı ama erişilemez (ders 11, denetim 2026-09-23).
+            // Kaydırınca beşi de bölgeler boyunca geliyor, ardışık odalar yine farklı.
+            Layout = RoomLayout.For(Room - 1 + RegionIndex);
 
             _roomRoot = new GameObject($"Room_{Room}");
             // ⚠️ Ebeveyn yoksa KENDİMİZE bağlan. Oyunda `Systems` altındayız ve
@@ -428,10 +450,14 @@ namespace TekCan
         /// B — doğrudan boss odasına atla. TEST KISAYOLU, gerçek oyunda kalkacak.
         /// (ENTER kalktı: dalgaları artık oyuncu çağırmıyor.)
         /// </summary>
+        // ⚠️ Kayda dokunan test tuşları (B, N, F5, F6, F1–F4) yalnızca GELİŞTİRME
+        // build'inde (editör dahil) çalışıyor. Kaldırılana kadar (todo: TESLİMDEN ÖNCE
+        // KALKACAK) sürüm build'inde F6 tek tuşla kalıcı ölümlü koşuyu siliyordu,
+        // F5 bedava 300 sn verip kaydı kapatıyordu (denetim 2026-09-25).
         static bool SkipToBossPressed()
         {
             var kb = Keyboard.current;
-            return kb != null && kb.bKey.wasPressedThisFrame;
+            return Debug.isDebugBuild && kb != null && kb.bKey.wasPressedThisFrame;
         }
 
         /// <summary>
@@ -442,7 +468,7 @@ namespace TekCan
         static bool SkipRegionPressed()
         {
             var kb = Keyboard.current;
-            return kb != null && kb.nKey.wasPressedThisFrame;
+            return Debug.isDebugBuild && kb != null && kb.nKey.wasPressedThisFrame;
         }
 
         /// <summary>
@@ -455,7 +481,7 @@ namespace TekCan
         static bool NewRunPressed()
         {
             var kb = Keyboard.current;
-            return kb != null && kb.f6Key.wasPressedThisFrame;
+            return Debug.isDebugBuild && kb != null && kb.f6Key.wasPressedThisFrame;
         }
 
         /// <summary>
@@ -468,7 +494,7 @@ namespace TekCan
         static bool RefillClockPressed()
         {
             var kb = Keyboard.current;
-            return kb != null && kb.f5Key.wasPressedThisFrame;
+            return Debug.isDebugBuild && kb != null && kb.f5Key.wasPressedThisFrame;
         }
 
         /// <summary>
@@ -568,10 +594,14 @@ namespace TekCan
                 // Boss'un ADI ve fazı görünmeli: hangi suçla dövüştüğün mekaniği açıklıyor.
                 var b = BossKind.For(RegionIndex);
                 var canlı = BossInRoom();
-                string faz = canlı != null && canlı.Phase >= 2 ? "  ·  FAZ 2" : "";
+                string faz = canlı != null && canlı.Phase >= 2 ? $"  ·  FAZ {canlı.Phase}" : "";   // faz 3 de "FAZ 2" yazıyordu
                 return $"{b.Name}{faz}" + (IsLastRegion ? "  (SON)" : "");
             }
-            if (Cleared) return "ÇIKIŞ AÇIK  ·  saat işlemeye devam ediyor";
+            // ⚠️ Sunak odasında saat DURUYOR — "işlemeye devam ediyor" demek, "SAAT DURDU"
+            // yazısının hemen altında yalan söylemekti.
+            if (Cleared) return Clock.Instance != null && Clock.Instance.Frozen
+                              ? "ÇIKIŞ AÇIK  ·  saat durdu, acele yok"
+                              : "ÇIKIŞ AÇIK  ·  saat işlemeye devam ediyor";
             return $"oda {Room} / {_t.roomsPerRegion - 1}   ·   {Layout.Name}";
         }
 

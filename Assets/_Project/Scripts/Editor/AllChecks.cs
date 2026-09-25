@@ -17,6 +17,14 @@ namespace TekCan.EditorTools
         [MenuItem("Tek Can/TÜM kapıları çalıştır")]
         public static void Run()
         {
+            // ⚠️ Play modunda ÇALIŞTIRMA: kapılar kayda test durumu yazıyor (3 eşya, sahte
+            // ölümler); oyunun bir sonraki checkpoint'i onu oyuncunun gerçek kaydına basardı.
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                Debug.LogError("[Tek Can] Kapılar Play modunda çalıştırılmaz — önce Play'den çık.");
+                return;
+            }
+
             var sb = new StringBuilder("\n══════ TEK CAN — TÜM KAPILAR ══════\n");
             int problems = 0;
 
@@ -105,6 +113,10 @@ namespace TekCan.EditorTools
             int f21 = Faz21SelfCheck.Execute();
             sb.AppendLine(Line("Faz 21 öz-denetim", f21 == 0, f21 == 0 ? "geçti" : $"{f21} başarısız"));
             problems += f21;
+
+            int f24 = Faz24SelfCheck.Execute();
+            sb.AppendLine(Line("Faz 24 öz-denetim", f24 == 0, f24 == 0 ? "geçti" : $"{f24} başarısız"));
+            problems += f24;
 
             int audit = TuningAudit.Execute();
             sb.AppendLine(audit == 0

@@ -34,18 +34,16 @@ namespace TekCan.EditorTools
             var outDir = Path.Combine(Directory.GetCurrentDirectory(), "oda_yerlesimleri");
             Directory.CreateDirectory(outDir);
 
-            // Her yerleşim bir odaya denk geliyor: RoomLayout.For(room) = All[room % 5]
-            for (int i = 0; i < RoomLayout.All.Length; i++)
-            {
-                int room = i;                                  // For(room) → All[room % 5]
-                var layout = RoomLayout.For(room);
-                Shoot(t, room, layout, outDir);
-            }
+            // 1. bölgenin düşmanlı odaları. ⚠️ Dosya adı ÜRETİMİN kurduğu yerleşimden
+            // (`rm.Layout`): önceden döngü sayacından türetiliyordu ve "0_HALKA.png"
+            // aslında oda 1'in DUVAR'ıydı — yalanı yakalayan araç yalan söylüyordu.
+            int adet = 0;
+            for (int room = 1; room <= t.roomsPerRegion - 2; room++, adet++) Shoot(t, room, outDir);
 
-            Debug.Log($"[Tek Can] {RoomLayout.All.Length} oda yerleşimi çekildi: {outDir}");
+            Debug.Log($"[Tek Can] {adet} oda yerleşimi çekildi: {outDir}");
         }
 
-        static void Shoot(Tuning t, int room, RoomLayout layout, string outDir)
+        static void Shoot(Tuning t, int room, string outDir)
         {
             Enemy.All.Clear();
             var root = new GameObject("room-capture");
@@ -72,9 +70,9 @@ namespace TekCan.EditorTools
             var cam = BuildCamera(t, root.transform);
             var tex = Render(cam);
 
-            string ad = $"{room}_{layout.Name}";
+            string ad = $"{room}_{rm.Layout.Name}";
             File.WriteAllBytes(Path.Combine(outDir, ad + ".png"), tex.EncodeToPNG());
-            Debug.Log($"  ✅ oda {room} · {layout.Name} · {Enemy.All.Count} düşman → {ad}.png");
+            Debug.Log($"  ✅ oda {room} · {rm.Layout.Name} · {Enemy.All.Count} düşman → {ad}.png");
 
             Object.DestroyImmediate(tex);
             foreach (var e in Enemy.All.ToArray()) if (e != null) Object.DestroyImmediate(e.gameObject);

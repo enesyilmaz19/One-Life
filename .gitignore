@@ -49,21 +49,7 @@ crashlytics-build.properties
 
 # graphify ciktisi (yeniden uretilebilir)
 Assets/_Project/Scripts/graphify-out/
-build.log
-check.log
+# kökteki koşu/araç logları — tek tek eklenmesin
+/*.log
 faz1_geribildirim.png
-cap.log
-probe.log
-api.log
-repro.log
-audit.log
-sim.log
-check2.log
-v.log
-all.log
-sync.log
-check3.log
-check4.log
-check5.log
-check6.log
 oda_yerlesimleri/

@@ -114,6 +114,7 @@ namespace TekCan
             AttackDamage = tuning.attackDamage;
             DashCooldown = tuning.dashCooldown;
             Dead = false;
+            Won = false;     // taze saat: ölüm gibi zafer de sıfırlanır
         }
 
         void Update() => Tick(Time.deltaTime);
@@ -161,7 +162,10 @@ namespace TekCan
         /// <summary>Saatin sıfıra inmesinin tek çıkışı. Akış da harcama da buradan geçer.</summary>
         void CheckDeath()
         {
-            if (Dead || Seconds > 0f) return;
+            // ⚠️ KAZANILMIŞ koşu ölemez. Kazanmadan önce bırakılmış bir yer işareti
+            // 1.3 sn sonra patlayıp saati sıfırlayınca eşya harcatıyor, ÇAĞRI ile
+            // zaferi siliyor ya da kazandıktan sonra "oyun bitti" yazdırıyordu (denetim 2026-09-23).
+            if (Dead || Won || Seconds > 0f) return;
             Seconds = 0f;
             Dead = true;
             Sfx.Die();
@@ -203,7 +207,7 @@ namespace TekCan
         /// <param name="fromHit">Yenen darbe mi (ayrı sayaca yazılır) yoksa aura/akış mı.</param>
         public void Spend(float seconds, bool fromHit = false)
         {
-            if (Dead) return;
+            if (Dead || Won) return;
             float x = Mathf.Max(0f, seconds);
             Seconds -= x;
             if (fromHit) TotalHitCost += x;

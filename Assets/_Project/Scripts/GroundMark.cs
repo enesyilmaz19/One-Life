@@ -20,6 +20,7 @@ namespace TekCan
         static readonly Color LienColor = new Color(1f, 0.45f, 0.95f, 0.35f);
 
         Transform _player;
+        Enemy _owner;       // bırakan — boss ise nemesis hesabına yazılır
         Tuning _t;
         float _radius, _cost, _timer;
         bool _fired;
@@ -54,7 +55,8 @@ namespace TekCan
 
         /// <summary>DÜŞMANIN bıraktığı tebligat — OYUNCUYA vurur. (SİMSAR, MÜBAŞİR)</summary>
         public static GroundMark Spawn(Tuning t, Vector3 pos, Transform player,
-                                       float radius, float delay, float cost, Transform parent)
+                                       float radius, float delay, float cost, Transform parent,
+                                       Enemy owner = null)
         {
             if (player == null) return null;
 
@@ -65,14 +67,16 @@ namespace TekCan
             var m = go.AddComponent<GroundMark>();
             m._t = t;
             m._player = player;
+            m._owner = owner;
             m._radius = radius;
             m._cost = cost;
             m._timer = delay;
 
             // ⚠️ Uyarı GÖRÜNÜR ve DOLUYOR: "burada bir şey olacak" değil,
             // "burada ŞU KADAR SÜRE sonra olacak" demeli. Dolan halka süreyi söylüyor.
+            // ⚠️ `scaled`: sayaç oyun zamanıyla işliyor, halka da öyle dolmalı.
             Arc.Spawn(pos, Quaternion.identity, radius, 360f, WarnColor, delay,
-                      scaleFrom: 0.25f, scaleTo: 1f);
+                      scaleFrom: 0.25f, scaleTo: 1f, scaled: true);
             return m;
         }
 
@@ -103,23 +107,15 @@ namespace TekCan
             // Oyuncununki KENDİ RENGİNDE (İPOTEK moru) — düşmanın tebligatıyla
             // karışsaydı oyuncu kendi koyduğu işaretten kaçmaya çalışırdı.
             Arc.Spawn(pos, Quaternion.identity, radius, 360f, LienColor, delay,
-                      scaleFrom: 0.25f, scaleTo: 1f);
+                      scaleFrom: 0.25f, scaleTo: 1f, scaled: true);
             return m;
         }
 
+        // Patlama mantığı TEK yerde (`Step`) — `Arc`/`Mote` ile aynı desen.
         void Update()
         {
-            if (_fired) return;
-
-            _timer -= Time.deltaTime;
-            if (_timer > 0f) return;
-
-            _fired = true;
-            if (_hitsEnemies) ActiveLiens = Mathf.Max(0, ActiveLiens - 1);
-            Detonate();
-
-            if (Application.isPlaying) Destroy(gameObject);
-            else DestroyImmediate(gameObject);
+            Step(Time.deltaTime);
+            if (_fired) Destroy(gameObject);
         }
 
         /// <summary>Öz-denetim dt'yi kendisi veriyor — editörde `Time.deltaTime` 0.</summary>
@@ -163,7 +159,7 @@ namespace TekCan
             d.y = 0f;
             if (d.magnitude > _radius) return;
 
-            _player.GetComponent<PlayerController>()?.TakeHit(_cost, transform.position);
+            _player.GetComponent<PlayerController>()?.TakeHit(_cost, transform.position, _owner);
         }
 
         void VurDüşmanlara()

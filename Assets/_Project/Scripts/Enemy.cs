@@ -92,6 +92,19 @@ namespace TekCan
         /// </summary>
         public float StolenFromPlayer { get; private set; }
 
+        /// <summary>Oyuncudan GERÇEKTEN inen bedeli hesaba yaz — yalnızca boss hesap tutar.</summary>
+        public void HesabınaYaz(float saniye)
+        {
+            if (IsBoss && saniye > 0f) StolenFromPlayer += saniye;
+        }
+
+        /// <summary>
+        /// Hesap diske geçti, sıfırla. ⚠️ Sıfırlanmasaydı aynı dövüşte ikinci ölüm
+        /// (ÖLÜM ALDATMA → tekrar ölüm) birikmiş TOPLAMI ikinci kez yazıyordu ve boss
+        /// bir dahaki karşılaşmada hak etmediği kadar büyük geliyordu (denetim 2026-09-23).
+        /// </summary>
+        public void HesabıKapat() => StolenFromPlayer = 0f;
+
         /// <summary>Bu boss daha önce seni öldürdüyse havuzuna eklenen borç.</summary>
         public float NemesisDebt { get; private set; }
 
@@ -266,8 +279,6 @@ namespace TekCan
             _push = dir.normalized * force;
         }
 
-        /// <summary>Öz-denetim için: şu an savruluyor mu.</summary>
-        public bool BeingPushed => _push.sqrMagnitude > 0.0001f;
 
         /// <summary>⚠️ dt DIŞARIDAN — editör modunda `Time.deltaTime` 0 (tuzak 3).</summary>
         public void TickPush(float dt)
@@ -313,14 +324,10 @@ namespace TekCan
             // vurulamıyordu. Yani ÖLDÜRÜLEMEZ BİR SALDIRGAN. Belge yorumu
             // "vurulmuyor, vurmuyor, kovalamıyor" diyordu; kod yalnızca birincisini
             // yapıyordu. Yorumun doğru olması kodun doğru olduğu anlamına gelmiyor.
-            if (Dormant)
-            {
-                TickBossPassives(Time.deltaTime);   // rakipler öldü mü diye BURASI bakıyor
-                if (Dormant) return;                // hâlâ uykuda: akış, aura, saldırı YOK
-            }
-
-            bool wasHollow = Hollow;
-
+            // ⚠️ İsabet parlaması UYKUDAN ÖNCE söner. Faz 3'e geçiş hep bir vuruşun
+            // içinde oluyor ve o vuruş parlamayı başlatıyor; sönme uykudan sonra
+            // kalsaydı boss rakip geçidi boyunca bembeyaz kalırdı, uyku rengi hiç
+            // görünmezdi (denetim 2026-09-23).
             if (_flashTimer > 0f)
             {
                 _flashTimer -= Time.unscaledDeltaTime;   // hit-stop sırasında da sönsün
@@ -331,6 +338,20 @@ namespace TekCan
 
                 if (_flashTimer <= 0f) { transform.localScale = _baseScale; Paint(); }
             }
+
+            // ⚠️ Koşu BİTTİ (ölüm ya da zafer): dövüş durur. Durmasaydı "OYUN BİTTİ"
+            // ekranında düşmanlar vurmaya devam ediyor, her vuruş hit-stop, sarsıntı
+            // ve acı sesi üretiyordu — saat düşmese de ekran "hâlâ dövüşüyorsun" diyordu.
+            var saat = Clock.Instance;
+            if (saat != null && (saat.Dead || saat.Won)) return;
+
+            if (Dormant)
+            {
+                TickBossPassives(Time.deltaTime);   // rakipler öldü mü diye BURASI bakıyor
+                if (Dormant) return;                // hâlâ uykuda: akış, aura, saldırı YOK
+            }
+
+            bool wasHollow = Hollow;
 
             // Havuz kendi kendine akar. Boşalınca daha aşağı inmez.
             if (!Hollow)
@@ -469,7 +490,7 @@ namespace TekCan
         /// Şu anki saldırı 360° mü — halka, yani yön kontrolü yok, UZAKLAŞMAK gerekiyor.
         /// Ses ve öz-denetim buna bakıyor; değeri `_attack`'ten türüyor.
         /// </summary>
-        bool _slamming;
+        bool _slamming => _attack != null && _attack.Angle >= 360f;
 
         /// <summary>
         /// Şu anki boss saldırısı — boss değilse null, sıradan koni kullanılıyor.
@@ -495,7 +516,6 @@ namespace TekCan
         /// değişince test yeşil kalıp oyun bozulmasın.)
         /// </summary>
         public float CurrentStrikeRadius => StrikeRadius;
-        public float CurrentStrikeInner => StrikeInner;
 
         void EnterWindup()
         {
@@ -507,8 +527,10 @@ namespace TekCan
             {
                 // ZİNCİR: farklı bir saldırı hemen ardından geliyor. Bir cevaba
                 // yerleşemiyorsun — halka çıkarttı, simit hemen içeri çağırıyor.
+                // ⚠️ `_chained`'i burada SIFIRLAMA: SetAttack onu zaten bir sonraki
+                // halkaya (`a.Then`) çeviriyor. Sıfırlamak her zinciri 2. halkada
+                // kesiyordu — faz 3'ün 4 halkalı zinciri hiç tam oynamadı (denetim 2026-09-23).
                 SetAttack(_chained);
-                _chained = null;
             }
             else
             {
@@ -531,7 +553,7 @@ namespace TekCan
             // Boss'un yere vuruşunda bu daha da kritik, çünkü halka 360° ve kaçacak yer yok.
             _telegraph = Arc.Spawn(transform.position, transform.rotation,
                                    StrikeRadius, StrikeAngle, TelegraphColor, dur, transform,
-                                   scaleFrom: 0.25f, scaleTo: 1f);
+                                   scaleFrom: 0.25f, scaleTo: 1f, scaled: true);
 
             // ⚠️ HARİTADAKİ RASTGELE GÜVENLİ NOKTA — hazırlık başında seçiliyor ve
             // yeşil halkayla APAÇIK gösteriliyor. Saldırıyı adil tutan şey
@@ -544,14 +566,14 @@ namespace TekCan
                 _safeSpot = RastgeleGüvenliNokta();
                 Arc.Spawn(_safeSpot, Quaternion.identity, _attack.SafeSpotRadius, 360f,
                           new Color(0.45f, 1f, 0.55f, 0.40f), dur,
-                          scaleFrom: 1f, scaleTo: 1f);
+                          scaleFrom: 1f, scaleTo: 1f, scaled: true);
             }
 
             // ⚠️ SİMİT'in güvenli göbeği GÖRÜNMELİ. Görünmezse oyuncu "halka geliyor,
             // kaç" der ve tam ters yönde ölür — mekanik doğru, sunum öldürücü olur.
             if (StrikeInner > 0f)
                 Arc.Spawn(transform.position, transform.rotation, StrikeInner, 360f,
-                          new Color(0.45f, 1f, 0.55f, 0.35f), dur, transform);
+                          new Color(0.45f, 1f, 0.55f, 0.35f), dur, transform, scaled: true);
 
             // ⚠️ AYNA'nın ARKA dilimi de çizilmeli. Çizilmezse oyuncu "koni
             // geliyor, geri çekil" der ve tam arkada ölür — mekanik doğru,
@@ -559,7 +581,7 @@ namespace TekCan
             if (_attack != null && _attack.Mirrored && StrikeAngle < 360f)
                 Arc.Spawn(transform.position, transform.rotation * Quaternion.Euler(0f, 180f, 0f),
                           StrikeRadius, StrikeAngle, TelegraphColor, dur, transform,
-                          scaleFrom: 0.25f, scaleTo: 1f, followYaw: 180f);
+                          scaleFrom: 0.25f, scaleTo: 1f, followYaw: 180f, scaled: true);
 
             // ⚠️ GÜVENLİ AÇIKLIK da görünmeli — arkada, yeşil. Görünmezse oyuncu
             // "halka geliyor, uzaklaş" der ve tam kaçamayacağı yerde ölür.
@@ -568,7 +590,7 @@ namespace TekCan
                 Arc.Spawn(transform.position, transform.rotation * Quaternion.Euler(0f, 180f, 0f),
                           StrikeRadius, _attack.SafeAngle,
                           new Color(0.45f, 1f, 0.55f, 0.30f), dur, transform,
-                          followYaw: 180f);   // ⚠️ olmazsa takip dönüşü sapmayı siler
+                          followYaw: 180f, scaled: true);   // ⚠️ olmazsa takip dönüşü sapmayı siler
 
             Paint();
         }
@@ -634,7 +656,6 @@ namespace TekCan
             {
                 // Boss olmayan düşman: sıradan koni vuruşu.
                 _attack = null;
-                _slamming = false;
                 _repeatsLeft = 0;
                 _chained = null;
                 return;
@@ -655,12 +676,14 @@ namespace TekCan
         }
 
         /// <summary>Saldırıyı kur — tekrar ve zincir durumu tek yerden ayarlanıyor.</summary>
+        /// <summary>Boss'un doğurdukları için kamera — yoksa süre etiketleri kameraya dönmüyordu.</summary>
+        static Transform Kamera => IsoCamera.Instance != null ? IsoCamera.Instance.transform : null;
+
         void SetAttack(BossAttack a)
         {
             _attack = a;
             _repeatsLeft = Mathf.Max(0, a.Repeat - 1);
             _chained = a.Then;                    // tekrarlar bitince zincire geçilir
-            _slamming = a.Angle >= 360f;          // eski kavram, saldırıdan türüyor
         }
 
         BossAttack _chained;
@@ -683,12 +706,6 @@ namespace TekCan
             if (_attack != null && _attack.Lunge > 0f)
                 transform.position = ArenayaSığdır(transform.position + _strikeDir * _attack.Lunge);
 
-            // GERİ SIÇRAMA: hamlenin tersi. Vurur ve çekilir — "kaç" değil
-            // "KOVALA" diye sorar. ⚠️ Arenaya sığdırılıyor: sınıra sıçrayan
-            // boss dışarı çıkıp erişilmez olurdu.
-            if (_attack != null && _attack.Recoil > 0f)
-                transform.position = ArenayaSığdır(transform.position - _strikeDir * _attack.Recoil);
-
             Arc.Spawn(transform.position, transform.rotation,
                 StrikeRadius, StrikeAngle, StrikeColor, _t.enemyStrikeDuration * 1.6f);
 
@@ -706,8 +723,9 @@ namespace TekCan
                 // ⚠️ NEMESİS: boss'un senden aldığı saniye SAYILIYOR — ve gerçekten
                 // İNEN bedel sayılıyor. Dash i-frame'i vuruşu yutabiliyor; "vurdum,
                 // demek ki aldı" varsayımı boss'a hak etmediği alacak yazardı.
-                float inen = _player.GetComponent<PlayerController>()?.TakeHit(cost, transform.position) ?? 0f;
-                if (IsBoss) StolenFromPlayer += inen;
+                // ⚠️ Hesaba `TakeHit` yazıyor, saat düşmeden ÖNCE: öldüren vuruş ölüm
+                // sırasının İÇİNDE diske yazılıyor, sonradan eklenen hiç sayılmıyordu.
+                _player.GetComponent<PlayerController>()?.TakeHit(cost, transform.position, this);
             }
 
             // ÇEKİM: hasardan SONRA. Önce çekseydik oyuncuyu tehlikeye sürükleyip
@@ -717,6 +735,15 @@ namespace TekCan
             // bu zaten — vurmuyor, seni yerinden ediyor.
             if (_attack != null && _attack.Pull > 0f && FlatDistanceToPlayer() <= StrikeRadius)
                 _player.GetComponent<PlayerController>()?.Yank(transform.position, _attack.Pull);
+
+            // GERİ SIÇRAMA: hamlenin tersi. Vurur ve ÇEKİLİR — "kaç" değil
+            // "KOVALA" diye sorar. ⚠️ Arenaya sığdırılıyor: sınıra sıçrayan
+            // boss dışarı çıkıp erişilmez olurdu.
+            // ⚠️ Hasardan SONRA. Önceden hasardan önce sıçrıyordu: 5 birim geri gidip
+            // isabeti YENİ yerden ölçüyordu, 4.25 menzilli DEVİR hiç tutmuyordu
+            // (denetim 2026-09-23). Hamle öne kalır: o, mesafeyi VURMADAN önce kapatır.
+            if (_attack != null && _attack.Recoil > 0f)
+                transform.position = ArenayaSığdır(transform.position - _strikeDir * _attack.Recoil);
         }
 
         void EnterState(State s, float duration)
@@ -835,8 +862,12 @@ namespace TekCan
             float tercih = Kind.PreferredRange(_t);
             if (tercih > 0f)
             {
+                // ⚠️ Geri çekilme ARENAYA SIĞDIRILIYOR. Sığdırılmazsa kenara sıkıştırılan
+                // MÜBAŞİR sınırın 6-8 birim dışına yerleşiyordu: oyuncu sınırda duruyor,
+                // yakın silahlar erişemiyor, oda hiç temizlenmiyordu (denetim 2026-09-23).
+                // Köşeye sıkışınca yeri yok — "uzak dur" cevabı orada biter, olması gereken bu.
                 if (dist < tercih * 0.85f)
-                    transform.position -= (to / dist) * MoveSpeed * Time.deltaTime;
+                    transform.position = ArenayaSığdır(transform.position - (to / dist) * MoveSpeed * Time.deltaTime);
                 else if (dist > tercih * 1.15f)
                     transform.position += (to / dist) * MoveSpeed * Time.deltaTime;
                 FacePlayer();
@@ -907,6 +938,12 @@ namespace TekCan
 
             CheckPhase();
 
+            // Buraya boş gelinmiyor (boşsa yukarıda öldü) — şimdi boşsa BU vuruş boşalttı.
+            // ⚠️ Boşalma halkası yalnızca kendi kendine akışta çıkıyordu; asıl yaygın
+            // yol olan vuruşla boşalmada hiç çıkmıyordu. CheckPhase'ten SONRA: fullenen
+            // boss (③④) boşalmış sayılmasın.
+            if (Hollow) OnWentHollow();
+
             _flashTimer = _t.hitFlashDuration;
 
             // İsabet patlaması: dışa açılan kısa halka. Beyaz parlama "değdi" diyor,
@@ -945,7 +982,7 @@ namespace TekCan
             if (aura <= 0f) return;
 
             Clock.Instance?.Spend(aura * dt);
-            if (IsBoss) StolenFromPlayer += aura * dt;   // NEMESİS: aura da onun hanesine
+            HesabınaYaz(aura * dt);   // NEMESİS: aura da onun hanesine (tek yazma yolu)
 
             // ⚠️ Zerreyi KISARAK çıkarıyoruz. Aura her karede işliyor; her karede zerre
             // doğursaydık saniyede ~60 nesne olurdu — hem çöp hem ekran karmaşası.
@@ -1040,7 +1077,7 @@ namespace TekCan
                              radius: _t.groundMarkRadius,
                              delay: _t.groundMarkDelay,
                              cost: HitCost * _t.groundMarkCostMultiplier,
-                             parent: transform.parent);
+                             parent: transform.parent, owner: this);
         }
 
         /// <summary>
@@ -1069,7 +1106,7 @@ namespace TekCan
                              radius: _t.bailiffMarkRadius,
                              delay: _t.groundMarkDelay,
                              cost: HitCost * _t.groundMarkCostMultiplier,
-                             parent: transform.parent);
+                             parent: transform.parent, owner: this);
         }
 
         // ⚠️ Boss'unkinden AYRI sayaç: aynı düşman hem boss hem MÜBAŞİR olamaz ama
@@ -1152,7 +1189,7 @@ namespace TekCan
 
         /// <summary>
         /// Şu anki saldırının güvenli nokta yarıçapı (0 = bu saldırıda yok).
-        /// ⚠️ `CurrentStrikeInner` ile aynı gerekçe: öz-denetim hangi saldırının
+        /// ⚠️ `CurrentStrikeRadius` ile aynı gerekçe: öz-denetim hangi saldırının
         /// seçildiğini ÜRETİMDEN öğreniyor, kendi seçimini dayatmıyor.
         /// </summary>
         public float CurrentSafeSpotRadius => _attack?.SafeSpotRadius ?? 0f;
@@ -1194,9 +1231,10 @@ namespace TekCan
                 // tehdidin bir cevabı olmak zorunda.
                 float açı = (360f / Mathf.Max(1, adet)) * i * Mathf.Deg2Rad;
                 var yer = transform.position + new Vector3(Mathf.Cos(açı), 0f, Mathf.Sin(açı)) * (Radius + 2.2f);
+                yer = ArenayaSığdır(yer);   // kenardaki boss dışarıya doğurmasın
                 yer.y = Bootstrap.ArenaCenter.y;
 
-                var yeni = Bootstrap.SpawnEnemyAt(_t, yer, _player, null,
+                var yeni = Bootstrap.SpawnEnemyAt(_t, yer, _player, Kamera,
                                                   poolMultiplier: 0.55f, boss: false,
                                                   kind: Boss.SummonKind, parent: transform.parent);
                 if (yeni != null) yeni.MarkAsSummoned();
@@ -1223,6 +1261,12 @@ namespace TekCan
         void ÇağırRakipleri()
         {
             Dormant = true;
+
+            // ⚠️ Faz 3 hazırlığın ORTASINDA gelebilir. Uykuda `Update` durduğu için
+            // hazırlık sayacı donuyordu; boss uyanınca kalan süre dolup UYARISIZ
+            // vuruyordu (telgraf çoktan sönmüştü). Uykuya giren boss saldırısını bırakır.
+            if (_telegraph != null) { _telegraph.Cancel(); _telegraph = null; }
+            EnterState(State.Chase, 0f);
 
             // ⚠️ RASTGELE SIRA, HER OYNAYIŞTA FARKLI (Enes). Sabit sıra olsaydı
             // final ezberlenir ve ikinci denemede bir sıralamanın tekrarı olurdu.
@@ -1267,8 +1311,14 @@ namespace TekCan
             var yer = Bootstrap.ArenaCenter - yön.normalized * (_t.arenaRadius * 0.45f);
             yer.y = Bootstrap.ArenaCenter.y;
 
-            var rakip = Bootstrap.SpawnEnemyAt(_t, yer, _player, null,
-                                               poolMultiplier: _t.rivalPoolMultiplier, boss: true,
+            // ⚠️ Havuz O BOSS'UN kendi havuzunun payı (Tuning: "çağırdığı önceki
+            // boss'ların havuz çarpanı"). Önceden SIRADAN düşman havuzunun payıydı:
+            // 10 × 0.7 = 7 sn, yani "yendiğinden güçlü" rakip iki vuruşta ölüyordu
+            // (bölge 1 boss'u ~200 sn). Büyüme, boss'un kendi bölgesinin büyümesi.
+            float rakipHavuzu = _t.bossPoolMultiplier * Mathf.Pow(_t.regionBossGrowth, kind.Index)
+                              * _t.rivalPoolMultiplier;
+            var rakip = Bootstrap.SpawnEnemyAt(_t, yer, _player, Kamera,
+                                               poolMultiplier: rakipHavuzu, boss: true,
                                                parent: transform.parent,
                                                bossKind: kind);
             if (rakip == null) return;
@@ -1312,7 +1362,10 @@ namespace TekCan
             if (Boss.SummonsRivalsInPhase == Phase) ÇağırRakipleri();
 
             // Dağarcık değişti: sıradaki saldırı YENİ listeden seçilsin.
-            _attack = null;
+            // ⚠️ `_attack`'e DOKUNMA: faz hazırlığın ortasında değişebiliyor (son vuruş
+            // havuzu boşaltıp fazı çeviriyor). Sıfırlanırsa ekrandaki telgraf eski
+            // saldırıyı gösterirken düz koni iniyordu — yeşil "güvenli" alanda vurulmak.
+            // Sıradaki hazırlıkta PickAttack onu zaten yenisiyle eziyor.
             _repeatsLeft = 0;
             _chained = null;
 
@@ -1345,13 +1398,19 @@ namespace TekCan
             TimeLeft *= 0.5f;
 
             var yan = transform.right * Radius * 2.2f;
-            var ikiz = Bootstrap.SpawnEnemyAt(_t, transform.position + yan, _player, null,
+            var ikiz = Bootstrap.SpawnEnemyAt(_t, transform.position + yan, _player, Kamera,
                                               poolMultiplier: 1f, boss: true, kind: Kind,
                                               parent: transform.parent, bossKind: Boss);
 
             // ⚠️ Doğanı DOĞRUDAN alıyoruz. Sahnede "aynı türden faz 1'de olan" diye
             // aramak, ikinci bir bölünmede yanlışını bulabilirdi.
-            if (ikiz != null) ikiz.BecomeTwin(TimeLeft);
+            if (ikiz == null) return;
+
+            // ⚠️ Yankının ikizi de YANKI. İşaretlenmezse son boss onu beklemeden
+            // sıradaki rakibi çağırıyor ya da uyanıyordu ("hepsi ölünce kendisi
+            // gelsin" deliniyordu) ve ikizin çaldığı zaman KEFİL'in defterine yazılıyordu.
+            if (SummonedRival) ikiz.MarkAsSummonedRival();
+            ikiz.BecomeTwin(TimeLeft);
         }
 
         /// <summary>Bölünmeden doğan ikiz — `Split` çağırıyor.</summary>
@@ -1361,7 +1420,10 @@ namespace TekCan
             _startingPool = pool;
             Phase = 2;
             OnCredit = true;
-            transform.localScale = _baseScale * 0.8f;
+            // Dayanak da küçülür: yalnızca ölçek küçülseydi ilk isabet darbesi
+            // `_baseScale`'e dönüp ikizi kalıcı olarak TAM boya büyütüyordu.
+            _baseScale *= 0.8f;
+            transform.localScale = _baseScale;
             Paint();
         }
 

@@ -42,8 +42,8 @@ hiçbir işe yaramaz, asset onu ezer.
   bu uyarı olmadığı için yanlış varsayımla geçti.)
 
 ⚠️ **Kuralın istisnası — asset'te HENÜZ OLMAYAN alanlar.** 2026-08-24'te tam senkron
-yapılmıştı, ama Faz 8–15'te eklenen alanlar asset'e hiç yazılmadı: **99 alanın 34'ü
-dosyada yok** (araç sayıyor, tahmin değil). O alanlarda kural TERSİNE işliyor — asset
+yapılmıştı, ama sonradan eklenen alanlar asset'e hiç yazılmadı: **118 alanın 49'u
+dosyada yok** (2026-09-25; araç sayıyor, tahmin değil — güncel sayı `TuningAudit` çıktısında). O alanlarda kural TERSİNE işliyor — asset
 ezecek bir kayıt taşımadığı için **.cs değişikliği uygulanıyor.** Oda/bölge büyümesi,
 düşman rütbesi, checkpoint/diriliş, Faz 13 tür kancaları ve HACİZ / İPOTEK / İFLAS
 kadranlarının **hepsi** bu grupta — yani ayar oturumunun kadranlarının çoğu.
@@ -100,6 +100,11 @@ Bu üç hata sınıfı projede defalarca çıktı. Yeni kod yazarken önce bunla
    Ve her kısayolun **geri alma yolu** olmalı, kısayolun kendisi kadar erişilebilir
    bir yerde: `F6` sıfırdan yeni koşu başlatır ve **ölüm ekranında da çalışır**.
    ⚠️ Bu kural klavye girdisiyle test edilemiyor — o yüzden burada yazıyor.
+5. **Yok edilmiş OLABİLECEK Unity nesnesinde `?.` / `??` kullanma** (saldıran düşman, işaretin
+   sahibi, eski odanın nesnesi). Yok edilmiş `UnityEngine.Object` C# tarafında null değil;
+   `x?.Foo()` ölü nesneye yazar. Açık `if (x != null)` yaz. (`Clock.Reset` yorumu, ders 14.)
+6. **Kapıyı yazınca bir kere BOZ.** Hatayı geri koy, kırmızıya dönüyor mu bak. 2026-09-25
+   denetiminde bozuk dört mekaniğin dördünün de kapısı yeşildi (ders 14).
 
 ## graphify
 

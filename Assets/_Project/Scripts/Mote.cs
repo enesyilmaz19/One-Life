@@ -23,7 +23,6 @@ namespace TekCan
         public static readonly Color HarvestColor = new Color(0.40f, 1f, 0.50f);   // HUD kazanç yeşiliyle aynı
         public static readonly Color DrainColor = new Color(1f, 0.35f, 0.30f);
 
-        static Material _shared;
         static Mesh _sharedMesh;
 
         Transform _target;

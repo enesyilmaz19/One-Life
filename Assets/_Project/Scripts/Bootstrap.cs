@@ -231,6 +231,14 @@ namespace TekCan
             }
             _runRoot = null;
             Build();
+
+            // Çalışma anında üretilen varlıklar (ses klipleri, yay mesh'leri, `renderer.material`
+            // kopyaları) sahibi ölünce kendiliğinden gitmiyor; her ÇAĞRI/F6/R ~0.5 MB
+            // biriktiriyordu. Yeniden kurulum zaten bir kesinti anı, taraması oraya düşüyor.
+            // (Eski kök kare sonunda yok ediliyor; onun artıkları BİR SONRAKİ yeniden
+            // kurulumda süpürülüyor — birikim yine tek koşuyla sınırlı.)
+            // ponytail: toplu tarama; kesinti hissedilirse Sfx/Arc Reset'lerinde tek tek Destroy.
+            Resources.UnloadUnusedAssets();
         }
 
         /// <summary>

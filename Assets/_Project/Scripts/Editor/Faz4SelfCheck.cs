@@ -176,6 +176,9 @@ namespace TekCan.EditorTools
             var b2 = Enemy.All.Count > 0 ? Enemy.All[0] : null;
             if (b2 != null)
             {
+                // ⚠️ Saat yukarıda KAZANILDI; kazanılmış koşu artık zaman kaybetmiyor
+                // (Faz 24). Aura ölçümü taze saatle — yoksa emişi değil zaferi ölçerdik.
+                clock.Init(t, player.transform, t.startSeconds);
                 float auraBefore = clock.Seconds;
                 b2.ApplyAura(1f);
                 failed += Check(ref total, "BOSS SAATİ GERÇEKTEN EMDİ",

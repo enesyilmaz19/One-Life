@@ -86,11 +86,21 @@ namespace TekCan
             if (Type == Kind.Repair)
             {
                 var kırık = FirstBroken();
-                if (kırık == null || clock == null || !clock.TryBuy(Price)) return;
+                // ⚠️ Checkpoint bedeli taşıyamıyorsa SATMA. Taşımadan satılsaydı checkpoint
+                // 0.5 sn'ye iniyor, her ÇAĞRI düşmanın ortasında anında ölüm oluyor ve kalan
+                // eşyalar zincirleme yanıyordu (`TryBuy`'ın "kendini öldüremezsin" kuralı).
+                if (kırık == null || clock == null || SaveFile.CheckpointSeconds(_t) <= Price
+                    || !clock.TryBuy(Price)) return;
 
                 var s = SaveFile.Current;
                 s.broken[kırık.Index]--;
                 s.intact[kırık.Index]++;
+
+                // ⚠️ Bedel CHECKPOINT'TEN de düşülüyor. Checkpoint odaya GİRİŞTE yazılıyor,
+                // onarım ondan SONRA alınıyor: düşülmeseydi her ÇAĞRI bedeli geri veriyordu
+                // — öl, dön, yine onar, yine öl… SONSUZ diriliş (denetim 2026-09-23).
+                // Onarım kalıcı, bedeli de kalıcı olmalı.
+                s.checkpointSeconds = Mathf.Max(0.5f, SaveFile.CheckpointSeconds(_t) - Price);
                 SaveFile.Flush();          // kazanım da hemen yazılır, ölüm gibi
 
                 Sfx.Buy();
@@ -123,6 +133,8 @@ namespace TekCan
             {
                 var kırık = FirstBroken();
                 if (kırık == null) return "ONARIM   [tamir edilecek eşya yok]";
+                if (SaveFile.CheckpointSeconds(_t) <= Price)
+                    return $"ONARIM  {kırık.Name}   [checkpoint zamanın {Price:0} sn'yi taşımıyor]";
                 return $"ONARIM  {kırık.Name}   —   {Price:0.0} saniye   [E]";
             }
 

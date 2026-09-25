@@ -46,8 +46,6 @@ namespace TekCan
         /// <summary>Kuşanılan silah. 1-4 tuşlarıyla değişiyor (Faz 3 test kolaylığı).</summary>
         public Weapon Weapon => TekCan.Weapon.All[_weaponIndex];
 
-        static readonly Color SwingTint = new Color(0.65f, 0.9f, 1f, 0.42f);
-        static readonly Color DashSwingTint = new Color(0.55f, 1f, 0.85f, 0.55f);
         static readonly Color HurtColor = new Color(1f, 0.3f, 0.3f);
 
         /// <summary>Savurma yayı üretildi mi — öz-denetim bunu kontrol eder (ıskada da çıkmalı).</summary>
@@ -123,7 +121,8 @@ namespace TekCan
 
         void Update()
         {
-            if (_t == null || (Clock.Instance != null && Clock.Instance.Dead)) return;
+            // Koşu bitti (ölüm ya da zafer): oyuncu da durur — düşmanlarla aynı kural.
+            if (_t == null || (Clock.Instance != null && (Clock.Instance.Dead || Clock.Instance.Won))) return;
 
             _dashCd -= Time.deltaTime;
             _iFrames -= Time.deltaTime;
@@ -220,7 +219,16 @@ namespace TekCan
             var m = Mouse.current;
             if (m != null && m.rightButton.wasPressedThisFrame) return true;
             var gp = Gamepad.current;
-            return gp != null && gp.buttonNorth.wasPressedThisFrame;
+            // ⚠️ Kolda Y aynı zamanda SUNAK tuşu (`Altar.UsePressed`). Sunağın yanında
+            // özel saldırı sayılmıyor: yoksa alışveriş + FAİZLİ İCRA'sı birlikte
+            // ateşleniyor, 3 sn bedel ve bekleme süresi boşa gidiyordu.
+            return gp != null && gp.buttonNorth.wasPressedThisFrame && !SunakYakın();
+        }
+
+        static bool SunakYakın()
+        {
+            foreach (var a in Altar.All) if (a != null && a.PlayerInRange) return true;
+            return false;
         }
 
         /// <summary>Öz-denetim ve HUD için: özel saldırı hazır mı, değilse ne kadar kaldı.</summary>
@@ -477,7 +485,12 @@ namespace TekCan
 
         void DashStrike()
         {
-            transform.rotation = Quaternion.LookRotation(_dashDir);
+            // ⚠️ HACİZ geri dash atıyor ama VURUŞ NİŞANA dönük. Dash onu dibindekinden
+            // uzaklaştırıyor, dash-atak da o dibindekine iniyor — menzilli silahın
+            // "yakın cevabı" bu (Weapon: DASH-ATAK). Dash yönüne dönseydi arkasındaki
+            // boşluğa savuruyordu ve cevap hiç tutmuyordu (denetim 2026-09-23).
+            var yön = Weapon.DashBackwards ? -_dashDir : _dashDir;
+            if (yön.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(yön);
 
             // Dash-atak artık SİLAHA GÖRE değişiyor: tek hedefli silah dash'te de tek
             // hedefli kalır ama çok sert vurur; koni süpürür ama vuruş başına daha az.
@@ -652,7 +665,11 @@ namespace TekCan
                        float minRange = 0f)
         {
             surfaceDist = float.MaxValue;
-            if (e == null) return false;
+            // ⚠️ UYKUDAKİ boss hedef DEĞİL (`TakeDamage` onu zaten yok sayıyor). Seçimde
+            // kalsaydı tek hedefli silahlar en yakın gövdeyi — sahnenin ortasında yatan
+            // dev boss'u — seçip vuruşu boşa harcıyordu; FAİZLİ bedelini ödüyor,
+            // arkadaki rakibe hiçbir şey olmuyordu (denetim 2026-09-23).
+            if (e == null || e.Dormant) return false;
 
             Vector3 to = e.transform.position - transform.position;
             to.y = 0f;
@@ -747,8 +764,13 @@ namespace TekCan
             delta.y = 0f;                                  // tuzak 2: y yatay hesaba karışmasın
             if (delta.magnitude > menzil) delta = delta.normalized * menzil;
 
+            // ⚠️ ODA KÖKÜNE bağlanıyor: oda sökülünce patlamadan gidiyor (`TearDown`
+            // sayacı zaten o varsayımla sıfırlıyor). Koşu köküne bağlıydı; yeni odaya
+            // taşınıp orada patlıyor ve "aynı anda tek ipotek" kuralını deliyordu.
+            // Oda yoksa (öz-denetim) eski yer.
+            var oda = RoomManager.Instance != null ? RoomManager.Instance.RoomRoot : null;
             GroundMark.SpawnLien(_t, transform.position + delta, yarıçap, gecikme,
-                                 hasar, hasat, transform.parent);
+                                 hasar, hasat, oda != null ? oda : transform.parent);
         }
 
         /// <summary>
@@ -778,17 +800,37 @@ namespace TekCan
         /// dash i-frame'inde yanlış olurdu ve boss kaçırdığı vuruşları da hesabına
         /// yazardı. Ölçüm tahmin değil, gerçekten inen miktar.
         /// </returns>
-        public float TakeHit(float secondsCost, Vector3 fromPosition)
+        /// <param name="saldıran">Vuran boss — nemesis hesabı için. Sıradan düşman ve
+        /// hesapsız vuruşlar (yer işareti sahipsizse) null verir.</param>
+        public float TakeHit(float secondsCost, Vector3 fromPosition, Enemy saldıran = null)
         {
             if (Invulnerable) return 0f;
+
+            // Koşu bittiyse (ölüm ya da zafer) darbe yok — ne bedel ne geri bildirim.
+            var clock = Clock.Instance;
+            if (clock != null && (clock.Dead || clock.Won)) return 0f;
 
             // ⚠️ GERÇEKTEN İNEN miktar ölçülüyor, istenen değil. Saatinde 2 saniye
             // kalmışken 4 saniyelik darbe yersen boss 4 değil 2 almıştır — nemesis
             // defterine 4 yazmak, olmayan bir alacağı hesabına geçirmek olurdu.
             // (Projenin kuralı: ÖZELLİK değil ETKİ. Burada da geçerli.)
-            float öncekiSaat = Clock.Instance != null ? Clock.Instance.Seconds : 0f;
-            Clock.Instance?.Spend(secondsCost, fromHit: true);   // oda hesabında AYRI sayılıyor
-            float inen = Clock.Instance != null ? öncekiSaat - Clock.Instance.Seconds : secondsCost;
+            // ⚠️ Saat farkıyla ölçülmüyor artık: bu darbe öldürüp diriltirse (ÖLÜM
+            // ALDATMA) saat YÜKSELMİŞ olarak dönüyor ve fark EKSİ çıkıyordu.
+            float inen = clock != null
+                       ? Mathf.Min(Mathf.Max(0f, secondsCost), Mathf.Max(0f, clock.Seconds))
+                       : secondsCost;
+
+            // ⚠️ Hesaba saat düşmeden ÖNCE yaz: saat sıfırlanırsa ölüm sırası
+            // (RevivalSystem) AYNI çağrının içinde defteri diske yazıyor.
+            // Unity null'ı için `?.` değil açık kontrol: saldıran yok edilmiş olabilir.
+            if (saldıran != null) saldıran.HesabınaYaz(inen);
+
+            if (clock != null) clock.Spend(secondsCost, fromHit: true);   // oda hesabında AYRI sayılıyor
+
+            // Darbe koşuyu yeniden başlattıysa (ÇAĞRI) bu nesne eski koşuya ait:
+            // acı sesi ve hit-stop yeni koşunun ilk karesine taşmasın.
+            if (clock != null && Clock.Instance != clock) return inen;
+
             HitStop.Freeze(_t.hitStopDuration * 1.5f);
             IsoCamera.Shake(_t.hurtShake);
 

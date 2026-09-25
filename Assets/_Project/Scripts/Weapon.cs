@@ -124,6 +124,11 @@ namespace TekCan
         public virtual float Knockback(Tuning t) => 0f;
 
         /// <summary>Sağ tık saldırısı. null = yok (hiçbir silahta olmamalı).</summary>
+        /// <remarks>⚠️ Her çağrıda YENİDEN kuruluyor, önbellek yok. Önbellekliyken ilk
+        /// verilen `Tuning`'i sonsuza dek tutuyordu: Inspector'daki canlı ayar (F1 köprüsü)
+        /// ve F2-F4 profilleri özel saldırılara HİÇ geçmiyordu (denetim 2026-09-23).</remarks>
+        // ponytail: HUD her OnGUI olayında 5-6 küçük nesne kuruyor. Profilde görünürse
+        // önbelleği Tuning DEĞERLERİNE bağla (referansına değil).
         public virtual WeaponSpecial Special(Tuning t) => null;
 
         // ── DASH-ATAK KİMLİĞİ ────────────────────────────────────────────────
@@ -213,13 +218,12 @@ namespace TekCan
 
         /// SÜPÜRME — çevrendeki HERKESE. Sorusu "kaç kişiye birden vurabilirim";
         /// halka o sorunun azamisi. Konumlanmayı ödüllendiriyor: topla, sonra bas.
-        public override WeaponSpecial Special(Tuning t) => _s ??= new WeaponSpecial
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
         {
             Name = "SÜPÜRME", Cooldown = t.specialCooldownCone,
             Angle = 360f, RangeMul = 1.5f, DamageMul = 1.15f, Knockback = 5f,
             Tint = new Color(0.65f, 0.95f, 1f, 0.5f)
         };
-        WeaponSpecial _s;
         // MaxTargets sınırsız, HarvestMultiplier 1 — dengenin sıfır noktası.
     }
 
@@ -247,7 +251,7 @@ namespace TekCan
         /// İCRA — bahsi büyütüyor. Peşin bedel ağır, hasar çok, öldürürsen ÜÇ KAT
         /// geri geliyor. Sorusu değişmiyor ("bu savurma tutar mı"), sadece bedeli
         /// ve ödülü büyüyor. Iskalarsan doğrudan ömründen gidiyor.
-        public override WeaponSpecial Special(Tuning t) => _s ??= new WeaponSpecial
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
         {
             Name = "İCRA", Cooldown = t.specialCooldownFaizli,
             MaxTargets = 1, Angle = t.singleTargetAngle * 0.8f, RangeMul = 1.3f,
@@ -255,7 +259,6 @@ namespace TekCan
             Cost = t.faizliSwingCost * 6f, KillRefundMul = 3f,
             Tint = new Color(1f, 0.8f, 0.25f, 0.6f)
         };
-        WeaponSpecial _s;
 
         /// ⚠️ Dash-atak isabet ederse savurma bedeli GERİ GELİYOR. FAİZLİ'nin sorusu
         /// "tutar mı"; dash onu en zor haliyle soruyor (hareket halinde, tek hedef)
@@ -307,14 +310,13 @@ namespace TekCan
         /// ("yaklaşmalı mıyım") tersine çevirip cevabını veriyor: UZAKLAŞ.
         /// Ölü bölgesi olan silahın en uzaktan en sert vurması, mesafe bandını
         /// ceza olmaktan çıkarıp SİLAH haline getiriyor.
-        public override WeaponSpecial Special(Tuning t) => _s ??= new WeaponSpecial
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
         {
             Name = "UZUN VADE", Cooldown = t.specialCooldownHaciz,
             MaxTargets = 1, Angle = t.singleTargetAngle * 0.45f, RangeMul = 1.5f,
             DamageMul = 0.8f, DamagePerDistance = 0.42f, HarvestMul = 1.1f,
             Tint = new Color(0.55f, 1f, 0.7f, 0.55f)
         };
-        WeaponSpecial _s;
 
         /// ⚠️ Dash NİŞANIN TERSİNE. Menzilli silahın derdi mesafeyi KAYBETMEK;
         /// dash onu geri kazandırıyor. Diğerlerinde dash saldırı, burada KONUM.
@@ -353,18 +355,16 @@ namespace TekCan
         /// HACİZ İHBARI — çok geniş, çok geç patlayan işaret. Sorusu aynı ("nereye
         /// gidecekler") ama UFKU uzuyor: 0.85 saniye sonrasını değil, iki katını
         /// tahmin edeceksin. Geniş olması affediciliği değil, tahminin ödülü.
-        public override WeaponSpecial Special(Tuning t) => _s ??= new WeaponSpecial
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
         {
             Name = "HACİZ İHBARI", Cooldown = t.specialCooldownIpotek,
             GroundDelay = t.ipotekDelay * 2.1f, GroundRadius = t.ipotekRadius * 2f,
             RangeMul = 1f, DamageMul = 2.4f, HarvestMul = 1f,
             Tint = new Color(1f, 0.45f, 0.95f, 0.5f)
         };
-        WeaponSpecial _s;
-
-        /// ⚠️ Dash BAŞLADIĞIN yere ipotek bırakıyor — kaçarken kurulan tuzak.
-        /// Silahın sorusu tahmin; dash onu KENDİ KAÇIŞINLA soruyor: peşinden
-        /// gelenler senin bıraktığın yere basıyor.
+        // Dash'te ipotek BIRAKMIYOR (2026-09-11'de silindi: arkana hayalet ipotek
+        // düşürüp nişan aldığınınkinin yerini çalıyordu). Dash kimliği yukarıda:
+        // dash-atakta doğrudan yay vuruyor, menzilli silahın yakın cevabı.
     }
 
     /// <summary>
@@ -408,7 +408,7 @@ namespace TekCan
         /// vuruş dipteyken kendiliğinden korkunç oluyor. Üstüne bir de saniye
         /// bedeli koysaydım iki ceza üst üste binerdi ve silah "dipte güçlü" değil
         /// "dipte kullanılamaz" olurdu — kimliğinin tam tersi.
-        public override WeaponSpecial Special(Tuning t) => _s ??= new WeaponSpecial
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
         {
             Name = "TASFİYE", Cooldown = t.specialCooldownIflas,
             MaxTargets = 1, Angle = t.singleTargetAngle * 1.2f, RangeMul = 1.1f,
@@ -416,7 +416,6 @@ namespace TekCan
             DamageMul = 0.62f, HarvestMul = 1f, Knockback = 2f,
             Tint = new Color(1f, 0.3f, 0.25f, 0.6f)
         };
-        WeaponSpecial _s;
 
         public override float DesperationMultiplier(float seconds, Tuning t)
         {

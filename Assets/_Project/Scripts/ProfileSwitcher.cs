@@ -40,7 +40,7 @@ namespace TekCan
                 TuneProfile.PullFromAssetIfBaseline(_t);
             }
 
-            if (kb == null) return;
+            if (kb == null || !Debug.isDebugBuild) return;   // A/B profilleri yalnızca geliştirme build'inde
 
             int seçim = -1;
             if (kb.f1Key.wasPressedThisFrame) seçim = 0;

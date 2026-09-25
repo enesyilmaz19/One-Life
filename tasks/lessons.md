@@ -430,3 +430,50 @@ menzili 3.0 yerine 3.2 yapmak iki özdeş saldırıyı "farklı" gösteriyordu.
 
 Yerine oyuncunun gerçekten hissettiği şeyler kondu: alanın açısı, güvenli yerin
 genişliği, hangi mesafede sorulduğu.
+
+---
+
+## Ders 14 — Dört kapı yeşildi, dört mekanik bozuktu (2026-09-25, denetim)
+
+**Ne oldu:** İki ajan kodu baştan sona taradı, ~30 hata buldu. Asıl ders sayıda değil:
+bozuk dört mekaniğin **dördünün de kapısı vardı ve yeşildi.**
+
+| Mekanik | Kapı neyi ölçüyordu | Neyi ölçmeliydi |
+|---|---|---|
+| Boss zinciri (faz 3'ün 4 halkası) | Zincirin boyunu **veriden** saydı: 4 | Kaç halkanın **oynadığını**: 2 |
+| Geri sıçrayan saldırı (DEVİR) | Boss **uzaklaştı mı** | Saldırı **vurdu mu** — hiç vurmuyordu |
+| HACİZ dash-atağı | `DashStrike`'ı `_dashDir` **sıfırken** çağırdı | `StartDash`'in kurduğu yönle — boşluğa vuruyordu |
+| Son boss'un uyku rengi | Testin **kendi hesapladığı** iki rengi kıyasladı | Renderer'ın **gerçekte** ne gösterdiği |
+
+Hepsi ders 3'ün ("özellik değil etki") aynısı. Kural biliniyordu. Uygulanmadı, çünkü her
+kapı yazıldığı gün **gerçek bir soruyu** cevaplıyordu. Soru sonra kaydı ama kapı kaymadı.
+
+**Kural:**
+
+> Kapı yazdıktan sonra **bir kere bilerek boz** — hatayı geri koy ve kırmızıya döndüğünü
+> gör. Dönmüyorsa kapı üretimi değil kendi varsayımını ölçüyor.
+
+**Somut savunma:** `Faz24SelfCheck` en ağır düzeltmelerin etkisini ölçüyor. Altı hata bilerek
+geri kondu, altı kontrol kırmızıya döndü, başka hiçbir şey düşmedi.
+⚠️ **Hâlâ açık:** uyku RENGİ gerçek renderer'dan ölçülmüyor (Faz 18'in kontrolü boş,
+Faz 24 yalnızca hazırlığın bırakıldığını ölçüyor). Playtest maddesi 10 bunu gözle soruyor.
+
+### Yan dersler
+- **Unity null'ı ve `?.`**: yok edilmiş bir `UnityEngine.Object` C# tarafında null DEĞİL.
+  `saldıran?.HesabınaYaz(...)` yok edilmiş boss'a yazardı. Unity nesnesinde açık
+  `if (x != null)` kullan (`Clock.Reset` yorumundaki tuzağın aynısı).
+- **Yorum ile kod ayrıştı**: `TearDown` "bekleyen İPOTEK oda ile birlikte yok oluyor"
+  diyordu, ipotek odaya değil koşu köküne bağlıydı. `PlayerController`, düşmanların
+  arenaya sığdırıldığını söylüyordu, MÜBAŞİR sığdırılmıyordu. **Yorum bir iddiadır,
+  kanıt değil.**
+- **Düzeltme bir testi kırdıysa önce testi sorgula**: Faz 4 aura kontrolü kazanılmış
+  saati tekrar kullanıyordu. "Kazanılmış koşu zaman kaybetmez" düzeltmesiyle kırmızıya
+  döndü. Kırmızı haklıydı ama sebebi testin kurgusuydu, üretim değil.
+- **Rastgele sıra + gövde saymak = titrek kapı**: Faz 18 "aynı anda tek rakip"i gövdeyle
+  sayıyordu. Rakip sırası rastgele. KEFİL ilk gelince bölünüyor ve 4'te 1 ihtimalle kırmızı
+  yanıyordu. Önceki koşularda şansla yeşildi. Kuralın dilindeki birimi say (burada: boss).
+- **Düzeltmenin kendisi delik açabilir**: tamir bedelini checkpoint'ten düşmek sonsuz
+  dirilişi kapattı, ama checkpoint bedelden küçükse 0.5 sn'lik ölüm döngüsü açtı. Güvenlik
+  incelemesi yakaladı. Her "bedeli şuradan düş" düzeltmesinde sor: *o hesap sıfıra inerse?*
+- **`.gitignore` satır sonu yorumu desteklemez**: `#` yalnızca satır başında yorum.
+  `/*.log   # açıklama` yazınca desen bozulur. Yorum ayrı satıra.

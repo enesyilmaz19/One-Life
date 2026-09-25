@@ -32,6 +32,7 @@ namespace TekCan
         /// <summary>Kullanılmış (kırık) eşya — zamanla TAMİR edilebilir.</summary>
         public int[] broken = new int[3];
 
+        /// <summary>Koşu BİTTİ — eşyasız ölümle YA DA zaferle. Sıradaki açılış yeni koşu.</summary>
         public bool gameOver;
         public int deaths;
 
@@ -104,18 +105,25 @@ namespace TekCan
 
         public static void Load()
         {
-            try
+            // ⚠️ Önce YAN dosya: varsa, yarıda kalmış en YENİ yazmadır (başarılı her
+            // yazma onu tüketiyor). Yer değiştirme kilitli dosyada (antivirüs, bulut
+            // senkronu) düşerse ölüm kaydı orada kalıyordu; okumasaydık oyuncu eşyasını
+            // geri kazanır ya da ana dosya da yoksa koşu sessizce silinirdi.
+            // Bozuksa (yazarken çökme) ana dosyaya düşülür.
+            foreach (var yol in new[] { Path + ".tmp", Path })
             {
-                if (File.Exists(Path))
+                try
                 {
-                    Current = JsonUtility.FromJson<SaveData>(File.ReadAllText(Path));
-                    if (Current != null) { LoadedFromDisk = true; Normalize(); return; }
+                    if (!File.Exists(yol)) continue;
+                    var okunan = JsonUtility.FromJson<SaveData>(File.ReadAllText(yol));
+                    if (okunan == null) continue;
+                    Current = okunan; LoadedFromDisk = true; Normalize(); return;
                 }
-            }
-            catch (Exception e)
-            {
-                // Bozuk kayıt oyunu açılmaz yapmasın; yenisiyle devam.
-                Debug.LogWarning($"[Tek Can] Kayıt okunamadı, yeni koşu: {e.Message}");
+                catch (Exception e)
+                {
+                    // Bozuk kayıt oyunu açılmaz yapmasın; sıradakiyle ya da yenisiyle devam.
+                    Debug.LogWarning($"[Tek Can] Kayıt okunamadı ({System.IO.Path.GetFileName(yol)}): {e.Message}");
+                }
             }
             Current = new SaveData();
             LoadedFromDisk = false;
@@ -151,7 +159,28 @@ namespace TekCan
         {
             if (Current == null) return;
             if (TestJumpUsed) return;                    // ⚠️ kirli koşu diske gitmez
-            try { File.WriteAllText(Path, JsonUtility.ToJson(Current)); }
+            try
+            {
+                // ⚠️ ATOMİK: önce yan dosyaya yaz, sonra tek hamlede yerine koy.
+                // `WriteAllText` dosyayı önce SIFIRLIYOR, sonra yazıyor; arada çökme ya da
+                // elektrik kesintisi boş dosya bırakıyor, `Load` onu okuyamayıp sessizce
+                // YENİ KOŞU başlatıyordu — kalıcı ölümlü koşu habersiz siliniyordu
+                // (denetim 2026-09-23). Yarım kalan yazma artık yalnızca yan dosyayı bozar.
+                // Yedek (.bak) BİLEREK yok: ana dosyayı silen oyuncu yedekten ölüm
+                // öncesine dönerdi — "tek can"ı delen yeni bir yol.
+                string yan = Path + ".tmp";
+                // `Flush(true)`: veri DİSKE inmeden yer değiştirilirse elektrik kesintisinde
+                // dosya doğru boyda ama sıfırlarla dolu kalabiliyor (NTFS adı günlükler, içeriği değil).
+                using (var fs = new FileStream(yan, FileMode.Create, FileAccess.Write))
+                using (var w = new StreamWriter(fs))
+                {
+                    w.Write(JsonUtility.ToJson(Current));
+                    w.Flush();
+                    fs.Flush(true);
+                }
+                if (File.Exists(Path)) File.Replace(yan, Path, null);
+                else File.Move(yan, Path);
+            }
             catch (Exception e) { Debug.LogError($"[Tek Can] Kayıt YAZILAMADI: {e.Message}"); }
         }
 

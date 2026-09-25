@@ -64,6 +64,7 @@ namespace TekCan
                 SaveFile.CreditBoss(e.Boss, e.StolenFromPlayer);
                 Debug.Log($"[Tek Can] NEMESİS — {e.Boss.Name} senden {e.StolenFromPlayer:0.0} sn aldı. " +
                           $"Toplam hesabı: {SaveFile.BossLedger(e.Boss):0.0} sn.");
+                e.HesabıKapat();   // yazılan bir daha yazılmasın (aynı dövüşte ikinci ölüm)
             }
         }
 
@@ -77,6 +78,10 @@ namespace TekCan
             //  yenersen atmayacak. Kazanmanın karşılığı budur.)
             var rm = RoomManager.Instance;
             if (rm == null || !rm.Cleared) return;
+
+            // ⚠️ Sunak odası düşmansız ve ilk karesinde "temiz" sayılıyor. Buraya yürümek
+            // GEÇİCİ DÖNÜŞ'ü dövüşmeden kazandırıyordu. Koşul "bir odayı TEMİZLEMEK".
+            if (rm.IsAltarRoom) return;
 
             // Aynı oda zaten temizken kurulduysa, o temizlik SENİN eserin değil — saymaz.
             if (rm.Room == _armRoom && _armCleared) return;
@@ -97,6 +102,7 @@ namespace TekCan
             if (LastStandArmed)
             {
                 LastStandArmed = false;
+                NemesisiYaz();   // bu da bir ölüm: seni öldüren boss'un hesabına geçer
                 save.deaths++;
                 SaveFile.Flush();
                 Debug.Log("[Tek Can] GEÇİCİ DÖNÜŞ tükendi — checkpoint'e dönülüyor");

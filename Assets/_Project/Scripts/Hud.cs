@@ -45,7 +45,7 @@ namespace TekCan
         {
             if (_clock == null || !(_clock.Dead || _clock.Won) || !RestartPressed()) return;
 
-            // Oyun bittiyse R SIFIRDAN başlatır — checkpoint de eşyalar da gider.
+            // Oyun bittiyse (eşyasız ölüm ya da ZAFER) R SIFIRDAN başlatır — checkpoint de eşyalar da gider.
             // Ölüm eşyayla karşılandıysa buraya zaten gelinmiyor (RevivalSystem hallediyor).
             bool bitti = SaveFile.Current != null && SaveFile.Current.gameOver;
             if (bitti) Bootstrap.NewRun(); else Bootstrap.Restart();
@@ -214,7 +214,22 @@ namespace TekCan
             int toplam = RevivalKind.IntactCount(s);
             float y = 150f;
 
-            if (toplam == 0)
+            // Son şans sayacı açıkken oyuncu bunu BİLMELİ — saat 10'dan geri sayıyor
+            // ama neden saydığını söylemezsek panik değil kafa karışıklığı olur.
+            // ⚠️ "SON CAN" dalından ÖNCE: son sağlam eşya GEÇİCİ DÖNÜŞ'se o dal erken
+            // dönüyor, hedef yazısı hiç çıkmıyor ve yerine YANLIŞ uyarı çıkıyordu.
+            bool dönüşte = RevivalSystem.Instance != null && RevivalSystem.Instance.LastStandArmed;
+            if (dönüşte)
+            {
+                _mid.normal.textColor = new Color(1f, 0.45f, 0.40f);
+                GUI.Label(new Rect(0f, Screen.height * 0.38f, Screen.width, 30f),
+                          "GEÇİCİ DÖNÜŞ  ·  ODAYI TEMİZLE", _mid);
+                _mid.normal.textColor = Color.white;
+            }
+
+            // ⚠️ Sayaç açıkken ölmek eşya HARCAMIYOR, checkpoint'e atıyor — "ölürsen
+            // biter" o an yalan olurdu.
+            if (toplam == 0 && !dönüşte)
             {
                 _mid.normal.textColor = Color.Lerp(new Color(1f, 0.25f, 0.25f), Color.white,
                                                    Mathf.PingPong(Time.unscaledTime * 3f, 1f));
@@ -241,16 +256,6 @@ namespace TekCan
                 GUI.Label(new Rect(x + i * w, y, w, 40f), satır, _small);
             }
             _small.normal.textColor = Color.white;
-
-            // Son şans sayacı açıkken oyuncu bunu BİLMELİ — saat 10'dan geri sayıyor
-            // ama neden saydığını söylemezsek panik değil kafa karışıklığı olur.
-            if (RevivalSystem.Instance != null && RevivalSystem.Instance.LastStandArmed)
-            {
-                _mid.normal.textColor = new Color(1f, 0.45f, 0.40f);
-                GUI.Label(new Rect(0f, Screen.height * 0.38f, Screen.width, 30f),
-                          "GEÇİCİ DÖNÜŞ  ·  ODAYI TEMİZLE", _mid);
-                _mid.normal.textColor = Color.white;
-            }
         }
 
         /// <summary>
@@ -442,8 +447,9 @@ namespace TekCan
             if (wm.Cleared)
             {
                 _small.normal.textColor = new Color(1f, 0.75f, 0.5f);
+                bool durdu = _clock != null && _clock.Frozen;   // sunak odası: beklemek BEDAVA
                 GUI.Label(new Rect(0f, Screen.height * 0.30f + 34f, Screen.width, 24f),
-                          "yeşil diske yürü — beklemek pahalı", _small);
+                          durdu ? "hazır olunca yeşil diske yürü" : "yeşil diske yürü — beklemek pahalı", _small);
                 _small.normal.textColor = Color.white;
             }
             else
