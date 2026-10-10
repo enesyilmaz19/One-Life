@@ -512,6 +512,14 @@ namespace TekCan
         public float IsrarÇarpanı => _ısrar;
 
         /// <summary>
+        /// Aynı sıradan art arda `seri`. saldırının çarpanı: eşiğe kadar 1, sonra her adımda
+        /// BİNEREK (1 + adım)^n, tavanlı. Enes: *"x2 değil, 1.3 1.5 1.8 gibi artarak gitsin,
+        /// x5'e kadar"* (2026-10-10) → ×1.25, 1.56, 1.95, 2.44, 3.05, 3.81, 4.77, 5.
+        /// </summary>
+        public static float IsrarEğrisi(Tuning t, int seri)
+            => Mathf.Min(t.bossStreakCap, Mathf.Pow(1f + t.bossStreakStep, Mathf.Max(0, seri - t.bossStreakThreshold)));
+
+        /// <summary>
         /// Bu fazın saldırı dağarcığı — faz başına BİR KEZ alınıyor, üç sıraya bölünüyor.
         /// ⚠️ `Boss.Attacks()` her çağrıda YENİ dizi üretiyor; kareye bir
         /// çağırmak çöp toplayıcıyı beslerdi.
@@ -674,7 +682,9 @@ namespace TekCan
         Color IsrarRengi(Color c)
         {
             if (_ısrar <= 1f || _t == null) return c;
-            float k = Mathf.InverseLerp(1f, Mathf.Max(1.01f, _t.bossStreakCap), _ısrar);
+            // Logaritmik: çarpan binerek büyüyor, her adım AYNI miktar koyulaşsın. İlk adım da
+            // görünsün diye %25'ten başlıyor (×5 tavanında doğrusal ölçek ×1.25'i %6 boyuyordu).
+            float k = Mathf.Lerp(0.25f, 1f, Mathf.Log(_ısrar) / Mathf.Log(Mathf.Max(1.01f, _t.bossStreakCap)));
             var r = Color.Lerp(c, new Color(0.75f, 0.02f, 0.05f, c.a), k);
             r.a = Mathf.Min(0.85f, c.a * (1f + k));
             return r;
@@ -812,8 +822,7 @@ namespace TekCan
                 _haritasız++;
                 if (_seçilenTür == _sonBant) _bantSerisi++;
                 else { _sonBant = _seçilenTür; _bantSerisi = 1; }
-                _ısrar = Mathf.Min(_t.bossStreakCap,
-                                   1f + Mathf.Max(0, _bantSerisi - _t.bossStreakThreshold) * _t.bossStreakStep);
+                _ısrar = IsrarEğrisi(_t, _bantSerisi);
             }
 
             SetAttack(_seçilen);

@@ -347,11 +347,14 @@ namespace TekCan.EditorTools
             int eskiN = t.bossMapAttackEvery;
             t.bossMapAttackEvery = 0;                       // yalnızca yakın/uzak — ısrar burada sayılıyor
 
-            // a) Akış: dibinde 6 saldırı → 1, 1, 1, 1.25, 1.5, 1.75 · sonra uzakta → 1
+            // a) Akış: dibinde 14 saldırı · sonra uzakta → 1.
+            //    Enes (2026-10-10): *"x2 değil, 1.3 1.5 1.8 gibi ARTARAK gitsin, x5'e kadar."*
+            //    Formül kopyalanmıyor, istenen ŞEKİL ölçülüyor: eşiğe kadar 1, ilk adım ~1.3,
+            //    sonra her artış bir öncekinden BÜYÜK, tavan tam ×5 ve orada duruyor.
             var (r, c, boss) = Kur(t, BossKind.For(0));
             var oyuncu = r.transform.Find("player");
             var çarpanlar = new List<float>();
-            for (int k = 0; k < 6; k++)
+            for (int k = 0; k < 14; k++)
             {
                 Sıfırla(boss);
                 float yarım = boss.CurrentStrikeRadius * 0.5f;
@@ -364,11 +367,23 @@ namespace TekCan.EditorTools
             boss.transform.position = Bootstrap.ArenaCenter + Vector3.forward * 16f;
             SaldırıyıBekle(boss, null, oyuncu);
             float uzakta = boss.IsrarÇarpanı;
-            float Beklenen(int k) => Mathf.Min(t.bossStreakCap, 1f + Mathf.Max(0, k + 1 - t.bossStreakThreshold) * t.bossStreakStep);
-            bool sıraOk = true;
-            for (int k = 0; k < çarpanlar.Count; k++) if (Mathf.Abs(çarpanlar[k] - Beklenen(k)) > 0.001f) sıraOk = false;
+            int eşik = t.bossStreakThreshold;
+            bool eşiğeKadarBir = true, artarak = true, tavanda = false, aşmıyor = true;
+            for (int k = 0; k < çarpanlar.Count; k++)
+            {
+                if (k < eşik && Mathf.Abs(çarpanlar[k] - 1f) > 0.001f) eşiğeKadarBir = false;
+                if (çarpanlar[k] > 5f + 0.001f) aşmıyor = false;
+                if (Mathf.Abs(çarpanlar[k] - 5f) < 0.001f) tavanda = true;
+                // Tavana kadar: her artış bir öncekinden büyük ("artarak").
+                if (k > eşik && çarpanlar[k] < 5f - 0.001f && çarpanlar[k] - çarpanlar[k - 1] <= çarpanlar[k - 1] - çarpanlar[k - 2] + 0.001f)
+                    artarak = false;
+            }
+            float ilkAdım = çarpanlar[eşik];
             failed += Check(ref total, $"⚠️ ISRAR: hep dibinde → {string.Join(", ", çarpanlar.ConvertAll(x => x.ToString("0.00")))}",
-                            sıraOk, çarpanlar[çarpanlar.Count - 1]);
+                            eşiğeKadarBir && ilkAdım > 1.15f && ilkAdım < 1.4f, ilkAdım);
+            failed += Check(ref total, "⚠️ ISRAR ARTARAK büyüyor: her artış bir öncekinden büyük (Enes: \"1.3, 1.5, 1.8 gibi\")",
+                            artarak, 0);
+            failed += Check(ref total, "⚠️ ISRAR tavanı tam ×5, ulaşılıyor ve aşılmıyor", tavanda && aşmıyor, çarpanlar[çarpanlar.Count - 1]);
             failed += Check(ref total, $"⚠️ ISRAR: mesafeni değiştirince SIFIRLANIYOR (uzakta ×{uzakta:0.00})",
                             Mathf.Abs(uzakta - 1f) < 0.001f, uzakta);
 
@@ -407,9 +422,13 @@ namespace TekCan.EditorTools
                 var arc = Alan(boss, "_telegraph") as Arc;
                 return arc != null ? arc.Color : Color.clear;
             }
-            Color normal = Yay(1f), ısrarlı = Yay(1.75f);
-            failed += Check(ref total, $"⚠️ ISRAR GÖRÜNÜYOR: uyarı yayı koyulaşıyor (a {normal.a:0.00} → {ısrarlı.a:0.00}, g {normal.g:0.00} → {ısrarlı.g:0.00})",
+            // İLK adım da görünmeli (×5 tavanında doğrusal boya ×1.25'i %6 koyulaştırıyordu),
+            // ve her adım bir öncekinden koyu.
+            Color normal = Yay(1f), ısrarlı = Yay(1f + t.bossStreakStep), orta = Yay(2.5f), tavan = Yay(t.bossStreakCap);
+            failed += Check(ref total, $"⚠️ ISRAR GÖRÜNÜYOR, ilk adımda bile (a {normal.a:0.00} → {ısrarlı.a:0.00}, g {normal.g:0.00} → {ısrarlı.g:0.00})",
                             ısrarlı.a > normal.a + 0.05f && ısrarlı.g < normal.g - 0.05f, ısrarlı.a);
+            failed += Check(ref total, $"ISRAR arttıkça daha koyu (a {ısrarlı.a:0.00} → {orta.a:0.00} → {tavan.a:0.00})",
+                            orta.a > ısrarlı.a + 0.02f && tavan.a > orta.a + 0.02f, tavan.a);
             Temizle(r);
 
             // d) HUD: boss odasının başlığında "ISRAR ×"

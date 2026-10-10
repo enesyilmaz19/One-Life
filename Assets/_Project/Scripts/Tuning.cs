@@ -337,10 +337,11 @@ namespace TekCan
         public int bossMapAttackEvery = 4;
         [Tooltip("ISRAR: aynı sıradan (hep yakın ya da hep uzak) bu kadar saldırıdan SONRA bedel artmaya başlar")]
         public int bossStreakThreshold = 3;
-        [Tooltip("ISRAR: eşikten sonraki her saldırıda bedele eklenen çarpan")]
+        [Tooltip("ISRAR: eşikten sonraki her saldırıda bedel bu oranda BİNEREK artar (0.25 → ×1.25, 1.56, " +
+                 "1.95, 2.44, 3.05, 3.81, 4.77, 5). Enes: \"1.3, 1.5, 1.8 gibi artarak, ×5'e kadar\" (2026-10-10).")]
         public float bossStreakStep = 0.25f;
-        [Tooltip("ISRAR: bedel çarpanının tavanı")]
-        public float bossStreakCap = 2f;
+        [Tooltip("ISRAR: bedel çarpanının tavanı (Enes: şimdilik ×5)")]
+        public float bossStreakCap = 5f;
         [Tooltip("Boss'a vurmak normal düşmanın kaç katı zaman kazandırır. DÜŞÜK olmalı: boss uzun bir dövüş, seni beslememeli.")]
         public float bossHarvestMultiplier = 0.4f;
 

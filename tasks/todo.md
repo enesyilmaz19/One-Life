@@ -151,7 +151,7 @@ Enes: *"son boss fighta baktım, 2 saldırı atıyor, biz ona bayağı saldırı
 **Ne yapıldı**
 - Her saldırının türü veride (`Tür`: Yakın / Uzak / Harita), menzilden tahmin edilmiyor. Mesafe yakın/uzak sırasını seçiyor. **Her 4. saldırı harita sırasından** (`bossMapAttackEvery` = 4).
 - Harita saldırısı yalnızca **cevabına yetişilebiliyorsa** yapılıyor. Yetişilemiyorsa sıra bekliyor, boss yaklaşıyor. Sen kaçmaya devam edersen ~1.5 sn sonra normal saldırısını yapıyor, harita sırası beklemeye devam ediyor.
-- **ISRAR:** aynı sıradan art arda 3 saldırıdan sonra her saldırı +%25, tavan ×2. Mesafe ya da faz değişince sıfır. Harita saldırıları ne sayar ne sıfırlar. Uyarı yayı koyulaşıyor, HUD'da "ISRAR ×1.50 — mesafeni değiştir" (KEFİL ikiye bölününce ikisinin yükseği). Kadranlar: `bossStreakThreshold` 3 · `bossStreakStep` 0.25 · `bossStreakCap` 2. Israr saldırı başına bir kez belirleniyor, tekrarlı saldırının her vuruşunda geçerli.
+- **ISRAR:** aynı sıradan art arda 3 saldırıdan sonra bedel BİNEREK artıyor: ×1.25, 1.56, 1.95, 2.44, 3.05, 3.81, 4.77, **5** (tavan). Enes (2026-10-10): *"x2 değil, 1.3 1.5 1.8 gibi artarak, x5'e kadar."* Mesafe ya da faz değişince sıfır. Harita saldırıları ne sayar ne sıfırlar. Uyarı yayı koyulaşıyor, HUD'da "ISRAR ×1.50 — mesafeni değiştir" (KEFİL ikiye bölününce ikisinin yükseği). Kadranlar: `bossStreakThreshold` 3 · `bossStreakStep` 0.25 (her adımda ×1.25) · `bossStreakCap` 5. Uyarı yayı ilk adımda bile görünür koyulaşıyor, her adımda biraz daha. Israr saldırı başına bir kez belirleniyor, tekrarlı saldırının her vuruşunda geçerli.
 - **Taşınma:** her fazın her saldırısının sonraki fazda devamı var ("+" hâli ya da `Önceki` ile bağlı). MURABAHACI faz 3'e FAİZ++, İBRAZ++, MUACCELİYET+, PROTESTO++ eklendi. REZERV ← ÇİFT EKSPERTİZ, TAM TASFİYE ← SÖZLEŞME.
 
 **Sayılar (yakın / uzak / harita)**
@@ -170,12 +170,12 @@ Enes: *"son boss fighta baktım, 2 saldırı atıyor, biz ona bayağı saldırı
 - **SİMSAR — BÜYÜK İHALE(+), BÜYÜK MÜZAYEDE:** arena boyu açıklıklı halka. Cevap: arkasına geç. 8–9 birimden uzaktaysan ya da boss duvara yakınsa yapılmıyor (arkası duvar olunca kapı arenanın dışında kalıyordu).
 - **MURABAHACI — SÖZLEŞME, İHTARNAME(+, ++), TAM TASFİYE:** güvenli nokta artık senin yetişebileceğin yerlerden seçiliyor. Önceden ~üçte biri yetişilemezdi.
 
-**Kapı — `Faz26SelfCheck` 16/16 · tüm kapılar 23/23 TEMİZ**
+**Kapı — `Faz26SelfCheck` 19/19 · tüm kapılar 23/23 TEMİZ**
 - Veri: sayılar, tür–şekil uyumu, taşınma.
 - Akış: dibinde ve uzakta 12'şer saldırı, her 4.'sü harita. Uzaktaki oyuncuya simit/açıklık sırası gelince boss yaklaşıyor, araya başka saldırı girmiyor.
 - **Kapsama (Enes'in sorusu):** her fazın yazılı HER saldırısı dövüşte yapılıyor.
 - **Cevap taraması:** her harita saldırısı, boss 3 konumda × oyuncu 7 konumda (duvara sıkışmış dahil) × gövde 1 ve ×1.6 (nemesis). Uyarıdan 0.25 sn sonra en yakın güvenli yere koşan vurulmuyor: **873/873**.
-- Israr: sıra, sıfırlanma (mesafe + faz), bedel, renk, HUD.
+- Israr: eşiğe kadar ×1, ilk adım ~1.3, her artış bir öncekinden büyük, tavan tam ×5; sıfırlanma (mesafe + faz), bedel, renk (ilk adımda bile görünür), HUD. Bozma: düz artış, tavansız eğri, eski renk → üçü de kırmızı.
 - Uyuyan boss'un etiketi güncel.
 - **Bozma:** 18 hata bilerek geri kondu (ilk 10 + inceleme düzeltmelerinin 8'i), hepsi kırmızı. Biri öbürünü maskeliyordu (erişim şartı yokken "sıra tutma" ölçülemiyor), ayrı koşuyla gösterildi.
 - **İnceleme turu buldu:** ilk kapı kolay konumları ölçüyordu (boss sabit, oyuncu 3/7 birim önde, nemesis yok). TAM TAHSİL, uzaktan simit/açıklık ve rastgele nokta orada yeşil geçiyordu. Faz 12'nin "aynı soru" imzasındaki `tür=` dört kopyayı saklıyordu → erişim basamağına (kısa / uzun / harita) çevrildi. Sertlik merdiveni harita saldırılarını ayrı ölçüyor, TAM TAHSİL'in boyunu `ArenaOranı`'ndan okuyor (bozma: TAM TAHSİL+'nın halkası küçülünce kırmızı).
@@ -190,7 +190,7 @@ Enes: *"son boss fighta baktım, 2 saldırı atıyor, biz ona bayağı saldırı
 > Önce **F6**.
 1. **Her 4. saldırı.** B ile TAHSİLDAR. Yakında ya da uzakta dur, say: 3 normal, 1 harita. *Bak:* harita saldırısı ayırt ediliyor mu?
 2. **TAM TAHSİL.** Boss ortaya sıçrayıp dev halka basıyor, kenara koş. *Bak:* yetişiyor musun? Sıçrama okunuyor mu (animasyon yok, ışınlanıyor)?
-3. **ISRAR.** Boss'un dibinde kal. 4. yakın saldırıdan sonra uyarı yayı koyulaşmalı, HUD'da "ISRAR ×1.25" yazmalı. Uzaklaş: sıfırlanmalı. *Bak:* fark ediliyor mu, cezası adil mi?
+3. **ISRAR.** Boss'un dibinde kal. 4. yakın saldırıdan sonra uyarı yayı koyulaşmalı, HUD'da "ISRAR ×1.25" yazmalı, her saldırıda büyümeli (×5'e kadar). Uzaklaş: sıfırlanmalı. *Bak:* fark ediliyor mu, ×5 çok mu sert, ne kadar sürede ×5'e çıkıyor?
 4. **KEFİL — TOPLU TEMİNAT** (N, B). Uzaktaysan boss önce yaklaşıyor, sonra mavi simit: dibine koş.
 5. **SİMSAR — BÜYÜK İHALE** (N×3, B). Arkasına geç. Boss duvar dibindeyken gelmemeli.
 6. **MURABAHACI** (N×4, B, F7). Yeşil nokta hep yetişebileceğin yerde mi? Faz 3'te dibinde dururken 7 farklı yakın saldırı görmelisin.
