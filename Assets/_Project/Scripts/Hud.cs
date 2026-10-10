@@ -80,7 +80,7 @@ namespace TekCan
 
             GUI.Label(new Rect(12f, Screen.height - 26f, 900f, 20f),
                 "WASD · Sol tık · Shift/Space dash · dash+saldırı = DASH-ATAK · SAĞ TIK özel · E sunak · 1-5 silah" +
-                "   ‖ TEST: B boss · N bölge · F5 saati doldur · F6 SIFIRDAN · F1-F4 profil" +
+                "   ‖ TEST: B boss · N bölge · F5 saati doldur · F7 TAM GÜÇ · F6 SIFIRDAN · F1-F4 profil" +
                 (SaveFile.TestJumpUsed ? "   ⚠️ koşu kirli — kayda yazılmıyor" : ""), _small);
         }
 

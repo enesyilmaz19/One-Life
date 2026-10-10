@@ -85,9 +85,17 @@ namespace TekCan
             if (_groundRenderer != null) _groundRenderer.material.color = c;
         }
 
+        /// <summary>
+        /// `Restart` mı kuruyor (ÇAĞRI, R, F6) yoksa oyun mu AÇILIYOR. Oda başı kayıt
+        /// (K1) yalnızca açılışta okunur: ÇAĞRI checkpoint'e atmalı, oda başına değil.
+        /// </summary>
+        static bool _yenidenKurulum;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Build()
         {
+            bool açılış = !_yenidenKurulum;
+            _yenidenKurulum = false;
             ResetStatics();
             _runRoot = new GameObject("Run");
 
@@ -185,10 +193,14 @@ namespace TekCan
             if (SaveFile.NeedsNewRun) SaveFile.NewRun(t);
             var save = SaveFile.Current;
 
+            var (oda, bölge, saat, odaBaşı) = BaşlangıçNoktası(save, t, açılış);
+
             var clock = systems.AddComponent<Clock>();
-            clock.Init(t, player.transform, save.checkpointSeconds);
+            clock.Init(t, player.transform, saat);
             // Checkpoint DURUMU geri yüklüyor, yalnızca saati değil.
-            if (save.HasUpgrades)
+            if (odaBaşı)
+                clock.RestoreUpgrades(save.resumeHarvest, save.resumeDamage, save.resumeDash);
+            else if (save.HasUpgrades)
                 clock.RestoreUpgrades(save.harvestRate, save.attackDamage, save.dashCooldown);
             systems.AddComponent<RevivalSystem>().Init(t, clock);
             var pc = player.AddComponent<PlayerController>();
@@ -201,11 +213,28 @@ namespace TekCan
             // Oda yöneticisi — ilk odayı kendisi kuruyor: düşmanları yerleştiriyor,
             // oyuncuyu girişe koyuyor, çıkışı açıyor. Sunaklar da odaya ait artık,
             // arenaya değil (bkz. RoomManager.PlaceAltars).
-            systems.AddComponent<RoomManager>().Init(t, player.transform, camGo.transform,
-                                                     save.checkpointRoom, save.checkpointRegion);
+            systems.AddComponent<RoomManager>().Init(t, player.transform, camGo.transform, oda, bölge);
 
-            Debug.Log($"[Tek Can] Arena hazır — oda {save.checkpointRoom}/{t.roomsPerRegion}, " +
-                      $"{clock.Seconds:0}s saat, {RevivalKind.IntactCount(save)} diriliş eşyası.");
+            Debug.Log($"[Tek Can] Arena hazır — oda {oda}/{t.roomsPerRegion}" +
+                      (odaBaşı ? " (ODA BAŞI kaydından)" : "") +
+                      $", {clock.Seconds:0}s saat, {RevivalKind.IntactCount(save)} diriliş eşyası.");
+        }
+
+        /// <summary>
+        /// Koşu nereden başlıyor — `Build`'in TEK kararı, ayrı duruyor çünkü `Build`
+        /// sahneyi kurduğu için öz-denetim onu koşturamaz; kararı doğrudan soruyor.
+        ///
+        /// ⚠️ K1: oyunu kapatıp açan oyuncu GİRDİĞİ ODANIN BAŞINA, girdiği andaki
+        /// zamanla döner. Öbür her yol (ÇAĞRI, R, F6) checkpoint'ten — ve checkpoint
+        /// zamanı K2 tabanının geçtiği tek kaynaktan (`SaveFile.CheckpointSeconds`).
+        /// </summary>
+        public static (int oda, int bölge, float saat, bool odaBaşı) BaşlangıçNoktası(
+            SaveData save, Tuning t, bool açılış)
+        {
+            // `resumeSeconds > 0`: `Clock.Init` 0'ı "baştan başla" (tam saat) okuyor.
+            if (açılış && save.resumeRoom > 0 && save.resumeSeconds > 0f)
+                return (save.resumeRoom, save.resumeRegion, save.resumeSeconds, true);
+            return (save.checkpointRoom, save.checkpointRegion, SaveFile.CheckpointSeconds(t), false);
         }
 
         /// <summary>
@@ -230,6 +259,7 @@ namespace TekCan
                 Object.Destroy(_runRoot);
             }
             _runRoot = null;
+            _yenidenKurulum = true;
             Build();
 
             // Çalışma anında üretilen varlıklar (ses klipleri, yay mesh'leri, `renderer.material`

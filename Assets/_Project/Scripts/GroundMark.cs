@@ -15,9 +15,16 @@ namespace TekCan
     /// </summary>
     public class GroundMark : MonoBehaviour
     {
-        static readonly Color WarnColor = new Color(0.9f, 0.55f, 1f, 0.35f);
+        // ⚠️ DÜŞMANIN işareti TEHLİKE renginde (boss halkalarının turuncu-kırmızısı),
+        // OYUNCUNUN ipoteği mor. Faz 25'e kadar ikisi de mordu: (0.9, 0.55, 1) ile
+        // (1, 0.45, 0.95) — yorum "karışmasın diye kendi renginde" diyordu, sayılar
+        // aynıydı. Enes SİMSAR'ın işaretini "İPOTEK bug'ı" sandı; SİMSAR'ın böyle bir
+        // saldırısı olduğunu hiç fark etmemişti (2026-09-30). Faz25SelfCheck tonu ölçüyor.
+        static readonly Color WarnColor = new Color(1f, 0.32f, 0.08f, 0.38f);
+        static readonly Color WarnBlastColor = new Color(1f, 0.3f, 0.1f, 0.6f);
 
         static readonly Color LienColor = new Color(1f, 0.45f, 0.95f, 0.35f);
+        static readonly Color LienBlastColor = new Color(1f, 0.4f, 0.9f, 0.55f);
 
         Transform _player;
         Enemy _owner;       // bırakan — boss ise nemesis hesabına yazılır
@@ -131,13 +138,17 @@ namespace TekCan
 
         public bool Fired => _fired;
 
+        /// <summary>Oyuncuya mı vuruyor (düşmanın tebligatı) — otopilot bundan kaçıyor.</summary>
+        public bool OyuncuyaVurur => !_hitsEnemies;
+        public float Yarıçap => _radius;
+
         /// <summary>Kaç düşman vuruldu — öz-denetim ETKİYİ buradan ölçüyor.</summary>
         public int EnemiesHit { get; private set; }
 
         void Detonate()
         {
             Arc.Spawn(transform.position, Quaternion.identity, _radius, 360f,
-                      new Color(1f, 0.4f, 0.9f, 0.55f), 0.25f, scaleFrom: 0.9f, scaleTo: 1.25f);
+                      _hitsEnemies ? LienBlastColor : WarnBlastColor, 0.25f, scaleFrom: 0.9f, scaleTo: 1.25f);
             Sfx.Slam();
 
             if (_hitsEnemies) { VurDüşmanlara(); return; }

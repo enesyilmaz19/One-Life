@@ -46,6 +46,19 @@ namespace TekCan
         public float dashCooldown = -1f;
 
         public bool HasUpgrades => harvestRate > 0f;
+
+        // ⚠️ ODA BAŞI KAYIT (K1, Enes kararı 2026-09-30). Her oda girişinde yazılıyor;
+        // oyunu KAPATIP AÇAN oyuncu girdiği odanın başına, girdiği andaki zamanla döner.
+        // Önceden yalnızca checkpoint vardı: saat 3 sn'ye düşünce Alt+F4 → checkpoint'e
+        // TAM zamanla dönüş, eşya harcanmıyordu. Açık küçüldü ama bilerek kapanmadı:
+        // bir oda içinde kapatmak hâlâ o odanın başına döndürüyor ("oda başı" kayıtlı
+        // oyunlar gibi). ÇAĞRI bu kaydı KULLANMAZ — o checkpoint'e atar.
+        public int resumeRoom;                      // 0 = yok
+        public int resumeRegion;
+        public float resumeSeconds = -1f;
+        public float resumeHarvest = -1f;
+        public float resumeDamage = -1f;
+        public float resumeDash = -1f;
     }
 
     /// <summary>
@@ -190,10 +203,16 @@ namespace TekCan
         /// ⚠️ TEK KAYNAK: hem `RevivalKind` hem `RevivalSystem` bunu ayrı ayrı
         /// hesaplıyordu. Aynı kavramın iki ölçümü, `lessons.md` (9)'un tam konusu.
         /// </summary>
+        /// ⚠️ TABANLI (K2, 2026-09-30): checkpoint odasına 4 sn ile girince her ÇAĞRI
+        /// seni 4 sn ile düşmanların yanına atıyordu, eşyalar saniyeler içinde eriyordu.
+        /// Taban BURADA, tek kaynakta — ÇAĞRI, GEÇİCİ DÖNÜŞ'ün başarısı ve açılış hep
+        /// buradan okuyor. Onarım sunağı bu yüzden tabanın altına inen alımı satmıyor
+        /// (yoksa bedeli taban geri öderdi: sonsuz diriliş, ders 14 yan ders).
         public static float CheckpointSeconds(Tuning t)
-            => Current != null && Current.checkpointSeconds > 0f
-                ? Current.checkpointSeconds
-                : t.startSeconds;
+            => Mathf.Max(t.recallMinSeconds,
+                         Current != null && Current.checkpointSeconds > 0f
+                             ? Current.checkpointSeconds
+                             : t.startSeconds);
 
         public static void NewRun(Tuning t)
         {

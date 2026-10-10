@@ -187,6 +187,13 @@ namespace TekCan
             // sonraki her ÇAĞRI da oraya atıyordu — eşya stoğu saniyeler içinde erirdi.
             if (RevivalSystem.Instance != null && RevivalSystem.Instance.LastStandArmed) return;
 
+            // ⚠️ AYNI checkpoint odasına yeniden giriş (ÇAĞRI, kapat-aç, A/B yeniden kurulumu)
+            // checkpoint'i EZMEZ. Ezseydi yerinde dirilip (az zamanla) kapat-aç yapan oyuncunun
+            // checkpoint'i kalıcı olarak o az zamana inerdi (inceleme 2026-10-03). Odalar
+            // yalnızca ileri gidiyor; aynı odaya ancak bu yollardan dönülüyor.
+            if (s.checkpointRoom == Room && s.checkpointRegion == RegionIndex && s.checkpointSeconds > 0f)
+                return;
+
             s.checkpointRoom = Room;
             s.checkpointRegion = RegionIndex;
             s.checkpointSeconds = Clock.Instance.Seconds;
@@ -201,6 +208,28 @@ namespace TekCan
             Debug.Log($"[Tek Can] CHECKPOINT — bölge {RegionIndex + 1} oda {Room}, " +
                       $"{s.checkpointSeconds:0.0}s, hasat %{s.harvestRate * 100f:0}, " +
                       $"hasar {s.attackDamage:0.0}");
+        }
+
+        /// <summary>
+        /// ODA BAŞI KAYIT (K1) — oyunu kapatıp açan buraya döner. Checkpoint'ten ayrı:
+        /// ÇAĞRI yine checkpoint'e atıyor.
+        /// ⚠️ GEÇİCİ DÖNÜŞ sayarken yazılmaz — `SaveCheckpoint` ile aynı gerekçe:
+        /// o 10 saniye ödünç zaman, kayda geçerse kapatıp açmak onu "gerçek" yapardı.
+        /// </summary>
+        public void SaveRoomStart()
+        {
+            var s = SaveFile.Current;
+            var c = Clock.Instance;
+            if (s == null || c == null) return;
+            if (RevivalSystem.Instance != null && RevivalSystem.Instance.LastStandArmed) return;
+
+            s.resumeRoom = Room;
+            s.resumeRegion = RegionIndex;
+            s.resumeSeconds = c.Seconds;
+            s.resumeHarvest = c.HarvestRate;
+            s.resumeDamage = c.AttackDamage;
+            s.resumeDash = c.DashCooldown;
+            SaveFile.Flush();
         }
 
         void Update()
@@ -222,6 +251,7 @@ namespace TekCan
             if (SkipToBossPressed()) { SaveFile.MarkTestJump(); EnterRoom(_t.roomsPerRegion); return; }
             if (SkipRegionPressed()) { SaveFile.MarkTestJump(); EnterRegion(RegionIndex + 1); return; }
             if (RefillClockPressed()) { SaveFile.MarkTestJump(); RefillClock(); }
+            if (FullPowerPressed()) FullPower();
 
             if (Cleared || AnyEnemyAlive()) return;
             OnCleared();
@@ -339,6 +369,7 @@ namespace TekCan
             // Checkpoint odaya GİRERKEN yazılır, temizlenince değil: checkpoint'in anlamı
             // "buraya kadar geldin", "burayı da bitirdin" değil.
             if (IsCheckpointRoom) SaveCheckpoint();
+            SaveRoomStart();
 
             OpenLedger();
             IsoCamera.Shake(_t.hitShake * 0.6f);
@@ -498,6 +529,39 @@ namespace TekCan
         }
 
         /// <summary>
+        /// F7 — TAM GÜÇ: koşu boyunca BÜTÜN sunakları almış gibi + saat dolu.
+        /// TEST KISAYOLU, gerçek oyunda kalkacak. Enes (2026-09-30): final faz 3'e
+        /// gelemedi, uyku rengini ve 4 halkalı zinciri test edemedi.
+        /// </summary>
+        static bool FullPowerPressed()
+        {
+            var kb = Keyboard.current;
+            return Debug.isDebugBuild && kb != null && kb.f7Key.wasPressedThisFrame;
+        }
+
+        /// <summary>
+        /// Her bölgenin sunak odasında her sunaktan azami alım. Tavanlar `Clock`'ta
+        /// (hasat tavanı, dash tabanı) — TAM GÜÇ onları delmiyor, oyunun kendi sınırı.
+        /// </summary>
+        void FullPower()
+        {
+            var c = Clock.Instance;
+            if (c == null) return;
+            SaveFile.MarkTestJump();   // ⚠️ İÇERİDE: öz-denetim kirlenmeyi de ölçebilsin
+            int alım = _t.altarMaxPurchases * RegionCount;
+            for (int i = 0; i < alım; i++)
+            {
+                c.UpgradeHarvest(_t.altarHarvestStep);
+                c.UpgradeDamage(_t.altarDamageStep);
+                c.UpgradeDash(_t.altarDashStep);
+            }
+            c.Revive(TestRefillSeconds);
+            Sfx.Buy();
+            Debug.Log($"[TEST] TAM GÜÇ — {alım} alım × 3 sunak: hasat %{c.HarvestRate * 100f:0}, " +
+                      $"hasar {c.AttackDamage:0.0}, dash {c.DashCooldown:0.00} sn, saat {c.Seconds:0}");
+        }
+
+        /// <summary>
         /// ⚠️ `startSeconds` DEĞİL — o Enes'in ayarı ve sonra ölçeceğimiz şey.
         /// Onu yükseltmek ölçtüğümüz şeyi bozardı. Bu ayrı bir test sayısı.
         /// </summary>
@@ -595,7 +659,13 @@ namespace TekCan
                 var b = BossKind.For(RegionIndex);
                 var canlı = BossInRoom();
                 string faz = canlı != null && canlı.Phase >= 2 ? $"  ·  FAZ {canlı.Phase}" : "";   // faz 3 de "FAZ 2" yazıyordu
-                return $"{b.Name}{faz}" + (IsLastRegion ? "  (SON)" : "");
+                // ⚠️ ISRAR görünmeli: hep aynı mesafede duranın bedeli artıyor (Faz 26).
+                // Odadaki boss'ların EN YÜKSEĞİ — KEFİL ikiye bölününce ikizinki de sayılıyor.
+                float enYüksek = 1f;
+                foreach (var e in Enemy.All)
+                    if (e != null && e.IsBoss && !e.Dormant) enYüksek = Mathf.Max(enYüksek, e.IsrarÇarpanı);
+                string ısrar = enYüksek > 1.001f ? $"  ·  ISRAR ×{enYüksek:0.00} — mesafeni değiştir" : "";
+                return $"{b.Name}{faz}" + (IsLastRegion ? "  (SON)" : "") + ısrar;
             }
             // ⚠️ Sunak odasında saat DURUYOR — "işlemeye devam ediyor" demek, "SAAT DURDU"
             // yazısının hemen altında yalan söylemekti.

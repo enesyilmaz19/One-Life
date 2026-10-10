@@ -64,6 +64,14 @@ denetimini **tek Unity açılışında** çalıştırır; bir kontrol düşerse 
 faz numarası yazılmıyor.)* (Ayar sapması yalnızca uyarı —
 hangi değerin doğru olduğu Enes'in kararı.)
 
+**Otopilot — oyunu GERÇEK Play modunda oynayan bot** (Faz 25b). Kapılar zamanı elle
+ilerletiyor; otopilot oyunun kendi karelerinde, Unity'nin SANAL klavye/faresiyle oynuyor
+(işletim sistemi tuşları Play'e geçmiyor, sanal cihaz geçiyor). Enes'in kaydına dokunmaz.
+- İzle: `Tek Can → Otopilot (izle)` — gerçek hızda, ekranda yazılı, ekran görüntülü
+- Batch: `-executeMethod TekCan.EditorTools.OtopilotMenu.Batch` — **`-quit` YOK**, bot kendisi çıkar, ~12 dk
+- Çıktı: `Logs/Otopilot/<zaman>/rapor.md` + görüntüler. Uzun sürdüğü için `AllChecks`'te değil.
+- ⚠️ Batch'te pencere odakta olmuyor: bot girdi ayarının kopyasında `backgroundBehavior = IgnoreFocus` açıyor (yoksa tuşlar düşüyor).
+
 Ayrı araçlar (kapı değil, rapor): `Denge simülasyonu` (hasat oranı taraması) ·
 `Zorluk eğrisi raporu` (her bölge/oda için kazanç–masraf kırılımı + kaçınma pencereleri) ·
 `Geri bildirim ekran görüntüsü al` · `Oda yerleşimlerini çek`.

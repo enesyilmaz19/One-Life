@@ -234,16 +234,11 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "seri vuruş İFLAS'a özel (kimlik dağılmıyor)",
                             seriSayısı == 1, seriSayısı);
 
-            // ── 10) ⚠️ DASH KİMLİKLERİ — üçü ayrışıyor mu ──
-            failed += Check(ref total, "⚠️ HACİZ dash'i NİŞANIN TERSİNE",
-                            System.Array.Find(Weapon.All, w => w is Haciz).DashBackwards, 0f);
+            // ── 10) ⚠️ DASH KİMLİKLERİ ──
+            // HACİZ'in geri dash'i Faz 25'te kalktı (Enes: kafa karıştırıyor). Dash
+            // yönünü artık Faz25SelfCheck ETKİDEN ölçüyor (StartDash → gittiğin yön).
             failed += Check(ref total, "⚠️ FAİZLİ dash'i bedeli İADE ediyor",
                             System.Array.Find(Weapon.All, w => w is Faizli).DashRefundsCost, 0f);
-            int kimlikli = 0;
-            foreach (var w in Weapon.All)
-                if (w.DashBackwards || w.DashRefundsCost) kimlikli++;
-            failed += Check(ref total, "dash kimlikleri İKİ silaha kanca gerektirdi (üçününki zaten ayrı)",
-                            kimlikli == 2, kimlikli);
 
             // ── ⚠️ İPOTEK'in dash kimliği: YER İŞARETİ DEĞİL, DOĞRUDAN YAY ──
             //

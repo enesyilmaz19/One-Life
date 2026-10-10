@@ -325,8 +325,10 @@ namespace TekCan.EditorTools
                            : "✅ makul"));
             sb.AppendLine();
 
-            sb.AppendLine($"  düşman hazırlığı    : {t.enemyWindupDuration:0.000} sn  " +
-                          $"({t.enemyWindupDuration / kare:0} kare tepki payı)");
+            float hazırlık = t.enemyWindupDuration + t.enemyReactionWindow;
+            sb.AppendLine($"  düşman hazırlığı    : {hazırlık:0.000} sn  " +
+                          $"(nişan {t.enemyWindupDuration:0.00} + kilitli {t.enemyReactionWindow:0.00} = " +
+                          $"{t.enemyReactionWindow / kare:0} kare tepki payı)");
             float dashMesafe = t.dashDistance;
             float menzil = t.enemyAttackRange;
             sb.AppendLine($"  dash mesafesi       : {dashMesafe:0.00} · düşman menzili {menzil:0.00}  " +

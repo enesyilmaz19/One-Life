@@ -189,7 +189,10 @@ namespace TekCan.EditorTools
 
             var rm10Go = new GameObject("rooms"); rm10Go.transform.SetParent(root10.transform);
             var rm10 = rm10Go.AddComponent<RoomManager>();
-            rm10.Init(t, clock10.transform, null);        // oda 1 = checkpoint → kaydeder
+            // ⚠️ YENİ bir checkpoint odasına varış (oda 4). Faz 25'e kadar burada oda 1'e
+            // giriliyordu, ama kayıttaki checkpoint ZATEN oda 1'di — gerçek oyunda o, ÇAĞRI
+            // ya da kapat-aç ile aynı odaya dönüş demek ve artık checkpoint'i ezmiyor (L1).
+            rm10.Init(t, clock10.transform, null, startRoom: 4);   // oda 4 = checkpoint → kaydeder
 
             failed += Check(ref total, "⚠️ checkpoint yükseltmeleri de KAYDEDİYOR",
                             Mathf.Abs(SaveFile.Current.harvestRate - hasatSonra) < 0.001f,

@@ -208,8 +208,9 @@ namespace TekCan.EditorTools
             }
 
             // ── 8) HACİZ DASH-ATAĞI DİBİNDEKİNE İNİYOR (C-10) ──
-            //    Dash nişanın TERSİNE; vuruş dash yönüne dönüyordu ve boşluğa iniyordu.
             //    Faz 3 bu yolu `_dashDir` sıfırken koşturuyordu — yani hiç sınamıyordu.
+            //    Faz 25: geri dash kalktı (Enes), dash-atak dash yönüne iniyor. Soru
+            //    aynı: menzilli silah ÖLÜ BÖLGESİNDEKİNE dash-atakla vurabiliyor mu.
             {
                 var (r9, c9, _) = Kur(t, null);
                 var pGo = r9.transform.Find("player");
@@ -217,12 +218,12 @@ namespace TekCan.EditorTools
                 pGo.rotation = Quaternion.identity;
                 int hacizİndis = System.Array.FindIndex(Weapon.All, w => w is Haciz);
                 Alan(pc, "_weaponIndex", hacizİndis);
-                Alan(pc, "_dashDir", -Vector3.forward);         // StartDash'in HACİZ için kurduğu yön
+                Alan(pc, "_dashDir", Vector3.forward);          // dibindekine doğru dash
                 var dipteki = Bootstrap.SpawnEnemyAt(t, pGo.position + Vector3.forward * (t.hacizMinRange * 0.4f),
                                                      pGo, null, parent: r9.transform);
                 float önce = dipteki.TimeLeft;
                 Özel_Çağır(pc, "DashStrike");
-                failed += Check(ref total, "⚠️ HACİZ geri dash'ten sonra NİŞANDAKİNE vuruyor (yakın cevabı tutuyor)",
+                failed += Check(ref total, "⚠️ HACİZ dash-atağı ÖLÜ BÖLGESİNDEKİNE vuruyor (yakın cevabı tutuyor)",
                                 dipteki.TimeLeft < önce - 0.001f, önce - dipteki.TimeLeft);
                 Temizle(r9);
             }

@@ -44,8 +44,9 @@ namespace TekCan.EditorTools
             var zırhlı = Make(t, root1.transform, EnemyKind.Basic, EnemyRank.Armored);
             var iri = Make(t, root1.transform, EnemyKind.Basic, EnemyRank.Huge);
 
-            failed += Check(ref total, "⚠️ ZIRHLI'nın CANI daha çok",
-                            zırhlı.TimeLeft > normal.TimeLeft * 1.4f, zırhlı.TimeLeft / normal.TimeLeft);
+            // ⚠️ Faz 25: ZIRHLI'nın dayanıklılığı artık HAVUZDAN değil ZIRHTAN geliyor
+            // (Enes: "vurunca daha az hasar almalı"). Havuz kontrolü kalktı; etkisi
+            // aşağıda (4) vuruş sayısıyla, Faz25SelfCheck'te vuruş başına ölçülüyor.
             failed += Check(ref total, "⚠️ ZIRHLI daha YAVAŞ (bırakıp gitme seçeneği kalsın)",
                             zırhlı.CurrentSpeed < normal.CurrentSpeed * 0.9f,
                             zırhlı.CurrentSpeed / normal.CurrentSpeed);
@@ -96,12 +97,15 @@ namespace TekCan.EditorTools
                             lapseİ.Growth <= t.lapseGrowthCap + 0.001f, lapseİ.Growth);
             Temizle(root3);
 
-            // ── 4) ZIRHLI daha çok CAN = daha çok ÖDEME (havuz hem can hem para) ──
+            // ── 4) ZIRHLI daha çok VURUŞ ister, ama havuzu kadar öder (havuz hem can hem para) ──
+            //    Faz 25'e kadar "daha çok öder"di (havuz ×2). Artık zırh hasarı kısıyor:
+            //    toplam ödeme havuz kadar, vuruş başına AZ (Enes: "gelen can orantılı az").
             var (kazançN, vuruşN) = TümünüBoşalt(t, EnemyRank.Normal);
             var (kazançZ, vuruşZ) = TümünüBoşalt(t, EnemyRank.Armored);
             failed += Check(ref total, "ZIRHLI daha çok vuruş istiyor", vuruşZ > vuruşN, vuruşZ - vuruşN);
-            failed += Check(ref total, "ZIRHLI daha çok ÖDÜYOR (can = para, yasa)",
-                            kazançZ > kazançN * 1.4f, kazançZ / Mathf.Max(0.001f, kazançN));
+            failed += Check(ref total, "ZIRHLI TOPLAMDA havuzu kadar ödüyor (can = para, yasa)",
+                            Mathf.Abs(kazançZ - kazançN * t.armoredPoolMultiplier) < kazançN * 0.05f,
+                            kazançZ / Mathf.Max(0.001f, kazançN));
 
             // ── 5) Boss rütbe ALMIYOR ──
             var (root5, clock5) = Kur(t);

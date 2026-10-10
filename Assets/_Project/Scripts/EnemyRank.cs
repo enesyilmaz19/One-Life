@@ -39,6 +39,15 @@ namespace TekCan
         public virtual float PoolMultiplier(Tuning t) => 1f;
 
         /// <summary>
+        /// Vuruş başına ALDIĞI hasarın oranı — ZIRHLI'nın kadranı (Faz 25).
+        /// Hasat inen hasarla orantılı, yani vuruş başına kazanç da aynı oranda düşüyor.
+        /// </summary>
+        public virtual float DamageTaken(Tuning t) => 1f;
+
+        /// <summary>Vuruşunun bedel çarpanı — İRİ'nin kadranı (Faz 25).</summary>
+        public virtual float HitCostMultiplier(Tuning t) => 1f;
+
+        /// <summary>
         /// TÜRÜN KENDİ İMZASININ çarpanı — İRİ'nin kadranı.
         ///
         /// ⚠️ İRİ'yi "büyük ZIRHLI"dan ayıran tek şey bu. Yalnızca havuz büyütseydim
@@ -77,11 +86,17 @@ namespace TekCan
     }
 
     /// <summary>
-    /// ZIRHLI — **çok canlı ve yavaş.** Her türden olabilir, odada birkaç tane.
+    /// ZIRHLI — **vurunca az hasar alır, az zaman verir.** Her türden olabilir, odada birkaç tane.
     ///
-    /// Enes'in tarifi birebir: *"zırhlı tüm çeşitlerden olabilir, sadece daha çok
-    /// canı var ve daha yavaş gidiyor."* İmzası değişmiyor — SIZINTI zırhlıyken de
-    /// aynı hızda emiyor, sadece daha uzun yaşıyor.
+    /// ═══ 2026-09-30 playtest — Enes: *"zırhlı ile iriyi ayırt edemiyorum. Zırhlı
+    /// vurunca daha az hasar almalı, gelen can da orantılı olarak az olacak."* ═══
+    /// Sebep kodda bulundu: `Enemy.TakeDamage`'de "ZIRH BURADA" yazan bir yorum vardı,
+    /// altında zırh YOKTU. ZIRHLI yalnızca havuzu ×2 olan bir düşmandı, İRİ ×4 — ikisi
+    /// de "daha çok can". Artık zırh GERÇEK: hasar `armoredDamageTaken` ile kısılıyor,
+    /// havuz normal. Kazanç vuruş başına düşüyor çünkü hasat inen hasarla orantılı.
+    ///
+    /// İmzası değişmiyor — SIZINTI zırhlıyken de aynı hızda emiyor, sadece daha
+    /// uzun yaşıyor.
     ///
     /// ⚠️ Yavaşlık şart: çok canlı AMA normal hızda olsaydı, cezası "uzun sürüyor"
     /// değil "kaçamıyorum" olurdu. Yavaşlık oyuncuya BIRAKIP GİTME seçeneği
@@ -91,6 +106,7 @@ namespace TekCan
     {
         public override string Name => "ZIRHLI";
         public override float PoolMultiplier(Tuning t) => t.armoredPoolMultiplier;
+        public override float DamageTaken(Tuning t) => t.armoredDamageTaken;
         public override float SpeedMultiplier => 0.7f;
         public override float ScaleMultiplier => 1.12f;
         public override bool IsElite => true;
@@ -121,6 +137,8 @@ namespace TekCan
         public override string Name => "İRİ";
         public override float PoolMultiplier(Tuning t) => t.hugePoolMultiplier;
         public override float TraitMultiplier(Tuning t) => t.hugeTraitMultiplier;
+        // Enes (2026-09-30): "İri daha çok can ve daha çok hasara sahip olmalı."
+        public override float HitCostMultiplier(Tuning t) => t.hugeHitCostMultiplier;
         public override float SpeedMultiplier => 0.8f;
         public override float ScaleMultiplier => 1.6f;
         public override float WindupMultiplier => 1.35f;      // boss gibi ağır telegraf

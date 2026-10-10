@@ -477,3 +477,55 @@ Faz 24 yalnızca hazırlığın bırakıldığını ölçüyor). Playtest maddes
   incelemesi yakaladı. Her "bedeli şuradan düş" düzeltmesinde sor: *o hesap sıfıra inerse?*
 - **`.gitignore` satır sonu yorumu desteklemez**: `#` yalnızca satır başında yorum.
   `/*.log   # açıklama` yazınca desen bozulur. Yorum ayrı satıra.
+
+## Ders 15 — Dağarcık 97, oyuncunun gördüğü 2 (2026-09-30, birleşik playtest)
+
+**Ne oldu:** Enes *"boss saldırılarını çeşitlendirmeni istemiştim, yapılmamış"* dedi.
+Veride yapılmıştı: 2026-09-11'de dağarcık 69 → 97. Ama MURABAHACI faz 1'de Enes **2
+saldırı** gördü. Sebep seçim kodu: boss en uzun erişimli saldırısının menziline girdiğin
+an saldırıyor, sonra yalnızca o mesafeden erişenleri seçiyor. Uzakta duran oyuncuya 7
+saldırının 2'si ulaşıyor. Kapı dağarcığın BOYUNU saydı, oynananı değil.
+
+Ders 13 ("mekanik var ama ulaşılamıyor") ve ders 14'ün ("veriyi saydı, oynananı değil")
+aynısı, üçüncü kez. Oyuncu için veride duran ama önüne gelmeyen saldırı **yapılmamış**
+saldırıdır. Enes'in cümlesi doğruydu.
+
+**Kural:**
+> İçerik eklerken kapı **oyuncunun davranışıyla** ölçsün: gerçekçi mesafelerde duran bir
+> simüle oyuncu her saldırıyı en az bir kez görüyor mu? "Listede var" ölçü değil.
+
+### Yan ders
+- **Yorum yine koddan ayrışmıştı:** `Enemy.TakeDamage` "ZIRH BURADA" diyor, altında zırh
+  yok. ZIRHLI yalnızca havuzu ×2. Oyuncu ZIRHLI ile İRİ'yi ayırt edemedi, çünkü ikisi de
+  "daha çok can". *Yorum bir iddiadır* (ders 14) — rütbeyi ölçen bir kapı olsaydı yakalardı.
+- **"Kendi renginde" dedi, sayılar aynıydı:** oyuncunun İPOTEK işareti ile SİMSAR'ın işareti
+  (1, 0.45, 0.95) ve (0.9, 0.55, 1). Enes SİMSAR'ın işaretini "İPOTEK bug'ı" sandı; SİMSAR'ın böyle bir saldırısı olduğunu hiç fark etmemişti ("ilk defa duyuyom"). Renk yüzünden bir boss mekaniği oyunda GÖRÜNMEZ olmuştu. Renk
+  ayrımı iddiası göze sorulmalı, yoruma değil.
+- **İkinci kayıt noktası, birinci kayıt noktasının açığını yeniden açtı (Faz 25 inceleme):**
+  K1 oda başı kaydını ekledim. ONARIM eşyayı diske hemen yazıyor, bedelini checkpoint'ten
+  düşüyordu — ama oda başı kaydından düşmüyordu. Kapat-aç bedeli geri veriyor, onarım
+  kalıyordu: K2'nin kapattığı sonsuz diriliş. Güvenlik ajanı buldu, kapılarım değil.
+  **Kural:** geri sarılabilen her yeni kayıt noktasında sor — *hangi etki diske HEMEN
+  gidiyor (onarım, eşya, nemesis), ve bedeli bu kayıtta da duruyor mu?* Etki kalıcı,
+  bedel geri sarılıyorsa bedava bir şey var demektir.
+- **Bozma turunda iki bozma birbirini maskeleyebilir:** oda başı kaydını yazmayan bozma,
+  ölümün o kaydı düşürüp düşürmediğini ölçen kontrolü de yeşil bırakıyordu (ölçecek kayıt
+  yoktu). Toplu bozmada yeşil kalan kontrolü TEK BAŞINA boz.
+- **Otopilotun ilk iki kırmızısı botun kendi ölçüm hatasıydı:** K1'de yarım saniye bekleyip
+  ölçtü, o arada saat 1.8 sn aktı. Uyku renginde ilk karede baktı, faz geçişinin 0.2 sn'lik
+  beyaz parlaması sönmemişti. **Ölçüm de bir mekanik:** akan bir şeyi beklerken ölçme, geçici
+  durumların (parlama, sarsıntı) sönmesini bekle. Kırmızı gelince önce ölçeni sorgula (ders 14 yan ders).
+- **Ölçtüğün etkiyi başka bir şey de üretiyor mu?** Dash kontrolü "0.25 sn'de 1.5 birim gitti mi"
+  diye soruyordu; yürümek de 1.6 ediyordu. Dash hiç atılmasa da yeşildi. İnceleme ajanı buldu.
+  Etki ölçerken, o etkiyi üretebilecek ÖBÜR yolları kapat (burada: yönü tek kare tut, bırak).
+
+- **"Cevabı var" testi tek konumda yeşil, oyunun yarısında kırmızıydı (Faz 26 inceleme):**
+  harita saldırılarının kapısı boss'u hep aynı yere, oyuncuyu hep 3/7 birim önüne koyuyordu,
+  nemesis büyümesini hiç denemiyordu. 873 konumluk taramada SİMSAR'ın açıklığı duvar dibinde
+  kaçılamaz çıktı (arkası duvar, kapı arenanın dışında), TAM TAHSİL nemesis boyunda arenadan
+  büyüktü, KEFİL'in simitine 17 birimden yetişilmiyordu. **Kural:** "oyuncu kaçabiliyor mu"
+  sorusunu geometriye bağlı her saldırıda KONUM (orta / kenar / duvara sıkışmış) ve ÖLÇEK
+  (nemesis) üzerinden tara. Kolay kurgu, sorulmak istenen soruyu sormaz.
+- **Botun kontrolü de varsayım taşır:** otopilot "uzakta dur" sahnesinde gelen her yakın
+  saldırıyı hata sayıyordu. Bot duvara sıkışınca boss yaklaştı, yakın saldırı DOĞRU geldi.
+  Kontrol artık saldırı başlarken botun gerçek uzaklığına bakıyor.

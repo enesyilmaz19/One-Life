@@ -88,6 +88,7 @@ namespace TekCan
 
             LastStandArmed = false;
             _clock.Revive(CheckpointSeconds());
+            rm.SaveRoomStart();   // K1: kurulunca silinen oda başı kaydı, kazanınca geri yazılıyor
             Sfx.Win();
             IsoCamera.Shake(_t.hitShake * 1.2f);
             Debug.Log("[Tek Can] GEÇİCİ DÖNÜŞ başarılı — oda temizlendi, checkpoint zamanı geri verildi");
@@ -104,6 +105,7 @@ namespace TekCan
                 LastStandArmed = false;
                 NemesisiYaz();   // bu da bir ölüm: seni öldüren boss'un hesabına geçer
                 save.deaths++;
+                save.resumeRoom = 0;    // K1: ÇAĞRI checkpoint'e atıyor, oda başı kaydı geçersiz
                 SaveFile.Flush();
                 Debug.Log("[Tek Can] GEÇİCİ DÖNÜŞ tükendi — checkpoint'e dönülüyor");
                 Recall();
@@ -127,6 +129,15 @@ namespace TekCan
             save.intact[kind.Index]--;
             save.broken[kind.Index]++;      // kırıldı — zamanla tamir edilebilir
             save.deaths++;
+
+            // ⚠️ K1 — ODA BAŞI KAYDI ÖLÜMÜ DE TAŞIMALI, aynı yazmanın içinde. Yoksa
+            // öl → yerinde diril (az zamanla) → kapat → aç = oda başına GİRİŞ zamanıyla
+            // dönüş. Eşya yanmış ama zamanı geri alınmış olurdu.
+            // GEÇİCİ DÖNÜŞ de siliyor: kurulu sayaç diske yazılmıyor, sayarken kapatıp
+            // açan oyuncu 10 sn ile ve sayaçsız odanın başına düşüyordu — sıradaki ölüm
+            // yeni bir eşya yakıyordu. Artık kapatmak = başaramamak = checkpoint (inceleme).
+            if (kind.SendsToCheckpoint || kind.ArmsLastStand) save.resumeRoom = 0;
+            else save.resumeSeconds = Mathf.Min(save.resumeSeconds, kind.SecondsOnUse(_t));
             SaveFile.Flush();
 
             LastUsed = kind;

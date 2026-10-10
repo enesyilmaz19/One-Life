@@ -144,7 +144,10 @@ namespace TekCan
         // Boss yalnızca "kalın bir düşman" olmasın: daha hızlı, daha az uyarı verir,
         // daha geniş vurur ve darbesi çok daha pahalıdır. Menzili de gövdesi kadar uzun,
         // yoksa dev bir yaratık burnunun dibinden ıskalıyor gibi görünür.
-        /// <summary>Öz-denetim için: gerçek hazırlık süresi (formül kopyalanmasın).</summary>
+        /// <summary>
+        /// Öz-denetim için: TEMEL hazırlık (formül kopyalanmasın). ⚠️ Saldırının
+        /// çarpanı / mutlak süresi ve tepki payı HARİÇ — gerçek süre `EnterWindup`'ta.
+        /// </summary>
         public float CurrentWindup => WindupDuration;
 
         float WindupDuration => _t.enemyWindupDuration
@@ -170,6 +173,7 @@ namespace TekCan
         float HitCost => (Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost)
                        * Region.HitCost                            // AĞIRLIK bölgesi kuralı
                        * Growth                                    // ZAMANAŞIMI
+                       * Rank.HitCostMultiplier(_t)                // İRİ: daha çok hasar
                        * (IsBoss ? _t.bossHitCostMultiplier : 1f);
 
         /// <summary>
@@ -348,7 +352,14 @@ namespace TekCan
             if (Dormant)
             {
                 TickBossPassives(Time.deltaTime);   // rakipler öldü mü diye BURASI bakıyor
-                if (Dormant) return;                // hâlâ uykuda: akış, aura, saldırı YOK
+                if (Dormant)                        // hâlâ uykuda: akış, aura, saldırı YOK
+                {
+                    // ⚠️ Etiket uykuda da güncel: faz 3'e geçiş havuzu FULLÜYOR ama etiket
+                    // geçişten önceki son değerde (6.6) donuyordu — "bitmek üzere" yalanı
+                    // (otopilot izleme oturumu, 2026-10-09).
+                    if (_label != null) _label.Set(TimeLeft, Hollow);
+                    return;
+                }
             }
 
             bool wasHollow = Hollow;
@@ -383,49 +394,68 @@ namespace TekCan
                 return;
             }
 
-            TickState();
+            TickState(Time.deltaTime);
             if (_label != null) _label.Set(TimeLeft, Hollow);
         }
 
         // ── saldırı evreleri ─────────────────────────────────────────────────
-        // Hazırlık boyunca oyuncuyu takip eder ve uyarı yayı görünür.
-        // Vuruş başlarken yön KİLİTLENİR — dodge burada mümkün olur.
-        // Kilit olmasaydı telegraf yalan söylerdi ve kaçmak imkânsız olurdu.
+        // Hazırlığın İLK kısmında oyuncuyu takip eder, SON kısmında (tepki payı)
+        // yön KİLİTLİ ve uyarı yayı donuk — dodge burada mümkün olur.
+        //
+        // ⚠️ Faz 25'e kadar takip vuruş anına kadar sürüyordu. Boss hazırlığı
+        // 0.1–0.25 sn, insan tepkisi ~0.25 sn: koni seni takip ediyor, kaçış ancak
+        // son karede dash ile. Enes: *"düşmanlar hareketlerimize anlık tepki veriyor."*
 
-        void TickState()
+        /// <summary>Hazırlığın sonunda yönün kilitli kaldığı süre (saniye).</summary>
+        float TepkiPayı => IsBoss ? _t.bossReactionWindow : _t.enemyReactionWindow;
+
+        /// <summary>
+        /// Hazırlıkta hâlâ oyuncuya dönüyor mu.
+        /// ⚠️ GÜVENLİ AÇIKLIKLI saldırıda HİÇ dönmüyor: açıklık boss'un arkasında ve
+        /// boss dönerken açıklık da dönüp hep oyuncunun tam karşısına kaçıyordu —
+        /// SİMSAR'ın halkasından kaçmak imkânsızdı (Enes, 2026-09-30).
+        /// ⚠️ HARİTA saldırısında da dönmüyor (Faz 26): arena boyu bir ayna ya da ışın
+        /// sana dönmeye devam etseydi yana kaçmak imkânsız olurdu.
+        /// </summary>
+        bool HazırlıktaTakip => _stateTimer > TepkiPayı
+                             && (_attack == null || (_attack.SafeAngle <= 0f && !_attack.Harita));
+
+        /// <summary>⚠️ dt DIŞARIDAN — öz-denetim hazırlığı adım adım koşturabilsin (tuzak 3).</summary>
+        void TickState(float dt)
         {
-            _stateTimer -= Time.deltaTime;
+            _stateTimer -= dt;
 
             // ⚠️ Savrulma DURUMDAN BAĞIMSIZ: hazırlıktayken de vurulunca savrulmalı,
             // yoksa "ağır darbe" yalnızca kovalarken görünür ve tesadüfi hissedilir.
-            TickPush(Time.deltaTime);
+            TickPush(dt);
 
             switch (_state)
             {
                 case State.Chase:
-                    _attackTimer -= Time.deltaTime;
-                    ChaseMove();
-                    if (_attackTimer <= 0f && FlatDistanceToPlayer() <= TetikMenzili)
-                        EnterWindup();
+                    _attackTimer -= dt;
+                    ChaseMove(dt);
+                    if (_attackTimer <= 0f && SaldırıyaHazır(dt)) EnterWindup();
                     break;
 
                 case State.Windup:
-                    FacePlayer();                                   // hâlâ takip ediyor
+                    if (HazırlıktaTakip) FacePlayer();
                     if (_stateTimer <= 0f) EnterStrike();
                     break;
 
                 case State.Strike:
                     transform.position += _strikeDir *
-                        (_t.enemyLungeDistance / Mathf.Max(0.0001f, _t.enemyStrikeDuration)) * Time.deltaTime;
+                        (_t.enemyLungeDistance / Mathf.Max(0.0001f, _t.enemyStrikeDuration)) * dt;
                     if (_stateTimer <= 0f) EnterState(State.Recover, _t.enemyRecoverDuration);
                     break;
 
                 case State.Recover:
                     if (_stateTimer <= 0f)
                     {
-                        // ⚠️ Tekrar ve ZİNCİRDE bekleme YOK — hemen devam ediyor.
+                        // ⚠️ Tekrar ve ZİNCİRDE saldırı BEKLEMESİ YOK — hemen sıradaki hazırlık.
                         // Araya bekleme koyarsak ikisi de sıradan iki saldırıya dönüşür
                         // ve sordukları soru ("yerleşemezsin") kaybolur.
+                        // (Her halkanın kendi hazırlığı ve TEPKİ PAYI var — bilerek: 0.1 sn'lik
+                        // bir zincir halkası da okunmalı. Faz 25'ten beri zincirler daha yavaş.)
                         if (_repeatsLeft > 0 || _chained != null) { EnterWindup(); break; }
 
                         _attackTimer = _t.enemyAttackCooldown;
@@ -435,56 +465,184 @@ namespace TekCan
             }
         }
 
-        int _attackCount;
-
         int _dağarcıkFaz = -1;
         BossAttack[] _dağarcık;
 
+        // ── SALDIRI SEÇİMİ: ÜÇ SIRA (Faz 26, Enes'in kuralı) ──────────────────
+        // *"Yakın menzil, uzak menzil ve tüm harita diye 3 çeşit olsun. Mesafeye göre
+        // yakın ve uzak arasında değişsin, belirli sayıda saldırıdan sonra tüm harita
+        // saldırılarını yapsın."*
+        //
+        // Faz 25: iki sıra, saldırının sırası MENZİLDEN türüyordu (`RangeMul > 1.7`).
+        // Boss'un etrafında patlayan büyük halkalar "uzak" sayılıyor, dibinde dövüşen
+        // oyuncu fazda 2-4 saldırı görüyordu (Enes: "son boss 2 saldırı atıyor").
+        // Şimdi saldırının türü VERİDE (`BossAttack.Tür`). Mesafe yakın/uzak sırasını
+        // seçiyor; her `bossMapAttackEvery`. saldırı HARİTA sırasından, mesafeden bağımsız.
+        // Her sıra kendi içinde sırayla dönüyor; sayaç yalnızca saldırı yapılınca ilerliyor.
+        //
+        // Faz 25'ten kalan: boss sırası gelen saldırının menziline girene kadar
+        // yürüyor; oyuncu kaçıp girdirmezse SABIR dolunca aynı sıradan yetişeni yapıyor.
+        readonly BossAttack[][] _sıralar = new BossAttack[3][];
+        readonly int[] _sayaç = new int[3];
+
+        /// <summary>Son harita saldırısından beri yapılan yakın/uzak saldırı sayısı.</summary>
+        int _haritasız;
+
+        /// <summary>Sıradaki saldırının menziline girilemeden geçen süre — kaçışı kapatır.</summary>
+        float _sabır;
+        float _öncekiMesafe;
+
+        // `SaldırıyaHazır`'ın bulduğu, `PickAttack`'in tükettiği saldırı.
+        BossAttack _seçilen;
+        SaldırıTürü _seçilenTür;
+        int _seçilenİndis;
+
+        // ── ISRAR (Faz 26, Enes'in fikri) ────────────────────────────────────
+        // *"Sürekli yakından veya sürekli uzaktan saldıranlar için belli bir eşikten
+        // sonra peşpeşe yapılan yakın ve uzak menzil saldırılarının hasarı artsın."*
+        // Aynı sıradan art arda saldırı = oyuncu hep aynı mesafede. Eşikten sonra her
+        // saldırı daha pahalı; mesafe değişince sıfır. Harita saldırıları ne sayar ne
+        // sıfırlar. ⚠️ GÖRÜNÜR: uyarı yayı koyulaşıyor, HUD'da "ISRAR ×" yazıyor —
+        // görünmeseydi "boss rastgele sert vurdu" olurdu (ders 10).
+        SaldırıTürü _sonBant = SaldırıTürü.Harita;
+        int _bantSerisi;
+        float _ısrar = 1f;
+
+        /// <summary>Şu anki saldırının ısrar çarpanı (1 = yok). HUD ve öz-denetim okuyor.</summary>
+        public float IsrarÇarpanı => _ısrar;
+
         /// <summary>
-        /// Bu fazın saldırı dağarcığı — faz başına BİR KEZ alınıyor.
+        /// Bu fazın saldırı dağarcığı — faz başına BİR KEZ alınıyor, üç sıraya bölünüyor.
         /// ⚠️ `Boss.Attacks()` her çağrıda YENİ dizi üretiyor; kareye bir
         /// çağırmak çöp toplayıcıyı beslerdi.
+        /// ⚠️ Yalnızca SALDIRILAR önbellekte, menzil DEĞİL: `AttackRange` boss'ta
+        /// `Radius`'u içeriyor ve `Radius` isabet parlamasında %28 şişiyor. Menzili
+        /// faz başına bir kez hesaplamak geçici titreşimi bütün faza yayardı
+        /// (Faz 23'ün bayat önbellek hatası).
         /// </summary>
         BossAttack[] Dağarcık
         {
             get
             {
-                if (_dağarcıkFaz != Phase) { _dağarcıkFaz = Phase; _dağarcık = Boss.Attacks(Phase); }
+                if (_dağarcıkFaz != Phase)
+                {
+                    _dağarcıkFaz = Phase;
+                    _dağarcık = Boss.Attacks(Phase);
+                    for (int t = 0; t < 3; t++)
+                    {
+                        var tür = (SaldırıTürü)t;
+                        _sıralar[t] = System.Array.FindAll(_dağarcık, a => a.Tür == tür);
+                        _sayaç[t] = 0;                   // yeni faz, yeni dağarcık: baştan
+                    }
+                    // Yakın ya da uzak sıra boşsa öbürü — boş sıra boss'u çaresiz bırakırdı.
+                    if (_sıralar[0].Length == 0) _sıralar[0] = _sıralar[1];
+                    if (_sıralar[1].Length == 0) _sıralar[1] = _sıralar[0];
+                    if (_sıralar[0].Length == 0) _sıralar[0] = _sıralar[1] = _dağarcık;
+                    _haritasız = 0;
+                    _seçilen = null;
+                    _sabır = 0f;
+                    // ⚠️ Israr da sıfır: yoksa MURABAHACI rakip dövüşlerinden sonra uyanınca
+                    // faz 2'nin ×2'siyle başlıyordu (inceleme 2026-10-10).
+                    _sonBant = SaldırıTürü.Harita; _bantSerisi = 0; _ısrar = 1f;
+                }
                 return _dağarcık;
             }
         }
 
-        /// <summary>
-        /// Saldırıya GİRME mesafesi. Sıradan düşmanda kendi menzili; boss'ta
-        /// o fazın EN UZUN erişimi.
-        ///
-        /// ⚠️⚠️ Bu olmadan mesafeye göre saldırı seçmek İMKÂNSIZDI ve Enes'in
-        /// gördüğü şey tam olarak buydu: *"bosslarda uzakta olduğunda menzilli
-        /// saldıracak... mekaniği koymamışsın, sırayla hamlelerini yapıyor
-        /// gibi."* Eski koşul `<= AttackRange` idi — yani boss önce YAKIN
-        /// DÖVÜŞE kadar yürüyor, ancak orada saldırıya giriyordu. "Uzaktayken"
-        /// diye bir durum hiç oluşmuyordu; menzilli saldırılar dekordu.
-        ///
-        /// ⚠️ SONUÇ önbelleğe alınmıyor, yalnızca DAĞARCIK alınıyor. İlk
-        /// yazışımda sonucu faz başına bir kez hesaplıyordum — ama `AttackRange`
-        /// boss'ta `Radius`'u da içeriyor ve `Radius` isabet parlamasında
-        /// %28'e kadar şişiyor (bkz. `_flashTimer` ölçeklemesi). Yani boss tam
-        /// vurulduğu karede hesaplanan menzil BÜTÜN FAZ boyunca şişik kalırdı:
-        /// geçici bir titreşimi kalıcı bir hataya çeviren, klasik bayat önbellek.
-        /// </summary>
-        float TetikMenzili
+        BossAttack[] Sıra(SaldırıTürü tür)
         {
-            get
-            {
-                if (Boss == null) return AttackRange;
-                float r = AttackRange, en = r;
-                foreach (var a in Dağarcık) en = Mathf.Max(en, r * a.RangeMul + a.Lunge);
-                return en;
-            }
+            _ = Dağarcık;
+            return _sıralar[(int)tür];
         }
 
-        /// <summary>Öz-denetim için: boss hangi mesafeden saldırıya giriyor.</summary>
-        public float AttackTriggerRange => TetikMenzili;
+        /// <summary>Harita saldırısının sırası geldi mi — mesafeden bağımsız.</summary>
+        bool HaritaZamanı => _t.bossMapAttackEvery > 0 && Sıra(SaldırıTürü.Harita).Length > 0
+                             && _haritasız >= _t.bossMapAttackEvery - 1;
+
+        /// <summary>
+        /// Sırası gelmiş VE cevabına yetişilebilen harita saldırısı (yoksa null).
+        /// ⚠️ Simit ve açıklıkta cevap boss'a koşmak: 17 birimden yetişilmiyordu
+        /// (inceleme 2026-10-10). Erişim şartı `MaxPlayerRange`'te, burada sorgulanıyor.
+        /// </summary>
+        BossAttack SıradakiHarita(float mesafe)
+        {
+            if (!HaritaZamanı) return null;
+            var h = Sıra(SaldırıTürü.Harita);
+            var a = h[_sayaç[(int)SaldırıTürü.Harita] % h.Length];
+            return HaritaYapılabilir(a, mesafe) ? a : null;
+        }
+
+        /// <summary>
+        /// Harita saldırısının cevabı şu an VAR mı: erişim şartları, ve AÇIKLIKTA boss'un
+        /// arkasında yer. ⚠️ Kapı boss'un ARKASINDA: boss duvar dibindeyken arkası duvardı,
+        /// kapı arenanın dışında kalıyordu (Faz 26 kapı taraması, 2026-10-10). Öz-denetim
+        /// bunu çağırıyor — kendi şartını yazsaydı oyundan ayrışırdı.
+        /// </summary>
+        bool HaritaYapılabilir(BossAttack a, float mesafe)
+        {
+            if (!Erişir(a, mesafe)) return false;
+            if (a.SafeAngle <= 0f) return true;
+            Vector3 d = transform.position - Bootstrap.ArenaCenter;
+            d.y = 0f;
+            return d.magnitude <= _t.arenaRadius * 0.6f;
+        }
+
+        /// <summary>Oyuncu bu mesafedeyken hangi sıra: yakın mı, menzilli mi.</summary>
+        bool Uzakta(float mesafe) => mesafe > AttackRange * BossAttack.UzakEşiği;
+
+        /// <summary>Saldırı bu mesafeden oyuncuya GERÇEKTEN ulaşıyor ve şartları tutuyor mu.</summary>
+        bool Erişir(BossAttack a, float mesafe)
+            => mesafe <= AttackRange * a.RangeMul + a.Lunge
+            && (a.MinPlayerRange <= 0f || mesafe >= a.MinPlayerRange)
+            && (a.MaxPlayerRange <= 0f || mesafe <= a.MaxPlayerRange);
+
+        /// <summary>
+        /// Bekleme bitti — saldırıya girilebilir mi. Sıradan düşmanda kendi menzili;
+        /// boss'ta mesafenin sırasındaki SIRADAKİ saldırının menzili.
+        ///
+        /// ⚠️ SABIR: oyuncu kaçıp boss'u menzile hiç sokmazsa, `bossAttackPatience`
+        /// sonra aynı sıradan o an yetişen ilk saldırı yapılıyor. Yoksa kaçarak
+        /// saldırıları tamamen iptal edebilirdin.
+        /// ⚠️ Sabır yalnızca boss YAKLAŞAMIYORKEN işliyor. Her karede işleseydi uzaktan
+        /// yürüyerek gelen boss (14 birimden 7'ye ~1.6 sn) yolda sabrını tüketip sırayı
+        /// atlardı — "sırayla" kuralı duran oyuncuya karşı bile bozulurdu.
+        /// </summary>
+        bool SaldırıyaHazır(float dt)
+        {
+            float mesafe = FlatDistanceToPlayer();
+            if (Boss == null) return mesafe <= AttackRange;
+
+            // HARİTA: sırası geldiyse önce o — cevabına yetişilebiliyorsa (`SıradakiHarita`).
+            // Yetişilemiyorsa sıra TUTULUYOR, boss yaklaşıyor; sabır dolarsa (oyuncu kaçıyor)
+            // mesafenin sırasından yetişen saldırı, harita sırası beklemeye devam ediyor.
+            bool sabırsız = _sabır >= _t.bossAttackPatience;
+            var harita = SıradakiHarita(mesafe);
+            if (harita != null)
+            {
+                _seçilen = harita; _seçilenTür = SaldırıTürü.Harita;
+                _seçilenİndis = _sayaç[(int)SaldırıTürü.Harita] % Sıra(SaldırıTürü.Harita).Length;
+                return true;
+            }
+
+            if (!HaritaZamanı || sabırsız)
+            {
+                var tür = Uzakta(mesafe) ? SaldırıTürü.Uzak : SaldırıTürü.Yakın;
+                var liste = Sıra(tür);
+                int sıra = _sayaç[(int)tür];
+
+                int bakılacak = sabırsız ? liste.Length : 1;
+                for (int i = 0; i < bakılacak; i++)
+                {
+                    int j = (sıra + i) % liste.Length;
+                    if (!Erişir(liste[j], mesafe)) continue;
+                    _seçilen = liste[j]; _seçilenTür = tür; _seçilenİndis = j;
+                    return true;
+                }
+            }
+            if (_öncekiMesafe - mesafe < MoveSpeed * dt * 0.5f) _sabır += dt;   // yaklaşamıyor
+            _öncekiMesafe = mesafe;
+            return false;
+        }
 
         /// <summary>
         /// Şu anki saldırı 360° mü — halka, yani yön kontrolü yok, UZAKLAŞMAK gerekiyor.
@@ -504,11 +662,23 @@ namespace TekCan
         // ⚠️ Eskiden burada bir de `_slamming ? bossSlamRadius : ...` dalı vardı; yere
         // vuruş `BossAttack`'e taşınınca ÖLÜ KOD oldu (saldırı yokken `_slamming` da
         // false). Bırakılsaydı "hangi yol çalışıyor" sorusu iki cevaplı kalırdı.
-        float StrikeRadius => _attack != null ? AttackRange * _attack.RangeMul : AttackRange;
+        float StrikeRadius => _attack == null ? AttackRange
+                            : _attack.ArenaOranı > 0f ? _t.arenaRadius * _attack.ArenaOranı   // gövdeden bağımsız
+                            : AttackRange * _attack.RangeMul;
         float StrikeAngle => _attack != null && _attack.Angle > 0f ? _attack.Angle : AttackAngle;
         float StrikeInner => _attack?.InnerRadius ?? 0f;
-        Color StrikeColor => _attack?.Tint ?? StrikeTint;
-        Color TelegraphColor => _attack?.Tint ?? TelegraphTint;
+        Color StrikeColor => IsrarRengi(_attack?.Tint ?? StrikeTint);
+        Color TelegraphColor => IsrarRengi(_attack?.Tint ?? TelegraphTint);
+
+        /// <summary>Israr arttıkça uyarı koyulaşıyor — "bu vuruş daha pahalı" GÖRÜNSÜN.</summary>
+        Color IsrarRengi(Color c)
+        {
+            if (_ısrar <= 1f || _t == null) return c;
+            float k = Mathf.InverseLerp(1f, Mathf.Max(1.01f, _t.bossStreakCap), _ısrar);
+            var r = Color.Lerp(c, new Color(0.75f, 0.02f, 0.05f, c.a), k);
+            r.a = Mathf.Min(0.85f, c.a * (1f + k));
+            return r;
+        }
 
         /// <summary>
         /// Şu anki gerçek vuruş yarıçapı ve güvenli göbeği. Öz-denetim BUNLARI okuyor —
@@ -534,17 +704,23 @@ namespace TekCan
             }
             else
             {
-                _attackCount++;
                 PickAttack();
             }
+            _seçilen = null;   // tekrar/zincir dalı seçileni kullanmadı — bayatlamasın
 
             // ⚠️ MUTLAK süre çarpanı EZER: konum değiştirten saldırılara (güvenli açıklık,
             // simit) çarpan vermek yetmiyordu — boss hazırlıkları ~0.2 sn ve
             // "yeşil alana geçecek kadar süre kalmıyordu" (Enes).
+            // ⚠️ TEPKİ PAYI çarpanlı hazırlığa EKLENİYOR: eski süre boyunca nişan alıyor,
+            // sonra pay kadar yön kilitli (bkz. `HazırlıktaTakip`). Mutlak süreliler
+            // zaten uzun; payları sürelerinin içinden (son kısmı kilitli).
             float dur = _attack != null && _attack.WindupSeconds > 0f
                       ? _attack.WindupSeconds
-                      : WindupDuration * (_attack?.WindupMul ?? 1f);
+                      : WindupDuration * (_attack?.WindupMul ?? 1f) + TepkiPayı;
             EnterState(State.Windup, dur);
+            // ORTAYA SIÇRAMA (TAM TAHSİL): uyarı çizilmeden ÖNCE — halka ortadan çiziliyor.
+            if (_attack != null && _attack.ArenaOranı > 0f)
+                transform.position = ArenayaSığdır(Bootstrap.ArenaCenter);
             FacePlayer();
 
             // ⚠️ Hazırlık işareti artık DOLUYOR (0.25 → 1.0). Sabit yay "vuracağım" diyordu
@@ -563,7 +739,7 @@ namespace TekCan
             // boss hareket etse bile yeri değişmemeli.
             if (_attack != null && _attack.SafeSpotRadius > 0f)
             {
-                _safeSpot = RastgeleGüvenliNokta();
+                _safeSpot = RastgeleGüvenliNokta(dur);
                 Arc.Spawn(_safeSpot, Quaternion.identity, _attack.SafeSpotRadius, 360f,
                           new Color(0.45f, 1f, 0.55f, 0.40f), dur,
                           scaleFrom: 1f, scaleTo: 1f, scaled: true);
@@ -596,59 +772,13 @@ namespace TekCan
         }
 
         /// <summary>
-        /// ⚠️ ÖRNEĞE ait, statik DEĞİL. Paylaşılan bir statik liste burada
-        /// teknik olarak güvenli olurdu (tek iş parçacığı, tek çağrı içinde
-        /// dolduruluyor ve okunuyor) — ama bu projede paylaşılan statik durum
-        /// iki kez sessiz hataya dönüştü (`Enemy.All`, `GroundMark.ActiveLiens`)
-        /// ve her ikisi de "güvenli görünüyordu". Boss sayısı bir avuç; bir
-        /// liste başına düşen bedel, o riski taşımaya değmez.
-        /// </summary>
-        readonly System.Collections.Generic.List<BossAttack> _adaylar
-            = new System.Collections.Generic.List<BossAttack>();
-
-        /// <summary>
-        /// Uygun saldırıları `_adaylar`a topluyor. `uzak` verilmişse YALNIZCA o
-        /// mesafe sınıfı; verilmemişse sınıf aranmıyor (geri çekilme turu).
-        /// </summary>
-        bool Ayıkla(BossAttack[] liste, float mesafe, bool? uzak)
-        {
-            _adaylar.Clear();
-            foreach (var a in liste)
-            {
-                if (a.MinPlayerRange > 0f && mesafe < a.MinPlayerRange) continue;
-                if (a.MaxPlayerRange > 0f && mesafe > a.MaxPlayerRange) continue;
-
-                // ⚠️ ERİŞİM: saldırı oyuncuya GERÇEKTEN ulaşabiliyor mu. Eski sıra
-                // bunu hiç sormuyordu — boss 10 birim uzaktayken 1.0 menzilli bir
-                // koni savurup boşluğa vuruyordu. Enes'in gördüğü şey buydu:
-                // "sırayla hamlelerini yapıyor gibi".
-                if (mesafe > AttackRange * a.RangeMul + a.Lunge) continue;
-
-                // ⚠️ Alan saldırıları (halka / haritada güvenli nokta) bant
-                // ayrımından MUAF: yönsüzler, her mesafede aynı soruyu soruyorlar.
-                if (uzak.HasValue && !a.HerBant && a.Uzak != uzak.Value) continue;
-                _adaylar.Add(a);
-            }
-            return _adaylar.Count > 0;
-        }
-
-        /// <summary>
-        /// Sıradaki saldırı — MESAFEYE GÖRE. Enes: *"bosslarda uzakta olduğunda
-        /// menzilli saldıracak, yakında ise yakın saldırılarını yapacak mekaniği
-        /// koymamışsın; sırayla hamlelerini yapıyor gibi."*
+        /// Sıradaki saldırıyı KUR ve o sıranın sayacını ilerlet.
         ///
-        /// ⚠️ Haklıydı: eski hâl listeyi SIRAYLA dönüyordu ve mesafe filtresi
-        /// yalnızca birkaç saldırıda vardı, yani pratikte hiç iş görmüyordu.
+        /// Normalde `SaldırıyaHazır` saldırıyı çoktan buldu (menzil + sabır). Bulmadıysa
+        /// (hazırlık doğrudan çağrıldı) mesafenin sırasındaki sıradaki saldırı alınıyor.
         ///
-        /// ⚠️ Bu aynı zamanda şu şikâyetin de sebebiydi: *"faz 2'deki yeni özgün
-        /// saldırıların hiçbirini yapmamışsın."* Tek sıra + uzun liste = listenin
-        /// sonundaki saldırılar ancak dövüş yeterince UZUN sürerse gelirdi; faz 2
-        /// çoğu zaman o kadar sürmüyor. Mesafe sınıfı listeyi ikiye böldüğü için
-        /// her sınıfın turu kısalıyor ve YENİ saldırılar yüzeye çıkıyor.
-        ///
-        /// Sıra içinde hâlâ deterministik ("bu saldırı mı zor, ben mi kötü
-        /// oynadım" cevaplanabilir kalsın) — rastgeleliği mesafe sağlıyor,
-        /// zar değil.
+        /// ⚠️ Sıra içinde DETERMİNİSTİK ("bu saldırı mı zor, ben mi kötü oynadım"
+        /// cevaplanabilir kalsın) — çeşidi mesafe veriyor, zar değil.
         /// </summary>
         void PickAttack()
         {
@@ -661,18 +791,34 @@ namespace TekCan
                 return;
             }
 
-            var liste = Dağarcık;                 // faz başına tek dizi, kareye sıfır çöp
-            float mesafe = FlatDistanceToPlayer();
-            bool uzak = mesafe > AttackRange * BossAttack.UzakEşiği;
-            int sıra = Mathf.Abs(_attackCount - 1);
-
-            // ① mesafeye UYAN sınıf → ② erişebilen her şey → ③ hiçbiri olmazsa liste sırası
-            if (Ayıkla(liste, mesafe, uzak) || Ayıkla(liste, mesafe, null))
+            if (_seçilen == null)
             {
-                SetAttack(_adaylar[sıra % _adaylar.Count]);
-                return;
+                float mesafe = FlatDistanceToPlayer();
+                _seçilenTür = SıradakiHarita(mesafe) != null ? SaldırıTürü.Harita
+                            : Uzakta(mesafe) ? SaldırıTürü.Uzak : SaldırıTürü.Yakın;
+                var liste = Sıra(_seçilenTür);
+                _seçilenİndis = _sayaç[(int)_seçilenTür] % liste.Length;
+                _seçilen = liste[_seçilenİndis];
             }
-            SetAttack(liste[sıra % liste.Length]);
+
+            _sayaç[(int)_seçilenTür] = _seçilenİndis + 1;
+            if (_seçilenTür == SaldırıTürü.Harita)
+            {
+                _haritasız = 0;
+                _ısrar = 1f;                              // harita ısrarı ne sayar ne sıfırlar
+            }
+            else
+            {
+                _haritasız++;
+                if (_seçilenTür == _sonBant) _bantSerisi++;
+                else { _sonBant = _seçilenTür; _bantSerisi = 1; }
+                _ısrar = Mathf.Min(_t.bossStreakCap,
+                                   1f + Mathf.Max(0, _bantSerisi - _t.bossStreakThreshold) * _t.bossStreakStep);
+            }
+
+            SetAttack(_seçilen);
+            _seçilen = null;
+            _sabır = 0f;
         }
 
         /// <summary>Saldırıyı kur — tekrar ve zincir durumu tek yerden ayarlanıyor.</summary>
@@ -719,7 +865,7 @@ namespace TekCan
             // Hasar yalnızca bu anda, kilitli yöne göre iner. Kaçtıysan ıskalar.
             if (PlayerInStrikeCone())
             {
-                float cost = HitCost * (_attack?.CostMul ?? 1f);
+                float cost = HitCost * (_attack?.CostMul ?? 1f) * _ısrar;    // ISRAR
                 // ⚠️ NEMESİS: boss'un senden aldığı saniye SAYILIYOR — ve gerçekten
                 // İNEN bedel sayılıyor. Dash i-frame'i vuruşu yutabiliyor; "vurdum,
                 // demek ki aldı" varsayımı boss'a hak etmediği alacak yazardı.
@@ -778,9 +924,22 @@ namespace TekCan
         /// Faz 10'da (zamanlama/zorluk kilidi) yeniden bakılacak; simetrik yapılırsa
         /// düşmanlar belirgin şekilde daha çok vurur.
         /// </summary>
-        public bool PlayerInStrikeCone()
+        public bool PlayerInStrikeCone() => _player != null && İsabet(_player.position, _strikeDir);
+
+        /// <summary>
+        /// Şu an VURSA bu noktadaki oyuncuya isabet eder mi — yön şu anki bakış.
+        /// Otopilot ("uyarıyı gören insan") bunu soruyor. ⚠️ Aynı hesap, kopya değil:
+        /// bot kendi formülünü yazsaydı oyundan ayrışır ve yalan söylerdi.
+        /// </summary>
+        public bool ŞimdiVursaİsabet(Vector3 oyuncu) => İsabet(oyuncu, transform.forward);
+
+        /// <summary>Hazırlığın kalan süresi — hazırlıkta değilse 0.</summary>
+        public float KalanHazırlık => _state == State.Windup ? Mathf.Max(0f, _stateTimer) : 0f;
+
+        bool İsabet(Vector3 oyuncu, Vector3 yön)
         {
-            Vector3 to = FlatToPlayer();
+            Vector3 to = oyuncu - transform.position;
+            to.y = 0f;
             float d = to.magnitude;
             if (d > StrikeRadius) return false;
 
@@ -788,7 +947,7 @@ namespace TekCan
             // "yaklaş" değil, "arkasına geç" de değil — ORAYA YETİŞ.
             if (_attack != null && _attack.SafeSpotRadius > 0f)
             {
-                var s = _player.position - _safeSpot;
+                var s = oyuncu - _safeSpot;
                 s.y = 0f;                                  // tuzak 2
                 if (s.magnitude <= _attack.SafeSpotRadius) return false;
             }
@@ -801,13 +960,13 @@ namespace TekCan
             // boyunca oyuncuya döndüğü için oyuncu daima içinde kalır ve saldırı
             // hiç isabet etmezdi.
             float safe = _attack?.SafeAngle ?? 0f;
-            if (safe > 0f && Vector3.Angle(-_strikeDir, to) <= safe * 0.5f) return false;
+            if (safe > 0f && Vector3.Angle(-yön, to) <= safe * 0.5f) return false;
 
             // AYNA: ön VE arka dilim. Hangisi daha yakınsa o sayılıyor — yanlar
             // güvenli kalıyor, geri çekilmek kalmıyor.
-            float sapma = Vector3.Angle(_strikeDir, to);
+            float sapma = Vector3.Angle(yön, to);
             if (_attack != null && _attack.Mirrored)
-                sapma = Mathf.Min(sapma, Vector3.Angle(-_strikeDir, to));
+                sapma = Mathf.Min(sapma, Vector3.Angle(-yön, to));
 
             // 360°'de yön kontrolü yok: her açı zaten içeride.
             return StrikeAngle >= 360f || sapma <= StrikeAngle * 0.5f;
@@ -843,7 +1002,7 @@ namespace TekCan
             if (to.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(to.normalized);
         }
 
-        void ChaseMove()
+        void ChaseMove(float dt)
         {
             Vector3 to = FlatToPlayer();
             float dist = to.magnitude;
@@ -852,7 +1011,7 @@ namespace TekCan
             // KAÇAK kaçarken oyuncudan UZAKLAŞIYOR — kovalamak senin kararın.
             if (Fleeing)
             {
-                transform.position -= (to / dist) * MoveSpeed * Time.deltaTime;
+                transform.position -= (to / dist) * MoveSpeed * dt;
                 transform.rotation = Quaternion.LookRotation(-to / dist);
                 return;
             }
@@ -867,15 +1026,15 @@ namespace TekCan
                 // yakın silahlar erişemiyor, oda hiç temizlenmiyordu (denetim 2026-09-23).
                 // Köşeye sıkışınca yeri yok — "uzak dur" cevabı orada biter, olması gereken bu.
                 if (dist < tercih * 0.85f)
-                    transform.position = ArenayaSığdır(transform.position - (to / dist) * MoveSpeed * Time.deltaTime);
+                    transform.position = ArenayaSığdır(transform.position - (to / dist) * MoveSpeed * dt);
                 else if (dist > tercih * 1.15f)
-                    transform.position += (to / dist) * MoveSpeed * Time.deltaTime;
+                    transform.position += (to / dist) * MoveSpeed * dt;
                 FacePlayer();
                 return;
             }
 
             if (dist > AttackRange * 0.9f)
-                transform.position += (to / dist) * MoveSpeed * Time.deltaTime;
+                transform.position += (to / dist) * MoveSpeed * dt;
             FacePlayer();
         }
 
@@ -900,12 +1059,12 @@ namespace TekCan
                 return;
             }
 
-            // ⚠️ ZIRH BURADA. Hasar zamana daha yavaş çevriliyor — havuza dokunmuyor.
-            // Hasat akan zamanla orantılı olduğu için TOPLAM ödeme aynı kalıyor, sadece
-            // çok daha uzun sürüyor. Yani zırh ödülü kısmıyor, SANİYE BAŞINA GELİRİ kısıyor:
-            // saat sen vururken de işlediği için dövüş kârdan masrafa kayabiliyor.
-            // (Havuzu küçültseydim ödülü de kısardım ve zırh "daha az veren düşman"
-            // olurdu — bambaşka, çok daha kötü bir şey.)
+            // ⚠️ ZIRH BURADA — gerçekten (Faz 25). Bu yorum önceden de "zırh burada"
+            // diyordu ama altında zırh YOKTU; ZIRHLI yalnızca havuzu ×2 bir düşmandı ve
+            // Enes onu İRİ'den ayıramadı (2026-09-30). Hasar kısılıyor, hasat inen
+            // hasarla orantılı olduğu için vuruş başına kazanç da aynı oranda düşüyor.
+            // TOPLAM ödeme havuz kadar kalıyor, sadece daha çok vuruş istiyor.
+            damage *= Rank.DamageTaken(_t);
             float drained = Mathf.Min(damage, TimeLeft);
             TimeLeft -= drained;
 
@@ -1156,9 +1315,9 @@ namespace TekCan
         }
 
         /// <summary>
-        /// Boss faz geçişi. İki farklı kural (Enes kararı):
-        ///   ① ② havuz YARIYA düşünce döner
-        ///   ③ ④ havuz BİTİNCE fullenip döner — "kazandım" sandığın an
+        /// Boss faz geçişi. İki farklı kural (Enes kararı, `BossKind.RefillsOnEmpty`):
+        ///   TAHSİLDAR, EKSPER havuz YARIYA düşünce döner
+        ///   KEFİL, SİMSAR, MURABAHACI havuz BİTİNCE fullenip döner — "kazandım" sandığın an
         ///
         /// ⚠️ Fullenen havuz KREDİ olarak işaretleniyor: erir ama hasat vermez.
         /// </summary>
@@ -1198,14 +1357,28 @@ namespace TekCan
         /// Arenada rastgele bir nokta — kenardan biraz içeride.
         /// ⚠️ Kenara yapışık seçilseydi oyuncu arena sınırına sıkışır ve "yetiştim
         /// ama yine öldüm" derdi; sınır bu oyunda yeni (Enes bildirdi).
+        ///
+        /// ⚠️ Ve oyuncunun YETİŞEBİLECEĞİ yerden: koşarak, boss'un tepki payı düşülmüş
+        /// sürede. Önceden oyuncuya bakılmıyordu, noktaların ~üçte biri yetişilemezdi
+        /// (inceleme 2026-10-10). Rastgelelik kalıyor — yalnızca yetişilemeyenler eleniyor.
         /// </summary>
-        Vector3 RastgeleGüvenliNokta()
+        Vector3 RastgeleGüvenliNokta(float süre)
         {
-            float açı = Random.value * Mathf.PI * 2f;
-            float r = Random.Range(0.15f, 0.75f) * _t.arenaRadius;
-            return new Vector3(Bootstrap.ArenaCenter.x + Mathf.Cos(açı) * r,
-                               Bootstrap.ArenaCenter.y,
-                               Bootstrap.ArenaCenter.z + Mathf.Sin(açı) * r);
+            float bütçe = _t.moveSpeed * Mathf.Max(0f, süre - _t.bossReactionWindow)
+                        + _attack.SafeSpotRadius - 0.5f;
+            Vector3 en = Bootstrap.ArenaCenter; float enYakın = float.MaxValue;
+            for (int i = 0; i < 24; i++)
+            {
+                float açı = Random.value * Mathf.PI * 2f;
+                float r = Random.Range(0.15f, 0.75f) * _t.arenaRadius;
+                var p = new Vector3(Bootstrap.ArenaCenter.x + Mathf.Cos(açı) * r,
+                                    Bootstrap.ArenaCenter.y,
+                                    Bootstrap.ArenaCenter.z + Mathf.Sin(açı) * r);
+                float d = _player != null ? new Vector2(p.x - _player.position.x, p.z - _player.position.z).magnitude : 0f;
+                if (d <= bütçe) return p;
+                if (d < enYakın) { enYakın = d; en = p; }   // hiçbiri yetmezse en yakını
+            }
+            return en;
         }
 
         /// <summary>

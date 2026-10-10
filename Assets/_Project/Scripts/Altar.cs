@@ -89,7 +89,9 @@ namespace TekCan
                 // ⚠️ Checkpoint bedeli taşıyamıyorsa SATMA. Taşımadan satılsaydı checkpoint
                 // 0.5 sn'ye iniyor, her ÇAĞRI düşmanın ortasında anında ölüm oluyor ve kalan
                 // eşyalar zincirleme yanıyordu (`TryBuy`'ın "kendini öldüremezsin" kuralı).
-                if (kırık == null || clock == null || SaveFile.CheckpointSeconds(_t) <= Price
+                // ⚠️ Ve ÇAĞRI TABANININ ALTINA da inemez (K2): inseydi taban bedeli geri
+                // öderdi — öl, dön, onar, öl… sonsuz diriliş geri gelirdi.
+                if (kırık == null || clock == null || !OnarımTaşınıyor()
                     || !clock.TryBuy(Price)) return;
 
                 var s = SaveFile.Current;
@@ -101,6 +103,12 @@ namespace TekCan
                 // — öl, dön, yine onar, yine öl… SONSUZ diriliş (denetim 2026-09-23).
                 // Onarım kalıcı, bedeli de kalıcı olmalı.
                 s.checkpointSeconds = Mathf.Max(0.5f, SaveFile.CheckpointSeconds(_t) - Price);
+                // ⚠️ ...ve ODA BAŞI KAYDINDAN da (K1). Onarım kalıcı ve hemen diske gidiyor;
+                // bedeli oda başı kaydında kalmasaydı kapat-aç zamanı geri verirdi, onarım
+                // kalırdı — K2'nin kapattığı sonsuz diriliş geri gelirdi (inceleme 2026-10-03).
+                // Yükseltmelerde bu sorun yok: onlar oda başı kaydıyla BİRLİKTE geri sarılıyor.
+                // `Max`: 0'ın altı `Clock.Init`'te "baştan başla" (tam saat) demek.
+                s.resumeSeconds = Mathf.Max(0.5f, s.resumeSeconds - Price);
                 SaveFile.Flush();          // kazanım da hemen yazılır, ölüm gibi
 
                 Sfx.Buy();
@@ -133,7 +141,7 @@ namespace TekCan
             {
                 var kırık = FirstBroken();
                 if (kırık == null) return "ONARIM   [tamir edilecek eşya yok]";
-                if (SaveFile.CheckpointSeconds(_t) <= Price)
+                if (!OnarımTaşınıyor())
                     return $"ONARIM  {kırık.Name}   [checkpoint zamanın {Price:0} sn'yi taşımıyor]";
                 return $"ONARIM  {kırık.Name}   —   {Price:0.0} saniye   [E]";
             }
@@ -146,6 +154,9 @@ namespace TekCan
             };
             return SoldOut ? $"{what}   [TÜKENDİ]" : $"{what}   —   {Price:0.0} saniye   [E]";
         }
+
+        /// <summary>Onarım bedeli düşülünce checkpoint ÇAĞRI tabanının üstünde kalıyor mu.</summary>
+        bool OnarımTaşınıyor() => SaveFile.CheckpointSeconds(_t) - Price >= _t.recallMinSeconds;
 
         void Paint()
         {

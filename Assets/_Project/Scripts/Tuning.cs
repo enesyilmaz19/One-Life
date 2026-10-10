@@ -66,9 +66,10 @@ namespace TekCan
         public float playerKnockback = 1.2f;
 
         [Header("── DÜŞMAN: SALDIRI EVRELERİ ──")]
-        [Tooltip("HAZIRLIK: vuruştan önceki uyarı süresi. Bu olmadan dodge tahmindir.")]
+        [Tooltip("HAZIRLIK: vuruştan önceki NİŞAN süresi — düşman bu sürede sana dönüyor. " +
+                 "Üstüne tepki payı (enemyReactionWindow) ekleniyor: o sürede yön kilitli.")]
         public float enemyWindupDuration = 0.20f;
-        [Tooltip("VURUŞ: hasarın indiği kısa evre. Yön hazırlık bitince KİLİTLENİR — sonrası kaçılabilir.")]
+        [Tooltip("VURUŞ: hasarın indiği kısa evre. Yön tepki payı başında KİLİTLENDİ — o andan sonrası kaçılabilir.")]
         public float enemyStrikeDuration = 0.10f;
         [Tooltip("TOPARLANMA: vuruştan sonra açık kaldığı süre")]
         public float enemyRecoverDuration = 0.20f;
@@ -78,6 +79,10 @@ namespace TekCan
         public float enemyAttackAngle = 90f;
         [Tooltip("Vuruş anında öne atılma mesafesi")]
         public float enemyLungeDistance = 0.8f;
+        [Tooltip("TEPKİ PAYI: hazırlığın SON bu kadar saniyesinde düşman sana dönmeyi bırakır, " +
+                 "uyarı yayı donar. Hazırlığa EKLENİYOR. ⚠️ Enes (2026-09-30): 'düşmanlar " +
+                 "hareketlerimize anlık tepki veriyor.' Önceden yön ancak vuruş anında kilitleniyordu.")]
+        public float enemyReactionWindow = 0.25f;
         [Tooltip("Saldırı sırasında hareket hızı çarpanı")]
         [Range(0f, 1f)] public float attackMoveDamping = 0f;
 
@@ -221,13 +226,19 @@ namespace TekCan
         [Header("── DÜŞMAN RÜTBESİ (Faz 17) ──")]
         // ⚠️ ZIRHLI = MİKTAR ekseni, İRİ = KİMLİK ekseni. İlk tasarımda ikisi de
         // havuz ekseninde durup aynı hissettiriyordu (Enes: "ayrışmıyor").
-        [Tooltip("ZIRHLI: havuz çarpanı — 'daha çok can'. Yaygın, odada birkaç tane olur.")]
-        public float armoredPoolMultiplier = 2.0f;
+        [Tooltip("ZIRHLI: havuz çarpanı. ⚠️ 2.0 idi; Faz 25'te zırh GERÇEK oldu " +
+                 "(armoredDamageTaken), havuz normale döndü — yoksa ikisi üst üste biner.")]
+        public float armoredPoolMultiplier = 1.0f;
+        [Tooltip("ZIRHLI: vuruş başına aldığı hasarın oranı. Hasat hasarla orantılı, " +
+                 "yani vuruş başına kazanç da bu oranda (Enes: 'gelen can da orantılı az').")]
+        public float armoredDamageTaken = 0.5f;
         [Tooltip("ZIRHLI: kaç yuvada bir. 3 = her üçüncü düşman. 0 = kapalı.")]
         public int armoredEverySlot = 3;
 
         [Tooltip("İRİ: havuz çarpanı. Mini boss, o yüzden ZIRHLI'dan da kalın.")]
         public float hugePoolMultiplier = 4.0f;
+        [Tooltip("İRİ: vuruşunun bedeli normalin kaç katı (Enes: 'daha çok hasar').")]
+        public float hugeHitCostMultiplier = 1.6f;
         [Tooltip("İRİ: TÜRÜN İMZASININ çarpanı — onu 'büyük zırhlı'dan ayıran tek şey bu. " +
                  "SIZINTI'nın emişi, SİGORTA'nın yarıçapı, MÜBAŞİR'in sıklığı, " +
                  "ZAMANAŞIMI'nın büyüme hızı hep bununla katlanıyor.")]
@@ -273,6 +284,11 @@ namespace TekCan
                  "aldatmadan önce geçici dönüş çalıştı' diye bildirdi — sıra değil SÜRE hatası.")]
         public float defianceMinSeconds = 12f;
 
+        [Tooltip("ÇAĞRI (checkpoint'e dönüş) en az bu kadar saniyeyle döndürür. ⚠️ K2 " +
+                 "(2026-09-30): checkpoint odasına 4 sn ile girince her ÇAĞRI seni 4 sn ile " +
+                 "düşmanların yanına atıyordu, eşyalar saniyeler içinde eriyordu.")]
+        public float recallMinSeconds = 20f;
+
         [Tooltip("TEST: başlangıçtaki ÖLÜM ALDATMA sayısı. Gerçek oyunda eşyalar hikâyeden gelecek.")]
         public int testDefianceCount = 1;
         [Tooltip("TEST: başlangıçtaki GEÇİCİ DÖNÜŞ sayısı")]
@@ -307,6 +323,24 @@ namespace TekCan
         public float bossWindupMultiplier = 0.85f;
         [Tooltip("Boss'un vuruş konisi bu kat geniş — yandan kaçmak zorlaşır")]
         public float bossAttackAngleMultiplier = 1.5f;
+        [Tooltip("TEPKİ PAYI (boss): hazırlığın son bu kadar saniyesinde yön kilitli. " +
+                 "Çarpanlı hazırlıklara EKLENİYOR; mutlak süreliler (simit, açıklık…) zaten uzun. " +
+                 "⚠️ 0.3'te 30 hızlı koninin 8'inden koşarak çıkılamıyordu (SAYIM, PROTESTO…): " +
+                 "geniş ya da uzun saldırıda 0.25 sn tepkiden sonra kalan süre yetmiyordu. " +
+                 "Faz25SelfCheck ölçüyor; düşürürsen hangilerinin kaçılmaz olduğunu söyler.")]
+        public float bossReactionWindow = 0.45f;
+        [Tooltip("Boss sıradaki saldırısının menziline giremezse bu kadar bekler, sonra " +
+                 "aynı sıradan o an yetişen saldırıyı yapar. Kaçarak saldırıları iptal etmek olmasın.")]
+        public float bossAttackPatience = 1.5f;
+        [Tooltip("Her kaçıncı saldırı TÜM HARİTA sırasından (mesafeden bağımsız). " +
+                 "4 = üç yakın/uzak, bir harita. 0 = harita saldırısı yok. (Enes, Faz 26)")]
+        public int bossMapAttackEvery = 4;
+        [Tooltip("ISRAR: aynı sıradan (hep yakın ya da hep uzak) bu kadar saldırıdan SONRA bedel artmaya başlar")]
+        public int bossStreakThreshold = 3;
+        [Tooltip("ISRAR: eşikten sonraki her saldırıda bedele eklenen çarpan")]
+        public float bossStreakStep = 0.25f;
+        [Tooltip("ISRAR: bedel çarpanının tavanı")]
+        public float bossStreakCap = 2f;
         [Tooltip("Boss'a vurmak normal düşmanın kaç katı zaman kazandırır. DÜŞÜK olmalı: boss uzun bir dövüş, seni beslememeli.")]
         public float bossHarvestMultiplier = 0.4f;
 

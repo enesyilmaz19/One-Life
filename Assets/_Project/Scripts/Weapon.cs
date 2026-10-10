@@ -140,9 +140,6 @@ namespace TekCan
         // AYRIŞMAYAN üçüne kanca eklendi. Olanı tekrar yazmak, olmayanı eklemekten
         // daha kötü — beşi de "özel" görünür ama üçü aynı şeyi yapardı.
 
-        /// <summary>Dash NİŞANIN TERSİNE gider (HACİZ) — mesafeyi geri kazanmak için.</summary>
-        public virtual bool DashBackwards => false;
-
         /// <summary>Dash-atak isabet ederse savurma bedeli geri gelir (FAİZLİ).</summary>
         public virtual bool DashRefundsCost => false;
 
@@ -318,9 +315,10 @@ namespace TekCan
             Tint = new Color(0.55f, 1f, 0.7f, 0.55f)
         };
 
-        /// ⚠️ Dash NİŞANIN TERSİNE. Menzilli silahın derdi mesafeyi KAYBETMEK;
-        /// dash onu geri kazandırıyor. Diğerlerinde dash saldırı, burada KONUM.
-        public override bool DashBackwards => true;
+        // Dash artık diğerleri gibi GİTTİĞİN YÖNE (Faz 25). Faz 16'da nişanın tersine
+        // atıyordu; playtest sorusu "kafa karıştırıyor mu" idi, Enes: "hacizin dashi
+        // hep terse doğru gidiyor, dash sol tık yapınca düşmandan uzağa kayıp vuruyor."
+        // Kimliği dash-atakta kalıyor: ölü bölgeyi tanımıyor, dibindekine iniyor.
     }
 
     /// <summary>

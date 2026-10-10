@@ -279,9 +279,8 @@ namespace TekCan.EditorTools
                     bool yakın = false, uzakV = false;
                     foreach (var a in b.Attacks(f))
                     {
-                        if (a.HerBant) { yakın = true; uzakV = true; }
-                        else if (a.Uzak) uzakV = true;
-                        else yakın = true;
+                        if (a.Uzak) uzakV = true;
+                        else if (!a.Harita) yakın = true;
                     }
                     if (!yakın || !uzakV)
                     {
@@ -423,11 +422,20 @@ namespace TekCan.EditorTools
                             tekrarVar, 1);
 
             // ── 11) ⚠️ SON BOSS en geniş dağarcığa sahip ──
+            //    Her boss'un EN KALABALIK fazı kıyaslanıyor. Faz 26'ya kadar yalnızca faz 2
+            //    bakılıyordu; harita saldırılarıyla öbürlerinin faz 2'si 10'a çıktı, finalin
+            //    asıl dağarcığı ise faz 3'te (14) — faz 2'ye bakmak kuralın amacını kaçırıyordu.
             var son = BossKind.For(BossKind.All.Length - 1);
+            int EnKalabalık(BossKind b)
+            {
+                int en = 0;
+                for (int f = 1; f <= b.PhaseCount; f++) en = Mathf.Max(en, b.Attacks(f).Length);
+                return en;
+            }
             int enFazla = 0;
-            foreach (var b in BossKind.All) enFazla = Mathf.Max(enFazla, b.Attacks(2).Length);
-            failed += Check(ref total, "⚠️ SON BOSS en geniş dağarcığa sahip",
-                            son.Attacks(2).Length >= enFazla, son.Attacks(2).Length);
+            foreach (var b in BossKind.All) if (b != son) enFazla = Mathf.Max(enFazla, EnKalabalık(b));
+            failed += Check(ref total, $"⚠️ SON BOSS en geniş dağarcığa sahip (en kalabalık fazı {EnKalabalık(son)} ≥ {enFazla})",
+                            EnKalabalık(son) > enFazla, EnKalabalık(son));
 
             // ── 12) ⚠️ GÜVENLİ AÇIKLIK gerçekten ARKADA mı ──
             //    Öne konsaydı boss hazırlık boyunca oyuncuya döndüğü için oyuncu
@@ -578,87 +586,13 @@ namespace TekCan.EditorTools
                 Object.DestroyImmediate(g.gameObject);
             Temizle(rootS);
 
-            // ── 16b) ⚠️⚠️ MESAFEYE GÖRE SALDIRI SEÇİMİ — ETKİ ────────────────
-            //    Enes: *"aga bosslarda uzakta olduğunda menzilli saldıracak,
-            //    yakında ise yakın saldırılarını yapacak mekaniği koymamışsın.
-            //    sırayla hamlelerini yapıyor gibi."*
-            //
-            //    ⚠️ Bu bir ÖZELLİK testi olamaz: eski kodda da `MinPlayerRange`
-            //    alanı VARDI, yani "mesafe filtresi var mı" diye sorsaydık test
-            //    yeşil yanar ve Enes'in gördüğü hata yerinde dururdu. Soru şu:
-            //    boss UZAKTAYKEN gerçekten uzak saldırı mı seçiyor.
-            var pick = typeof(Enemy).GetMethod("PickAttack",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var sayaç = typeof(Enemy).GetField("_attackCount",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-            int yanlışBant = 0, kapsamsız = 0;
-            foreach (var b in BossKind.All)
-            {
-                var (rootM, clockM, bossM) = Kur(t, b);
-                var oyuncuM = rootM.transform.Find("player");
-                float menzil = bossM.CurrentStrikeRadius;   // saldırısızken temel menzil
-
-                // ① UZAKTA → uzak saldırı · YAKINDA → yakın saldırı
-                //    ⚠️ "Uzak" mesafesi boss'un KENDİ tetik menzilinden alınıyor,
-                //    testin uydurduğu bir sayıdan değil: ilk yazımda 4× menzil
-                //    yazmıştım ve HİÇBİR saldırı oraya erişemediği için test
-                //    üretimi değil kendi varsayımını ölçüyordu.
-                foreach (bool uzakta in new[] { false, true })
-                {
-                    float d = uzakta ? bossM.AttackTriggerRange * 0.9f : menzil * 0.6f;
-                    oyuncuM.position = bossM.transform.position + bossM.transform.forward * d;
-                    for (int i = 0; i < 12; i++)
-                    {
-                        sayaç.SetValue(bossM, i);
-                        pick.Invoke(bossM, null);
-                        var seçilen = bossM.CurrentAttack;
-                        if (seçilen == null || seçilen.HerBant) continue;   // alan: iki banda da uyar
-                        if (seçilen.Uzak != uzakta)
-                        {
-                            yanlışBant++;
-                            Debug.LogError($"    {b.Name} {(uzakta ? "UZAKTA" : "YAKINDA")} " +
-                                           $"→ {seçilen.Name} (menzil {seçilen.RangeMul:0.0})");
-                        }
-                    }
-                }
-
-                // ② ⚠️ HER SALDIRI YÜZEYE ÇIKIYOR mu. Enes: *"faz 2'deki yeni özgün
-                //    saldırıların hiçbirini yapmamışsın."* Aynı kökün ikinci yüzü:
-                //    tek sıra + uzun liste = sondakiler pratikte hiç gelmiyordu.
-                for (int f = 1; f <= b.PhaseCount; f++)
-                {
-                    var liste = b.Attacks(f);
-                    var görülenAd = new System.Collections.Generic.HashSet<string>();
-                    // Fazı otomatik özelliğin ARKA ALANINDAN kuruyoruz: üretime
-                    // yalnızca test için bir kapı açmak, o kapının oyunda da
-                    // açılabildiği anlamına gelirdi.
-                    typeof(Enemy).GetProperty("Phase").GetSetMethod(true)
-                                 .Invoke(bossM, new object[] { f });
-                    foreach (float çarpan in new[] { 0.5f, 1.2f, 2f, 3f, 5f, 7f })
-                    {
-                        oyuncuM.position = bossM.transform.position
-                                         + bossM.transform.forward * (menzil * çarpan);
-                        for (int i = 0; i < liste.Length * 2; i++)
-                        {
-                            sayaç.SetValue(bossM, i);
-                            pick.Invoke(bossM, null);
-                            if (bossM.CurrentAttack != null) görülenAd.Add(bossM.CurrentAttack.Name);
-                        }
-                    }
-                    foreach (var a in liste)
-                        if (!görülenAd.Contains(a.Name))
-                        {
-                            kapsamsız++;
-                            Debug.LogError($"    {b.Name} faz {f}: {a.Name} HİÇ seçilmiyor");
-                        }
-                }
-                Temizle(rootM);
-            }
-            failed += Check(ref total, "⚠️⚠️ UZAKTA menzilli, YAKINDA yakın saldırı seçiliyor",
-                            yanlışBant == 0, yanlışBant);
-            failed += Check(ref total, "⚠️⚠️ dağarcıktaki HER saldırı yüzeye çıkıyor (ölü saldırı yok)",
-                            kapsamsız == 0, kapsamsız);
+            // ── 16b) MESAFEYE GÖRE SALDIRI SEÇİMİ → Faz25SelfCheck ──────────────
+            //    Buradaki kontrol `PickAttack`'i 0.5×–7× menzil arası HER mesafede
+            //    çağırıp "her saldırı bir yerde seçiliyor" diyordu ve yeşildi. Oyunda
+            //    o mesafelerin çoğuna hiç gelinmiyordu: boss en uzun erişimin sınırında
+            //    saldırıya giriyordu, MURABAHACI faz 1'de uzak oyuncu 7 saldırının 2'sini
+            //    gördü (ders 15). Faz 25 seçimi değiştirdi (iki sıra) ve ölçümü OYUN
+            //    AKIŞINDAN yapıyor: boss yürüyor, oyuncu duruyor ya da dibe giriyor.
 
             // ── 16c) ⚠️⚠️ ÜÇ YENİ ŞEKİL GERÇEKTEN ÇALIŞIYOR MU — ETKİ ────────
             //    Enes'in "her bossta farklı olacak" şartını üç yeni şekille
@@ -887,8 +821,17 @@ namespace TekCan.EditorTools
                         : ölçü < 2.3f ? "dar"
                                       : "geniş";
 
+            // ⚠️ ERİŞİM kaba ölçekte (kısa/uzun): TAHSİL ile KUŞATMA aynı soruyu soruyor
+            // ama KUŞATMA'da GERÇEKTEN koşman gerekiyor. Faz 25'e kadar bu ayrım `Uzak`
+            // bayrağından geliyordu; Faz 26'da tür veriye geçince imzadan düştü ve
+            // beş çift "kopya" göründü. Tam sayı DEĞİL, eşik — sayı kaçamağı olmasın.
+            // ⚠️ "harita" üçüncü basamak, TÜR değil: arena boyu saldırıda "menzilden çık"
+            // cevabı KAPALI — TEMİNAT'ın iki cevabı var (gir ya da dışarı kaç), TOPLU
+            // TEMİNAT'ın tek. `tür=` token'ı bunu da, yakın/uzak ayrımını da ölçüsüzce
+            // ayırıyordu ve dört gerçek kopyayı saklıyordu (inceleme 2026-10-10).
+            string erişim = a.Harita ? "harita" : a.RangeMul > BossAttack.UzakEşiği ? "uzun" : "kısa";
             return $"{Şekil(a)}|{açı}|{bant}|tekrar={a.Repeat > 1}" +
-                   $"|zincir={a.Then != null}|uzak={a.Uzak}|herBant={a.HerBant}";
+                   $"|zincir={a.Then != null}|erişim={erişim}";
         }
 
         /// <summary>
@@ -958,7 +901,10 @@ namespace TekCan.EditorTools
                           : a.SafeAngle > 0f ? 180f / Mathf.Max(20f, a.SafeAngle)
                           : a.SafeSpotRadius > 0f ? 4f / Mathf.Max(1f, a.SafeSpotRadius)
                           : 1f;
-            return a.CostMul * a.RangeMul * Mathf.Max(1, a.Repeat) * daralma;
+            // ⚠️ Ortaya sıçrayan halkada (TAM TAHSİL) `RangeMul` yalnızca erişim; boyu `ArenaOranı`.
+            //    RangeMul'a baksaydık faz 2'de halka küçülse de "güçlendi" derdik.
+            float boy = a.ArenaOranı > 0f ? a.ArenaOranı : a.RangeMul;
+            return a.CostMul * boy * Mathf.Max(1, a.Repeat) * daralma;
         }
 
         /// <summary>Her şeklin bu fazdaki EN SERT örneği.</summary>
@@ -967,7 +913,9 @@ namespace TekCan.EditorTools
             var d = new System.Collections.Generic.Dictionary<string, float>();
             foreach (var a in xs)
             {
-                string ş = Şekil(a);
+                // ⚠️ Harita saldırısı AYRI basamak: RangeMul 11 şeklin en serti olup aynı
+                // şeklin normal saldırısındaki gerilemeyi örtüyordu (inceleme 2026-10-10).
+                string ş = Şekil(a) + (a.Harita ? "·harita" : "");
                 float s = Sertlik(a);
                 if (!d.TryGetValue(ş, out float v) || s > v) d[ş] = s;
             }

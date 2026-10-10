@@ -6,6 +6,42 @@
 
 ---
 
+## 🎮 BİRLEŞİK PLAYTEST — sorular (oynandı 2026-09-30, cevaplar todo.md'de)
+
+> Faz 12–24'ün bekleyen testleri **60 soruydu**. Cevabı bir kararı değiştirenler kaldı: **12 madde.**
+> Sıra oyunun akışına göre. Önce **F6** (sıfırdan koşu), bölge 1'i **test tuşu kullanmadan** oyna.
+> Her madde: **ne yap → neye bak → ne olursa ne demek.**
+
+**A — Bölge 1, normal oyna**
+
+1. **Odalar.** Dört odayı geç. *Bak:* dizilişler (halka, duvar, yumak, kanat, dağınık) birbirinden ayrışıyor mu? HALKA artık gerçekten geliyor, önceden hiç gelmiyordu. *Hayırsa:* yerleşimler yeniden çizilir.
+2. **ZIRHLI ve İRİ.** *Bak:* ZIRHLI görünce "bu oda uzun sürecek", İRİ görünce "önce bunu halletmeliyim" diyor musun? *Hayırsa:* ayrım asset fazına kalır (şu an ikisi de kapsül).
+3. **Sunak odası** (boss'tan önceki, düşmansız, "SAAT DURDU"). *Bak:* alışveriş gerçek bir karar mı, yoksa "hepsini al" mı oldu? *"Hepsini al" ise:* fiyat eğrisi sertleşir.
+4. **Boss 1 (TAHSİLDAR).** Uzakta dur, sonra dibine gir. *Bak:* uzakta menzilli, yakında yakın saldırı yapıyor mu? Boss 2'den **hafif** mi? *Hayırsa:* bu kadran ayarlanır.
+
+**B — Silahlar** *(1–5 tuşları koşuyu kirletmez, serbest)*
+
+5. **Sağ tıklar.** Beşini de dene. *Bak:* beş farklı şey mi, yoksa "hepsi büyük vuruş" mu? FAİZLİ'nin İCRA'sını ıskalamak canını yakıyor mu (yakmalı)?
+6. **HACİZ dibindekine.** Bir düşmanı dibine al, **dash + sol tık.** *Bak:* artık ona vuruyor. Önceden boşluğa vuruyordu (düzeltildi). Bu hamle kendiliğinden aklına geliyor mu?
+7. **İPOTEK.** Koşarken dash + saldırı: *arkanda hiçbir şey çıkmamalı.* Sonra kapıya yakın bir ipotek koy ve hemen geç: **yeni odada patlamamalı** (düzeltildi).
+
+**C — Boss'lar** *(N / B ile gez; koşu kirlenir, sonra F6)*
+
+8. **SİMSAR'ın DEVİR'i.** *Bak:* vurup geri sıçrıyor. Önceden önce sıçrıyor, sonra boşluğa vuruyordu, yani **hiç tutmuyordu** (düzeltildi). Şimdi adil mi, sert mi?
+9. **KEFİL'in simidi.** Yeşil göbekte dur, faz 2'ye tam geçerken bile. *Bak:* göbekte **vurulmamalısın.** Önceden faz geçişi o anki saldırıyı düz koniye çeviriyordu (düzeltildi).
+10. **⚠️ FİNAL — MURABAHACI faz 3.** Üç şey değişti:
+    - 4 halkalı zincir (halka → simit → açıklık → ayna) artık **sonuna kadar** oynuyor. Önceden 2. halkada kesiliyordu.
+    - Çağırdığı eski boss'lar artık **gerçek havuzla** geliyor. Önceden 7 sn'ydiler, 2 vuruşta ölüyorlardı.
+    - Uyurken **soluk** görünmeli. Önceden bembeyaz kalıyordu.
+    *Bak:* final **fazla mı uzun?** Uzunsa kadran `rivalPoolMultiplier` (şu an 0.7), Inspector'dan, F1'de.
+
+**D — Ölüm**
+
+11. **Nemesis.** Bir boss'a bilerek öl, ona dön. *Bak:* gövdesinden büyüdüğü anlaşılıyor mu? Aynı boss'a iki kez ölünce üçüncüsü imkânsız mı geliyor? *(Hesap artık doğru tutuluyor: öldüren vuruş sayılıyor, ikinci ölüm çift yazılmıyor.)*
+12. **Son eşya.** Eşyaların bitmek üzereyken: *Bak:* uyarı yeterince bağırıyor mu? GEÇİCİ DÖNÜŞ sayarken artık "SON CAN" yazmamalı (o an ölmek eşya harcamıyor).
+
+---
+
 ## 📥 ENES'İN MASASI
 
 - [x] ✅ **Zorluk kontrolü geçti** (2026-08-25) — Faz 1'deki *"biz çok hızlı düşmanlar

@@ -435,17 +435,9 @@ namespace TekCan
 
         void StartDash(Vector3 input)
         {
+            // ⚠️ Her silahta GİTTİĞİN YÖNE. HACİZ Faz 16–24 arası nişanın tersine
+            // atıyordu; Enes kafa karıştırdığını bildirdi (2026-09-30), kalktı.
             _dashDir = input.sqrMagnitude > 0.0001f ? input.normalized : transform.forward;
-
-            // ⚠️ HACİZ nişanın TERSİNE dash atıyor. Menzilli silahın derdi mesafeyi
-            // KAYBETMEK; dash onu geri kazandırıyor. Diğerlerinde dash bir saldırı,
-            // burada bir KONUM hamlesi — silahın sorusu ("yaklaşmalı mıyım") dash'te
-            // de sorulmuş oluyor.
-            if (Weapon.DashBackwards)
-            {
-                Vector3 nişan = AimDirection(input);
-                if (nişan.sqrMagnitude > 0.0001f) _dashDir = -nişan.normalized;
-            }
 
             _dashTimer = _t.dashDuration;
             _dashCd = Clock.Instance != null ? Clock.Instance.DashCooldown : _t.dashCooldown;
@@ -485,12 +477,9 @@ namespace TekCan
 
         void DashStrike()
         {
-            // ⚠️ HACİZ geri dash atıyor ama VURUŞ NİŞANA dönük. Dash onu dibindekinden
-            // uzaklaştırıyor, dash-atak da o dibindekine iniyor — menzilli silahın
-            // "yakın cevabı" bu (Weapon: DASH-ATAK). Dash yönüne dönseydi arkasındaki
-            // boşluğa savuruyordu ve cevap hiç tutmuyordu (denetim 2026-09-23).
-            var yön = Weapon.DashBackwards ? -_dashDir : _dashDir;
-            if (yön.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(yön);
+            // Dash-atak dash yönüne iner. (HACİZ'in geri dash'i varken burada yön
+            // ters çevriliyordu; dash kalkınca o dal da kalktı — Faz 25.)
+            if (_dashDir.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(_dashDir);
 
             // Dash-atak artık SİLAHA GÖRE değişiyor: tek hedefli silah dash'te de tek
             // hedefli kalır ama çok sert vurur; koni süpürür ama vuruş başına daha az.
