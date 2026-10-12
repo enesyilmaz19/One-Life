@@ -108,13 +108,21 @@ namespace TekCan
             _kb.MakeCurrent();
             _fare.MakeCurrent();
             _izle = SessionState.GetBool(İzleAnahtar, false) && !Application.isBatchMode;
+
+            // SESSİZ (Enes, 2026-10-12: "bot testi yaparken arkada oyunun sesi geliyor").
+            // Yalnızca bu Play oturumu — editörün kalıcı "Mute Audio" ayarına dokunulmuyor.
+            _eskiSes = AudioListener.volume;
+            AudioListener.volume = 0f;
         }
+
+        float _eskiSes = 1f;
 
         void OnDestroy()
         {
             if (_kb != null) InputSystem.RemoveDevice(_kb);
             if (_fare != null) InputSystem.RemoveDevice(_fare);
             if (_eskiAyar != null) InputSystem.settings = _eskiAyar;
+            AudioListener.volume = _eskiSes;
             if (_ayar != null) Destroy(_ayar);
         }
 
@@ -139,9 +147,9 @@ namespace TekCan
             if (Mouse.current != _fare) _fare.MakeCurrent();
 
             // Bekçi: bot takılırsa süreç sonsuza dek açık kalmasın.
-            if (!_bitti && Time.realtimeSinceStartup - _başlangıç > 30f * 60f)
+            if (!_bitti && Time.realtimeSinceStartup - _başlangıç > _bekçiDk * 60f)
             {
-                Kaydet("⏱", "Bekçi", false, "30 dk doldu — bot takıldı");
+                Kaydet("⏱", "Bekçi", false, $"{_bekçiDk:0} dk doldu — bot takıldı");
                 StartCoroutine(Bitir());
             }
         }
@@ -199,6 +207,7 @@ namespace TekCan
 
         // ── rapor ─────────────────────────────────────────────────────────────
         bool _izle, _bitti;
+        float _bekçiDk = 30f;
         float _başlangıç;
         string _sahne = "", _ne = "";
 
@@ -253,9 +262,12 @@ namespace TekCan
             _t = Resources.Load<Tuning>("Tuning");
             yield return null; yield return null;           // Bootstrap kurulsun
 
-            bool p26 = SessionState.GetString(SenaryoAnahtar, "") == "p26";
-            IEnumerator[] sahneler = p26
+            string senaryo = SessionState.GetString(SenaryoAnahtar, "");
+            _bekçiDk = senaryo == "tam" ? 120f : 30f;       // tam koşu uzun sürebiliyor
+            IEnumerator[] sahneler = senaryo == "p26"
                 ? new[] { Kurulum(), P26Tahsildar(), P26Kefil(), P26Simsar(), P26Murabahacı(), Bitir() }
+                : senaryo == "tam"
+                ? new[] { Kurulum(), TamKoşu(), Bitir() }
                 : SessionState.GetInt(AdımAnahtar, 0) == 0
                 ? new[] { Kurulum(), GirdiKanıtı(), K1Hazırla() }          // K1: Play'den çıkıp giriyor
                 : new[] { K1Doğrula(), Bölge1(), Sunak(), Tahsildar(), Haciz(), Simsar(), Final(), Bitir() };
@@ -644,6 +656,87 @@ namespace TekCan
             Kaydet("8", "Final", null, (Saat != null && Saat.Won ? "KAZANILDI" : "kazanılamadı (süre doldu)") +
                    $" · tehdit {_tehdit}, vurulma {_vuruldu}, süre takviyesi {_takviye}");
             _final = null;
+        }
+
+        // ── TAM KOŞU (Faz 27 ölçümü) ─────────────────────────────────────────
+        // Enes (2026-10-12): hedef "son boss'un İLK yenilmesine kadar toplam 8–10 saat".
+        // Bunu sayıya çevirmek için önce BİR KOŞUNUN gerçekte kaç dakika sürdüğü lazım —
+        // tahmin değil ölçüm. Bot bütün bölgeleri atlamadan oynuyor; F5 takviyesi koşu bitmesin
+        // diye var ama her biri "saat burada bitiyordu" diye yazılıyor.
+
+        bool _tamKoşu;
+        readonly List<string> _takviyeYeri = new List<string>();
+
+        IEnumerator TamKoşu()
+        {
+            _tamKoşu = true;
+            var bölgeSüresi = new float[8];
+            var bossSüresi = new List<string>();
+            var satırlar = new StringBuilder();
+            float t0 = Time.realtimeSinceStartup;
+            int güvenlik = 0;
+            while (Saat != null && !Saat.Won && güvenlik++ < 80)
+            {
+                if (Saat.Dead) { Kaydet("TK", "bot öldü", false, _sahne); break; }
+                var rm = Oda;
+                if (rm == null) { yield return Bekle(0.5f); continue; }
+                int bölge = rm.RegionIndex, oda = rm.Room;
+                string tür = rm.IsBossRoom ? "BOSS" : rm.IsAltarRoom ? "SUNAK" : "oda";
+                Sahne($"TAM KOŞU B{bölge + 1}·O{oda}", tür);
+                float giriş = Saat.Seconds, ta = Time.realtimeSinceStartup;
+                int takviye0 = _takviye;
+
+                if (rm.IsBossRoom)
+                {
+                    string ad = BossAdı(Boss());
+                    yield return BossuÖldür(1200f, kazanınca: rm.IsLastRegion);
+                    bossSüresi.Add($"{ad} {(Time.realtimeSinceStartup - ta) / 60f:0.0} dk");
+                    // Boss'un çağırdıkları kalabiliyor: oda temizlenmeden kapı açılmıyor.
+                    if (!Saat.Won) yield return OdayıGeç(120f);
+                }
+                else if (rm.IsAltarRoom)
+                {
+                    yield return SunaktanAl(40f);
+                    yield return KapıdanÇık(30f);
+                }
+                else yield return OdayıGeç(600f);
+
+                float süre = Time.realtimeSinceStartup - ta;
+                if (bölge < bölgeSüresi.Length) bölgeSüresi[bölge] += süre;
+                satırlar.Append($"B{bölge + 1}·O{oda} {tür} {süre:0}sn (saat {giriş:0}→{Saat.Seconds:0}" +
+                                (_takviye > takviye0 ? $", takviye {_takviye - takviye0}" : "") + ") · ");
+                // Oda değişmediyse (kapı bulunamadı) sonsuz döngüye girmesin.
+                if (Oda != null && Oda.RegionIndex == bölge && Oda.Room == oda && !Saat.Won)
+                { Kaydet("TK", "oda geçilemedi", false, $"B{bölge + 1}·O{oda} {tür}"); break; }
+            }
+            float toplam = (Time.realtimeSinceStartup - t0) / 60f;
+            var bölgeler = new List<string>();
+            for (int i = 0; i < bölgeSüresi.Length; i++) if (bölgeSüresi[i] > 0f) bölgeler.Add($"B{i + 1} {bölgeSüresi[i] / 60f:0.0}");
+            Kaydet("TK", "Tam koşu", Saat != null && Saat.Won,
+                   $"{(Saat != null && Saat.Won ? "KAZANILDI" : "bitmedi")} · {toplam:0.0} dk · bölgeler (dk): {string.Join(", ", bölgeler)}");
+            Kaydet("TK", "Boss dövüşleri", null, string.Join(", ", bossSüresi));
+            Kaydet("TK", "Saat bitecekti (F5 takviyesi)", null,
+                   _takviyeYeri.Count == 0 ? "hiç" : $"{_takviyeYeri.Count} kez: {string.Join(", ", _takviyeYeri)}");
+            Kaydet("TK", "Sunak", null, $"{Saat.Purchases} alım · hasat %{Saat.HarvestRate * 100:0} · hasar {Saat.AttackDamage:0.0} · dash {Saat.DashCooldown:0.00} sn");
+            Kaydet("TK", "Oda oda", null, satırlar.ToString());
+        }
+
+        /// <summary>Sunak odası: `yedek` saniye kalacak şekilde en ucuz geliştirmeyi al (ALICI profili).</summary>
+        IEnumerator SunaktanAl(float yedek)
+        {
+            yield return Bekle(0.6f);
+            for (int tur = 0; tur < 12; tur++)
+            {
+                Altar en = null;
+                foreach (var a in Altar.All)
+                    if (a != null && a.Type != Altar.Kind.Repair && !a.SoldOut && (en == null || a.Price < en.Price)) en = a;
+                if (en == null || Saat.Seconds - en.Price < yedek) break;
+                yield return Git(en.transform.position, 1.2f, 6f);
+                int alım = Saat.Purchases;
+                Bas(Key.E);
+                yield return Bekle(0.3f);
+                if (Saat.Purchases == alım) break;      // alınamadı — döngüye girme
+            }
         }
 
         // ── FAZ 26 PLAYTEST ───────────────────────────────────────────────────
@@ -1039,6 +1132,7 @@ namespace TekCan
             if (mod != Mod.Ölümüne && Saat.Seconds < _takviyeEşiği && Time.time - _sonTakviye > 2f)
             {
                 Bas(Key.F5); _sonTakviye = Time.time; _takviye++;
+                if (_tamKoşu && Oda != null) _takviyeYeri.Add($"B{Oda.RegionIndex + 1}·O{Oda.Room}");
             }
 
             bool kaçan = mod == Mod.Dövüş || mod == Mod.ÇokUzak || mod == Mod.DibindeKaçar;
@@ -1319,6 +1413,11 @@ namespace TekCan
                 if (g == null || !g.OyuncuyaVurur || g.Fired) continue;
                 Vector3 to = Düz(ben - g.transform.position);
                 if (to.magnitude > g.Yarıçap + 0.6f) continue;
+                // ⚠️ Yalnızca patlamaya YETİŞEMEYECEKSEN kaç. Bot işaretin içine girer girmez
+                // kaçıyordu: SİMSAR faz 2'de 1.1 sn'de bir işaret düşüyor, bot hiç vuramadı,
+                // 20 dk'da öldüremedi (tam koşu ölçümü). İnsan vurur, patlamadan önce çıkar.
+                float çıkış = (g.Yarıçap + 0.6f - to.magnitude) / _t.moveSpeed + İnsanTepkisi;
+                if (g.Kalan > çıkış + 0.2f) continue;
                 Yürü(to.sqrMagnitude > 0.01f ? to : Vector3.right);
                 return true;
             }

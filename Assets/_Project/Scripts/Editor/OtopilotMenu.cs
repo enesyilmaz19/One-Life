@@ -32,6 +32,12 @@ namespace TekCan.EditorTools
 
         public static void Playtest26() => Başlat(izle: false, senaryo: "p26");
 
+        /// <summary>Faz 27 ölçümü: bütün bölgeler atlamadan, bir tam koşu kaç dakika (Enes 2026-10-12).</summary>
+        [MenuItem("Tek Can/Otopilot — tam koşu ölçümü (izle)")]
+        public static void TamKosuIzle() => Başlat(izle: true, senaryo: "tam");
+
+        public static void TamKosu() => Başlat(izle: false, senaryo: "tam");
+
         static void Başlat(bool izle, string senaryo = "")
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)

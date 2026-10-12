@@ -142,6 +142,9 @@ namespace TekCan
         public bool OyuncuyaVurur => !_hitsEnemies;
         public float Yarıçap => _radius;
 
+        /// <summary>Patlamaya kalan süre — otopilot "çıkmaya yetişir miyim" diye soruyor.</summary>
+        public float Kalan => _timer;
+
         /// <summary>Kaç düşman vuruldu — öz-denetim ETKİYİ buradan ölçüyor.</summary>
         public int EnemiesHit { get; private set; }
 

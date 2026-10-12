@@ -203,6 +203,7 @@ namespace TekCan
             s.harvestRate = Clock.Instance.HarvestRate;
             s.attackDamage = Clock.Instance.AttackDamage;
             s.dashCooldown = Clock.Instance.DashCooldown;
+            s.boughtCounts = Clock.Instance.AlınanKopya;     // kalıcı fiyat ölümle delinmesin
 
             SaveFile.Flush();
             Debug.Log($"[Tek Can] CHECKPOINT — bölge {RegionIndex + 1} oda {Room}, " +
@@ -229,6 +230,7 @@ namespace TekCan
             s.resumeHarvest = c.HarvestRate;
             s.resumeDamage = c.AttackDamage;
             s.resumeDash = c.DashCooldown;
+            s.resumeBoughtCounts = c.AlınanKopya;
             SaveFile.Flush();
         }
 
@@ -551,9 +553,9 @@ namespace TekCan
             int alım = _t.altarMaxPurchases * RegionCount;
             for (int i = 0; i < alım; i++)
             {
-                c.UpgradeHarvest(_t.altarHarvestStep);
-                c.UpgradeDamage(_t.altarDamageStep);
-                c.UpgradeDash(_t.altarDashStep);
+                c.Yükselt(Altar.Kind.Harvest);   // sunağın kendi yolu: azalan getiri dahil
+                c.Yükselt(Altar.Kind.Damage);
+                c.Yükselt(Altar.Kind.Dash);
             }
             c.Revive(TestRefillSeconds);
             Sfx.Buy();

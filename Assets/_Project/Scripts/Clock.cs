@@ -71,11 +71,52 @@ namespace TekCan
         /// ⚠️ Checkpoint zamanı geri verip build'i vermemek yarım geri yükleme olurdu:
         /// eski zamanınla ama sıfır güçle aynı odalara girerdin.
         /// </summary>
-        public void RestoreUpgrades(float harvest, float damage, float dashCd)
+        public void RestoreUpgrades(float harvest, float damage, float dashCd, int[] alınan = null)
         {
             if (harvest > 0f) HarvestRate = Mathf.Min(harvest, _t.harvestRateCap);
             if (damage > 0f) AttackDamage = damage;
             if (dashCd > 0f) DashCooldown = dashCd;
+            // ⚠️ Sayım da geri yükleniyor: yoksa checkpoint'e dönen oyuncu güçlü ama fiyatlar
+            // SIFIRDAN — kalıcı fiyat bir ölümle delinirdi. (Eski kayıtta dizi yok → 0.)
+            if (alınan != null && alınan.Length == _alınan.Length) System.Array.Copy(alınan, _alınan, _alınan.Length);
+        }
+
+        // ── SUNAK EKONOMİSİ (Faz 27) ──────────────────────────────────────────
+        // Bot oyunu 9 dk'da bitirdi: 43 alım, hasar ×5.8, boss'lar 20 sn'de eridi. Sebep iki:
+        // fiyat her bölgenin sunağında SIFIRLANIYORDU, ve her alım aynı miktarı veriyordu.
+        // Şimdi her türün alım sayısı KOŞU boyunca sürüyor; fiyat da getiri de ona bağlı.
+        // ⚠️ Tek yer: sunak, TAM GÜÇ (F7), kayıt ve zorluk raporu bunları çağırıyor.
+
+        /// <summary>Türe göre (hasat, hasar, dash) bu koşuda kaç alım yapıldı.</summary>
+        readonly int[] _alınan = new int[3];
+
+        public int Alınan(Altar.Kind k) => k == Altar.Kind.Repair ? 0 : _alınan[(int)k];
+        public int[] AlınanKopya => (int[])_alınan.Clone();
+
+        /// <summary>n. alımın (0'dan) fiyatı — hangi sunakta, hangi bölgede olursa olsun.</summary>
+        public static float Fiyat(Tuning t, int n) => t.altarBasePrice * Mathf.Pow(t.altarPriceGrowth, n);
+
+        /// <summary>n. alımın (0'dan) getirisi: adım × azalma^n. Toplam sınırlı: adım / (1 − azalma).</summary>
+        public static float Getiri(Tuning t, Altar.Kind k, int n)
+        {
+            float adım = k == Altar.Kind.Harvest ? t.altarHarvestStep
+                       : k == Altar.Kind.Damage ? t.altarDamageStep
+                       : k == Altar.Kind.Dash ? t.altarDashStep : 0f;
+            return adım * Mathf.Pow(t.altarStepDecay, n);
+        }
+
+        public float SıradakiFiyat(Altar.Kind k) => Fiyat(_t, Alınan(k));
+        public float SıradakiGetiri(Altar.Kind k) => Getiri(_t, k, Alınan(k));
+
+        /// <summary>Bir alımın ETKİSİ (bedel `TryBuy`'da). Sayımı ilerletir.</summary>
+        public void Yükselt(Altar.Kind k)
+        {
+            if (k == Altar.Kind.Repair) return;
+            float d = SıradakiGetiri(k);
+            if (k == Altar.Kind.Harvest) UpgradeHarvest(d);
+            else if (k == Altar.Kind.Damage) UpgradeDamage(d);
+            else UpgradeDash(d);
+            _alınan[(int)k]++;
         }
 
         /// <summary>

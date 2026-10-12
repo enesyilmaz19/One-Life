@@ -28,7 +28,7 @@ Altın yok. Ruh yok. Ayrı para birimi yok. Tek sayı oyunun tamamını çevirir
 ## Kararlaştırılanlar
 
 - [x] Çekirdek kaynak: tek sayı (saniye)
-- [x] Klasik roguelike: **meta ilerleme yok**, ölünce her şey gider
+- [x] **Meta ilerleme yok.** Eskiden "ölünce her şey gider" → **2026-10-12:** koşu tek hikâye (taban 8 saat); ölünce son kontrol noktasına (mini boss / ana boss), kontrol noktaları nemesis defteriyle aşınır. Ayrıntı: `tasks/todo.md` "YAPI"
 - [x] Hikâye yükü yok — özgünlük mekanikte
 - [x] Görsel kimlik **silah + VFX** üzerine kurulacak, karakter sade ve okunur
 - [x] Silah ilkesi: *göründüğü* için değil **kararı değiştirdiği** için özgün
@@ -776,12 +776,12 @@ Yükseltme ilerlemesi modele katıldı (`ALIMSIZ` / `ALICI` profilleri):
 | ORTA / ALIMSIZ | bölge 1 oda 3'te ölüyor |
 | ORTA / ALICI | bölge 1 oda 3'te ölüyor *(ilk sunağa yetişemiyor)* |
 
-**① ASIL SUÇLU: HASARIN TAVANI YOK.** `altarDamageStep` 1.2 ve sınırsız — hasar
+**① ASIL SUÇLU: HASARIN TAVANI YOK.** *(✅ Faz 27'de çözüldü — azalan getiri)* `altarDamageStep` 1.2 ve sınırsız — hasar
 koşu boyunca **3.5 → 19.1**'e çıkıyor. Ve hasar **üç kalemi birden** iyileştiriyor:
 dövüş kısalıyor → akış azalıyor → aura azalıyor. Tabloda görünüyor: dövüş masrafı
 bölge 1'de 9.7, bölge 4'te **0.8**. Hasat tavanlı (%70), hasar değil.
 
-**② SUNAK FİYATLARI HER ODA SIFIRLANIYOR.** `Altar._bought` bir **örnek alanı** ve
+**② SUNAK FİYATLARI HER ODA SIFIRLANIYOR.** *(✅ Faz 27'de çözüldü — kalıcı fiyat)* `Altar._bought` bir **örnek alanı** ve
 sunaklar her odada YENİDEN doğuyor — fiyat artışı (×1.6) koşu boyunca birikmiyor,
 her sunak odasında 6 saniyeden başlıyor. 42 alım yapılabiliyor.
 
@@ -802,9 +802,13 @@ zamanlama kilidiyle aynı seansta yapılacak.
 
 ### Ayar sırası (ölçüme göre — ikinci kez güncellendi)
 
-1. **Hasar yükseltmesine TAVAN** ya da azalan getiri — tek büyük kaldıraç bu
-2. **Sunak fiyat birikimi** — `_bought` koşu boyunca korunmalı (oda başına değil)
-3. Sonra koşu uzunluğu ve kural şiddetleri
+1. ✅ **Hasar yükseltmesine azalan getiri** — Faz 27 (2026-10-12): aynı türden her alım
+   öncekinin ×`altarStepDecay` (0.8); hasar tavanı kendiliğinden 3.5 + 1.2/(1−0.8) = 9.5
+2. ✅ **Sunak fiyat birikimi** — Faz 27: fiyat türe göre KOŞU boyunca o türden alım
+   sayısına bağlı (`Clock.Fiyat`), sayım kayıtta. `_bought` yalnızca sunak başı tavan.
+   Ölçüm (tam koşu botu): oyun 8.6 → 13.6 dk, hasar ×5.8 → ×2.3.
+3. Sonra koşu uzunluğu ve kural şiddetleri — **tek koşu 8 saat** kararıyla (2026-10-12)
+   Faz 28 yapısıyla birlikte (`tasks/todo.md` "YAPI")
 4. **Boss ekonomisine EN SON dokunulur** — ilk üçü düzelince kendiliğinden değişiyor
 
 ---

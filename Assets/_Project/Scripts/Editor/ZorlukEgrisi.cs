@@ -45,6 +45,7 @@ namespace TekCan.EditorTools
         {
             public float Hasat, Hasar;
             public int Alım;
+            public int[] Türden;          // hasat, hasar, dash — koşu boyunca (Faz 27)
         }
 
         /// <summary>Sunaktan alım yapan profil — asıl fark burada çıkıyor.</summary>
@@ -81,9 +82,10 @@ namespace TekCan.EditorTools
             sb.AppendLine("⚠️ oda KOMPOZİSYONU üretimden okunuyor; yalnızca dövüş modelleniyor");
             sb.AppendLine("⚠️ SUNAK ODASI (S): düşman yok ve SAAT DURUYOR — tek bedeli aldıkların");
             sb.AppendLine($"⚠️ SUNAK: {t.altarMaxPurchases} alım × 3 sunak, taban {t.altarBasePrice:0} sn, " +
-                          $"artış ×{t.altarPriceGrowth:0.0} — SUNAK ODASINDA (S), bölgede bir kez");
-            sb.AppendLine($"   hasat +{t.altarHarvestStep:0.00}/alım (tavan %{t.harvestRateCap * 100f:0}) · " +
-                          $"hasar +{t.altarDamageStep:0.0}/alım (TAVAN YOK)");
+                          $"artış ×{t.altarPriceGrowth:0.0} — fiyat KOŞU boyunca türe göre sürüyor (Faz 27)");
+            sb.AppendLine($"   hasat +{t.altarHarvestStep:0.00} (tavan %{t.harvestRateCap * 100f:0}) · " +
+                          $"hasar +{t.altarDamageStep:0.0} · her alım öncekinin ×{t.altarStepDecay:0.00}'ı " +
+                          $"(hasar tavanı +{t.altarDamageStep / Mathf.Max(0.001f, 1f - t.altarStepDecay):0.0})");
             sb.AppendLine();
 
             foreach (var b in Beceriler)
@@ -97,7 +99,7 @@ namespace TekCan.EditorTools
                 int öldüBölge = -1, öldüOda = -1;
                 float tYürüme = 0f, tDövüş = 0f, tDarbe = 0f, tAura = 0f, tAlım = 0f;
 
-                var d = new Durum { Hasat = t.harvestRate, Hasar = t.attackDamage };
+                var d = new Durum { Hasat = t.harvestRate, Hasar = t.attackDamage, Türden = new int[3] };
 
                 int bölgeSayısı = Mathf.Clamp(t.regionsPerAct, 1, Region.All.Length);
                 for (int r = 0; r < bölgeSayısı; r++)
@@ -200,11 +202,15 @@ namespace TekCan.EditorTools
             float toplam = 0f;
 
             // Üç sunak: HASAT, KESKİNLİK, ÇEVİKLİK. Her biri `altarMaxPurchases` kez.
+            // ⚠️ Fiyat ve getiri OYUNUN formülleri (`Clock.Fiyat` / `Clock.Getiri`) — model kopya
+            // hesap tutmuyor. Sayım bölgeler arası sürüyor (`d.Türden`), oyundaki gibi.
             for (int sunak = 0; sunak < 3; sunak++)
             {
+                var tür = (Altar.Kind)sunak;
                 for (int i = 0; i < t.altarMaxPurchases; i++)
                 {
-                    float fiyat = t.altarBasePrice * Mathf.Pow(t.altarPriceGrowth, i);
+                    int n = d.Türden[sunak];
+                    float fiyat = Clock.Fiyat(t, n);
                     if (saat - fiyat < rezerv) break;
 
                     // Hasat tavana dayandıysa o sunağa para verme — oyuncu da vermez.
@@ -213,9 +219,11 @@ namespace TekCan.EditorTools
                     saat -= fiyat;
                     toplam += fiyat;
                     d.Alım++;
+                    d.Türden[sunak] = n + 1;
 
-                    if (sunak == 0) d.Hasat = Mathf.Min(t.harvestRateCap, d.Hasat + t.altarHarvestStep);
-                    else if (sunak == 1) d.Hasar += t.altarDamageStep;   // ⚠️ TAVANI YOK
+                    float getiri = Clock.Getiri(t, tür, n);
+                    if (sunak == 0) d.Hasat = Mathf.Min(t.harvestRateCap, d.Hasat + getiri);
+                    else if (sunak == 1) d.Hasar += getiri;
                 }
             }
             return toplam;

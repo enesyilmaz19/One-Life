@@ -548,7 +548,11 @@ namespace TekCan.EditorTools
 
             float hasar0 = c.AttackDamage;
             Çağır(rm, "FullPower");
-            float beklenen = hasar0 + t.altarDamageStep * t.altarMaxPurchases * rm.RegionCount;
+            // Faz 27: alımlar AZALAN getiriyle — toplam geometrik (adım × (1 − r^n) / (1 − r)).
+            int n = t.altarMaxPurchases * rm.RegionCount;
+            float azalma = t.altarStepDecay;
+            float beklenen = hasar0 + (azalma >= 1f ? t.altarDamageStep * n
+                                                    : t.altarDamageStep * (1f - Mathf.Pow(azalma, n)) / (1f - azalma));
             failed += Check(ref total, $"⚠️ F7 TAM GÜÇ: bütün sunaklar alınmış gibi (hasar {c.AttackDamage:0.0} = {beklenen:0.0})",
                             Mathf.Abs(c.AttackDamage - beklenen) < 0.01f
                             && Mathf.Approximately(c.HarvestRate, t.harvestRateCap), c.AttackDamage);

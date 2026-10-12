@@ -115,6 +115,10 @@ namespace TekCan
         public float altarDamageStep = 1.2f;
         [Tooltip("ÇEVİKLİK sunağı: her alımda dash bekleme süresi bu kadar kısalır")]
         public float altarDashStep = 0.08f;
+        [Tooltip("AZALAN GETİRİ (Faz 27): aynı türden her alım bir öncekinin bu katı kadar verir. " +
+                 "0.8 → hasar en fazla +adım/(1−0.8) = +5 adım (1.2 × 5 = +6). 1 = azalma yok. " +
+                 "Kartopu kırılsın diye: bot 43 alımla hasarı ×5.8 yapıp oyunu 9 dk'da bitirdi.")]
+        public float altarStepDecay = 0.8f;
 
         [Header("── SİLAHLAR (Faz 3) ──")]
         [Tooltip("Tek hedefli silahların koni açısı — dar, çünkü tek düşman seçiyor")]

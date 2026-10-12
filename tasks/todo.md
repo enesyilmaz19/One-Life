@@ -4,6 +4,7 @@
 
 | # | Ne | Nasıl | Nereye |
 |---|---|---|---|
+| 1 | 🟢 **Faz 28 başlasın mı** | Yapı + tempo: ara bölgeler, mini boss, kontrol noktası, nemesis toparlanması, dalgalı odalar, uzun boss. Önce 1 bölge | "başla" |
 | 2 | 🎮 *(isteğe bağlı)* **Faz 26 his testi** | Bot 7 maddeyi oynadı (aşağıda). Sana kalan his: TAM TAHSİL/İHALE sıçraması okunuyor mu, ×5 ısrar adil mi | Gördüklerini yaz |
 | 4 | ✏️ **Adlandırma** | Kahraman, 5 boss, 5 bölge, 3 diriliş eşyası. Şimdikiler çalışma adı | `docs/TASARIM.md` "Açık" |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
@@ -219,7 +220,58 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 
 ---
 
-## ⚖️ FAZ 27 — Denge — **PLAN** (2026-10-11)
+## 🗺️ YAPI — tek koşu, hikâye 8 saat (Enes, 2026-10-12) — **✅ ONAYLANDI**
+
+> Enes: *"Her bossun bölgesi var, boss temizlenince orası kayboluyor, sonraki bölgeye geçiyoruz. Bölge içinde bölgeler var. Mini bossların temizlendiği yerde o ara bölge kayboluyor, checkpoint gibi. Her minibossun toparlanma süresi oluyor ölünce; sonraki minibossu az ölümle temizlemek lazım yoksa yenileniyor ve başa dönüyoruz. Ana boss yenince bölge kalktığı için sorun olmuyor. Ara bölge, perde ve oda sayısını sen belirle."*
+
+**Kurallar (Enes: "doğru anladın")**
+- 5 **bölge** = 5 ana boss (bugünküler). Ana boss ölünce bölge kalkar: KALICI kontrol noktası.
+- Her bölgede **ara bölgeler**, her biri bir **mini boss**la biter. Mini boss ölünce ara bölge kalkar: kontrol noktası.
+- Ölünce son kontrol noktasına dönülür, saat orada kaydedilen değerle.
+- **Toparlanma:** her ölümde, temizlenmiş son mini boss toparlanmaya başlar. Toparlanması dolarsa geri gelir, ara bölgesi geri açılır, bir önceki kontrol noktasına düşersin. Ana boss'un temizlediği bölge asla geri gelmez.
+  - ✅ **Toparlanma = NEMESİS** (Enes): ölümde kaybettiğin saniyeler seni öldürenin defterine yazılıyor (bugünkü nemesis). Defter, temizlenmiş son mini boss'un toparlanması: dolarsa geri gelir — nemesis olduğu için BÜYÜYEREK.
+- ✅ Yasa değişti (Enes: "yessir"): "ölünce her şey gider" → "ölünce son kontrol noktasına; kontrol noktaları nemesis defteriyle aşınır". Meta ilerleme yine yok. CLAUDE.md ve TASARIM.md güncellendi.
+
+**Sayılar — taslak (hedef taban 8 saat)**
+| | Sayı | Süre |
+|---|---|---|
+| Bölge (ana boss) | 5 | ~95 dk / bölge |
+| Ara bölge (mini boss) | bölge başına **5** → toplam **25 mini boss** | ~15 dk / ara bölge |
+| Oda | ara bölge başına **7** (+ sunak odası) → toplam ~175 oda | ~1.5 dk / oda |
+| Mini boss | | ~3–4 dk |
+| Ana boss | | ~6–8 dk |
+| **Toplam** | | **~8 saat**, ölümlerle ~10 |
+- **Perde** mekanik değil, hikâye bölümü: Perde 1 = bölge 1–2, Perde 2 = bölge 3–4, Perde 3 = bölge 5 (final).
+- **İçerik ihtiyacı:** bölge başına 2–3 yeni düşman türü (bugün 7 tür), 25 mini boss (bölgenin ana boss'unun suçundan türeyen, daha küçük dağarcıklı), yeni oda dizilişleri.
+
+**Faz sırası**
+1. ✅ **Faz 27 — kartopu:** sunak fiyatı kalıcı, azalan getiri, hasar tavanı (tempo Faz 28'e taşındı).
+2. **Faz 28 — yapı + tempo:** ara bölge + mini boss + kontrol noktası + nemesis toparlanması; dalgalı odalar (~1.5 dk), uzun boss (3–8 dk, boss odasında yavaş akış). Önce 1 bölge ile.
+3. **Faz 29 — silaha özel yükseltmeler + yeni sunak güçlendirmeleri** (Enes: "bir faza eklemeyi unutma"): eski "Faz 20" (boss sonrası sunak, silaha özel yetenekler), FAİZLİ İCRA yeniden, İPOTEK yeni sağ tık, sunaklara yeni güçlendirme türleri. Faz 27'nin ekonomi kurallarıyla (kalıcı fiyat, azalan getiri) çalışır.
+4. **Faz 30+ — içerik:** 25 mini boss, yeni düşman türleri, oda dizilişleri, bölge bölge.
+
+---
+
+## ⚖️ FAZ 27 — Denge — **ADIM 1 BİTTİ (kartopu) · ADIM 2 (tempo) Faz 28'e taşındı** (2026-10-13)
+
+**✅ Adım 1 — kartopu kırıldı**
+- **Kalıcı fiyat:** her türün fiyatı KOŞU boyunca o türden kaç alım yapıldığına bağlı (`Clock.Fiyat`). Önceden her bölgenin sunağında sıfırlanıyordu.
+- **Azalan getiri:** aynı türden her alım bir öncekinin ×0.8'i (`altarStepDecay`). Hasar tavanı kendiliğinden: 3.5 + 1.2/(1−0.8) = **9.5 (×2.7)**. Sunak sıradaki gerçek getiriyi yazıyor.
+- Sayım kayıtta (checkpoint + oda başı) — ölüm kalıcı fiyatı delmiyor. F7 TAM GÜÇ ve zorluk raporu aynı formülü çağırıyor.
+- **Kapı:** `Faz27SelfCheck` 8/8 · tüm kapılar 24/24 · 4 bozmanın 4'ü kırmızı (fiyat sunağa bağlı / azalma yok / kayıt sayımı taşımıyor / sunak sabit adım yazıyor).
+- **Tam koşu (bot):**
+| | Önce | Sonra |
+|---|---|---|
+| Bütün oyun | 8.6 dk | **13.6 dk** |
+| Alım · hasar | 43 · 20.3 (×5.8) | **19 · 7.9 (×2.3)** |
+| Boss (TAH · EKS · KEF · SİM · MUR) | 25 · 21 · 24 · 55 · 107 sn | 22 · 25 · 43 sn · **2.1 · 5.5 dk** |
+| Saat bitecekti | hiç | 3 kez (son iki boss) |
+
+**✅ Adım 2 — tempo (Enes onayladı, 2026-10-13): Faz 28 yapısıyla birlikte**
+- **Oda ~1.5 dk → DALGALAR:** oda bileşimi 3–4 dalgada geliyor, dalga temizlenince sıradaki doğuyor, son dalgadan sonra kapı açılıyor. Düşmanları süngere çevirmek yerine (her biri 10 kat can) çeşit ve baskı artıyor.
+- **Boss 3–8 dk:** havuz büyüyor + boss odasında saat akışı yavaşlıyor. Yoksa 6 dakikalık dövüşte saat (can) erir: bugün boss odasında ~1.6 sn/sn akıyor, 6 dk = 576 sn.
+- ⚠️ **Sıra önerisi:** tempoyu YAPI (Faz 28) ile birlikte ayarlamak. Ara bölge başına 7 oda, mini boss'lar ve kontrol noktaları gelince odanın ve boss'un süresi de, saat ekonomisinin toplamı da yeniden ölçülecek; tempo bugünkü 4 odalı bölgeye göre ayarlanırsa iki kez ayarlanır.
+
 
 > Enes: *"satın alma buffları hâlâ çok bozuk gibi. Oyunu yaklaşık 8-10 saate yayacağımız için ona göre bir dengeleme yaparız, bossları da ona göre düzenleriz."*
 
@@ -233,7 +285,24 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 - Israr ×5'te TAHSİLDAR'ın tek vuruşu **48 sn** (başlangıç saati 110).
 - Hasat taraması: temiz oyuncunun kâra geçtiği en düşük oran %30, şimdiki %35.
 
-**✅ Karar (Enes, 2026-10-12): "8–10 saat" = son boss'un İLK yenilmesine kadar toplam süre** — *"zaten 1 kere yenince hikâye bitiyor."* Koşu kısa kalıyor, oyuncu birçok denemede öğrenip bitiriyor. Hedef: orta oyuncu ilk denemelerde bölge 2–3'e varsın, her denemede biraz daha ileri.
+**Ölçüm 2 — tam koşu (bot gerçek oyunda, atlamadan, 2026-10-12, `Otopilot — tam koşu ölçümü`)**
+Bot neredeyse hiç vurulmayan iyi bir oyuncu gibi oynuyor (boss saldırılarının %1'inde vuruldu), sunaktan 40 sn yedekle alıyor.
+| | Süre |
+|---|---|
+| **Bütün oyun — KAZANDI** | **8.6 dk** (saat hiç bitmedi, sonda 507 sn) |
+| Bölge 1 · 2 · 3 · 4 · 5 | 1.4 · 1.4 · 1.3 · 1.8 · 2.7 dk |
+| Boss | TAHSİLDAR 25 sn · EKSPER 21 sn · KEFİL 24 sn · SİMSAR 55 sn · MURABAHACI 107 sn |
+| Dövüş odası | 6–21 sn |
+| Sunak | 43 alım: hasar 3.5 → **20.3** (×5.8), hasat %70 (tavan), dash 0.10 sn |
+**Sonuç:** oyun iki uçta da bozuk. Vuruş yiyen orta oyuncu ilk boss'ta ölüyor (zorluk raporu); vurulmayan ve alan oyuncu 9 dakikada bitiriyor, boss'lar 20 saniyede eriyor. Kartopu (alım → hasar → hasat → daha çok alım) dengeyi yutuyor.
+
+**✅ Karar (Enes, 2026-10-12, düzeltme): TEK KOŞU = hikâye, taban 8 saat, ölümlerle ~10 saat.** *"hikayesi 8-10 saat sürecek."* Bir koşu baştan sona bir hikâye; ölümler ~2 saat ekliyor.
+- **Ölçek:** şu an iyi oyuncu bütün oyunu 9 dk'da bitiriyor. 8 saat ≈ **50 kat**. Bu denge değil, YAPI ve İÇERİK işi.
+- **❓ Açık — ölüm ne olacak?** Yasa "ölünce her şey gider" diyor; 8 saatlik koşuda bu 8 saati sıfırlamak olur. "Ölümlerle 10 saat" ölümün bir KONTROL NOKTASINA döndürdüğünü söylüyor (kaybedilen = o noktadan beri geçen süre). Yasanın bu maddesi değişecek mi?
+- **❓ Açık — 50 kat nereden?** Kabaca: perde/bölge sayısı, bölge başına oda, oda ve boss süreleri. Örnek bir dağılım: 3 perde × 5 bölge × 10 oda, boss 3–5 dk, oda 1–2 dk ≈ 6–8 saat.
+- **Faz 27'nin yeni kapsamı:** kartopunu kır (her durumda gerekli) + yavaş tempo (oda 1–2 dk, boss 3–5 dk). Yapı (perde/bölge/oda sayısı) ve içerik ayrı fazlar.
+
+~~ilk anlayış:~~ "8–10 saat" = son boss'un İLK yenilmesine kadar toplam süre — *"zaten 1 kere yenince hikâye bitiyor."* Koşu kısa kalıyor, oyuncu birçok denemede öğrenip bitiriyor. Hedef: orta oyuncu ilk denemelerde bölge 2–3'e varsın, her denemede biraz daha ileri.
 **✅ Karar:** ×5 ısrar (tek vuruş 48 sn) **kalsın**.
 
 **Plan**
@@ -247,7 +316,7 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 
 ---
 
-## 🗂️ Faz 25–26'dan sonra — Faz 20 ile birlikte
+## 🗂️ Faz 29 ile birlikte (eski "Faz 20" listesi)
 
 - [ ] **Faz 20 = boss sonrası sunak.** Boss'tan sonra ikinci bir sunak odası, silaha özel yetenekler satıyor (madde 8, 5)
 - [ ] **FAİZLİ İCRA yeniden:** bedel saatinin yüzdesi, hasar ödenen bedele bağlı. Eşiğin altındaysan öldürmez. Eşiğin üstündeysen zaman vermez (masada soru 3)

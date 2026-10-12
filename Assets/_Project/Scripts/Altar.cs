@@ -29,9 +29,13 @@ namespace TekCan
         // ONARIM tükenmez ve fiyatı sabittir: yükseltme değil, ONARIM. Her ölümden sonra
         // aynı bedelle yeniden karşına çıkması gerekiyor.
         public bool SoldOut => Type != Kind.Repair && _bought >= _t.altarMaxPurchases;
-        public float Price => Type == Kind.Repair
-            ? _t.revivalRepairPrice
-            : _t.altarBasePrice * Mathf.Pow(_t.altarPriceGrowth, _bought);
+        // ⚠️ Faz 27: fiyat bu SUNAĞIN değil, koşunun o türden alım sayısına bağlı — bölge
+        // değişince sıfırlanmıyor (kartopu buradan büyüyordu). `_bought` yalnızca sunak başı tavan.
+        public float Price => Type == Kind.Repair ? _t.revivalRepairPrice
+                            : Clock.Instance != null ? Clock.Instance.SıradakiFiyat(Type)
+                            : Clock.Fiyat(_t, 0);
+
+        float Getiri() => Clock.Instance != null ? Clock.Instance.SıradakiGetiri(Type) : Clock.Getiri(_t, Type, 0);
 
         static RevivalKind FirstBroken() => RevivalKind.FirstBroken(SaveFile.Current);
         public bool PlayerInRange { get; private set; }
@@ -123,12 +127,7 @@ namespace TekCan
             _bought++;
             // Tuning'e DEĞİL Clock'a yazılıyor — asset çalışma anında değiştirilirse
             // yükseltmeler bir sonraki koşuya sızar (bkz. Clock'taki not).
-            switch (Type)
-            {
-                case Kind.Harvest: clock.UpgradeHarvest(_t.altarHarvestStep); break;
-                case Kind.Damage:  clock.UpgradeDamage(_t.altarDamageStep); break;
-                case Kind.Dash:    clock.UpgradeDash(_t.altarDashStep); break;
-            }
+            clock.Yükselt(Type);
 
             Sfx.Buy();
             IsoCamera.Shake(_t.hitShake * 0.7f);
@@ -148,9 +147,10 @@ namespace TekCan
 
             string what = Type switch
             {
-                Kind.Harvest => $"HASAT  +%{_t.altarHarvestStep * 100f:0}",
-                Kind.Damage  => $"KESKİNLİK  +{_t.altarDamageStep:0.0}",
-                _            => $"ÇEVİKLİK  dash -{_t.altarDashStep:0.00}sn",
+                // Gösterilen SIRADAKİ alımın getirisi — azalıyor, sabit adım yalan olurdu.
+                Kind.Harvest => $"HASAT  +%{Getiri() * 100f:0.0}",
+                Kind.Damage  => $"KESKİNLİK  +{Getiri():0.00}",
+                _            => $"ÇEVİKLİK  dash -{Getiri():0.000}sn",
             };
             return SoldOut ? $"{what}   [TÜKENDİ]" : $"{what}   —   {Price:0.0} saniye   [E]";
         }

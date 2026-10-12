@@ -6,7 +6,13 @@ Unity **6000.5.2f1** · URP · **izometrik 3B** · aksiyon roguelike · Steam / 
 
 > **Tek bir sayı var: saniye. Canın da o, süren de o, paran da o.**
 
-Can barı **yok ve yazılmayacak.** Altın/ruh/ayrı para birimi **yok.** Meta ilerleme **yok** — ölünce her şey gider.
+Can barı **yok ve yazılmayacak.** Altın/ruh/ayrı para birimi **yok.** Meta ilerleme **yok.**
+
+**Ölüm (Enes, 2026-10-12):** koşu tek bir hikâye, taban 8 saat. Ölünce **son kontrol noktasına** dönersin
+(mini boss'un temizlediği ara bölge, ya da ana boss'un temizlediği bölge). Kontrol noktaları
+**aşınır**: ölümde kaybettiğin saniyeler seni öldürenin NEMESİS defterine yazılır, defter dolarsa
+temizlediğin son mini boss geri gelir ve bir önceki kontrol noktasına düşersin. Ana boss'un
+temizlediği bölge geri gelmez. *(Eskiden: "ölünce her şey gider".)*
 
 Bir özellik bu yasayı bozuyorsa özellik gider, yasa kalır.
 
@@ -69,6 +75,7 @@ ilerletiyor; otopilot oyunun kendi karelerinde, Unity'nin SANAL klavye/faresiyle
 (işletim sistemi tuşları Play'e geçmiyor, sanal cihaz geçiyor). Enes'in kaydına dokunmaz.
 - İzle: `Tek Can → Otopilot (izle)` — gerçek hızda, ekranda yazılı, ekran görüntülü
 - Faz 26 playtest'i: `Tek Can → Otopilot — Faz 26 playtest (izle)` ya da batch `…OtopilotMenu.Playtest26` (~15 dk) — todo'daki 7 maddeyi oynayıp ölçer, sonunda saldırı başına vurulma tablosu
+- Tam koşu ölçümü (Faz 27): `Tek Can → Otopilot — tam koşu ölçümü (izle)` ya da batch `…OtopilotMenu.TamKosu` — bütün bölgeler atlamadan; oda/bölge/boss süreleri, sunak alımları, saatin bittiği yerler (F5 takviyesi)
 - Batch: `-executeMethod TekCan.EditorTools.OtopilotMenu.Batch` — **`-quit` YOK**, bot kendisi çıkar, ~12 dk
 - Çıktı: `Logs/Otopilot/<zaman>/rapor.md` + görüntüler. Uzun sürdüğü için `AllChecks`'te değil.
 - ⚠️ Batch'te pencere odakta olmuyor: bot girdi ayarının kopyasında `backgroundBehavior = IgnoreFocus` açıyor (yoksa tuşlar düşüyor).
@@ -128,6 +135,15 @@ graphify update Assets/_Project/Scripts
 Mimari sorularından önce `graphify-out/GRAPH_REPORT.md` oku; modüller arası "X ile Y nasıl ilişkili" sorularında grep yerine `graphify query` / `path` / `explain` kullan.
 
 ## Unity başsız çalıştırma
+
+⚠️ **Gizli pencerede çalıştır** (Enes, 2026-10-12: "sürekli alttab atıyorsun" — her Unity açılışı odağı çalıyordu):
+```bash
+powershell -NoProfile -ExecutionPolicy Bypass -File Araclar/unity-gizli.ps1 -Method TekCan.EditorTools.AllChecks.Run -Log <log>
+powershell -NoProfile -ExecutionPolicy Bypass -File Araclar/unity-gizli.ps1 -Method TekCan.EditorTools.OtopilotMenu.TamKosu -Log <log> -Otopilot
+```
+Kapıları mümkün olduğunca TEK açılışta topla (`AllChecks`). Bot testleri sessiz (`Otopilot.Awake`).
+
+Düz komut (yalnızca betik çalışmazsa):
 
 ```bash
 "/c/Program Files/Unity/Hub/Editor/6000.5.2f1/Editor/Unity.exe" -batchmode -quit -nographics -projectPath "C:\Users\Enesin pc\UnityProjects\Tek Can" -logFile <log>

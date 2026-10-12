@@ -199,9 +199,9 @@ namespace TekCan
             clock.Init(t, player.transform, saat);
             // Checkpoint DURUMU geri yüklüyor, yalnızca saati değil.
             if (odaBaşı)
-                clock.RestoreUpgrades(save.resumeHarvest, save.resumeDamage, save.resumeDash);
+                clock.RestoreUpgrades(save.resumeHarvest, save.resumeDamage, save.resumeDash, save.resumeBoughtCounts);
             else if (save.HasUpgrades)
-                clock.RestoreUpgrades(save.harvestRate, save.attackDamage, save.dashCooldown);
+                clock.RestoreUpgrades(save.harvestRate, save.attackDamage, save.dashCooldown, save.boughtCounts);
             systems.AddComponent<RevivalSystem>().Init(t, clock);
             var pc = player.AddComponent<PlayerController>();
             pc.Init(t, camGo.transform);

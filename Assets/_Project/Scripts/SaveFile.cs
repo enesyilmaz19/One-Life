@@ -44,6 +44,8 @@ namespace TekCan
         public float harvestRate = -1f;
         public float attackDamage = -1f;
         public float dashCooldown = -1f;
+        /// <summary>Faz 27: türe göre alım sayısı (hasat, hasar, dash) — kalıcı fiyat ve azalan getiri.</summary>
+        public int[] boughtCounts = new int[0];
 
         public bool HasUpgrades => harvestRate > 0f;
 
@@ -59,6 +61,7 @@ namespace TekCan
         public float resumeHarvest = -1f;
         public float resumeDamage = -1f;
         public float resumeDash = -1f;
+        public int[] resumeBoughtCounts = new int[0];
     }
 
     /// <summary>
