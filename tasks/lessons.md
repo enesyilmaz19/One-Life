@@ -529,3 +529,11 @@ saldırıdır. Enes'in cümlesi doğruydu.
 - **Botun kontrolü de varsayım taşır:** otopilot "uzakta dur" sahnesinde gelen her yakın
   saldırıyı hata sayıyordu. Bot duvara sıkışınca boss yaklaştı, yakın saldırı DOĞRU geldi.
   Kontrol artık saldırı başlarken botun gerçek uzaklığına bakıyor.
+- **Adalet şartı mekaniği sessizce öldürebilir (Faz 26 bot playtest'i):** SİMSAR'ın açıklıklı
+  harita saldırısına "boss duvara yakınsa yapma" şartı koydum; kapı adaleti ölçtü ve yeşildi.
+  Gerçek dövüşte SİMSAR çoğu zaman kenarda: 16 saldırıda 1 harita geldi, olması gereken 4.
+  **Kural:** bir saldırıya "şu durumda yapma" şartı eklerken şartın OYUNDA ne sıklıkla
+  tuttuğunu da ölç. Çoğu zaman tutuyorsa şart değil tasarım değişmeli (burada: ortaya sıçra).
+- **Ölçüm penceresi başka olayları da yakalar:** bot "hazırlık başladı → vuruş indi" arasında
+  saat düştüyse "bu saldırı vurdu" diyordu. Kalabalıkta (rakipler, işaretler) KOMİSYON+ 14/14
+  göründü, gerçekte 0/4. Etkiyi ölçerken pencereyi etkinin KENDİ anına daralt (aynı kare).

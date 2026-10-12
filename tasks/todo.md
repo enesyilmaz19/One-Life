@@ -4,8 +4,7 @@
 
 | # | Ne | Nasıl | Nereye |
 |---|---|---|---|
-| 1 | 🚨 **Yedek** | github.com → New → **Private** → ad `tek-can`. Adresi bana ver, bağlayıp gönderirim | — |
-| 2 | 🎮 **Faz 26 playtest** (üç sıra, ısrar, harita saldırıları) | Aşağıda "Playtest — Faz 26", 7 madde | Gördüklerini yaz |
+| 2 | 🎮 *(isteğe bağlı)* **Faz 26 his testi** | Bot 7 maddeyi oynadı (aşağıda). Sana kalan his: TAM TAHSİL/İHALE sıçraması okunuyor mu, ×5 ısrar adil mi | Gördüklerini yaz |
 | 4 | ✏️ **Adlandırma** | Kahraman, 5 boss, 5 bölge, 3 diriliş eşyası. Şimdikiler çalışma adı | `docs/TASARIM.md` "Açık" |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 
@@ -167,14 +166,14 @@ Enes: *"son boss fighta baktım, 2 saldırı atıyor, biz ona bayağı saldırı
 - **TAHSİLDAR — TAM TAHSİL(+):** arenanın ORTASINA sıçrıyor, halka arenanın %65'i (+ hâlinde %72). Cevap: kenara koş. *Planda "dalga" vardı (halka → simit zinciri). Zincir MURABAHACI'nın tekeli, düşürüldü. İlk yazılan hâli boss'un durduğu yerde dev halkaydı. Duvar dibinden kaçılamıyordu, nemesis büyümesiyle de arenadan büyük oluyordu. Ortaya sıçrayınca kaçış yolu her yerden en fazla halkanın yarıçapı kadar.*
 - **EKSPER — TAM DEĞERLEME(+), BÜYÜK SAĞANAK:** arena boyu ayna şeritleri, beş dar ışın. Cevap: yana çık.
 - **KEFİL — TOPLU TEMİNAT(+), TOPLU REHİN:** arena boyu simit. Cevap: ona koş. 11–12 birimden uzaktaysan yapılmıyor.
-- **SİMSAR — BÜYÜK İHALE(+), BÜYÜK MÜZAYEDE:** arena boyu açıklıklı halka. Cevap: arkasına geç. 8–9 birimden uzaktaysan ya da boss duvara yakınsa yapılmıyor (arkası duvar olunca kapı arenanın dışında kalıyordu).
+- **SİMSAR — BÜYÜK İHALE(+), BÜYÜK MÜZAYEDE:** arenanın ORTASINA sıçrıyor, halka arenanın tamamı, tek çıkış arkasındaki kapı. Hazırlık 2.3 sn: duvar dibinden ortanın arkasına yetişilsin. İHALE+ 3 inişten 2'ye indi. *İlk hâli boss'un yerinde patlıyordu ve "boss duvara yakınsa yapma" şartı vardı: bot playtest'inde 16 saldırıda yalnızca 1 harita geldi. Ortaya sıçrayınca 16'da 4.*
 - **MURABAHACI — SÖZLEŞME, İHTARNAME(+, ++), TAM TASFİYE:** güvenli nokta artık senin yetişebileceğin yerlerden seçiliyor. Önceden ~üçte biri yetişilemezdi.
 
 **Kapı — `Faz26SelfCheck` 19/19 · tüm kapılar 23/23 TEMİZ**
 - Veri: sayılar, tür–şekil uyumu, taşınma.
 - Akış: dibinde ve uzakta 12'şer saldırı, her 4.'sü harita. Uzaktaki oyuncuya simit/açıklık sırası gelince boss yaklaşıyor, araya başka saldırı girmiyor.
 - **Kapsama (Enes'in sorusu):** her fazın yazılı HER saldırısı dövüşte yapılıyor.
-- **Cevap taraması:** her harita saldırısı, boss 3 konumda × oyuncu 7 konumda (duvara sıkışmış dahil) × gövde 1 ve ×1.6 (nemesis). Uyarıdan 0.25 sn sonra en yakın güvenli yere koşan vurulmuyor: **873/873**.
+- **Cevap taraması:** her harita saldırısı, boss 3 konumda × oyuncu 7 konumda (duvara sıkışmış dahil) × gövde 1 ve ×1.6 (nemesis). Uyarıdan 0.25 sn sonra en yakın güvenli yere koşan vurulmuyor: **961/961** (SİMSAR'ın ortaya sıçraması kaldırılınca 30 konumda kırmızı).
 - Israr: eşiğe kadar ×1, ilk adım ~1.3, her artış bir öncekinden büyük, tavan tam ×5; sıfırlanma (mesafe + faz), bedel, renk (ilk adımda bile görünür), HUD. Bozma: düz artış, tavansız eğri, eski renk → üçü de kırmızı.
 - Uyuyan boss'un etiketi güncel.
 - **Bozma:** 18 hata bilerek geri kondu (ilk 10 + inceleme düzeltmelerinin 8'i), hepsi kırmızı. Biri öbürünü maskeliyordu (erişim şartı yokken "sıra tutma" ölçülemiyor), ayrı koşuyla gösterildi.
@@ -186,13 +185,30 @@ Enes: *"son boss fighta baktım, 2 saldırı atıyor, biz ona bayağı saldırı
 - Kapsama 47/82: bot her mesafede durmuyor, EKSPER/KEFİL'i yalnızca finalde rakip olarak görüyor. Bilgi amaçlı. Asıl kanıt kapıdaki kapsama kontrolü.
 - Önceki koşunun iki kırmızısı botun kendi varsayımıydı (uzakta = hep uzak; zincir uzak sırasında). İkisi de düzeltildi.
 
-### 🎮 Playtest — Faz 26
+### 🤖 Bot playtest'i — Faz 26 (2026-10-11, `Tek Can → Otopilot — Faz 26 playtest`)
+Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi ✅, final KAZANILDI.
+| Madde | Ölçüm |
+|---|---|
+| 1 Her 4. saldırı | TAHSİLDAR 24 saldırı (12 uzakta + 12 dibinde): her 4.'sü TAM TAHSİL |
+| 2 TAM TAHSİL | 13 hazırlığın 13'ünde boss ortada · bot 4'te 1 vuruldu |
+| 3 Israr | sıfırdan **15. saldırıda, 42 sn'de ×5** · gerçek dövüşte eğri: 1, 1, 1, 1.25, 1.56 … 5 · HUD "ISRAR ×5,00" · uzaklaşınca ×1 · **×5'te tek vuruş 48 sn** (TAHSİLDAR) |
+| 4 KEFİL | hep kaçan bota 35 sn'de 6 saldırı geldi, simit dahil · 4 harita saldırısının hepsi erişimdeyken |
+| 5 SİMSAR | 16 saldırıda 4 harita (her 4.'sü), 4'ünde de boss ortada · bot İHALE'de 6'da 0 vuruldu |
+| 6 MURABAHACI | faz 3 dibinde 7 yakın saldırının **7'si** geldi · yeşil nokta 7 inişin 7'sinde yetişilebilir |
+| 7 Haksız aday | bota dönük 146 boss saldırısının 5'inde vuruldu (%3). Öne çıkan yok (en yüksek KUŞATMA 2/4) |
+
+**Playtest'in bulduğu ve düzeltilenler**
+- 🐛 **SİMSAR'ın harita saldırısı neredeyse hiç gelmiyordu** (16'da 1) → ortaya sıçrıyor (yukarıda).
+- Botun kendi hataları (oyunun değil): ısrarı önceki seriden devam ederken sıfırdan saydı · "vurulma"ya hazırlık boyunca başka yerden yenen darbeleri yazıyordu (kalabalıkta KOMİSYON+ 14/14 görünüyordu, gerçekte 0/4) · dev halkada kenarda girip çıkıyordu, ortaya sıçrayan halkada vuruluyordu.
+- 📊 **Faz 27'ye veri:** sunaktan hiç almamış bot KEFİL'i 5 dk'da öldüremedi.
+
+### 🎮 Playtest — Faz 26 (insan için, isteğe bağlı)
 > Önce **F6**.
 1. **Her 4. saldırı.** B ile TAHSİLDAR. Yakında ya da uzakta dur, say: 3 normal, 1 harita. *Bak:* harita saldırısı ayırt ediliyor mu?
 2. **TAM TAHSİL.** Boss ortaya sıçrayıp dev halka basıyor, kenara koş. *Bak:* yetişiyor musun? Sıçrama okunuyor mu (animasyon yok, ışınlanıyor)?
 3. **ISRAR.** Boss'un dibinde kal. 4. yakın saldırıdan sonra uyarı yayı koyulaşmalı, HUD'da "ISRAR ×1.25" yazmalı, her saldırıda büyümeli (×5'e kadar). Uzaklaş: sıfırlanmalı. *Bak:* fark ediliyor mu, ×5 çok mu sert, ne kadar sürede ×5'e çıkıyor?
 4. **KEFİL — TOPLU TEMİNAT** (N, B). Uzaktaysan boss önce yaklaşıyor, sonra mavi simit: dibine koş.
-5. **SİMSAR — BÜYÜK İHALE** (N×3, B). Arkasına geç. Boss duvar dibindeyken gelmemeli.
+5. **SİMSAR — BÜYÜK İHALE** (N×3, B). Boss ortaya sıçrıyor, ortanın arkasındaki kapıya geç. *Bak:* sıçrama okunuyor mu, 2.3 sn yetiyor mu?
 6. **MURABAHACI** (N×4, B, F7). Yeşil nokta hep yetişebileceğin yerde mi? Faz 3'te dibinde dururken 7 farklı yakın saldırı görmelisin.
 7. **Kapsama.** "Bu saldırıyı ilk defa görüyorum" dediğin oldu mu? Hangisi sıkıcı ya da haksız?
 
@@ -203,17 +219,31 @@ Enes: *"son boss fighta baktım, 2 saldırı atıyor, biz ona bayağı saldırı
 
 ---
 
-## ⚖️ FAZ 27 — Denge — **hedef: oyun 8–10 saat** (Enes, 2026-10-10)
+## ⚖️ FAZ 27 — Denge — **PLAN** (2026-10-11)
 
 > Enes: *"satın alma buffları hâlâ çok bozuk gibi. Oyunu yaklaşık 8-10 saate yayacağımız için ona göre bir dengeleme yaparız, bossları da ona göre düzenleriz."*
 
-> Sayıları sen olmadan kilitlemem. Bu, yol haritasının 3. ve 4. adımıyla (buff tavanı + ayar oturumu) birleşiyor.
+**Ölçüm — şimdiki sayılarla** (`Zorluk eğrisi raporu`, 2026-10-11). Bir koşu = 5 bölge × 6 oda (4 dövüş + sunak + boss) = 30 oda.
+| Oyuncu | Sunaktan alıyor | Sonuç |
+|---|---|---|
+| TEMİZ | evet | koşuyu **294 sn** ile bitiriyor (sunağa 260 sn, 27 alım) |
+| TEMİZ | hayır | bölge 2 boss'unda saat bitiyor |
+| ORTA | evet / hayır | **ilk boss'ta** saat bitiyor |
+- Bot (sunaktan almamış) KEFİL'i 5 dk'da öldüremedi.
+- Israr ×5'te TAHSİLDAR'ın tek vuruşu **48 sn** (başlangıç saati 110).
+- Hasat taraması: temiz oyuncunun kâra geçtiği en düşük oran %30, şimdiki %35.
 
-- [ ] Hasat yükseltmesine azalan getiri. İlk sunakta hasadı fullemek bu kadar zaman basmasın. Ama çok yatırım yapan oyuncu çok vurup rahat geçsin (madde 3)
-- [ ] Hasar tavanı + kalıcı sunak fiyatı (yol haritası 3)
-- [ ] Düşmanlar her boss'tan sonra katlanarak zorlaşsın. Bir oda asla boss'un çeyreği kadar terletmesin (madde 4). `Zorluk eğrisi raporu` ile ölçülür
-- [ ] Boss havuzları: TAHSİLDAR tek atımda ölmesin (madde 4)
+**✅ Karar (Enes, 2026-10-12): "8–10 saat" = son boss'un İLK yenilmesine kadar toplam süre** — *"zaten 1 kere yenince hikâye bitiyor."* Koşu kısa kalıyor, oyuncu birçok denemede öğrenip bitiriyor. Hedef: orta oyuncu ilk denemelerde bölge 2–3'e varsın, her denemede biraz daha ileri.
+**✅ Karar:** ×5 ısrar (tek vuruş 48 sn) **kalsın**.
+
+**Plan**
+- [ ] **Hasat azalan getiri:** her alım bir öncekinden az versin. İlk sunakta fullemek mümkün olmasın, çok yatıran yine rahat geçsin (madde 3)
+- [ ] **Hasar tavanı + kalıcı sunak fiyatı:** fiyat bölgeler arası sıfırlanmasın (yol haritası 3)
+- [ ] **Bölge ölçeği:** her boss'tan sonra katlanarak zorlaşsın. Bir oda boss'un ¼'ü kadar terletmesin (madde 4). Kapı: oda masrafı / boss masrafı
+- [ ] **Boss havuzları:** TAHSİLDAR tek atımda ölmesin, sunaktan az almış oyuncu boss'u makul sürede öldürebilsin (madde 4 + bot verisi)
+- [ ] **Orta oyuncu hedefi** (a'ya göre): zorluk raporunda ORTA/ALICI en az bölge 2'yi bitirsin
 - [ ] ZIRHLI kendi kendine normal düşman kadar hızlı eriyor (havuz ×1, akış zırhı tanımıyor): beklersen zırh boşa gidiyor. Akışa da zırh mı uygulansın? *(Faz 25 incelemesi)*
+- [ ] Kapı: zorluk raporu bir öz-denetime dönüşür (hedefler sayı olarak, kırmızı/yeşil)
 
 ---
 
@@ -226,6 +256,8 @@ Enes: *"son boss fighta baktım, 2 saldırı atıyor, biz ona bayağı saldırı
 - [ ] Boss'lara klasik şekiller dışında ekstra saldırılar — önce seçim düzeltmesinden sonra dağarcık yetiyor mu bak
 
 ## 📝 Sonraya notlar (Enes, 2026-09-30)
+
+- **Ekstra oyun modu — tekrar oynanabilirlik için** (Enes, 2026-10-12). Oyun bittikten sonra bakılacak.
 - Silahlar değişecek, yeni özellikler eklenecek (ileride bir revizyon)
 - Her geçiş (oda, faz, boss girişi…) çok ani. Araya animasyon ve bekleme
 - Oda şekilleri asset fazında her odada biraz değişecek (boyut + şekil)

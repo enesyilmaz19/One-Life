@@ -304,6 +304,9 @@ namespace TekCan.EditorTools
                             oyuncu.position = merkez + Vector3.back * 2.5f;
                             Alan(boss, "_chained", a);
                             Çağır(boss, "EnterWindup");
+                            // ⚠️ Boss'un yeri hazırlıktan SONRA okunuyor: SİMSAR'ın harita açıklığı
+                            // ortaya sıçrıyor (Faz 26) — eski yere göre "arkası" yanlış yerdi.
+                            merkez = boss.transform.position;
                             var önü = Düz(oyuncu.position - merkez).normalized;
                             var hedef = merkez - önü * 1f;          // boss'un 1 birim ARKASI
 

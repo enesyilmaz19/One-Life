@@ -127,12 +127,16 @@ namespace TekCan
 
         /// <summary>
         /// &gt;0 ise boss hazırlık başında arenanın ORTASINA sıçrıyor ve halkanın yarıçapı
-        /// ARENANIN bu oranı — gövdeden bağımsız. Soru: "kenara koş". (TAHSİLDAR'ın harita
-        /// saldırısı; `RangeMul` burada yalnızca erişim: boss her yerden sıçrıyor.)
+        /// ARENANIN bu oranı — gövdeden bağımsız. TAHSİLDAR'da soru "kenara koş" (%65–72),
+        /// SİMSAR'da halka arenanın tamamı (1.0), tek çıkış açıklık: "ortanın arkasına geç".
+        /// (`RangeMul` burada yalnızca erişim: boss her yerden sıçrıyor.)
         ///
-        /// ⚠️ Neden ortaya: boss'un DURDUĞU yerde arena boyu halka, kaçış yolunu boss'un
-        /// konumuna bağlıyordu — duvar dibinde 13 birim koşu, NEMESİS büyümesiyle
-        /// arenadan büyük halka (inceleme 2026-10-10). Ortadan soru hep aynı ve okunur.
+        /// ⚠️ Neden ortaya: boss'un DURDUĞU yerde arena boyu saldırı, kaçış yolunu boss'un
+        /// konumuna bağlıyordu — TAHSİLDAR'da duvar dibinde 13 birim koşu ve NEMESİS
+        /// büyümesiyle arenadan büyük halka (inceleme 2026-10-10); SİMSAR'da boss duvar
+        /// dibindeyken açıklık duvara bakıyordu, kapı arenanın dışındaydı. "Duvardaysa yapma"
+        /// şartı oyunda neredeyse hep tutuyordu: 16 saldırıda 1 harita (bot playtest'i,
+        /// 2026-10-11). Ortadan soru hep aynı, okunur, ve sırası gelince GELİYOR.
         /// </summary>
         public float ArenaOranı = 0f;
 
@@ -187,9 +191,9 @@ namespace TekCan
 
         /// <summary>
         /// Harita saldırılarının menzil çarpanı — her boss konumundan arenanın tamamı.
-        /// ⚠️ Cevabı boss'a KOŞMAK olanlarda (simit, açıklık) ve geniş aynalarda
-        /// `MaxPlayerRange` var: 17 birimden boss'un dibine yetişilmiyordu (inceleme
-        /// 2026-10-10). Sırası gelince yetişilemiyorsa boss YAKLAŞIYOR, sıra bekliyor.
+        /// ⚠️ Cevabı boss'a KOŞMAK olanlarda (simit) ve geniş aynada `MaxPlayerRange` var:
+        /// 17 birimden boss'un dibine yetişilmiyordu (inceleme 2026-10-10). Sırası gelince
+        /// yetişilemiyorsa boss YAKLAŞIYOR, sıra bekliyor. Açıklık ortaya sıçrıyor (`ArenaOranı`).
         /// </summary>
         public const float HaritaMenzili = 11f;
 
@@ -741,17 +745,17 @@ namespace TekCan
                                      SafeAngle = 55f, WindupSeconds = 1f,
                                      CostMul = 1.4f, Tint = Ring },
 
-                    // HARİTA · AÇIKLIK ③ (gelişmiş): arena boyu, üç kez iniyor, kapı her
-                    // inişte yeniden yer değiştiriyor (boss her hazırlığın BAŞINDA sana dönüyor)
+                    // HARİTA · AÇIKLIK ③ (gelişmiş): ortaya sıçrıyor, kapı daralıyor, iki iniş.
+                    // ⚠️ Üç inişti: 2.3 sn'lik hazırlıkla tek saldırı 7 sn sürerdi.
                     new BossAttack { Name = "BÜYÜK İHALE+", Tür = SaldırıTürü.Harita,
-                                     RangeMul = BossAttack.HaritaMenzili, Angle = 360f,
-                                     SafeAngle = 95f, Repeat = 3, WindupSeconds = 1.6f, MaxPlayerRange = 8f,
+                                     RangeMul = BossAttack.HaritaMenzili, ArenaOranı = 1f, Angle = 360f,
+                                     SafeAngle = 95f, Repeat = 2, WindupSeconds = 2.3f,
                                      CostMul = 1.35f, Tint = Ring },
 
-                    // HARİTA · AÇIKLIK YENİ: arena boyu, İĞNE DELİĞİ kapı
+                    // HARİTA · AÇIKLIK YENİ: ortaya sıçrıyor, İĞNE DELİĞİ kapı
                     new BossAttack { Name = "BÜYÜK MÜZAYEDE", Tür = SaldırıTürü.Harita,
-                                     RangeMul = BossAttack.HaritaMenzili, Angle = 360f,
-                                     SafeAngle = 45f, WindupSeconds = 1.8f, MaxPlayerRange = 9f,
+                                     RangeMul = BossAttack.HaritaMenzili, ArenaOranı = 1f, Angle = 360f,
+                                     SafeAngle = 45f, WindupSeconds = 2.3f,
                                      CostMul = 1.55f, Tint = Ring },
 
                     // ÖZGÜN GERİ SIÇRAMA ① (gelişmiş): sıçrayış 5 → 7
@@ -792,11 +796,13 @@ namespace TekCan
                                      SafeAngle = 70f, WindupSeconds = 1f,
                                      CostMul = 1.3f, Tint = Ring },
 
-                    // HARİTA · AÇIKLIK ③ — arena boyu, İKİ KEZ iniyor, boss arada sana
-                    // dönüyor: kapı YER DEĞİŞTİRİYOR. (Faz 26'ya kadar 3.2 menzilli "İHALE".)
+                    // HARİTA · AÇIKLIK ③ — arenanın ORTASINA sıçrıyor, halka arenanın tamamı,
+                    // tek çıkış arkasındaki kapı. İKİ KEZ iniyor, boss arada sana dönüyor: kapı
+                    // YER DEĞİŞTİRİYOR. 2.3 sn: duvar dibinden ortanın arkasına yetişilsin.
+                    // (Faz 26'ya kadar 3.2 menzilli "İHALE".)
                     new BossAttack { Name = "BÜYÜK İHALE", Tür = SaldırıTürü.Harita,
-                                     RangeMul = BossAttack.HaritaMenzili, Angle = 360f,
-                                     SafeAngle = 110f, Repeat = 2, WindupSeconds = 1.8f, MaxPlayerRange = 9f,
+                                     RangeMul = BossAttack.HaritaMenzili, ArenaOranı = 1f, Angle = 360f,
+                                     SafeAngle = 110f, Repeat = 2, WindupSeconds = 2.3f,
                                      CostMul = 1.25f, Tint = Ring },
 
                     // ÖZGÜN GERİ SIÇRAMA ① — hamlenin TERSİ. "Kaç" değil "KOVALA".

@@ -569,7 +569,7 @@ namespace TekCan
 
         /// <summary>
         /// Sırası gelmiş VE cevabına yetişilebilen harita saldırısı (yoksa null).
-        /// ⚠️ Simit ve açıklıkta cevap boss'a koşmak: 17 birimden yetişilmiyordu
+        /// ⚠️ Simitte cevap boss'a koşmak: 17 birimden yetişilmiyordu
         /// (inceleme 2026-10-10). Erişim şartı `MaxPlayerRange`'te, burada sorgulanıyor.
         /// </summary>
         BossAttack SıradakiHarita(float mesafe)
@@ -577,22 +577,7 @@ namespace TekCan
             if (!HaritaZamanı) return null;
             var h = Sıra(SaldırıTürü.Harita);
             var a = h[_sayaç[(int)SaldırıTürü.Harita] % h.Length];
-            return HaritaYapılabilir(a, mesafe) ? a : null;
-        }
-
-        /// <summary>
-        /// Harita saldırısının cevabı şu an VAR mı: erişim şartları, ve AÇIKLIKTA boss'un
-        /// arkasında yer. ⚠️ Kapı boss'un ARKASINDA: boss duvar dibindeyken arkası duvardı,
-        /// kapı arenanın dışında kalıyordu (Faz 26 kapı taraması, 2026-10-10). Öz-denetim
-        /// bunu çağırıyor — kendi şartını yazsaydı oyundan ayrışırdı.
-        /// </summary>
-        bool HaritaYapılabilir(BossAttack a, float mesafe)
-        {
-            if (!Erişir(a, mesafe)) return false;
-            if (a.SafeAngle <= 0f) return true;
-            Vector3 d = transform.position - Bootstrap.ArenaCenter;
-            d.y = 0f;
-            return d.magnitude <= _t.arenaRadius * 0.6f;
+            return Erişir(a, mesafe) ? a : null;
         }
 
         /// <summary>Oyuncu bu mesafedeyken hangi sıra: yakın mı, menzilli mi.</summary>

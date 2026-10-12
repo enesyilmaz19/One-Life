@@ -26,7 +26,13 @@ namespace TekCan.EditorTools
         /// <summary>Komut satırından izleme (ASCII ad — Türkçe karakter komut satırında sorun çıkarabilir).</summary>
         public static void Izle() => Başlat(izle: true);
 
-        static void Başlat(bool izle)
+        /// <summary>Faz 26 playtest'inin yedi maddesi (Enes 2026-10-11: "playtesti de bot ile yap"). ~15 dk.</summary>
+        [MenuItem("Tek Can/Otopilot — Faz 26 playtest (izle)")]
+        public static void Playtest26Izle() => Başlat(izle: true, senaryo: "p26");
+
+        public static void Playtest26() => Başlat(izle: false, senaryo: "p26");
+
+        static void Başlat(bool izle, string senaryo = "")
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
             {
@@ -44,6 +50,7 @@ namespace TekCan.EditorTools
             }
             SessionState.SetBool(Otopilot.Aktif, true);
             SessionState.SetBool(Otopilot.İzleAnahtar, izle);
+            SessionState.SetString(Otopilot.SenaryoAnahtar, senaryo);
             SessionState.SetInt(Otopilot.AdımAnahtar, 0);
             SessionState.SetInt(Otopilot.HataAnahtar, 0);
             SessionState.SetInt(Otopilot.SSAnahtar, 0);

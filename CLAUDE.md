@@ -68,6 +68,7 @@ hangi değerin doğru olduğu Enes'in kararı.)
 ilerletiyor; otopilot oyunun kendi karelerinde, Unity'nin SANAL klavye/faresiyle oynuyor
 (işletim sistemi tuşları Play'e geçmiyor, sanal cihaz geçiyor). Enes'in kaydına dokunmaz.
 - İzle: `Tek Can → Otopilot (izle)` — gerçek hızda, ekranda yazılı, ekran görüntülü
+- Faz 26 playtest'i: `Tek Can → Otopilot — Faz 26 playtest (izle)` ya da batch `…OtopilotMenu.Playtest26` (~15 dk) — todo'daki 7 maddeyi oynayıp ölçer, sonunda saldırı başına vurulma tablosu
 - Batch: `-executeMethod TekCan.EditorTools.OtopilotMenu.Batch` — **`-quit` YOK**, bot kendisi çıkar, ~12 dk
 - Çıktı: `Logs/Otopilot/<zaman>/rapor.md` + görüntüler. Uzun sürdüğü için `AllChecks`'te değil.
 - ⚠️ Batch'te pencere odakta olmuyor: bot girdi ayarının kopyasında `backgroundBehavior = IgnoreFocus` açıyor (yoksa tuşlar düşüyor).

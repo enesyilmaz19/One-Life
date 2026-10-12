@@ -264,7 +264,7 @@ namespace TekCan.EditorTools
         /// İnsan modeli: her hazırlığın başında uyarıyı görür, 0.25 sn sonra en yakın
         /// GÜVENLİ noktaya koşar (üretimin kendi isabet hesabıyla — `ŞimdiVursaİsabet`).
         /// Koşarak yetişemeyecekse bir kez dash atar. Tekrarlar ve her iniş ayrı sınanır.
-        /// null = bu konumdan saldırı seçilmezdi (üretimin `HaritaYapılabilir`'i).
+        /// null = bu konumdan saldırı seçilmezdi (üretimin `Erişir`'i).
         /// </summary>
         static bool? İnsanKaçar(Tuning t, BossKind b, int f, BossAttack a, Vector3 bossYeri, Vector3 oyuncuYeri, float ölçek, int tohum)
         {
@@ -276,7 +276,7 @@ namespace TekCan.EditorTools
             var oyuncu = r.transform.Find("player");
             oyuncu.position = oyuncuYeri;
             float mesafe = Düz(oyuncu.position - boss.transform.position).magnitude;
-            if (!(bool)typeof(Enemy).GetMethod("HaritaYapılabilir", Özel).Invoke(boss, new object[] { a, mesafe }))
+            if (!(bool)typeof(Enemy).GetMethod("Erişir", Özel).Invoke(boss, new object[] { a, mesafe }))
             {
                 Temizle(r);
                 return null;

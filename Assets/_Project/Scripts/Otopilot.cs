@@ -40,6 +40,8 @@ namespace TekCan
         public const string RaporAnahtar = "TekCan.Otopilot.Rapor";
         public const string HataAnahtar = "TekCan.Otopilot.Hata";
         public const string SSAnahtar = "TekCan.Otopilot.SS";
+        /// <summary>"p26" = Faz 26 playtest senaryosu (Enes 2026-10-11: "playtesti de bot ile yap").</summary>
+        public const string SenaryoAnahtar = "TekCan.Otopilot.Senaryo";
         const string K1Oda = "TekCan.Otopilot.K1Oda", K1Bölge = "TekCan.Otopilot.K1Bolge",
                      K1Saat = "TekCan.Otopilot.K1Saat", K1Kapanış = "TekCan.Otopilot.K1Kapanis";
 
@@ -251,7 +253,10 @@ namespace TekCan
             _t = Resources.Load<Tuning>("Tuning");
             yield return null; yield return null;           // Bootstrap kurulsun
 
-            IEnumerator[] sahneler = SessionState.GetInt(AdımAnahtar, 0) == 0
+            bool p26 = SessionState.GetString(SenaryoAnahtar, "") == "p26";
+            IEnumerator[] sahneler = p26
+                ? new[] { Kurulum(), P26Tahsildar(), P26Kefil(), P26Simsar(), P26Murabahacı(), Bitir() }
+                : SessionState.GetInt(AdımAnahtar, 0) == 0
                 ? new[] { Kurulum(), GirdiKanıtı(), K1Hazırla() }          // K1: Play'den çıkıp giriyor
                 : new[] { K1Doğrula(), Bölge1(), Sunak(), Tahsildar(), Haciz(), Simsar(), Final(), Bitir() };
             foreach (var sahne in sahneler)
@@ -641,6 +646,256 @@ namespace TekCan
             _final = null;
         }
 
+        // ── FAZ 26 PLAYTEST ───────────────────────────────────────────────────
+        // Enes (2026-10-11): *"playtesti de bot ile yap, sorun çıkarsa düzelt."* todo.md
+        // "Playtest — Faz 26"nın yedi maddesi, gerçek oyunda. Kapı (Faz26SelfCheck) ideal
+        // insanla ADALETİ ölçüyor; bu, gerçek döngüde AKIŞI ve SERTLİĞİ ölçüyor.
+
+        bool _p26;
+        int _p26Orta, _p26Erişim, _p26Açıklık, _p26Nokta;
+        readonly List<string> _p26OrtaHata = new List<string>(), _p26ErişimHata = new List<string>(),
+                              _p26AçıklıkHata = new List<string>(), _p26NoktaHata = new List<string>();
+
+        /// <summary>
+        /// Her boss hazırlığının başında (tekrarlar dahil) üretimin verdiği sözü bağımsız ölçer:
+        /// ortaya sıçrama, harita erişimi, açıklıkta boss ortaya yakın, güvenli nokta yetişilebilir.
+        /// </summary>
+        void P26Gözle(Enemy e, Vector3 ben, bool yeni)
+        {
+            var a = e.CurrentAttack;
+            float merkezden = Düz(e.transform.position - Bootstrap.ArenaCenter).magnitude;
+            float mesafe = Düz(ben - e.transform.position).magnitude;
+            if (a.ArenaOranı > 0f)
+            {
+                _p26Orta++;
+                if (merkezden > 0.6f) _p26OrtaHata.Add($"{a.Name}: merkezden {merkezden:0.0}");
+            }
+            // Erişim ve açıklık yalnızca YENİ saldırıda seçiliyor; tekrarlar zorunlu.
+            if (yeni && a.Harita && a.MaxPlayerRange > 0f)
+            {
+                _p26Erişim++;
+                if (mesafe > a.MaxPlayerRange + 0.4f) _p26ErişimHata.Add($"{a.Name}: {mesafe:0.0} > {a.MaxPlayerRange:0}");
+            }
+            if (yeni && a.Harita && a.SafeAngle > 0f)
+            {
+                _p26Açıklık++;
+                if (merkezden > 0.6f) _p26AçıklıkHata.Add($"{a.Name}: boss merkezden {merkezden:0.0}");   // ortaya sıçrıyor
+            }
+            if (a.SafeSpotRadius > 0f)
+            {
+                _p26Nokta++;
+                float yol = Düz(ben - e.CurrentSafeSpot).magnitude - a.SafeSpotRadius;
+                float bütçe = _t.moveSpeed * Mathf.Max(0f, e.KalanHazırlık - _t.bossReactionWindow) + 0.3f;
+                if (yol > bütçe) _p26NoktaHata.Add($"{a.Name}: yol {yol:0.0} > koşu {bütçe:0.0}");
+            }
+        }
+
+        /// <summary>`adet` yeni saldırı (ya da `sınır` sn) boyunca `mod`'da oyna; her yeni saldırıda `her`.</summary>
+        IEnumerator Topla(Enemy boss, Mod mod, int adet, float sınır, System.Action<Enemy> her, System.Func<bool> yeter = null)
+        {
+            int n = 0;
+            _yeniSaldırı = e => { if (e != boss || e.CurrentAttack == null) return; n++; her(e); };
+            float t0 = Time.realtimeSinceStartup;
+            while (boss != null && n < adet && Time.realtimeSinceStartup - t0 < sınır && (yeter == null || !yeter()))
+            {
+                if (Saat != null && Saat.Dead) { Kaydet("—", "bot öldü", false, _sahne); _yeniSaldırı = null; yield return Bitir(); yield break; }
+                DövüşAdımı(mod, boss);
+                _ne = $"{n}/{adet} saldırı";
+                yield return null;
+            }
+            _yeniSaldırı = null;
+            Dur();
+        }
+
+        IEnumerator BossaGit(params Key[] tuşlar)
+        {
+            foreach (var k in tuşlar) { Bas(k); yield return Bekle(0.6f); }
+            yield return Bekle(0.6f);
+            if (Saat != null && Saat.Seconds < 200f) { Bas(Key.F5); yield return Bekle(0.3f); }
+        }
+
+        IEnumerator P26Tahsildar()
+        {
+            _p26 = true;
+            Sahne("P1 TAHSİLDAR", "B — boss odası");
+            yield return BossaGit(Key.B);
+            var boss = Boss();
+            if (boss == null || boss.Boss.Name != "TAHSİLDAR") { Kaydet("P1", "TAHSİLDAR", false, $"bulunamadı ({BossAdı(boss)})"); yield break; }
+
+            // Madde 1 — her 4. saldırı harita (uzakta ve dibinde, art arda)
+            var sıra = new List<BossAttack>();
+            Sahne("P1 TAHSİLDAR", "madde 1: uzakta 12 saldırı");
+            yield return Topla(boss, Mod.UzakDur, 12, 120f, e => sıra.Add(e.CurrentAttack));
+            int uzaktaki = sıra.Count;
+            Sahne("P1 TAHSİLDAR", "madde 1: dibinde 12 saldırı (kaçarak)");
+            yield return Topla(boss, Mod.DibindeKaçar, 12, 120f, e => sıra.Add(e.CurrentAttack));
+            bool dördüncü = sıra.Count >= 24;
+            for (int k = 0; k < sıra.Count; k++) if (sıra[k].Harita != ((k + 1) % 4 == 0)) dördüncü = false;
+            string Dizi(List<BossAttack> l, int b, int s) => string.Join(", ", l.GetRange(b, s).ConvertAll(a => a.Harita ? $"[{a.Name}]" : a.Name));
+            Kaydet("P1", "Madde 1 — her 4. saldırı harita (24 saldırı, uzakta + dibinde)", dördüncü,
+                   $"uzakta: {Dizi(sıra, 0, uzaktaki)} · dibinde: {Dizi(sıra, uzaktaki, sıra.Count - uzaktaki)}");
+
+            // Madde 3 — ISRAR: önce seriyi sıfırla (uzakta bir menzilli saldırı), sonra dibinde, kaçmadan.
+            // ⚠️ İlk koşuda bu adım yoktu: madde 1'in "dibinde" serisi ×4.77'den devam etti ve bot
+            // sıfırdan bekleyip kırmızı yaktı — oyun doğru saymıştı, ölçen yanlıştı.
+            Sahne("P1 TAHSİLDAR", "madde 3: önce uzaklaşıp seriyi sıfırlıyorum");
+            bool uzakGeldi = false;
+            yield return Topla(boss, Mod.UzakDur, 6, 40f, e => { if (e.CurrentAttack.Tür == SaldırıTürü.Uzak) uzakGeldi = true; }, () => uzakGeldi);
+            Sahne("P1 TAHSİLDAR", "madde 3: dibinde duruyorum, kaçmıyorum — ısrar kaç saniyede ×5?");
+            _takviyeEşiği = 150f;
+            var ısrar = new List<(SaldırıTürü tür, float x, float t)>();
+            float t0 = Time.time, enBüyük5 = 0f, önceki = Saat.TotalHitCost;
+            string hud5 = "";
+            int n = 0;
+            _yeniSaldırı = e =>
+            {
+                if (e != boss || e.CurrentAttack == null) return;
+                n++;
+                ısrar.Add((e.CurrentAttack.Tür, e.IsrarÇarpanı, Time.time - t0));
+                if (e.IsrarÇarpanı >= 4.99f && hud5 == "" && Oda != null) hud5 = Oda.Prompt();
+            };
+            float g0 = Time.realtimeSinceStartup;
+            int beşte = 0;
+            while (boss != null && Time.realtimeSinceStartup - g0 < 150f && n < 20 && beşte < 3)
+            {
+                if (Saat.Dead) { Kaydet("—", "bot öldü (ısrar)", false, _sahne); _yeniSaldırı = null; yield return Bitir(); yield break; }
+                DövüşAdımı(Mod.DibeGir, boss);
+                float darbe = Saat.TotalHitCost - önceki;
+                önceki = Saat.TotalHitCost;
+                if (boss.IsrarÇarpanı >= 4.99f) enBüyük5 = Mathf.Max(enBüyük5, darbe);
+                beşte = ısrar.FindAll(x => x.x >= 4.99f).Count;
+                _ne = $"ısrar ×{boss.IsrarÇarpanı:0.00}";
+                yield return null;
+            }
+            _yeniSaldırı = null;
+            _takviyeEşiği = 35f;
+            // Beklenen: aynı sıradan seri sayılıyor, harita ne sayar ne sıfırlar.
+            int seri = 0; SaldırıTürü bant = SaldırıTürü.Harita;
+            bool eğri = ısrar.Count > 0;
+            foreach (var (tür, x, _) in ısrar)
+            {
+                if (tür == SaldırıTürü.Harita) { if (Mathf.Abs(x - 1f) > 0.01f) eğri = false; continue; }
+                seri = tür == bant ? seri + 1 : 1; bant = tür;
+                if (Mathf.Abs(x - Enemy.IsrarEğrisi(_t, seri)) > 0.01f) eğri = false;
+            }
+            int ilk5 = ısrar.FindIndex(x => x.x >= 4.99f);
+            Kaydet("P1", "Madde 3 — ısrar gerçek dövüşte eğriyi izliyor (seri, harita sayılmıyor)", eğri,
+                   string.Join(", ", ısrar.ConvertAll(x => x.tür == SaldırıTürü.Harita ? "[H]" : x.x.ToString("0.00"))));
+            Kaydet("P1", "Madde 3 — ısrar ×5'e çıkıyor, HUD gösteriyor", ilk5 >= 0 && hud5.Contains("ISRAR ×5"),
+                   ilk5 >= 0 ? $"{ilk5 + 1}. saldırıda, {ısrar[ilk5].t:0} sn'de · HUD '{hud5}'" : "×5'e çıkmadı");
+            Kaydet("P1", "Madde 3 — ×5'te tek vuruş ne götürüyor", null, $"en büyük darbe {enBüyük5:0.0} sn (saat {Saat.Seconds:0} sn)");
+
+            Sahne("P1 TAHSİLDAR", "madde 3: uzaklaşıyorum — ısrar sıfırlanıyor mu?");
+            var sonra = new List<(SaldırıTürü, float)>();
+            yield return Topla(boss, Mod.UzakDur, 3, 40f, e => sonra.Add((e.CurrentAttack.Tür, e.IsrarÇarpanı)));
+            int ilkUzak = sonra.FindIndex(x => x.Item1 == SaldırıTürü.Uzak);
+            Kaydet("P1", "Madde 3 — uzaklaşınca ısrar sıfır", ilkUzak >= 0 ? Mathf.Abs(sonra[ilkUzak].Item2 - 1f) < 0.01f : (bool?)null,
+                   string.Join(", ", sonra.ConvertAll(x => $"{x.Item1} ×{x.Item2:0.00}")));
+
+            // Madde 2 — TAM TAHSİL: dövüş, öldür
+            Sahne("P1 TAHSİLDAR", "madde 2: dövüşüyorum — TAM TAHSİL'de kenara koşuyorum");
+            _tehdit = 0; _vuruldu = 0;
+            yield return BossuÖldür(240f);
+            _saldırıİst.TryGetValue("TAM TAHSİL", out var tt);
+            Kaydet("P1", "Madde 2 — TAM TAHSİL her seferinde ORTAYA sıçrıyor", _p26Orta > 0 ? _p26OrtaHata.Count == 0 : (bool?)null,
+                   $"{_p26Orta} hazırlık" + (_p26OrtaHata.Count > 0 ? " · " + string.Join(", ", _p26OrtaHata) : ""));
+            Kaydet("P1", "Madde 2 — TAM TAHSİL'den kaçış (bot)", null, $"bota dönük {tt.x}, vurulma {tt.y}");
+            yield return KapıdanÇık(20f);
+        }
+
+        IEnumerator P26Kefil()
+        {
+            Sahne("P2 KEFİL", "N, B");
+            yield return BossaGit(Key.N, Key.B);
+            var boss = Boss();
+            if (boss == null || boss.Boss.Name != "KEFİL") { Kaydet("P2", "KEFİL", false, $"bulunamadı ({BossAdı(boss)})"); yield break; }
+            Sahne("P2 KEFİL", "madde 4: hep kaçıyorum — simit sırası gelince ne oluyor?");
+            var uzakta = new List<string>();
+            yield return Topla(boss, Mod.ÇokUzak, 6, 35f, e => uzakta.Add(e.CurrentAttack.Name));
+            Kaydet("P2", "Madde 4 — hep kaçan bota gelenler", null, uzakta.Count > 0 ? string.Join(", ", uzakta) : "35 sn'de hiç saldırı yok");
+            Sahne("P2 KEFİL", "madde 4: dibinde kaçarak 12 saldırı (simite koşuyorum)");
+            yield return Topla(boss, Mod.DibindeKaçar, 12, 120f, e => { });
+            // ⚠️ Güç almamış bot KEFİL'i 5 dk'da öldüremedi (ilk koşu); öldürmek ölçümün parçası
+            // değil — N ile sonraki bölgeye.
+            Kaydet("P2", "Madde 4 — simit yalnızca ERİŞİLEBİLİRKEN başlıyor", _p26Erişim > 0 ? _p26ErişimHata.Count == 0 : (bool?)null,
+                   $"{_p26Erişim} harita saldırısı" + (_p26ErişimHata.Count > 0 ? " · " + string.Join(", ", _p26ErişimHata) : ""));
+            _p26Erişim = 0; _p26ErişimHata.Clear();
+        }
+
+        IEnumerator P26Simsar()
+        {
+            Sahne("P3 SİMSAR", "N, B");
+            yield return BossaGit(Key.N, Key.B);
+            var boss = Boss();
+            if (boss == null || boss.Boss.Name != "SİMSAR") { Kaydet("P3", "SİMSAR", false, $"bulunamadı ({BossAdı(boss)})"); yield break; }
+            Sahne("P3 SİMSAR", "madde 5: dibinde kaçarak 16 saldırı — BÜYÜK İHALE'de arkasına geçiyorum");
+            var simsar = new List<BossAttack>();
+            yield return Topla(boss, Mod.DibindeKaçar, 16, 180f, e => simsar.Add(e.CurrentAttack));
+            int haritaS = simsar.FindAll(a => a.Harita).Count;
+            // ⚠️ İlk playtest'te 16 saldırıda 1 harita geldi ("duvardaysa yapma" şartı hep tutuyordu).
+            Kaydet("P3", "Madde 5 — SİMSAR'ın harita sırası GELİYOR (16 saldırıda ≥ 3)", simsar.Count >= 16 ? haritaS >= 3 : (bool?)null,
+                   $"{simsar.Count} saldırıda {haritaS} harita · " + string.Join(", ", simsar.ConvertAll(a => a.Harita ? $"[{a.Name}]" : a.Name)));
+            Kaydet("P3", "Madde 5 — açıklıklı harita saldırısında boss ORTADA", _p26Açıklık > 0 ? _p26AçıklıkHata.Count == 0 : (bool?)null,
+                   $"{_p26Açıklık} saldırı" + (_p26AçıklıkHata.Count > 0 ? " · " + string.Join(", ", _p26AçıklıkHata) : ""));
+            _saldırıİst.TryGetValue("BÜYÜK İHALE", out var bi);
+            _saldırıİst.TryGetValue("BÜYÜK İHALE+", out var bi2);
+            _saldırıİst.TryGetValue("BÜYÜK MÜZAYEDE", out var bm);
+            Kaydet("P3", "Madde 5 — açıklıktan kaçış (bot)", null,
+                   $"İHALE {bi.y}/{bi.x} · İHALE+ {bi2.y}/{bi2.x} · MÜZAYEDE {bm.y}/{bm.x} (vurulma/bota dönük)");
+        }
+
+        IEnumerator P26Murabahacı()
+        {
+            Sahne("P4 MURABAHACI", "N, B, F7 TAM GÜÇ");
+            yield return BossaGit(Key.N, Key.B, Key.F7);
+            var boss = Boss();
+            if (boss == null || boss.Boss.PhaseCount < 3) { Kaydet("P4", "MURABAHACI", false, $"bulunamadı ({BossAdı(boss)})"); yield break; }
+            Sahne("P4 MURABAHACI", "madde 6: faz 3'e kadar dövüşüyorum — yeşil noktalara koşuyorum");
+            float t0 = Time.realtimeSinceStartup;
+            while (boss != null && !(boss.Phase >= 3 && !boss.Dormant) && Time.realtimeSinceStartup - t0 < 300f)
+            {
+                if (Saat != null && Saat.Dead) { Kaydet("—", "bot öldü", false, _sahne); yield return Bitir(); yield break; }
+                DövüşAdımı(Mod.Dövüş, Boss());
+                yield return null;
+            }
+            bool faz3 = boss != null && boss.Phase >= 3 && !boss.Dormant;
+            Kaydet("P4", "Faz 3'e ulaşıldı", faz3, faz3 ? "rakipler bitti, boss uyandı" : "faz 3'e gelinemedi");
+            if (faz3)
+            {
+                Sahne("P4 MURABAHACI", "madde 6: faz 3 dibinde — 7 yakın saldırının hepsi geliyor mu?");
+                var beklenen = Sıra(boss, SaldırıTürü.Yakın);
+                var görülen = new HashSet<string>();
+                yield return Topla(boss, Mod.DibindeKaçar, 24, 180f,
+                                   e => { if (e.CurrentAttack.Tür == SaldırıTürü.Yakın) görülen.Add(e.CurrentAttack.Name); },
+                                   () => görülen.Count >= beklenen.Count);
+                var eksik = beklenen.FindAll(a => !görülen.Contains(a));
+                Kaydet("P4", $"Madde 6 — faz 3 dibinde {beklenen.Count} yakın saldırının hepsi geliyor", eksik.Count == 0,
+                       $"{görülen.Count}/{beklenen.Count}" + (eksik.Count > 0 ? " · gelmeyen: " + string.Join(", ", eksik) : ""));
+            }
+            Sahne("P4 MURABAHACI", "öldürüyorum");
+            yield return BossuÖldür(300f, kazanınca: true);
+            Kaydet("P4", "Madde 6 — yeşil nokta her inişte YETİŞİLEBİLİR", _p26Nokta > 0 ? _p26NoktaHata.Count == 0 : (bool?)null,
+                   $"{_p26Nokta} iniş" + (_p26NoktaHata.Count > 0 ? " · " + string.Join(", ", _p26NoktaHata) : ""));
+            Kaydet("P4", "Final", null, (Saat != null && Saat.Won ? "KAZANILDI" : "kazanılamadı") + $" · süre takviyesi {_takviye}");
+        }
+
+        /// <summary>
+        /// Madde 7 — "hangisi haksız": her saldırıda bota dönük hazırlık ve isabet. Bot kusursuz
+        /// değil (ortalaması da yazılıyor); haksız ADAY, ortalamanın çok üstünde vurandır.
+        /// </summary>
+        void SaldırıİstatistikRaporu()
+        {
+            if (_saldırıİst.Count == 0) return;
+            int tt = 0, tv = 0;
+            var l = new List<(string ad, int t, int v)>();
+            foreach (var kv in _saldırıİst) { tt += kv.Value.x; tv += kv.Value.y; if (kv.Value.x >= 3) l.Add((kv.Key, kv.Value.x, kv.Value.y)); }
+            l.Sort((a, b) => (b.v * a.t).CompareTo(a.v * b.t));
+            var sb = new StringBuilder();
+            for (int i = 0; i < Mathf.Min(8, l.Count); i++) sb.Append($"{l[i].ad} {l[i].v}/{l[i].t} · ");
+            Kaydet("İ", "Saldırı başına vurulma (en çok vuranlar, ≥3 kez bota dönük)", null,
+                   $"ortalama {tv}/{tt} (%{100f * tv / Mathf.Max(1, tt):0}) · {sb}");
+        }
+
         IEnumerator Bitir()
         {
             if (_bitti) yield break;
@@ -650,6 +905,7 @@ namespace TekCan
             SS("son");
             yield return Bekle(0.5f);
 
+            SaldırıİstatistikRaporu();
             KapsamaRaporu();
             int hata = SessionState.GetInt(HataAnahtar, 0);
             try { RaporuYaz(hata); }
@@ -714,12 +970,22 @@ namespace TekCan
 
         // ── dövüş beyni ───────────────────────────────────────────────────────
 
-        enum Mod { Dövüş, UzakDur, DibeGir, Ölümüne }
+        enum Mod { Dövüş, UzakDur, DibeGir, Ölümüne, ÇokUzak, DibindeKaçar }
 
         readonly Dictionary<Enemy, float> _gördüğüAn = new Dictionary<Enemy, float>();
         readonly Dictionary<Enemy, Enemy.State> _sonDurum = new Dictionary<Enemy, Enemy.State>();
-        readonly List<(Enemy e, float hasar, bool açıklık)> _bekleyen = new List<(Enemy, float, bool)>();
+        readonly List<(Enemy e, float hasar, bool açıklık, string ad)> _bekleyen = new List<(Enemy, float, bool, string)>();
         int _tehdit, _vuruldu, _takviye;
+        /// <summary>Saat bunun altına inince F5. Israr ölçümünde yüksek: ×5'lik vuruş 35 sn'den büyük.</summary>
+        float _takviyeEşiği = 35f;
+        /// <summary>
+        /// Bot şu an KAÇIYOR mu. Vurulma tablosu yalnızca bunu sayar: "uzakta dur" ve "dibinde
+        /// kaçmadan dur" bölümlerinde bot bilerek vuruluyor — ilk playtest'te TAM TAHSİL'i
+        /// 6'da 4 gösteren buydu.
+        /// </summary>
+        bool _kaçıyor;
+        /// <summary>Saldırı adı → (bota dönük hazırlık, isabet). Haksız aday tablosu bundan.</summary>
+        readonly Dictionary<string, Vector2Int> _saldırıİst = new Dictionary<string, Vector2Int>();
         float _sonTakviye = -99f, _sonVuruş = -99f, _bossİlkHavuz;
         bool _donukSS;
 
@@ -770,13 +1036,15 @@ namespace TekCan
             Gözlem();
 
             // Süre takviyesi (Enes: "gerektiğinde süre takviyesi al koşuyu bitirmek için")
-            if (mod != Mod.Ölümüne && Saat.Seconds < 35f && Time.time - _sonTakviye > 2f)
+            if (mod != Mod.Ölümüne && Saat.Seconds < _takviyeEşiği && Time.time - _sonTakviye > 2f)
             {
                 Bas(Key.F5); _sonTakviye = Time.time; _takviye++;
             }
 
-            if (mod == Mod.Dövüş && Kaç(ben)) return;
-            if (mod == Mod.Dövüş && İşarettenKaç(ben)) return;
+            bool kaçan = mod == Mod.Dövüş || mod == Mod.ÇokUzak || mod == Mod.DibindeKaçar;
+            _kaçıyor = kaçan;
+            if (kaçan && Kaç(ben)) return;
+            if (kaçan && İşarettenKaç(ben)) return;
 
             if (hedef == null || hedef.Dormant) hedef = EnYakın();
             if (hedef == null) { Dur(); return; }
@@ -788,7 +1056,7 @@ namespace TekCan
             {
                 case Mod.Dövüş:
                     float menzil = pc.Weapon.Range(_t) * 0.8f + hedef.Radius;
-                    if (d > menzil) Yürü(to);
+                    if (d > menzil) { if (AlanaGirer(ben, to)) Dur(); else Yürü(to); }
                     else
                     {
                         Dur();
@@ -798,6 +1066,12 @@ namespace TekCan
                     break;
                 case Mod.UzakDur:
                     if (d < 7f) Yürü(Uzaklaş(ben, to)); else Dur();
+                    break;
+                case Mod.ÇokUzak:
+                    Yürü(Uzaklaş(ben, to));                       // hep kaç: erişilmez kal
+                    break;
+                case Mod.DibindeKaçar:
+                    if (d > 1.2f + hedef.Radius * 0.5f && !AlanaGirer(ben, to)) Yürü(to); else Dur();
                     break;
                 case Mod.DibeGir:
                 case Mod.Ölümüne:
@@ -838,14 +1112,24 @@ namespace TekCan
                     var b = _bekleyen[k];
                     _bekleyen.RemoveAt(k);
                     bool vurdu = Saat.TotalHitCost > b.hasar + 0.01f;
+                    // Tablo için daha sıkı: darbe TAM bu vuruşun karesinde mi indi. Hazırlık
+                    // boyunca BAŞKA bir yerden (rakipler, SİMSAR'ın işaretleri) yenen darbe
+                    // bu saldırıya yazılıyordu (playtest 3: kalabalıkta KOMİSYON+ 14/14).
+                    bool buVuruş = Saat.TotalHitCost > _kareDarbesi + 0.01f;
                     if (vurdu) _vuruldu++;
                     if (b.açıklık) { _açıklık++; if (vurdu) _açıklıkVuruldu++; }
+                    if (b.ad != null)
+                    {
+                        _saldırıİst.TryGetValue(b.ad, out var ist);
+                        _saldırıİst[b.ad] = new Vector2Int(ist.x + 1, ist.y + (buVuruş ? 1 : 0));
+                    }
                 }
                 // Tehdit sayımı: hazırlık başında bize dönük mü
                 if (önce != Enemy.State.Windup && şimdi == Enemy.State.Windup && e.ŞimdiVursaİsabet(ben))
                 {
                     _tehdit++;
-                    _bekleyen.Add((e, Saat.TotalHitCost, e.CurrentAttack != null && e.CurrentAttack.SafeAngle > 0f));
+                    _bekleyen.Add((e, Saat.TotalHitCost, e.CurrentAttack != null && e.CurrentAttack.SafeAngle > 0f,
+                                   _kaçıyor && e.IsBoss && e.CurrentAttack != null ? e.CurrentAttack.Name : null));
                 }
                 // Boss saldırı başlangıçları (yalnızca kovalamadan gelen = yeni saldırı)
                 if (önce == Enemy.State.Chase && şimdi == Enemy.State.Windup && e.IsBoss)
@@ -861,6 +1145,8 @@ namespace TekCan
                 }
                 if (e == _final && önce != Enemy.State.Windup && şimdi == Enemy.State.Windup && e.CurrentAttack != null)
                     _finalSaldırılar.Add(e.CurrentAttack.Name);
+                if (_p26 && e.IsBoss && önce != Enemy.State.Windup && şimdi == Enemy.State.Windup && e.CurrentAttack != null)
+                    P26Gözle(e, ben, yeni: önce == Enemy.State.Chase);
 
                 // Donmuş uyarı yayı — bir kez
                 if (_donukSS && şimdi == Enemy.State.Windup && e.IsBoss && e.KalanHazırlık < _t.bossReactionWindow * 0.6f
@@ -871,7 +1157,11 @@ namespace TekCan
                 }
                 _sonDurum[e] = şimdi;
             }
+            _kareDarbesi = Saat.TotalHitCost;
         }
+
+        /// <summary>Bir önceki karenin sonunda toplam darbe — vuruşun KENDİ karesini ayırmak için.</summary>
+        float _kareDarbesi;
 
         bool BekleyenVar(Enemy e, out int k)
         {
@@ -941,7 +1231,7 @@ namespace TekCan
             {
                 var e = kv.Key;
                 if (e == null || Time.time - kv.Value < İnsanTepkisi) continue;
-                if (!e.ŞimdiVursaİsabet(ben)) continue;
+                if (!Tehlikede(e, ben)) continue;
                 tehdit.Add(e);
                 kalan = Mathf.Min(kalan, e.KalanHazırlık);
             }
@@ -965,20 +1255,60 @@ namespace TekCan
             return true;
         }
 
-        /// <summary>16 yön, "uzaklaş"tan başlayıp sağa-sola açılarak ilk güvenli yer.</summary>
+        /// <summary>
+        /// 16 yönün her birinde ışın boyunca İLK güvenli nokta; en yakını (eşitse "uzaklaş"a yakın olan).
+        /// ⚠️ Eskiden yalnızca `mesafe` uzaklığındaki TEK noktaya bakıyordu: kenara koşulacak dev
+        /// halkada (TAM TAHSİL) o nokta arenanın dışına düşüyor, bot yanlamasına kaçıp vuruluyordu
+        /// (Faz 26 playtest, 2026-10-11: 5'te 4). İnsan en yakın güvenli yere koşar.
+        /// </summary>
         bool GüvenliYön(Vector3 ben, List<Enemy> tehdit, Vector3 uzak, float mesafe, out Vector3 yön)
         {
+            float en = float.MaxValue;
+            yön = uzak;
             for (int i = 0; i < 16; i++)
             {
                 float açı = ((i + 1) / 2) * 22.5f * (i % 2 == 0 ? 1f : -1f);
                 var d = Quaternion.Euler(0f, açı, 0f) * uzak;
-                var aday = ben + d * mesafe;
-                if (Düz(aday).magnitude > _t.arenaRadius * 0.95f) continue;
-                bool güvenli = true;
-                foreach (var e in tehdit) if (e.ŞimdiVursaİsabet(aday)) { güvenli = false; break; }
-                if (güvenli) { yön = d; return true; }
+                for (float x = 0.5f; x <= mesafe && x < en; x += 0.5f)
+                {
+                    var aday = ben + d * x;
+                    if (Düz(aday).magnitude > _t.arenaRadius * 0.95f) break;
+                    bool güvenli = true;
+                    foreach (var e in tehdit) if (Tehlikede(e, aday)) { güvenli = false; break; }
+                    if (güvenli) { en = x; yön = d; break; }
+                }
             }
-            yön = uzak;
+            return en < float.MaxValue;
+        }
+
+        /// <summary>
+        /// Bu nokta ya da 0.4 birim çevresi vurulur mu. ⚠️ Pay şart: bot güvenli yere VARINCA kaçmayı
+        /// bırakıyordu, alanın tam kenarında duruyordu.
+        /// </summary>
+        static bool Tehlikede(Enemy e, Vector3 p)
+        {
+            if (e.ŞimdiVursaİsabet(p)) return true;
+            // ⚠️ Pay yalnızca HARİTA saldırısında: her saldırıda pay bırakan bot boss'a hiç
+            // yanaşamadı, F7'yle bile MURABAHACI'yı faz 3'e taşıyamadı (playtest 3).
+            if (e.CurrentAttack == null || !e.CurrentAttack.Harita) return false;
+            foreach (var o in new[] { Vector3.right, Vector3.left, Vector3.forward, Vector3.back })
+                if (e.ŞimdiVursaİsabet(p + o * 0.4f)) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Bir sonraki adım hazırlanan bir HARİTA saldırısının alanına giriyor mu. ⚠️ Bot dövüşürken
+        /// boss'a yürüyordu: ortaya sıçrayan TAM TAHSİL'in halkasında kenarda girip çıkıyor, vuruş
+        /// anında içeride kalıyordu (Faz 26 playtest). İnsan kenarda bekler. Kısa hazırlıklı normal
+        /// saldırılarda beklemek botu pasifleştiriyordu — orada eski davranış.
+        /// </summary>
+        static bool AlanaGirer(Vector3 ben, Vector3 yön)
+        {
+            var sonraki = ben + yön.normalized * 1f;
+            foreach (var e in Enemy.All)
+                if (e != null && e.CurrentState == Enemy.State.Windup && e.CurrentAttack != null && e.CurrentAttack.Harita
+                    && Tehlikede(e, sonraki) && !e.ŞimdiVursaİsabet(ben))
+                    return true;
             return false;
         }
 
