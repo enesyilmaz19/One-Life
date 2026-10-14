@@ -253,8 +253,9 @@ namespace TekCan.EditorTools
                 for (int bölge = 0; bölge < t.regionsPerAct; bölge++)
                 {
                     typeof(RoomManager).GetMethod("EnterRegion", Özel).Invoke(rm, new object[] { bölge, 1 });
-                    for (int oda = 1; oda <= t.roomsPerRegion - 2; oda++)
+                    for (int oda = 1; oda <= t.RoomsInRegion; oda++)
                     {
+                        if (RoomManager.Tür(t, oda) != RoomManager.OdaTürü.Dövüş) continue;   // Faz 28
                         typeof(RoomManager).GetMethod("EnterRoom", Özel).Invoke(rm, new object[] { oda });
                         görülen.Add(rm.Layout.Name);
                     }

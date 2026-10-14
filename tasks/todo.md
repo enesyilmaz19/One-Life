@@ -4,9 +4,11 @@
 
 | # | Ne | Nasıl | Nereye |
 |---|---|---|---|
-| 1 | 🟢 **Faz 28 başlasın mı** | Yapı + tempo: ara bölgeler, mini boss, kontrol noktası, nemesis toparlanması, dalgalı odalar, uzun boss. Önce 1 bölge | "başla" |
 | 2 | 🎮 *(isteğe bağlı)* **Faz 26 his testi** | Bot 7 maddeyi oynadı (aşağıda). Sana kalan his: TAM TAHSİL/İHALE sıçraması okunuyor mu, ×5 ısrar adil mi | Gördüklerini yaz |
 | 4 | ✏️ **Adlandırma** | Kahraman, 5 boss, 5 bölge, 3 diriliş eşyası. Şimdikiler çalışma adı | `docs/TASARIM.md` "Açık" |
+| 6 | 🎮 **Faz 28 testi** | F6 yeni koşu → dövüş odası 5 dalga · **M** sıradaki mini boss · mini ölünce sunak (kontrol noktası) · eşyasız ölümde kontrol noktasına dönüş, birkaç ölümde "… TOPARLANDI" · **B** ana boss (saat yavaş akar). His: oda süresi, dalgalar, mini boss, saatin gidişi | Gördüklerini yaz |
+| 7 | ❓ **Ekonomi kararı** | İyi oynayıp alan kartopu, orta oyuncu erken ölüyor. Seçenekler mesajda | Cevap yaz |
+| 8 | ❓ **ÇAĞRI'nın rolü** | Eşyasız ölüm artık zaten kontrol noktasına döndürüyor; ÇAĞRI aynı işi yapıyor | Cevap yaz |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 
 ---
@@ -217,6 +219,86 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 - [x] Uyuyan boss'un süre etiketi donuyordu → uykuda da güncelleniyor
 - [x] Otopilot K1 payı → "kapanıştan değil girişten yakın mı"
 - [x] Otopilot üst yazısı → sol üst
+
+---
+
+## ⚔️ FAZ 29 — Silaha özel yükseltmeler + yeni sunak güçlendirmeleri — **PLAN** (2026-10-14)
+
+Enes: *"bu düzenlemelerden sonra commit at ve sonraki faza geç"*. Kaynak: eski "Faz 20" listesi (aşağıda) + birleşik playtest maddeleri 5, 7, 8.
+
+**Kararlaştırılmış — yapılıyor**
+- [ ] **A. İPOTEK:** dash-atak = bugünkü sağ tık (HACİZ İHBARI: geniş, geç patlayan işaret). **Yeni sağ tık = İPOTEK YAĞMURU:** büyük bir alanın içindeki düşmanların üstüne birkaç saniye boyunca peş peşe ipotek.
+- [ ] **B. FAİZLİ İCRA yeniden:** bedel saatin yüzdesi, hasar ödenen bedele bağlı. Eşiğin altındaysan İCRA seni öldürmez; eşiğin üstündeysen öldürünce zaman vermez. *Önerim:* eşik = hasat doyma tavanı (aynı sayı, yeni kural yok).
+
+**Öneri — Enes'in onayını bekliyor**
+- [ ] **C. Silah sunağı (eski Faz 20):** ana boss ölünce boss odası sunağa dönüyor (saat durur). Kuşandığın silaha özel 2 yükseltme satıyor; koşu boyu kalıyor. Fiyat sunak kuralıyla (en az saatin %10'u).
+  | Silah | Yükseltme önerisi |
+  |---|---|
+  | KONİ | GENİŞ AĞ (açı +) · SÜPÜRME bekleme −%30 · GERİ TEPME (itme +) |
+  | FAİZLİ | BİLEŞİK (öldürme iadesi ×2 → ×3) · İCRA bekleme −%30 · TEMERRÜT (ıskada bedelin yarısı geri) |
+  | HACİZ | UZUN KOL (menzil +) · DELİCİ (2 hedef) · DAR ÖLÜ BÖLGE |
+  | İPOTEK | ÇİFT TAPU (aynı anda 2 işaret) · HIZLI TAPU (gecikme −%30) · GENİŞ ARSA (alan +) |
+  | İFLAS | DİP (panik eşiği yukarı) · SERİ (TASFİYE +2 vuruş) · KAPANIŞ (dipte hasat +) |
+- [ ] **D. Yeni ara bölge sunakları:** SİGORTA (vuruş bedeli −%8, azalan getiri — ilerleme zorluğuna karşı) · SABIR (özel saldırı bekleme −%10). *Önerim:* sabit 3 (hasat / hasar / dash) + her sunak odasında dönen 1.
+- [ ] E. Kapılar + bozma · bot: silah sunağı alımı ve İPOTEK YAĞMURU / İCRA ölçümü
+
+---
+
+## 🏗️ FAZ 28 — Yapı + tempo — **BİTTİ** (2026-10-13 · ekonomi 2026-10-14)
+
+Enes: *"başla"* (YAPI taslağı ve tempo önerisi onaylı). Önce 1 bölge ile ölçülür.
+
+**Oda düzeni (bölge başına):** `[7 dövüş odası → MİNİ BOSS → SUNAK]` × 5 ara bölge → **ANA BOSS** = 46 oda.
+- Sunak odası her mini boss'tan sonra; aynı zamanda **kontrol noktası** (saat durur, onarım sunağı orada). Bölgenin ilk odası da kontrol noktası.
+- Dövüş odalarının büyümesi ara bölge İÇİNDE (oda 1→7) + ara bölgeler arası çarpan; bölge 46 odaya çıkınca eski "oda numarası" formülü patlamasın.
+
+**Mini boss:** ana boss'un dağarcığından küçük bir dilim (her mini farklı 2–3 saldırı, tek faz, çağırma yok). *"Mini boss'lar ana boss'un saldırılarını tek tek öğretiyor, ana boss hepsini birden yapıyor."* Kendi içeriği (25 özgün mini boss) Faz 30+.
+
+**Ölüm:**
+- Diriliş eşyası varsa bugünkü gibi çalışır. **Eşya yoksa oyun BİTMEZ → son kontrol noktasına** dönülür.
+- **Nemesis toparlanması:** her ölümde o odanın sana kaybettirdiği saniyeler (oda girişindeki saat + odada hasat ettiğin) son temizlenmiş mini boss'un defterine yazılır. Defter, mini boss havuzunun ×`miniBossRecoveryShare` katına ulaşınca mini boss **geri gelir**: kontrol noktası bir öncekine kayar, mini boss defteri kadar BÜYÜMÜŞ olarak tekrar dövüşülür. Ana boss'un temizlediği bölge geri gelmez.
+- ❓ Faz sonunda sorulacak: ÇAĞRI (kontrol noktasına dönüş eşyası) artık eşyasız ölümle aynı işi yapıyor — rolü ne olsun?
+
+**Tempo:** dövüş odası **dalgalarla** (~1.5 dk), mini boss 3–4 dk, ana boss 6–8 dk; boss/mini boss odasında saat akışı yavaş (`bossRoomDrainMultiplier`). Bot ile 1. bölge ölçülür.
+
+**Adımlar**
+- [x] A. Oda düzeni: `RoomManager.Tür` tek kaynak (oyun + zorluk raporu + kapılar); `roomsPerRegion` ve `checkpointEveryRooms` kalktı → `subRegionsPerRegion` 5 · `roomsPerSubRegion` 7 · `RoomsInRegion` 46. Test tuşu **M** = sıradaki mini boss. Eski kapılar yeni düzene uyarlandı (Faz 4, 9, 10, 13, 17, 19, 24, 25, 26, 27)
+- [x] B. Mini boss (`MiniBossKind`): ana boss'un faz 1'inden 2 yakın + 1 uzak (sonuncusu + harita), tek faz, havuz ana boss'un ×0.5'i; geçici unvanlar ÇIRAK · KÂTİP · MEMUR · VEKİL · KÂHYA. Boss listesinde değil (tekel/kapsama kapıları görmesin)
+- [x] C. Ölüm: eşyasız ölüm → kontrol noktası (oyun bitmiyor); toparlanma defteri (`SaveData.miniLedger`), eşik = mini havuzu × 1.5 (`miniBossRecoveryShare`); geri gelen mini nemesis kadar büyük; HUD "… TOPARLANDI — kontrol noktası geri kaydı"
+- [x] D. Tempo: 5 dalga (`roomWaves`), oda havuzu ara bölge içinde ×1.10 (`roomPoolGrowth`), ara bölgeler arası ×1.12, mini boss havuzu ×5 (`miniBossPoolShare`), ana boss ×12 (`mainBossPoolScale`), boss/mini odasında akış ×0.35; sunak 12 sn × 1.15, sunak başına türden 1 alım, getiri azalması ×0.9
+- [x] E. `Faz28SelfCheck` 19/19 · tüm kapılar 25/25 · 8 bozmanın 8'i kırmızı (3 koşuda, birbirini örtmesin diye)
+- [x] F. Bot: 1. bölge tam ölçüm (`Otopilot — 1. bölge ölçümü`, kalibrasyon 2)
+  | | Ölçüm |
+  |---|---|
+  | 1. bölge | **46.7 dk** · ara bölgeler 8.3 · 8.1 · 8.3 · 8.4 · 13.5 dk |
+  | Dövüş odası | ortalama 49 sn (26–70) — insan için ~1–1.5 dk |
+  | Mini boss | 2.4–3.3 dk · TAHSİLDAR 4.4 dk |
+  | Saat (başlangıç 110) | mini girişleri 469 → 1033 → 1573 → 2722 → 4181 · bölge sonu **4208** |
+  | Bot | vurulma %3 · 15 alım (hasat %51, hasar 5.5, dash 0.38) |
+- [x] **HATA — float saat:** bot ~3600 kare/sn koşuyor; büyük float saatte kare başı akış (~0.0003 sn) yuvarlanıp kayboluyordu → ilk ölçümün 9931 sn'si yarı yarıya ölçüm hatasıydı. `Clock` birikimleri `double`. Kapı: `Faz28SelfCheck` 20/20 (9000 sn'lik saatte küçük kareler), bozunca 9.77 ≠ 7.50 kırmızı. Ders 16.
+- [x] Araçlar: oda hesabında `süre / saat akışı / aura` · bot senaryoları `AraBolge1Olcum` (~10 dk) ve `MiniTeshis` (`[NABIZ]`) · zorluk raporu dalgaları ayrı sayıyor (aura ~5 kat abartılıyordu). Zırhlı/iri sayısı her oda girişinde sıfırlanıyor.
+- [x] Tüm kapılar ✅ TEMİZ.
+- ~~Ekonomi iki uçlu~~ → **G** (Enes 2026-10-14).
+
+**G. Ekonomi + ÇAĞRI + mini boss'lar (Enes 2026-10-14)**
+> *"başlarda kolay ve oyuncu dostu, ilerledikçe zorlaşan ve bu zorluğu bufflar ile kapatmaya çalışan bir yapı lazım. İyi oyuncu bile o kadar absürt saatlere ulaşmamalı… Seçenek B daha iyi: almazsa boss'ları kesemeyecek hale gelmeli ama çok hardcore sevenleri de tuttukları zaman ile ödüllendirmeli."*
+- [x] **Hasat doyması:** saat tavanın üstündeyse hasat ×(tavan / saat). Tavan 250 sn (1. bölge), her bölgede ×1.35 (`harvestSoftCap`, `harvestSoftCapGrowth`). HUD: "SAAT DOLU — hasat ×0.50".
+- [x] **Sunak = B:** fiyat en az saatin %10'u (`altarPricePercent`). Biriktiren daha çok öder; almayan tamponunu tutar ama güçlenmez.
+- [x] **İlerleme:** düşman vuruşu her ara bölgede ×1.09 pahalanıyor (`hitCostProgressGrowth`, bölgeler boyunca sayılır: son ara bölgede ×7.9). Başlangıç ucuzladı: darbe 4 → **1.5 sn**, boş düşman 1.5 → 0.6.
+- [x] **ÇAĞRI = bir önceki odanın başı** (oradaki saat ve güçle, K2 tabanı 20 sn). Mini boss geri geldiyse kontrol noktasına (ötesine atlatamaz). Bölge sınırını geçmez.
+- [x] **Mini boss'lar 5 bölgenin hepsinde** (zaten öyleydi) — ama TAHSİLDAR ve EKSPER'de 4. mini 1.'yi tekrarlıyordu. Artık ilk üçü faz 1'den, son ikisi faz 2'den (`+`'lı saldırılar). Kapı: 25 mini'nin dağarcığı farklı.
+- [x] Zorluk raporu düzeltildi: aura oyunun kendi değerinden (`Enemy.AuraOranı`), mini boss aurası 10 kat abartılıyordu.
+- [x] Kapılar: `Faz28SelfCheck` 25 kontrol (ÇAĞRI ×2, mini boss'lar, doyma, sunak yüzdesi, ilerleme) · 6 bozmanın 6'sı kırmızı · tüm kapılar ✅.
+- **Zorluk raporu (yeni ekonomi):**
+  | Oyuncu | Sonuç |
+  |---|---|
+  | TEMİZ + alıyor | koşuyu **1302 sn** ile bitiriyor · saat 1. bölgede ≤ ~700, en çok ~1580 |
+  | TEMİZ, almıyor | bölge 2'de ölüyor |
+  | ORTA + alıyor | 1. bölgeyi geçiyor, **bölge 2'de** zorlanıp ölüyor |
+  | ORTA, almıyor | 1. bölgenin sonunda ölüyor |
+- [x] **Bot — 1. bölge (yeni ekonomi):** 45.9 dk · oda ort. 48 sn · mini 2.4–2.9 dk · TAHSİLDAR 4.4 dk · saat en çok **~770**, bölge sonu **467** (önce 4208; ilk ölçümde 9931).
+- [x] **Bot — mini boss testi** (`MiniTesti`: 25 mini, o noktada beklenen güç, saat = doyma tavanı). Süre (oyun zamanı): bölge 1–3 **1.5–3.0 dk**, bölge 4 **2.5–4.3**, bölge 5 **3.1–5.4** — ilerledikçe uzuyor. Bot neredeyse hiç vurulmuyor (%1) ve mini boss'tan genelde KÂRLI çıkıyor (+%4…+%32 saat). Asıl tehlike **KUŞATMA** (11/48 isabet): KÂTİP · TAHSİLDAR −209 sn, KÂTİP · SİMSAR −255 sn. İnsan için mini boss'un bedeli vurulmak.
+- Faz 28 COMMIT'SİZ.
 
 ---
 

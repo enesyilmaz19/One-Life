@@ -135,13 +135,16 @@ namespace TekCan
             // ⚠️ GERÇEK hasat gösteriliyor — bölge kuralı ve boss cezası dâhil.
             // Enes "EKSPER ne yapıyordu?" diye sordu: mekaniği GÖRÜNMÜYORDU.
             // Ham oranı göstermek yalan söylüyordu; artık kesinti ekranda.
+            // DOYMA da (Faz 28): saat tavanı geçince hasat neden düştü, ekranda yazmalı.
             float kesinti = Region.Harvest * BossKind.ActiveHarvestMultiplier();
-            float gerçek = _clock.HarvestRate * kesinti;
-            bool kesintili = kesinti < 0.999f;
+            float doyma = _clock.HasatDoyması;
+            float gerçek = _clock.HarvestRate * kesinti * doyma;
+            bool kesintili = kesinti < 0.999f, dolu = doyma < 0.999f;
 
-            if (kesintili) _small.normal.textColor = new Color(1f, 0.6f, 0.4f);
+            if (kesintili || dolu) _small.normal.textColor = new Color(1f, 0.6f, 0.4f);
             GUI.Label(r, $"hasat %{gerçek * 100f:0}" +
                          (kesintili ? $"  (%{_clock.HarvestRate * 100f:0} → KESİNTİDE)" : "") +
+                         (dolu ? $"  (SAAT DOLU — hasat ×{doyma:0.00})" : "") +
                          $"   ·   hasar {_clock.AttackDamage:0.0}", _small);
             _small.normal.textColor = Color.white;
 
@@ -319,6 +322,16 @@ namespace TekCan
                 break;
             }
 
+            // ⚠️ TOPARLANMA GÖRÜNMELİ (Faz 28): kontrol noktası geri kaydıysa oyuncu NEDEN
+            // önceki ara bölgeye düştüğünü bilmeli — yoksa "kayıt bozuldu" der.
+            if (Time.unscaledTime - RevivalSystem.SonGeriGelmeAnı < 6f && RevivalSystem.SonGeriGelen != null)
+            {
+                _mid.normal.textColor = new Color(1f, 0.5f, 0.4f);
+                GUI.Label(new Rect(0f, Screen.height * 0.40f, Screen.width, 34f),
+                          $"{RevivalSystem.SonGeriGelen} TOPARLANDI — kontrol noktası geri kaydı", _mid);
+                _mid.normal.textColor = Color.white;
+            }
+
             // ⚠️ NEMESİS GÖRÜNMELİ. Boss sessizce büyüseydi oyuncu "bu neden bu
             // kadar kalın" diye sorar ve cevabı hiçbir yerde olmazdı — mekanik
             // doğru, sunum yok (ders 10). Borç ekranda yazıyor.
@@ -430,7 +443,7 @@ namespace TekCan
 
             _mid.normal.textColor = wm.Cleared
                 ? new Color(0.55f, 1f, 0.65f)
-                : (wm.IsBossRoom ? new Color(1f, 0.45f, 0.4f) : new Color(0.75f, 0.75f, 0.8f));
+                : (wm.IsBossRoom || wm.IsMiniBossRoom ? new Color(1f, 0.45f, 0.4f) : new Color(0.75f, 0.75f, 0.8f));
 
             GUI.Label(new Rect(0f, Screen.height * 0.30f, Screen.width, 40f), wm.Prompt(), _mid);
 

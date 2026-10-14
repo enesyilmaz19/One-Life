@@ -174,7 +174,14 @@ namespace TekCan
                        * Region.HitCost                            // AĞIRLIK bölgesi kuralı
                        * Growth                                    // ZAMANAŞIMI
                        * Rank.HitCostMultiplier(_t)                // İRİ: daha çok hasar
-                       * (IsBoss ? _t.bossHitCostMultiplier : 1f);
+                       * (IsBoss ? _t.bossHitCostMultiplier : 1f)
+                       * İlerleme();                               // İLERLEDİKÇE pahalı (Faz 28)
+
+        float İlerleme()
+        {
+            var rm = RoomManager.Instance;
+            return rm != null ? RoomManager.İlerlemeÇarpanı(_t, rm.RegionIndex, rm.SubRegion) : 1f;
+        }
 
         /// <summary>
         /// ZAMANAŞIMI'nın büyüme çarpanı — yaşadığı süreyle artıyor.
@@ -236,7 +243,9 @@ namespace TekCan
                 // matematiksel olarak YENİLEMEZ olurdu ve kalıcı ölüm bir ceza değil
                 // bir DUVAR olurdu. Nemesis hikâye anlatmalı, koşuyu kilitlememeli.
                 float tavan = TimeLeft * tuning.nemesisMaxShare;
-                NemesisDebt = Mathf.Min(SaveFile.BossLedger(Boss) * tuning.nemesisPoolShare, tavan);
+                // Mini boss'un defteri ana boss'unki DEĞİL — toparlanma defteri (Faz 28).
+                float defter = Boss is MiniBossKind mini ? SaveFile.MiniDefter(mini.AraBölge) : SaveFile.BossLedger(Boss);
+                NemesisDebt = Mathf.Min(defter * tuning.nemesisPoolShare, tavan);
                 TimeLeft += NemesisDebt;
             }
 
@@ -1079,7 +1088,8 @@ namespace TekCan
                              * Region.Harvest                      // KITLIK bölgesi kuralı
                              * BossKind.ActiveHarvestMultiplier()  // EKSPER'in suçu
                              * InsuredHarvest()                    // SİGORTA koruması
-                             * (IsBoss ? _t.bossHarvestMultiplier : 1f);
+                             * (IsBoss ? _t.bossHarvestMultiplier : 1f)
+                             * clock.HasatDoyması;                 // DOYMA: saat büyüdükçe hasat azalır
                 clock.Add(gain);
 
                 // Zaman ondan sana AKIYOR — kazanç sıfırsa (KASA) hiçbir şey akmaz,
@@ -1120,6 +1130,14 @@ namespace TekCan
         /// (editör modunda 0). Aksi hâlde "aura tanımlı mı" diye ÖZELLİK test edilirdi,
         /// "saat gerçekten indi mi" diye ETKİ değil — DURGUN dersinin tam tekrarı olurdu.
         /// </summary>
+        /// <summary>
+        /// Saniyede emdiği — TEK kaynak: oyun (`ApplyAura`) ve zorluk raporu buna soruyor. Rapor kendi
+        /// formülünü yazıyordu ve mini boss'un yarım aurası yerine genel boss aurasını sayıyordu (10 kat).
+        /// </summary>
+        public float AuraOranı => (Boss != null ? Boss.AuraDrain(_t, Phase)
+                                                : (IsBoss ? _t.bossAuraDrain : 0f))
+                                + Kind.AuraDrain(_t) * Rank.TraitMultiplier(_t);   // İRİ SIZINTI
+
         public void ApplyAura(float dt)
         {
             // ⚠️ UYKU KURALI BURADA DA. `Update` uykudayken bu metodu zaten
@@ -1129,9 +1147,7 @@ namespace TekCan
             // çağıranların geçtiği YERE konur, çağıranlardan birine değil.
             if (Dormant || Hollow || _t == null) return;
 
-            float aura = (Boss != null ? Boss.AuraDrain(_t, Phase)
-                                       : (IsBoss ? _t.bossAuraDrain : 0f))
-                       + Kind.AuraDrain(_t) * Rank.TraitMultiplier(_t);   // İRİ SIZINTI
+            float aura = AuraOranı;
             if (aura <= 0f) return;
 
             Clock.Instance?.Spend(aura * dt);

@@ -38,7 +38,7 @@ namespace TekCan
         // yorumlayacağım" dedi — ama "azaldı" tek başına teşhis değil. Zamanın
         // NEREYE gittiğini ayırmak lazım: hasat mı yetmedi, akış mı yedi,
         // darbe mi pahalıydı. `ZorlukEgrisi` raporunun canlı karşılığı.
-        float _girişSaat, _girişHasat, _girişHarcama, _girişBağış, _girişDarbe;
+        float _girişSaat, _girişHasat, _girişHarcama, _girişBağış, _girişDarbe, _girişSüre, _girişAkış;
 
         /// <summary>Odaya girerken saat kaçtı, temizlendiğinde kaça düştü.</summary>
         public float RoomNet { get; private set; }
@@ -57,7 +57,15 @@ namespace TekCan
             _girişHarcama = c.TotalSpent;
             _girişBağış = c.TotalGranted;
             _girişDarbe = c.TotalHitCost;
+            _girişSüre = c.RunTime;
+            _girişAkış = c.TotalTickDrain;
         }
+
+        /// <summary>
+        /// Bu odada ölürsen KAYBETTİĞİN saniyeler (Faz 28): odaya girerken saatin + burada hasat
+        /// ettiğin. Nemesis toparlanması bunu son temizlenmiş mini boss'un defterine yazıyor.
+        /// </summary>
+        public float ÖlümKaybı => Clock.Instance != null ? _girişSaat + (Clock.Instance.TotalHarvested - _girişHasat) : 0f;
 
         /// <summary>Bu odada dışarıdan verilen zaman (F5 ya da diriliş eşyası).</summary>
         public float RoomGranted { get; private set; }
@@ -101,14 +109,58 @@ namespace TekCan
             string ağır = RoomHuge > 0 ? $" · ⚠️ İRİ ODASI ({RoomHuge} mini boss, {RoomArmored} zırhlı)"
                        : RoomArmored > 0 ? $" · ⚠️ AĞIR ODA ({RoomArmored} zırhlı)" : "";
             Debug.Log($"[ODA HESABI] bölge {RegionIndex + 1} oda {Room} ({Layout.Name}){ağır} — " +
-                      $"hasat +{RoomHarvest:0.0} · akış −{RoomDrain:0.0} · " +
+                      $"hasat +{RoomHarvest:0.0} · akış −{RoomDrain:0.0} " +
+                      $"(süre {c.RunTime - _girişSüre:0} sn, saat akışı {c.TotalTickDrain - _girişAkış:0.0}, aura {RoomDrain - (c.TotalTickDrain - _girişAkış):0.0}) · " +
                       $"darbe −{RoomHitCost:0.0} · sunak −{RoomSpent:0.0} · " +
                       $"NET {RoomNet - RoomGranted:+0.0;-0.0}" + bağış);
             // ⚠️ Ağır oda ETİKETİ NET'in yanında duruyor: kötü bir NET gördüğünde
             // "eğri mi sertleşti, oda mı ağırdı" sorusu aynı satırda cevaplanıyor.
         }
 
-        public bool IsBossRoom => Room >= _t.roomsPerRegion;
+        // ── YAPI (Faz 28) ──────────────────────────────────────────────────────
+        // Enes: *"her bossun bölgesi var… bölge içinde bölgeler var, mini bossların temizlendiği
+        // yerde o ara bölge kayboluyor, checkpoint gibi oluyor."* Bir bölge:
+        //     [dövüş × N → MİNİ BOSS → SUNAK] × ara bölge sayısı → ANA BOSS
+        // Sunak odası aynı zamanda KONTROL NOKTASI (saat durur, onarım orada).
+        // ⚠️ Oda türünü TEK fonksiyon söylüyor (`Tür`) — oyun, zorluk raporu ve kapılar ona
+        // soruyor, kendi formülünü yazmıyor (eski "roomsPerRegion − 1 = sunak" yedi yere dağılmıştı).
+        public enum OdaTürü { Dövüş, MiniBoss, Sunak, Boss }
+
+        public static OdaTürü Tür(Tuning t, int oda)
+        {
+            if (oda >= t.RoomsInRegion) return OdaTürü.Boss;
+            int yer = (Mathf.Max(1, oda) - 1) % t.BlokBoyu;
+            return yer < t.DövüşOdası ? OdaTürü.Dövüş
+                 : yer == t.DövüşOdası ? OdaTürü.MiniBoss : OdaTürü.Sunak;
+        }
+
+        /// <summary>Odanın ara bölgesi (0'dan). Ana boss odası son ara bölgeye sayılıyor.</summary>
+        /// <summary>
+        /// İLERLEME (Enes 2026-10-14: "başlarda kolay, ilerledikçe zorlaşan"): düşman vuruşunun bedeli
+        /// her ara bölgede ×`hitCostProgressGrowth`, bölgeler boyunca sayılarak. 1. ara bölge ×1.
+        /// </summary>
+        public static float İlerlemeÇarpanı(Tuning t, int bölge, int araBölge)
+            => Mathf.Pow(t.hitCostProgressGrowth, bölge * Mathf.Max(1, t.subRegionsPerRegion) + araBölge);
+
+        public static int AraBölge(Tuning t, int oda)
+            => Mathf.Min((Mathf.Max(1, oda) - 1) / t.BlokBoyu, Mathf.Max(1, t.subRegionsPerRegion) - 1);
+
+        /// <summary>Ara bölgedeki kaçıncı oda (1'den) — dövüş odalarının büyümesi buna göre.</summary>
+        public static int AraOda(Tuning t, int oda) => (Mathf.Max(1, oda) - 1) % t.BlokBoyu + 1;
+
+        /// <summary>`s`. ara bölgenin mini boss odası ve ardındaki sunak (kontrol noktası) odası.</summary>
+        public static int MiniBossOdası(Tuning t, int s) => s * t.BlokBoyu + t.DövüşOdası + 1;
+        public static int SunakOdası(Tuning t, int s) => (s + 1) * t.BlokBoyu;
+
+        /// <summary>Bölgenin taban boss havuzu (çarpan) — ana ve mini boss buradan.</summary>
+        static float BölgeHavuzu(Tuning t, int bölge) => t.bossPoolMultiplier * Mathf.Pow(t.regionBossGrowth, bölge);
+        public static float AnaBossHavuzu(Tuning t, int bölge) => BölgeHavuzu(t, bölge) * t.mainBossPoolScale;
+        public static float MiniBossHavuzu(Tuning t, int bölge, int s)
+            => BölgeHavuzu(t, bölge) * t.miniBossPoolShare * Mathf.Pow(t.subRegionPoolGrowth, s);
+
+        public bool IsBossRoom => Tür(_t, Room) == OdaTürü.Boss;
+        public bool IsMiniBossRoom => Tür(_t, Room) == OdaTürü.MiniBoss;
+        public int SubRegion => AraBölge(_t, Room);
 
         /// <summary>
         /// SUNAK ODASI — boss'tan hemen önceki oda. Düşman YOK, yalnızca sunaklar.
@@ -126,7 +178,7 @@ namespace TekCan
         /// ⚠️ Ve boss'tan HEMEN ÖNCE: alışverişi bir sınavın eşiğinde yapıyorsun,
         /// yani "ne kadar hazırım" sorusu somut bir düşmana bakarak soruluyor.
         /// </summary>
-        public bool IsAltarRoom => _t.roomsPerRegion >= 3 && Room == _t.roomsPerRegion - 1;
+        public bool IsAltarRoom => Tür(_t, Room) == OdaTürü.Sunak;
         public bool Cleared { get; private set; }
         public RoomLayout Layout { get; private set; }
 
@@ -168,10 +220,10 @@ namespace TekCan
         }
 
         /// <summary>
-        /// Bu oda bir checkpoint mi. Greybox'ta ölçü ODA; gerçek oyunda 30dk-1sa'lik
-        /// kesitler olacak (bkz. TASARIM.md).
+        /// Kontrol noktası: bölgenin ilk odası ve her mini boss'tan sonraki sunak odası (Faz 28).
+        /// Eskiden "her 3 odada bir" idi — greybox ölçüsüydü, yapı gelince kalktı.
         /// </summary>
-        public bool IsCheckpointRoom => (Room - 1) % Mathf.Max(1, _t.checkpointEveryRooms) == 0;
+        public bool IsCheckpointRoom => Room == 1 || IsAltarRoom;
 
         /// <summary>
         /// ⚠️ Checkpoint HEMEN diske yazılır. Ölüm anında yazmak yetmiyor — checkpoint
@@ -224,6 +276,12 @@ namespace TekCan
             if (s == null || c == null) return;
             if (RevivalSystem.Instance != null && RevivalSystem.Instance.LastStandArmed) return;
 
+            // ÇAĞRI'nın hedefi bir önceki odanın başı. Aynı oda yeniden kuruluyorsa (A/B, ÇAĞRI dönüşü)
+            // kaymıyor; bölge değiştiyse ya da oda başı kaydı yoksa (ölümden sonra) hedef bu odanın kendisi.
+            bool aynıOda = s.resumeRoom == Room && s.resumeRegion == RegionIndex;
+            bool öncekiVar = s.resumeRoom > 0 && s.resumeRegion == RegionIndex && !aynıOda;
+            if (öncekiVar) ÇağrıyaKopyala(s);
+
             s.resumeRoom = Room;
             s.resumeRegion = RegionIndex;
             s.resumeSeconds = c.Seconds;
@@ -231,7 +289,15 @@ namespace TekCan
             s.resumeDamage = c.AttackDamage;
             s.resumeDash = c.DashCooldown;
             s.resumeBoughtCounts = c.AlınanKopya;
+            if (!öncekiVar && !aynıOda) ÇağrıyaKopyala(s);
             SaveFile.Flush();
+        }
+
+        static void ÇağrıyaKopyala(SaveData s)
+        {
+            s.recallRoom = s.resumeRoom; s.recallRegion = s.resumeRegion; s.recallSeconds = s.resumeSeconds;
+            s.recallHarvest = s.resumeHarvest; s.recallDamage = s.resumeDamage; s.recallDash = s.resumeDash;
+            s.recallBoughtCounts = s.resumeBoughtCounts;
         }
 
         void Update()
@@ -250,13 +316,24 @@ namespace TekCan
             // odası olduğu için her atlayış diske "buradasın" yazıyordu; Enes N ile
             // bölgeleri gezip bir daha 1. bölgeye DÖNEMEDİ. Kirli koşu artık diske
             // gitmiyor, yani kayıt olduğu yerde kalıyor.
-            if (SkipToBossPressed()) { SaveFile.MarkTestJump(); EnterRoom(_t.roomsPerRegion); return; }
-            if (SkipRegionPressed()) { SaveFile.MarkTestJump(); EnterRegion(RegionIndex + 1); return; }
+            if (SkipToBossPressed()) { SaveFile.MarkTestJump(); EnterRoom(_t.RoomsInRegion); return; }
+            if (SkipToMiniPressed()) { SaveFile.MarkTestJump(); EnterRoom(SıradakiMini()); return; }
+            if (SkipRegionPressed()) { SaveFile.MarkTestJump(); SaveFile.MiniDefterleriSil(); EnterRegion(RegionIndex + 1); return; }
             if (RefillClockPressed()) { SaveFile.MarkTestJump(); RefillClock(); }
             if (FullPowerPressed()) FullPower();
 
             if (Cleared || AnyEnemyAlive()) return;
+            // DALGA (Faz 28): oda temizlenmeden sıradaki dalga doğuyor; sonuncudan sonra kapı.
+            if (_kalanDalga > 0) { _kalanDalga--; DalgaGönder(Mathf.Max(1, _t.roomWaves) - 1 - _kalanDalga); return; }
             OnCleared();
+        }
+
+        /// <summary>Bu odadan sonraki ilk mini boss odası (M tuşu).</summary>
+        int SıradakiMini()
+        {
+            int s = SubRegion;
+            if (Room >= MiniBossOdası(_t, s)) s++;
+            return s >= Mathf.Max(1, _t.subRegionsPerRegion) ? _t.RoomsInRegion : MiniBossOdası(_t, s);
         }
 
         void OnCleared()
@@ -278,6 +355,9 @@ namespace TekCan
                 return;
             }
 
+            // Mini boss öldü: toparlanma borcu kapandı (geri gelmişse büyümesi de).
+            if (IsMiniBossRoom) SaveFile.MiniDefterSıfırla(SubRegion);
+
             if (_gate != null) _gate.Open();
         }
 
@@ -294,7 +374,8 @@ namespace TekCan
         /// </summary>
         public void NextRoom()
         {
-            if (IsBossRoom) EnterRegion(RegionIndex + 1);
+            // Ana boss öldü: bölge KALKTI, mini boss'ları bir daha geri gelmez.
+            if (IsBossRoom) { SaveFile.MiniDefterleriSil(); EnterRegion(RegionIndex + 1); }
             else EnterRoom(Room + 1);
         }
 
@@ -341,6 +422,11 @@ namespace TekCan
             // ayrı ayrı hatırlamam gerekirdi — ve biri unutulunca saat KALICI olarak
             // donardı. Zemin renginde aynı hatayı bir kez yaptım, aynısını tekrarlamıyorum.
             if (Clock.Instance != null) Clock.Instance.Frozen = false;
+            // Boss ve mini boss odasında akış yavaş (Faz 28 tempo) — aynı gerekçeyle tek yerde.
+            if (Clock.Instance != null)
+                Clock.Instance.DrainMultiplier = IsBossRoom || IsMiniBossRoom ? _t.bossRoomDrainMultiplier : 1f;
+            _kalanDalga = 0;
+            RoomArmored = 0; RoomHuge = 0;   // mini/boss/sunak odası önceki odanın sayısını taşımasın
 
             if (IsBossRoom)
             {
@@ -348,6 +434,7 @@ namespace TekCan
                 // Son bölge değilse boss odasının da çıkışı var: devrilince zincir sürüyor.
                 if (!IsLastRegion) PlaceExit();
             }
+            else if (IsMiniBossRoom) { PlaceMiniBoss(); PlaceExit(); }
             else if (IsAltarRoom)
             {
                 // Düşman yok — `OnCleared` ilk karede kendiliğinden çalışıp kapıyı
@@ -410,28 +497,59 @@ namespace TekCan
             _roomRoot = null;
         }
 
+        /// <summary>Bu odada daha kaç dalga doğacak (Faz 28).</summary>
+        int _kalanDalga;
+        public int RemainingWaves => _kalanDalga;
+
         void PlaceEnemies()
         {
-            int count = Mathf.RoundToInt(_t.roomBaseCount + _t.roomCountGrowth * (Room - 1));
-            float poolMult = Mathf.Pow(_t.roomPoolGrowth, Room - 1);
-
             RoomArmored = 0; RoomHuge = 0;
+            _kalanDalga = Mathf.Max(1, _t.roomWaves) - 1;
+            DalgaGönder(0);
+        }
+
+        /// <summary>
+        /// Bir dalga. ⚠️ Büyüme ARA BÖLGE İÇİNDEKİ oda sırasına göre (1→N) + ara bölgeler arası
+        /// çarpan. Eskiden bölgedeki oda numarasıydı; bölge 46 odaya çıkınca son odada
+        /// 70 düşman, havuz ×18 olurdu.
+        /// ⚠️ Dalga oyuncunun DİBİNE doğmasın: yakın konum arenanın karşısına yansıtılıyor.
+        /// </summary>
+        void DalgaGönder(int dalga)
+        {
+            int r = AraOda(_t, Room);
+            int count = Mathf.RoundToInt(_t.roomBaseCount + _t.roomCountGrowth * (r - 1));
+            float poolMult = Mathf.Pow(_t.roomPoolGrowth, r - 1) * Mathf.Pow(_t.subRegionPoolGrowth, SubRegion);
             for (int i = 0; i < count; i++)
             {
-                var rütbe = PickRank(Room, i);
+                int yuva = i + dalga * count;
+                var rütbe = PickRank(Room, yuva);
                 if (rütbe == EnemyRank.Huge) RoomHuge++;
                 else if (rütbe.IsElite) RoomArmored++;
-                Bootstrap.SpawnEnemyAt(_t, Layout.Position(_t, i, count), _player, _cam,
-                                       poolMult, boss: false, kind: PickKind(Room, i),
+                Vector3 yer = Layout.Position(_t, i, count);
+                if (dalga > 0 && _player != null)
+                {
+                    Vector3 fark = yer - _player.position; fark.y = 0f;
+                    if (fark.magnitude < 3f) yer = new Vector3(2f * Bootstrap.ArenaCenter.x - yer.x, yer.y, 2f * Bootstrap.ArenaCenter.z - yer.z);
+                }
+                Bootstrap.SpawnEnemyAt(_t, yer, _player, _cam,
+                                       poolMult, boss: false, kind: PickKind(Room, yuva),
                                        parent: _roomRoot.transform, rank: rütbe);
             }
+        }
+
+        void PlaceMiniBoss()
+        {
+            Bootstrap.SpawnEnemyAt(_t, new Vector3(0f, Bootstrap.ArenaCenter.y, _t.arenaRadius * 0.35f),
+                                   _player, _cam, MiniBossHavuzu(_t, RegionIndex, SubRegion), boss: true,
+                                   parent: _roomRoot.transform,
+                                   bossKind: MiniBossKind.For(RegionIndex, SubRegion, Mathf.Max(1, _t.subRegionsPerRegion)));
         }
 
         void PlaceBoss()
         {
             // Boss her bölgede sertleşiyor — yoksa 4. bölgenin boss'u 1. bölgeninkiyle
             // aynı olurdu ve zincirin tırmanma hissi kaybolurdu.
-            float havuz = _t.bossPoolMultiplier * Mathf.Pow(_t.regionBossGrowth, RegionIndex);
+            float havuz = AnaBossHavuzu(_t, RegionIndex);
 
             // ⚠️ Her bölgenin KENDİ ALACAKLISI var — bölge kuralı da onun yönetiminin
             // sonucu (bkz. TASARIM.md: "kural = kimlik").
@@ -498,6 +616,13 @@ namespace TekCan
         /// Bölge kurallarını hissetmek için 5 odayı temizlemek gerekmesin; kuralı
         /// yargılayamayan onu ayarlayamaz (boss'ta aynı sebeple B eklenmişti).
         /// </summary>
+        /// <summary>M — sıradaki MİNİ BOSS odasına atla (Faz 28). TEST KISAYOLU, kirletir.</summary>
+        static bool SkipToMiniPressed()
+        {
+            var kb = Keyboard.current;
+            return Debug.isDebugBuild && kb != null && kb.mKey.wasPressedThisFrame;
+        }
+
         static bool SkipRegionPressed()
         {
             var kb = Keyboard.current;
@@ -550,7 +675,7 @@ namespace TekCan
             var c = Clock.Instance;
             if (c == null) return;
             SaveFile.MarkTestJump();   // ⚠️ İÇERİDE: öz-denetim kirlenmeyi de ölçebilsin
-            int alım = _t.altarMaxPurchases * RegionCount;
+            int alım = _t.altarMaxPurchases * Mathf.Max(1, _t.subRegionsPerRegion) * RegionCount;   // her ara bölgede bir sunak odası
             for (int i = 0; i < alım; i++)
             {
                 c.Yükselt(Altar.Kind.Harvest);   // sunağın kendi yolu: azalan getiri dahil
@@ -655,10 +780,11 @@ namespace TekCan
         /// <summary>HUD için.</summary>
         public string Prompt()
         {
-            if (IsBossRoom)
+            if (IsBossRoom || IsMiniBossRoom)
             {
                 // Boss'un ADI ve fazı görünmeli: hangi suçla dövüştüğün mekaniği açıklıyor.
-                var b = BossKind.For(RegionIndex);
+                BossKind b = IsMiniBossRoom ? MiniBossKind.For(RegionIndex, SubRegion, Mathf.Max(1, _t.subRegionsPerRegion))
+                                            : BossKind.For(RegionIndex);
                 var canlı = BossInRoom();
                 string faz = canlı != null && canlı.Phase >= 2 ? $"  ·  FAZ {canlı.Phase}" : "";   // faz 3 de "FAZ 2" yazıyordu
                 // ⚠️ ISRAR görünmeli: hep aynı mesafede duranın bedeli artıyor (Faz 26).
@@ -674,7 +800,8 @@ namespace TekCan
             if (Cleared) return Clock.Instance != null && Clock.Instance.Frozen
                               ? "ÇIKIŞ AÇIK  ·  saat durdu, acele yok"
                               : "ÇIKIŞ AÇIK  ·  saat işlemeye devam ediyor";
-            return $"oda {Room} / {_t.roomsPerRegion - 1}   ·   {Layout.Name}";
+            string dalga = _kalanDalga > 0 ? $"   ·   {_kalanDalga} dalga daha" : "";
+            return $"ara bölge {SubRegion + 1}/{Mathf.Max(1, _t.subRegionsPerRegion)}   ·   oda {AraOda(_t, Room)}/{_t.DövüşOdası}   ·   {Layout.Name}{dalga}";
         }
 
         /// <summary>Odadaki yaşayan boss — HUD faz durumunu ondan okuyor.</summary>

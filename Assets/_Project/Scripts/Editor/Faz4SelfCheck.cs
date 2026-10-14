@@ -33,7 +33,10 @@ namespace TekCan.EditorTools
             // düşman okuyordu. Fixture üretimin oda zincirini VARSAYIYORDU.
             // 4'e çıkarıldı: oda 1-2 dövüş, oda 3 sunak, oda 4 boss — yani zincirin
             // her tipi temsil ediliyor, ve testler tipi ÜRETİMDEN soruyor.
-            t.roomsPerRegion = 4;
+            // Faz 28: tek ara bölge = oda 1-2 dövüş, 3 mini boss, 4 sunak, 5 boss.
+            t.subRegionsPerRegion = 1;
+            t.roomsPerSubRegion = 2;
+            t.roomWaves = 1;               // dalgalar Faz 28'in kapısında sınanıyor
             // ⚠️ TEK bölge: bu denetim koşunun yapısını sınıyor (boss = son, kazanma orada).
             // Bölge ZİNCİRİ Faz 10'un konusu ve orada sınanıyor.
             t.regionsPerAct = 1;
@@ -99,10 +102,10 @@ namespace TekCan.EditorTools
             // 7) Boss odası
             //    ⚠️ "Bir sonraki oda boss" VARSAYIMI kaldırıldı: Faz 19'da araya
             //    sunak odası girdi ve `NextRoom()` boss'a değil ona götürüyordu.
-            //    Zincirin uzunluğu üretimden geliyor (`roomsPerRegion`), teste
+            //    Zincirin uzunluğu üretimden geliyor (`RoomsInRegion`), teste
             //    gömülü sayıdan değil — yoksa her yeni oda tipi bu testi kırar.
             KillAll();
-            GoToRoom(wm, t.roomsPerRegion);
+            GoToRoom(wm, t.RoomsInRegion);
             failed += Check(ref total, "son oda BOSS odası", wm.IsBossRoom, wm.Room);
             failed += Check(ref total, "⚠️ boss odasında çıkış YOK (bölge orada bitiyor)",
                             Object.FindFirstObjectByType<ExitGate>() == null, 0);
@@ -129,7 +132,7 @@ namespace TekCan.EditorTools
             //    kaldıran bir saldırısı yoktu. Yere vuruş 360° — yana kaçmak işe yaramaz,
             //    UZAKLAŞMAK gerekir. Test: halkanın içi vurulur, dışı vurulmaz.
             KillAll();
-            GoToRoom(wm, t.roomsPerRegion);           // taze boss odası
+            GoToRoom(wm, t.RoomsInRegion);           // taze boss odası
             var slamBoss = Enemy.All.Count > 0 ? Enemy.All[0] : null;
             if (slamBoss != null)
             {
@@ -172,7 +175,7 @@ namespace TekCan.EditorTools
 
             // ⚠️ ETKİ testi, özellik değil: boss saati GERÇEKTEN emiyor mu?
             KillAll();
-            GoToRoom(wm, t.roomsPerRegion);           // yeni boss odası
+            GoToRoom(wm, t.RoomsInRegion);           // yeni boss odası
             var b2 = Enemy.All.Count > 0 ? Enemy.All[0] : null;
             if (b2 != null)
             {

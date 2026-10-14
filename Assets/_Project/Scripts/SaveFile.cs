@@ -22,6 +22,13 @@ namespace TekCan
         /// </summary>
         public float[] bossLedger = new float[0];
 
+        /// <summary>
+        /// Faz 28 — MİNİ BOSS TOPARLANMA DEFTERİ (bu bölgede, ara bölge başına). Ölümde kaybettiğin
+        /// saniyeler son temizlenmiş mini boss'un hanesine yazılıyor; dolunca o mini boss geri geliyor.
+        /// Bölge değişince siliniyor — ana boss'un temizlediği bölge geri gelmez.
+        /// </summary>
+        public float[] miniLedger = new float[0];
+
         public int checkpointRoom = 1;
         public int checkpointRegion;               // 0 tabanlı
         public float checkpointSeconds = -1f;      // -1 = henüz checkpoint yok, startSeconds kullan
@@ -62,6 +69,16 @@ namespace TekCan
         public float resumeDamage = -1f;
         public float resumeDash = -1f;
         public int[] resumeBoughtCounts = new int[0];
+
+        // ÇAĞRI'nın hedefi (Enes 2026-10-14: "bir önceki odaya atsın"): bir ÖNCEKİ odanın başı.
+        // Oda başı kaydı her girişte buraya kayıyor; bölge sınırını geçmiyor (ana boss'un bölgesi geri gelmez).
+        public int recallRoom;                      // 0 = yok
+        public int recallRegion;
+        public float recallSeconds = -1f;
+        public float recallHarvest = -1f;
+        public float recallDamage = -1f;
+        public float recallDash = -1f;
+        public int[] recallBoughtCounts = new int[0];
     }
 
     /// <summary>
@@ -255,6 +272,33 @@ namespace TekCan
         }
 
         /// <summary>Bu boss senden ne kadar aldı — havuzuna eklenecek borç.</summary>
+        public static float MiniDefter(int araBölge)
+        {
+            var l = Current?.miniLedger;
+            return l != null && araBölge >= 0 && araBölge < l.Length ? l[araBölge] : 0f;
+        }
+
+        public static void MiniDefterYaz(int araBölge, float saniye)
+        {
+            if (Current == null || araBölge < 0) return;
+            if (Current.miniLedger == null || Current.miniLedger.Length <= araBölge)
+                Current.miniLedger = FitFloat(Current.miniLedger, araBölge + 1);
+            Current.miniLedger[araBölge] += Mathf.Max(0f, saniye);
+        }
+
+        /// <summary>Mini boss yeniden öldü: borcu kapandı.</summary>
+        public static void MiniDefterSıfırla(int araBölge)
+        {
+            var l = Current?.miniLedger;
+            if (l != null && araBölge >= 0 && araBölge < l.Length) l[araBölge] = 0f;
+        }
+
+        /// <summary>Yeni bölge: önceki bölgenin mini boss'ları geri gelmez.</summary>
+        public static void MiniDefterleriSil()
+        {
+            if (Current != null) Current.miniLedger = new float[0];
+        }
+
         public static float BossLedger(BossKind kind)
         {
             if (kind == null || Current?.bossLedger == null) return 0f;

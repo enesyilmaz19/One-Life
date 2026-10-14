@@ -38,6 +38,21 @@ namespace TekCan.EditorTools
 
         public static void TamKosu() => Başlat(izle: false, senaryo: "tam");
 
+        /// <summary>Teşhis: M ile ilk mini boss, 10 sn'de bir oyun zamanı / saat akışı nabzı.</summary>
+        public static void MiniTeshis() => Başlat(izle: false, senaryo: "mini");
+
+        /// <summary>Enes: mini boss zaman + zorluk testi — 5 bölge × 5 mini, beklenen güçle (~1–1.5 saat).</summary>
+        public static void MiniTesti() => Başlat(izle: false, senaryo: "minitest");
+
+        /// <summary>Ekonomi ayarı: yalnızca 1. ara bölge (7 oda + mini boss + sunak), ~10 dk.</summary>
+        public static void AraBolge1Olcum() => Başlat(izle: false, senaryo: "ab1");
+
+        /// <summary>Faz 28 ölçümü: yalnızca 1. bölge (46 oda) — oda, mini boss ve ana boss süreleri.</summary>
+        [MenuItem("Tek Can/Otopilot — 1. bölge ölçümü (izle)")]
+        public static void Bolge1OlcumIzle() => Başlat(izle: true, senaryo: "b1");
+
+        public static void Bolge1Olcum() => Başlat(izle: false, senaryo: "b1");
+
         static void Başlat(bool izle, string senaryo = "")
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)

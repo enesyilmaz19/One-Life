@@ -234,6 +234,9 @@ namespace TekCan
         /// </summary>
         public int Index { get; private set; }
 
+        /// <summary>Mini boss mu (Faz 28) — nemesis defteri ve boss listesi ayrı.</summary>
+        public virtual bool IsMini => false;
+
         /// <summary>Ne yaptığı — HUD'da faz geçişinde gösteriliyor.</summary>
         public abstract string Crime { get; }
 
@@ -1074,6 +1077,76 @@ namespace TekCan
                 if (e != null && e.Boss != null && !e.Hollow)
                     m *= e.Boss.PlayerHarvest(e.Phase);
             return m;
+        }
+    }
+
+    /// <summary>
+    /// MİNİ BOSS (Faz 28) — ara bölgenin sonunda; ölünce ara bölge kalkar, kontrol noktası olur.
+    ///
+    /// Ana boss'un faz 1 dağarcığından bir DİLİM: 2 yakın + 1 uzak (sonuncusu ana boss'un harita
+    /// saldırısını da gösteriyor). Mini boss'lar ana boss'un saldırılarını TEK TEK öğretiyor, ana
+    /// boss hepsini birden yapıyor. Tek faz, çağırma yok, aura ve işaret yarı hızda.
+    ///
+    /// ⚠️ GEÇİCİ İÇERİK: unvanlar ve dilimler. 25 özgün mini boss Faz 30+ (todo "YAPI").
+    /// ⚠️ `BossKind.All`'da DEĞİL — boss listesinden dönen kapılar (tekel, kapsama, taşınma) onu
+    /// görmesin. Nemesis defteri de ayrı: ana boss'un defteri değil, toparlanma defteri.
+    /// </summary>
+    public sealed class MiniBossKind : BossKind
+    {
+        static readonly string[] Unvanlar = { "ÇIRAK", "KÂTİP", "MEMUR", "VEKİL", "KÂHYA" };
+
+        public BossKind Ana { get; }
+        /// <summary>Kaçıncı ara bölgenin mini boss'u (0'dan).</summary>
+        public int AraBölge { get; }
+        readonly BossAttack[] _dilim;
+
+        MiniBossKind(BossKind ana, int araBölge, int toplam)
+        {
+            bool son = araBölge >= toplam - 1;
+            Ana = ana;
+            AraBölge = araBölge;
+            // İlk üç mini faz 1'den, son ikisi FAZ 2'den öğretiyor — ilerledikçe zorlaşıyor ve faz 1'in
+            // dağarcığı küçük boss'larda (TAHSİLDAR, EKSPER) 4. mini 1.'yi tekrarlıyordu (kapı yakaladı).
+            int ilk = System.Math.Min(3, System.Math.Max(1, toplam - 2));
+            bool faz2 = araBölge >= ilk && ana.PhaseCount >= 2;
+            int sıra = faz2 ? araBölge - ilk : araBölge;
+            var tümü = ana.Attacks(faz2 ? 2 : 1);  // ⚠️ her çağrı YENİ nesneler — dilim mini'ye ait
+            var yakın = System.Array.FindAll(tümü, a => a.Tür == SaldırıTürü.Yakın);
+            var uzak = System.Array.FindAll(tümü, a => a.Tür == SaldırıTürü.Uzak);
+            var harita = System.Array.FindAll(tümü, a => a.Tür == SaldırıTürü.Harita);
+            var l = new System.Collections.Generic.List<BossAttack>();
+            void Ekle(BossAttack a) { if (a != null && !l.Contains(a)) l.Add(a); }
+            if (yakın.Length > 0) { Ekle(yakın[sıra % yakın.Length]); Ekle(yakın[(sıra + 1) % yakın.Length]); }
+            if (uzak.Length > 0) Ekle(uzak[sıra % uzak.Length]);
+            if (son && harita.Length > 0) Ekle(harita[0]);
+            _dilim = l.ToArray();
+        }
+
+        static readonly System.Collections.Generic.Dictionary<long, MiniBossKind> _önbellek =
+            new System.Collections.Generic.Dictionary<long, MiniBossKind>();
+
+        /// <summary>Bölgenin `araBölge`. mini boss'u. Aynı (bölge, ara bölge, toplam) hep aynı nesne.</summary>
+        public static MiniBossKind For(int bölge, int araBölge, int toplam)
+        {
+            long anahtar = ((long)bölge << 32) | ((long)araBölge << 16) | (uint)toplam;
+            if (!_önbellek.TryGetValue(anahtar, out var m))
+                _önbellek[anahtar] = m = new MiniBossKind(BossKind.For(bölge), araBölge, toplam);
+            return m;
+        }
+
+        public override bool IsMini => true;
+        public override string Name => $"{Unvanlar[AraBölge % Unvanlar.Length]} · {Ana.Name}";
+        public override string Crime => Ana.Crime;
+        public override Color Tint => Color.Lerp(Ana.Tint, new Color(0.6f, 0.6f, 0.6f), 0.35f);
+        public override int PhaseCount => 1;
+        public override BossAttack[] Attacks(int phase) => _dilim;
+        public override float AuraDrain(Tuning t, int phase) => Ana.AuraDrain(t, 1) * 0.5f;
+        public override float SpeedMultiplier(int phase) => Ana.SpeedMultiplier(1);
+        public override float PlayerHarvest(int phase) => Mathf.Lerp(1f, Ana.PlayerHarvest(1), 0.5f);
+        public override float GroundMarkInterval(int phase)
+        {
+            float a = Ana.GroundMarkInterval(1);
+            return a > 0f ? a * 2f : 0f;
         }
     }
 }

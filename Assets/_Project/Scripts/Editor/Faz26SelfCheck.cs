@@ -436,7 +436,7 @@ namespace TekCan.EditorTools
                 var (r2, _, _) = Kur(t, null);
                 var rmGo = new GameObject("rooms"); rmGo.transform.SetParent(r2.transform);
                 var rm = rmGo.AddComponent<RoomManager>();
-                rm.Init(t, r2.transform.Find("player"), null, startRoom: t.roomsPerRegion);
+                rm.Init(t, r2.transform.Find("player"), null, startRoom: t.RoomsInRegion);
                 var b2 = rm.BossInRoom();
                 if (b2 != null) Alan(b2, "_ısrar", 1.5f);
                 string başlık = rm.Prompt();

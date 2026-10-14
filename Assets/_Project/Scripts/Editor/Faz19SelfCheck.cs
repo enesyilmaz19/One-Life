@@ -36,7 +36,8 @@ namespace TekCan.EditorTools
 
             var t = ScriptableObject.CreateInstance<Tuning>();
             t.startSeconds = 5000f;
-            t.roomsPerRegion = 6;
+            t.subRegionsPerRegion = 2;     // Faz 28: [2 dövüş → mini → SUNAK] × 2 → boss = 9 oda
+            t.roomsPerSubRegion = 2;
             Region.Reset();
             Enemy.All.Clear();
             Altar.ResetAll();
@@ -58,16 +59,21 @@ namespace TekCan.EditorTools
             // ── 1) ⚠️ SUNAK ODASI VAR ve boss'tan HEMEN ÖNCE ──
             //    Bölgede tam bir tane olmalı: sıfırsa alışveriş yok, ikiyse
             //    "özel oda" olmaktan çıkar.
-            int sunakOdaSayısı = 0, sunakOdaNo = -1;
-            for (int oda = 1; oda <= t.roomsPerRegion; oda++)
+            // ⚠️ Faz 28: her ARA BÖLGEDE bir sunak odası, mini boss'un hemen ardından (kontrol
+            //    noktası); sonuncusu ana boss'un hemen önünde.
+            int sunakOdaSayısı = 0, sunakOdaNo = -1, miniArdıDeğil = 0;
+            for (int oda = 1; oda <= t.RoomsInRegion; oda++)
             {
                 goToRoom.Invoke(rm, new object[] { oda });
-                if (rm.IsAltarRoom) { sunakOdaSayısı++; sunakOdaNo = oda; }
+                if (!rm.IsAltarRoom) continue;
+                sunakOdaSayısı++; sunakOdaNo = oda;
+                if (RoomManager.Tür(t, oda - 1) != RoomManager.OdaTürü.MiniBoss) miniArdıDeğil++;
             }
-            failed += Check(ref total, "⚠️ bölgede TAM BİR sunak odası var",
-                            sunakOdaSayısı == 1, sunakOdaSayısı);
-            failed += Check(ref total, "⚠️ sunak odası BOSS'TAN HEMEN ÖNCE",
-                            sunakOdaNo == t.roomsPerRegion - 1, sunakOdaNo);
+            failed += Check(ref total, $"⚠️ bölgede ARA BÖLGE BAŞINA bir sunak odası ({sunakOdaSayısı} = {t.subRegionsPerRegion})",
+                            sunakOdaSayısı == t.subRegionsPerRegion, sunakOdaSayısı);
+            failed += Check(ref total, "⚠️ her sunak odası MİNİ BOSS'UN ARDINDA", miniArdıDeğil == 0, miniArdıDeğil);
+            failed += Check(ref total, "⚠️ son sunak odası ANA BOSS'TAN HEMEN ÖNCE",
+                            sunakOdaNo == t.RoomsInRegion - 1, sunakOdaNo);
 
             // ── 2) ⚠️ ODADA DÜŞMAN YOK — özellik değil ETKİ ──
             goToRoom.Invoke(rm, new object[] { sunakOdaNo });
@@ -91,9 +97,9 @@ namespace TekCan.EditorTools
             //    Eskiden HER ÇİFT ODADA çıkıyorlardı; buff matematiği oradan
             //    patlıyordu. Alışveriş bir OLAY olmalı, arka plan gürültüsü değil.
             int başkaOdadaSunak = 0;
-            for (int oda = 1; oda <= t.roomsPerRegion; oda++)
+            for (int oda = 1; oda <= t.RoomsInRegion; oda++)
             {
-                if (oda == sunakOdaNo) continue;
+                if (RoomManager.Tür(t, oda) == RoomManager.OdaTürü.Sunak) continue;
                 goToRoom.Invoke(rm, new object[] { oda });
                 foreach (var a in Object.FindObjectsByType<Altar>(FindObjectsInactive.Include))
                     if (a != null && !a.name.Contains("Repair")) başkaOdadaSunak++;
@@ -124,7 +130,7 @@ namespace TekCan.EditorTools
             // ── 6c) ⚠️ BOSS ODASINDA da akıyor — sunak boss'un HEMEN ÖNÜNDE ──
             //    Dondurmayı yalnızca "sunaktan çıkarken" kaldırsaydım, sunaktan
             //    sonraki oda boss odası olduğu için boss dövüşü zamansız geçerdi.
-            goToRoom.Invoke(rm, new object[] { t.roomsPerRegion });
+            goToRoom.Invoke(rm, new object[] { t.RoomsInRegion });
             float bossÖnce = clock.Seconds;
             clock.Tick(3f);
             failed += Check(ref total, "⚠️ BOSS odasında saat akıyor (donma taşınmıyor)",
@@ -132,12 +138,9 @@ namespace TekCan.EditorTools
 
             goToRoom.Invoke(rm, new object[] { sunakOdaNo });
 
-            // ── 7) ⚠️ ALIM TAVANI GERÇEKTEN DÜŞTÜ (buff matematiği) ──
-            //    Eskiden çift odalarda ~3 sunak × 3 alım; şimdi bölgede tek oda.
-            int eskiTavan = (t.roomsPerRegion / 2) * 3 * t.altarMaxPurchases;
-            int yeniTavan = 3 * t.altarMaxPurchases;
-            failed += Check(ref total, $"⚠️ bölge başına alım TAVANI düştü ({eskiTavan} → {yeniTavan})",
-                            yeniTavan < eskiTavan, yeniTavan);
+            // ── 7) (Faz 28'de kalktı) "bölge başına alım tavanı düştü" — her ara bölgede sunak
+            //    var artık; kartopunu oda sayısı değil KALICI FİYAT + AZALAN GETİRİ tutuyor
+            //    (Faz 27, `Faz27SelfCheck`).
 
             Temizle();
             Object.DestroyImmediate(root);

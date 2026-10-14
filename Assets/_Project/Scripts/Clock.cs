@@ -22,7 +22,12 @@ namespace TekCan
 
         Tuning _t;
         Transform _player;
-        public float Seconds { get; private set; }
+        // ⚠️ double: saat ve süre KARE KARE birikiyor. float'ta saat ~6000'e çıkınca kare başı
+        // akış (yüksek FPS'te ~0.0003 sn) yuvarlanıp KAYBOLUYORDU — bot 3600 kare/sn koştu ve
+        // geç odalarda saat hiç akmadı, 9931 sn'lik "şişmiş" saat ölçüldü (2026-10-13).
+        // 8 saatlik koşuda RunTime da aynı yolla bozulurdu.
+        double _seconds, _runTime, _tickDrain;
+        public float Seconds { get => (float)_seconds; private set => _seconds = value; }
         public bool Dead { get; private set; }
         public bool InCombat { get; private set; }
 
@@ -35,6 +40,12 @@ namespace TekCan
         /// </summary>
         public bool Frozen { get; set; }
 
+        /// <summary>
+        /// Akış çarpanı — `RoomManager` her odada kuruyor (boss / mini boss odasında yavaş).
+        /// Faz 28: ana boss 6–8 dk sürecek; bugünkü akışla (~1.6 sn/sn) o dövüşte saat (can) erirdi.
+        /// </summary>
+        public float DrainMultiplier { get; set; } = 1f;
+
         // ── koşu boyunca yükseltilebilen değerler ────────────────────────────
         // ⚠️ Bunlar Tuning'den KOPYALANIR, Tuning'e YAZILMAZ. ScriptableObject
         // çalışma anında değiştirilirse editörde kalıcı olur ve bir sonraki koşu
@@ -46,7 +57,9 @@ namespace TekCan
         // ── koşu defteri ─────────────────────────────────────────────────────
         // Koşu bitiş ekranı bunları gösteriyor. Saat zaten koşunun kasası,
         // hesabı da burada tutmak tutarlı.
-        public float RunTime { get; private set; }
+        public float RunTime => (float)_runTime;
+        /// <summary>Saatin kendi akışıyla (aura ve darbe HARİÇ) giden toplam — oda hesabı akışı auradan ayırıyor.</summary>
+        public float TotalTickDrain => (float)_tickDrain;
         public float TotalHarvested { get; private set; }
         public float TotalSpent { get; private set; }
         public int EnemiesKilled { get; private set; }
@@ -93,8 +106,33 @@ namespace TekCan
         public int Alınan(Altar.Kind k) => k == Altar.Kind.Repair ? 0 : _alınan[(int)k];
         public int[] AlınanKopya => (int[])_alınan.Clone();
 
-        /// <summary>n. alımın (0'dan) fiyatı — hangi sunakta, hangi bölgede olursa olsun.</summary>
-        public static float Fiyat(Tuning t, int n) => t.altarBasePrice * Mathf.Pow(t.altarPriceGrowth, n);
+        /// <summary>
+        /// n. alımın (0'dan) fiyatı — hangi sunakta olursa olsun: taban × artış^n, ama EN AZ saatin
+        /// `altarPricePercent`'i (Enes 2026-10-14, B: "almazsa boss'ları kesemesin, biriktiren ödesin").
+        /// </summary>
+        public static float Fiyat(Tuning t, int n, float saat = 0f)
+            => Mathf.Max(t.altarBasePrice * Mathf.Pow(t.altarPriceGrowth, n), t.altarPricePercent * saat);
+
+        /// <summary>
+        /// HASAT DOYMASI (Faz 28, Enes: "süre arttıkça artmasını zorlaştıran bir yapı"). Saat tavanın
+        /// altındayken hasat tam; üstünde ×(tavan / saat) — saat tavanın 2 katıysa hasat yarı.
+        /// İyi oyuncunun saati bir dengede durur, az saati olana dokunmaz. Tavan bölgeyle büyür.
+        /// </summary>
+        public static float Doyma(Tuning t, float saat, int bölge)
+        {
+            float tavan = t.harvestSoftCap * Mathf.Pow(t.harvestSoftCapGrowth, bölge);
+            return saat <= tavan ? 1f : tavan / saat;
+        }
+
+        public float HasatDoyması
+        {
+            get
+            {
+                if (_t == null) return 1f;
+                var rm = RoomManager.Instance;
+                return Doyma(_t, Seconds, rm != null ? rm.RegionIndex : 0);
+            }
+        }
 
         /// <summary>n. alımın (0'dan) getirisi: adım × azalma^n. Toplam sınırlı: adım / (1 − azalma).</summary>
         public static float Getiri(Tuning t, Altar.Kind k, int n)
@@ -105,7 +143,7 @@ namespace TekCan
             return adım * Mathf.Pow(t.altarStepDecay, n);
         }
 
-        public float SıradakiFiyat(Altar.Kind k) => Fiyat(_t, Alınan(k));
+        public float SıradakiFiyat(Altar.Kind k) => Fiyat(_t, Alınan(k), Seconds);
         public float SıradakiGetiri(Altar.Kind k) => Getiri(_t, k, Alınan(k));
 
         /// <summary>Bir alımın ETKİSİ (bedel `TryBuy`'da). Sayımı ilerletir.</summary>
@@ -171,7 +209,7 @@ namespace TekCan
         {
             if (Dead || Won || _t == null) return;
 
-            RunTime += dt;
+            _runTime += dt;
             InCombat = AnyLivingEnemyNear();
 
             // ⚠️ SUNAK ODASINDA AKIŞ DURUYOR (Enes kararı, Faz 19).
@@ -196,7 +234,9 @@ namespace TekCan
             // arka plan emişi (SIZINTI) — ikisi de saatten geçiyor, çünkü yasa o.
             // Bölgeye özel zırh/direnç olsaydı ikinci bir sistem doğardı.
             float drain = InCombat ? _t.drainInCombat : _t.drainOutOfCombat * Region.Drain;
-            Seconds -= (drain + Region.Background) * dt;
+            float akış = (drain + Region.Background) * DrainMultiplier * dt;
+            _seconds -= akış;
+            _tickDrain += akış;
             CheckDeath();
         }
 
@@ -224,7 +264,7 @@ namespace TekCan
             seconds = Mathf.Max(0f, seconds);
             if (seconds <= 0f) return;
 
-            Seconds += seconds;
+            _seconds += seconds;
             TotalHarvested += seconds;
             // Yalnızca BÜYÜK kazançlarda ses: KASA'nın toplu ödemesi, FAİZLİ'nin iadesi.
             // Her vuruşta çalsaydı isabet sesiyle üst üste biner ve ikisi de duyulmazdı —
@@ -250,7 +290,7 @@ namespace TekCan
         {
             if (Dead || Won) return;
             float x = Mathf.Max(0f, seconds);
-            Seconds -= x;
+            _seconds -= x;
             if (fromHit) TotalHitCost += x;
             CheckDeath();
         }
@@ -272,7 +312,7 @@ namespace TekCan
         public bool TryBuy(float price)
         {
             if (Dead || price <= 0f || Seconds <= price) return false;
-            Seconds -= price;
+            _seconds -= price;
             TotalSpent += price;
             Purchases++;
             return true;

@@ -27,6 +27,7 @@ namespace TekCan.EditorTools
             int failed = 0, total = 0;
 
             var t = ScriptableObject.CreateInstance<Tuning>();
+            t.harvestSoftCap = 1e6f;   // Faz 28 hasat doyması bu kapının konusu değil (büyük saatte kazancı kısıyor)
             t.startSeconds = 5000f;
             t.enemyTimePool = 10f;
             t.harvestRate = 0.5f;

@@ -147,7 +147,7 @@ namespace TekCan.EditorTools
             for (int bölge = 0; bölge < Region.All.Length; bölge++)
             {
                 enterRegion.Invoke(rm, new object[] { bölge, 1 });
-                for (int oda = 1; oda <= t.roomsPerRegion; oda++)
+                for (int oda = 1; oda <= t.RoomsInRegion; oda++)
                 {
                     int odaİri = 0, odaZırhlı = 0;
                     for (int i = 0; i < 9; i++)

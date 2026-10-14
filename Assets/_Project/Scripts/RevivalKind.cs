@@ -10,7 +10,7 @@ namespace TekCan
     ///
     ///   ① ÖLÜM ALDATMA   → önce DEVAM ETMEYİ dene (en az kayıp)
     ///   ② GEÇİCİ DÖNÜŞ   → sonra KAZANMAYI dene (kumar)
-    ///   ③ ÇAĞRI          → sonra kaybet (son çare, checkpoint'e düşersin)
+    ///   ③ ÇAĞRI          → sonra kaybet (son çare, bir ÖNCEKİ odanın başına düşersin)
     ///
     /// Sebep: oyunun tüm HUD'ı TEK BİR SAYI. Üstüne envanter ekranı + öncelik ayarı
     /// binerse minimalizm çöker. Oyuncu yalnızca elinde ne kaldığını görüyor.
@@ -25,8 +25,11 @@ namespace TekCan
         /// <summary>Kullanıldığında saat kaça ayarlanır.</summary>
         public abstract float SecondsOnUse(Tuning t);
 
-        /// <summary>Checkpoint'e döndürüyor mu (sahne yeniden kurulur) yoksa yerinde mi kalıyor.</summary>
-        public virtual bool SendsToCheckpoint => false;
+        /// <summary>
+        /// Geri mi gönderiyor (sahne yeniden kurulur) yoksa yerinde mi kalıyor. ÇAĞRI bir ÖNCEKİ
+        /// odanın başına gönderiyor (Enes 2026-10-14); mini boss geri geldiyse kontrol noktasına.
+        /// </summary>
+        public virtual bool SendsBack => false;
 
         /// <summary>Kullanınca "son şans" sayacı kurulur mu.</summary>
         public virtual bool ArmsLastStand => false;
@@ -64,8 +67,14 @@ namespace TekCan
         {
             public override string Name => "ÇAĞRI";
             public override Color Tint => new Color(0.55f, 0.75f, 1f);
-            public override bool SendsToCheckpoint => true;
-            public override float SecondsOnUse(Tuning t) => SaveFile.CheckpointSeconds(t);
+            public override bool SendsBack => true;
+            // Önceki odanın başındaki saat, K2 tabanıyla (yoksa checkpoint).
+            public override float SecondsOnUse(Tuning t)
+            {
+                var s = SaveFile.Current;
+                return s != null && s.recallRoom > 0 ? Mathf.Max(s.recallSeconds, t.recallMinSeconds)
+                                                     : SaveFile.CheckpointSeconds(t);
+            }
         }
 
         /// <summary>Onarım sırası: `All` sırasıyla ilk KIRIK eşya. `FirstAvailable`ın eşi.</summary>

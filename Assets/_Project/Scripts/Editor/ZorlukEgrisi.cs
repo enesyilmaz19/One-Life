@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
@@ -44,6 +45,7 @@ namespace TekCan.EditorTools
         struct Durum
         {
             public float Hasat, Hasar;
+            public float Saat;            // odaya girerken — DOYMA buna bakıyor (Faz 28)
             public int Alım;
             public int[] Türden;          // hasat, hasar, dash — koşu boyunca (Faz 27)
         }
@@ -104,14 +106,16 @@ namespace TekCan.EditorTools
                 int bölgeSayısı = Mathf.Clamp(t.regionsPerAct, 1, Region.All.Length);
                 for (int r = 0; r < bölgeSayısı; r++)
                 {
-                    for (int oda = 1; oda <= t.roomsPerRegion; oda++)
+                    for (int oda = 1; oda <= t.RoomsInRegion; oda++)
                     {
+                        // Faz 28: oda türünü ÜRETİM söylüyor — [dövüş × N → mini boss → sunak] × ara bölge → boss
+                        var tür = RoomManager.Tür(t, oda);
                         // ⚠️ SUNAK ODASI (Faz 19): boss'tan önceki odada DÜŞMAN YOK.
                         //    Rapor bunu modellemek ZORUNDA — modellemeseydi tam da
                         //    ölçmek için var olduğu şeyde (yükseltme ekonomisi)
                         //    yanılırdı: olmayan düşmandan hasat sayar, odanın saf
                         //    akış maliyetini görmez, alımları yanlış odalara dağıtır.
-                        bool sunakOdası = t.roomsPerRegion >= 3 && oda == t.roomsPerRegion - 1;
+                        bool sunakOdası = tür == RoomManager.OdaTürü.Sunak;
 
                         Ölçüm ö;
                         if (sunakOdası)
@@ -124,7 +128,7 @@ namespace TekCan.EditorTools
                             ö = new Ölçüm { Sayı = 0, Kazanç = 0f, Yürüme = 0f,
                                             Dövüş = 0f, Darbe = 0f, Aura = 0f, Net = 0f };
                         }
-                        else ö = OdayıÖlç(t, r, oda, b, d);
+                        else { d.Saat = saat; ö = OdayıÖlç(t, r, oda, b, d); }
 
                         saat += ö.Net;
                         tYürüme += ö.Yürüme; tDövüş += ö.Dövüş; tDarbe += ö.Darbe; tAura += ö.Aura;
@@ -138,7 +142,8 @@ namespace TekCan.EditorTools
                             harcandı = Alışverişi(t, ref d, ref saat, alış.Rezerv);
                         tAlım += harcandı;
 
-                        string boss = oda >= t.roomsPerRegion ? "B" : sunakOdası ? "S" : " ";
+                        string boss = tür == RoomManager.OdaTürü.Boss ? "B" : tür == RoomManager.OdaTürü.MiniBoss ? "M"
+                                    : sunakOdası ? "S" : " ";
                         sb.AppendLine($"  {r + 1,3} {oda,3}{boss} {ö.Sayı,6} | " +
                                       $"{ö.Kazanç,6:0.0}  {ö.Net,+6:0.0} | " +
                                       $"{ö.Yürüme,6:0.0} {ö.Dövüş,5:0.0} {ö.Darbe,5:0.0} {ö.Aura,4:0.0} | " +
@@ -210,7 +215,7 @@ namespace TekCan.EditorTools
                 for (int i = 0; i < t.altarMaxPurchases; i++)
                 {
                     int n = d.Türden[sunak];
-                    float fiyat = Clock.Fiyat(t, n);
+                    float fiyat = Clock.Fiyat(t, n, saat);
                     if (saat - fiyat < rezerv) break;
 
                     // Hasat tavana dayandıysa o sunağa para verme — oyuncu da vermez.
@@ -246,30 +251,43 @@ namespace TekCan.EditorTools
             rm.Init(t, player.transform, null);
             GoToRegion(rm, bölge);
             GoToRoom(rm, oda);
+            // Faz 28: DALGALAR — oda kurulurken yalnızca ilki doğuyor; model bütün dalgaları sayıyor.
+            var dalga = typeof(RoomManager).GetMethod("DalgaGönder", BindingFlags.NonPublic | BindingFlags.Instance);
+            // ⚠️ Her düşmanın DALGASI tutuluyor: sonraki dalga öncekiler ölünce doğuyor, yani
+            // aurası o ana kadar emmiyor. Hepsini baştan canlı sayan model aurayı ~5 kat abartıp
+            // TEMİZ oyuncuyu oda 6'da öldürüyordu; bot aynı odayı +244 ile geçti (2026-10-13).
+            var dalgaSınırı = new System.Collections.Generic.List<int> { Enemy.All.Count };
+            for (int w = 1, n = rm.RemainingWaves; w <= n; w++)
+            {
+                dalga.Invoke(rm, new object[] { w });
+                dalgaSınırı.Add(Enemy.All.Count);
+            }
 
             // ── üretimden OKUNAN kompozisyon ──
             // ⚠️ Havuz ve aura BİRLİKTE tutuluyor: ayrı iki liste tutup birini
             // sıralasaydım indis eşleşmesi bozulur ve her düşmanın aurası başkasının
             // ölüm anıyla çarpılırdı — sessiz, tamamen yanlış bir rapor.
-            var düşmanlar = new System.Collections.Generic.List<(float havuz, float aura)>();
+            var düşmanlar = new System.Collections.Generic.List<(int dalga, float havuz, float aura)>();
 
             int sayı = 0;
             float havuz = 0f, kazanç = 0f;
-            foreach (var e in Enemy.All)
+            for (int i = 0; i < Enemy.All.Count; i++)
             {
+                var e = Enemy.All[i];
                 if (e == null) continue;
                 sayı++;
+                int dalgaNo = 0;
+                while (dalgaNo < dalgaSınırı.Count - 1 && i >= dalgaSınırı[dalgaNo]) dalgaNo++;
                 havuz += e.TimeLeft;
 
                 // Vuruşla alınan: havuz × hasat × tür çarpanı × BÖLGE kuralı
                 float türÇarpan = e.Kind != null ? e.Kind.HarvestMultiplier : 1f;
                 float bossÇarpan = e.IsBoss ? t.bossHarvestMultiplier : 1f;
                 // ⚠️ `t.harvestRate` DEĞİL, koşunun O ANKİ hasadı — sunaktan yükseliyor.
-                kazanç += e.TimeLeft * d.Hasat * türÇarpan * Region.Harvest * bossÇarpan;
+                kazanç += e.TimeLeft * d.Hasat * türÇarpan * Region.Harvest * bossÇarpan
+                        * Clock.Doyma(t, d.Saat, bölge);   // giriş saatiyle — oda içindeki artışı görmüyor
 
-                düşmanlar.Add((e.TimeLeft,
-                               (e.Kind != null ? e.Kind.AuraDrain(t) : 0f)
-                               + (e.IsBoss ? t.bossAuraDrain : 0f)));
+                düşmanlar.Add((dalgaNo, e.TimeLeft, e.AuraOranı));
             }
 
             // ── modellenen dövüş ──
@@ -284,7 +302,8 @@ namespace TekCan.EditorTools
             float yol = Vector3.Distance(Bootstrap.Entrance(t), Bootstrap.Exit(t));
             float yürüme = yol / Mathf.Max(0.1f, t.moveSpeed);
 
-            float mDövüş = (t.drainInCombat + Region.Background) * süre;
+            // Boss / mini boss odasında akış yavaş (Faz 28) — çarpanı ÜRETİM kuruyor, model okuyor.
+            float mDövüş = (t.drainInCombat + Region.Background) * clock.DrainMultiplier * süre;
             float mYürüme = (t.drainOutOfCombat * Region.Drain + Region.Background) * yürüme;
 
             // ⚠️ AURA, düşman ÖLDÜKÇE AZALIR. İlk model hepsini dövüş boyunca yaşatıyordu
@@ -292,14 +311,18 @@ namespace TekCan.EditorTools
             // (bkz. lessons.md, kaçınma modeli hatası).
             // Sırayla öldürüyorsun: her düşman, ondan öncekiler bitene kadar + kendi
             // süresi boyunca emiyor. Zayıftan güçlüye gidiliyor (makul oyuncu davranışı).
-            düşmanlar.Sort((a, b2) => a.havuz.CompareTo(b2.havuz));
+            // Dalga dalga: her dalga öncekiler bitince başlıyor, sayaç dalga başında sıfırlanıyor.
+            düşmanlar.Sort((a, b2) => a.dalga != b2.dalga ? a.dalga.CompareTo(b2.dalga) : a.havuz.CompareTo(b2.havuz));
             float mAura = 0f, geçen = 0f;
+            int buDalga = -1;
             foreach (var düş in düşmanlar)
             {
+                if (düş.dalga != buDalga) { buDalga = düş.dalga; geçen = 0f; }
                 geçen += düş.havuz / dps;                    // bu düşman bu anda ölüyor
                 mAura += düş.aura * geçen;                   // o ana kadar emmiş
             }
-            float mDarbe = b.DarbePerDüşman * sayı * t.enemyFullHitCost * Region.HitCost;
+            float mDarbe = b.DarbePerDüşman * sayı * t.enemyFullHitCost * Region.HitCost
+                         * RoomManager.İlerlemeÇarpanı(t, bölge, RoomManager.AraBölge(t, oda));
             float masraf = mDövüş + mYürüme + mAura + mDarbe;
 
             KillAll();

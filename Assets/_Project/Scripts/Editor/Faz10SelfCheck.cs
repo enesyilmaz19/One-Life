@@ -34,9 +34,11 @@ namespace TekCan.EditorTools
             t.enemyTimePool = 10f;
             t.harvestRate = 0.35f;
             t.enemyDecayPerSecond = 0f;
-            t.roomsPerRegion = 2;          // kısa bölge: oda 1, sonra boss
+            t.subRegionsPerRegion = 1;     // kısa bölge (Faz 28): oda 1, mini boss, sunak, boss
+            t.roomsPerSubRegion = 1;
             t.regionsPerAct = 3;
             t.plainRoomCount = 0;
+            t.roomWaves = 1;               // Faz 28: oda hesabı tek dalgada ölçülüyor (dalgalar Faz28SelfCheck'te)
 
             // ── 1) Bölgeler birbirinden farklı ──
             failed += Check(ref total, "en az 3 bölge tanımlı", Region.All.Length >= 3,
@@ -93,7 +95,7 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "ilk bölge SON bölge değil", !rm.IsLastRegion, 0);
 
             // Boss odasına git, boss'u devir → bölge bitmeli, koşu BİTMEMELİ
-            GoToRoom(rm, t.roomsPerRegion);
+            GoToRoom(rm, t.RoomsInRegion);
             failed += Check(ref total, "boss odasına gelindi", rm.IsBossRoom, rm.Room);
             failed += Check(ref total, "⚠️ ara bölgenin boss odasında ÇIKIŞ VAR (zincir sürüyor)",
                             Object.FindFirstObjectByType<ExitGate>() != null, 1);
@@ -111,7 +113,7 @@ namespace TekCan.EditorTools
             // Son bölgeye atla, boss'u devir → koşu KAZANILMALI
             GoToRegion(rm, t.regionsPerAct - 1);
             failed += Check(ref total, "son bölgeye gelindi", rm.IsLastRegion, rm.RegionIndex);
-            GoToRoom(rm, t.roomsPerRegion);
+            GoToRoom(rm, t.RoomsInRegion);
             failed += Check(ref total, "⚠️ SON bölgenin boss odasında çıkış YOK",
                             Object.FindFirstObjectByType<ExitGate>() == null, 0);
 

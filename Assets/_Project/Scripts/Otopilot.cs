@@ -263,19 +263,100 @@ namespace TekCan
             yield return null; yield return null;           // Bootstrap kurulsun
 
             string senaryo = SessionState.GetString(SenaryoAnahtar, "");
-            _bekçiDk = senaryo == "tam" ? 120f : 30f;       // tam koşu uzun sürebiliyor
+            _bekçiDk = senaryo == "tam" || senaryo == "b1" || senaryo == "minitest" ? 150f : 30f;   // uzun senaryolar
+            _yalnızBölge1 = senaryo == "b1";
+            _tekAraBölge = senaryo == "ab1";   // ekonomi ayarı: 7 oda + mini + sunak, ~10 dk
             IEnumerator[] sahneler = senaryo == "p26"
                 ? new[] { Kurulum(), P26Tahsildar(), P26Kefil(), P26Simsar(), P26Murabahacı(), Bitir() }
-                : senaryo == "tam"
+                : senaryo == "tam" || senaryo == "b1" || senaryo == "ab1"
                 ? new[] { Kurulum(), TamKoşu(), Bitir() }
+                : senaryo == "mini"
+                ? new[] { Kurulum(), MiniTeşhis(), Bitir() }
+                : senaryo == "minitest"
+                ? new[] { Kurulum(), MiniTesti(), Bitir() }
                 : SessionState.GetInt(AdımAnahtar, 0) == 0
                 ? new[] { Kurulum(), GirdiKanıtı(), K1Hazırla() }          // K1: Play'den çıkıp giriyor
                 : new[] { K1Doğrula(), Bölge1(), Sunak(), Tahsildar(), Haciz(), Simsar(), Final(), Bitir() };
+            if (senaryo == "mini") StartCoroutine(Nabız());   // teşhis — öbür koşuların logunu kirletmesin
             foreach (var sahne in sahneler)
             {
                 if (_bitti) yield break;                     // bir sahne botu durdurduysa
                 yield return sahne;
             }
+        }
+
+        /// <summary>
+        /// TEŞHİS (Faz 28): mini boss odasında saat neredeyse akmıyordu ve ilk mini 20 dk'da
+        /// ölmedi. 10 sn'de bir: oyun zamanı gerçekten ilerliyor mu, saat akıyor mu, neden.
+        /// </summary>
+        IEnumerator Nabız()
+        {
+            while (!_bitti)
+            {
+                float r0 = Time.realtimeSinceStartup, g0 = Time.time;
+                var c0 = Saat;
+                float akış0 = c0 != null ? c0.TotalTickDrain : 0f, s0 = c0 != null ? c0.Seconds : 0f;
+                int kare = 0, donuk = 0;
+                while (Time.realtimeSinceStartup - r0 < 10f) { kare++; if (Time.timeScale == 0f) donuk++; yield return null; }
+                var c = Saat; var rm = Oda; var b = Boss();
+                if (c == null || rm == null || c != c0) continue;
+                Debug.Log($"[NABIZ] oda {rm.Room} · 10 sn gerçek → oyun {Time.time - g0:0.0} sn · {kare} kare ({donuk} donuk) · " +
+                          $"saat {s0:0}→{c.Seconds:0} · saat akışı {c.TotalTickDrain - akış0:0.0} · frozen {c.Frozen} · " +
+                          $"çarpan {c.DrainMultiplier:0.00} · dövüşte {c.InCombat} · düşman {Enemy.All.Count}" +
+                          (b != null ? $" · boss {b.TimeLeft:0} · mesafe {Düz(b.transform.position - Ben).magnitude:0.0}" : ""));
+            }
+        }
+
+        /// <summary>
+        /// Enes (2026-10-14): "mini bosslarda özel bir zaman testi ve zorluk testi yap bot üzerinden".
+        /// 5 bölge × 5 mini boss, hepsi M/N ile. Her dövüşe O NOKTADA BEKLENEN güçle girilir
+        /// (önceki her sunaktan üç alım) ve saat o bölgenin doyma tavanında. Ölçülen: süre (oyun
+        /// zamanı), saat kaybı, yenen darbe, takviye.
+        /// </summary>
+        IEnumerator MiniTesti()
+        {
+            int S = Mathf.Max(1, _t.subRegionsPerRegion);
+            var satırlar = new List<string>();
+            for (int b = 0; b < 5 && !_bitti; b++)
+            {
+                if (b > 0) { Bas(Key.N); yield return Bekle(1.5f); }
+                for (int s = 0; s < S && !_bitti; s++)
+                {
+                    Bas(Key.M); yield return Bekle(1.5f);
+                    var c = Saat; var boss = Boss();
+                    if (c == null || Oda == null || !Oda.IsMiniBossRoom || boss == null)
+                    { Kaydet("MT", $"B{b + 1}.{s + 1} mini boss odası açılmadı", false, Oda != null ? $"oda {Oda.Room}" : "oda yok"); continue; }
+
+                    // Beklenen güç: önceki her sunaktan türünden bir alım (b×S + s sunak)
+                    int beklenen = b * S + s;
+                    foreach (Altar.Kind k in new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash })
+                        while (c.Alınan(k) < beklenen) c.Yükselt(k);
+                    float giriş = _t.harvestSoftCap * Mathf.Pow(_t.harvestSoftCapGrowth, b);
+                    c.Revive(giriş);
+
+                    string ad = BossAdı(boss);
+                    float g0 = c.RunTime, d0 = c.TotalHitCost, h0 = c.TotalHarvested, b0 = c.TotalGranted;
+                    int t0 = _takviye;
+                    yield return OdayıGeç(900f);
+                    c = Saat;
+                    if (c == null) break;
+                    bool öldü = Oda != null && Oda.IsMiniBossRoom && !Oda.Cleared;
+                    float süre = c.RunTime - g0, darbe = c.TotalHitCost - d0, hasat = c.TotalHarvested - h0;
+                    float kayıp = giriş + (c.TotalGranted - b0) - c.Seconds;
+                    satırlar.Add($"B{b + 1}.{s + 1} {ad}: {süre / 60f:0.0} dk · saat −{kayıp:0} (%{kayıp / giriş * 100f:0}) · darbe −{darbe:0} · hasat +{hasat:0}" +
+                                 (_takviye > t0 ? $" · ⚠️ {_takviye - t0} takviye" : "") + (öldü ? " · ❌ ÖLMEDİ" : ""));
+                    Debug.Log($"[MİNİ TESTİ] {satırlar[satırlar.Count - 1]}");
+                }
+            }
+            Kaydet("MT", "Mini boss testi (beklenen güç, saat = doyma tavanı)", null, string.Join("<br>", satırlar));
+        }
+
+        IEnumerator MiniTeşhis()
+        {
+            Sahne("MİNİ TEŞHİS", "M: ilk mini boss · 10 sn'de bir nabız");
+            Bas(Key.M); yield return Bekle(1f);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            yield return OdayıGeç(600f);
         }
 
         IEnumerator Kurulum()
@@ -390,7 +471,8 @@ namespace TekCan
         {
             Sahne("3/9 BÖLGE 1", "odaları temizliyorum · ZIRHLI/İRİ vuruşlarını ölçüyorum");
             _rütbeÖlç = true;
-            for (int i = 0; i < 6 && Oda != null && !Oda.IsAltarRoom; i++)
+            // Faz 28: ilk sunak 7 dövüş odası + mini boss'tan sonra (eskiden 4 oda)
+            for (int i = 0; i < 12 && Oda != null && !Oda.IsAltarRoom; i++)
                 yield return OdayıGeç(120f);
             _rütbeÖlç = false;
 
@@ -664,7 +746,7 @@ namespace TekCan
         // tahmin değil ölçüm. Bot bütün bölgeleri atlamadan oynuyor; F5 takviyesi koşu bitmesin
         // diye var ama her biri "saat burada bitiyordu" diye yazılıyor.
 
-        bool _tamKoşu;
+        bool _tamKoşu, _yalnızBölge1, _tekAraBölge;
         readonly List<string> _takviyeYeri = new List<string>();
 
         IEnumerator TamKoşu()
@@ -675,13 +757,19 @@ namespace TekCan
             var satırlar = new StringBuilder();
             float t0 = Time.realtimeSinceStartup;
             int güvenlik = 0;
-            while (Saat != null && !Saat.Won && güvenlik++ < 80)
+            var miniSüresi = new List<string>();
+            var dövüşOdası = new List<float>();
+            var araBölgeSüresi = new Dictionary<string, float>();
+            while (Saat != null && !Saat.Won && güvenlik++ < 400)
             {
                 if (Saat.Dead) { Kaydet("TK", "bot öldü", false, _sahne); break; }
                 var rm = Oda;
                 if (rm == null) { yield return Bekle(0.5f); continue; }
+                if (_yalnızBölge1 && rm.RegionIndex > 0) break;   // 1. bölge ölçümü bitti
+                if (_tekAraBölge && (rm.RegionIndex > 0 || rm.SubRegion > 0)) break;
                 int bölge = rm.RegionIndex, oda = rm.Room;
-                string tür = rm.IsBossRoom ? "BOSS" : rm.IsAltarRoom ? "SUNAK" : "oda";
+                string tür = rm.IsBossRoom ? "BOSS" : rm.IsMiniBossRoom ? "MİNİ" : rm.IsAltarRoom ? "SUNAK" : "oda";
+                string araBölge = $"B{bölge + 1}.{rm.SubRegion + 1}";
                 Sahne($"TAM KOŞU B{bölge + 1}·O{oda}", tür);
                 float giriş = Saat.Seconds, ta = Time.realtimeSinceStartup;
                 int takviye0 = _takviye;
@@ -699,9 +787,18 @@ namespace TekCan
                     yield return SunaktanAl(40f);
                     yield return KapıdanÇık(30f);
                 }
+                else if (rm.IsMiniBossRoom)
+                {
+                    string ad = BossAdı(Boss());
+                    yield return OdayıGeç(900f);
+                    miniSüresi.Add($"{ad} {(Time.realtimeSinceStartup - ta) / 60f:0.0} dk");
+                }
                 else yield return OdayıGeç(600f);
 
                 float süre = Time.realtimeSinceStartup - ta;
+                if (tür == "oda") dövüşOdası.Add(süre);
+                araBölgeSüresi.TryGetValue(araBölge, out float ab);
+                araBölgeSüresi[araBölge] = ab + süre;
                 if (bölge < bölgeSüresi.Length) bölgeSüresi[bölge] += süre;
                 satırlar.Append($"B{bölge + 1}·O{oda} {tür} {süre:0}sn (saat {giriş:0}→{Saat.Seconds:0}" +
                                 (_takviye > takviye0 ? $", takviye {_takviye - takviye0}" : "") + ") · ");
@@ -712,8 +809,21 @@ namespace TekCan
             float toplam = (Time.realtimeSinceStartup - t0) / 60f;
             var bölgeler = new List<string>();
             for (int i = 0; i < bölgeSüresi.Length; i++) if (bölgeSüresi[i] > 0f) bölgeler.Add($"B{i + 1} {bölgeSüresi[i] / 60f:0.0}");
-            Kaydet("TK", "Tam koşu", Saat != null && Saat.Won,
-                   $"{(Saat != null && Saat.Won ? "KAZANILDI" : "bitmedi")} · {toplam:0.0} dk · bölgeler (dk): {string.Join(", ", bölgeler)}");
+            bool tamam = Saat != null && (Saat.Won || (_yalnızBölge1 && Oda != null && Oda.RegionIndex > 0)
+                                          || (_tekAraBölge && Oda != null && (Oda.RegionIndex > 0 || Oda.SubRegion > 0)));
+            Kaydet("TK", _yalnızBölge1 ? "1. bölge" : _tekAraBölge ? "1. ara bölge" : "Tam koşu", tamam,
+                   $"{(Saat != null && Saat.Won ? "KAZANILDI" : tamam ? "BİTTİ" : "bitmedi")} · {toplam:0.0} dk · bölgeler (dk): {string.Join(", ", bölgeler)}");
+            if (dövüşOdası.Count > 0)
+            {
+                dövüşOdası.Sort();
+                float ort = 0f; foreach (var x in dövüşOdası) ort += x; ort /= dövüşOdası.Count;
+                Kaydet("TK", "Dövüş odası", null,
+                       $"{dövüşOdası.Count} oda · ortalama {ort:0} sn · en kısa {dövüşOdası[0]:0} · en uzun {dövüşOdası[dövüşOdası.Count - 1]:0} sn");
+            }
+            var ab2 = new List<string>();
+            foreach (var kv in araBölgeSüresi) ab2.Add($"{kv.Key} {kv.Value / 60f:0.0}");
+            Kaydet("TK", "Ara bölgeler (dk)", null, string.Join(" · ", ab2));
+            Kaydet("TK", "Mini boss dövüşleri", null, miniSüresi.Count > 0 ? string.Join(", ", miniSüresi) : "—");
             Kaydet("TK", "Boss dövüşleri", null, string.Join(", ", bossSüresi));
             Kaydet("TK", "Saat bitecekti (F5 takviyesi)", null,
                    _takviyeYeri.Count == 0 ? "hiç" : $"{_takviyeYeri.Count} kez: {string.Join(", ", _takviyeYeri)}");

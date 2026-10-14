@@ -33,6 +33,7 @@ namespace TekCan.EditorTools
             int failed = 0, total = 0;
             var t = ScriptableObject.CreateInstance<Tuning>();
             t.startSeconds = 2000f;                         // alım bedeli testi bitirmesin
+            t.altarPricePercent = 0f;                       // Faz 28 yüzde kuralı Faz28SelfCheck'te; burada SAYIM ölçülüyor
             SaveFile.UseInMemory(new SaveData());
 
             var root = new GameObject("faz27-check");
@@ -108,7 +109,7 @@ namespace TekCan.EditorTools
             var güç = root.AddComponent<Clock>();
             güç.Init(t, player.transform, 100f);
             typeof(RoomManager).GetMethod("FullPower", Özel).Invoke(rm, null);
-            int n = t.altarMaxPurchases * rm.RegionCount;
+            int n = t.altarMaxPurchases * Mathf.Max(1, t.subRegionsPerRegion) * rm.RegionCount;   // Faz 28: her ara bölgede sunak
             float f7 = t.attackDamage + t.altarDamageStep * (1f - Mathf.Pow(t.altarStepDecay, n)) / (1f - t.altarStepDecay);
             failed += Check(ref total, $"F7 TAM GÜÇ azalan getiriyle ({Clock.Instance.AttackDamage:0.00} = {f7:0.00})",
                             Mathf.Abs(Clock.Instance.AttackDamage - f7) < 0.01f, Clock.Instance.AttackDamage);

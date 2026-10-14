@@ -38,7 +38,7 @@ namespace TekCan.EditorTools
             // (`rm.Layout`): önceden döngü sayacından türetiliyordu ve "0_HALKA.png"
             // aslında oda 1'in DUVAR'ıydı — yalanı yakalayan araç yalan söylüyordu.
             int adet = 0;
-            for (int room = 1; room <= t.roomsPerRegion - 2; room++, adet++) Shoot(t, room, outDir);
+            for (int room = 1; room <= t.DövüşOdası; room++, adet++) Shoot(t, room, outDir);   // ilk ara bölgenin dövüş odaları
 
             Debug.Log($"[Tek Can] {adet} oda yerleşimi çekildi: {outDir}");
         }

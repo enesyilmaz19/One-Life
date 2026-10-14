@@ -90,14 +90,15 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "son şans sayacı kalktı", !rev3.LastStandArmed, 0);
             Object.DestroyImmediate(root3);
 
-            // ── 5) ⚠️ EŞYA YOKSA OYUN GERÇEKTEN BİTİYOR ──
+            // ── 5) ⚠️ EŞYA YOKSA OYUN BİTMİYOR — son kontrol noktasına (yasa, Faz 28) ──
+            //    Eskiden "eşya yoksa oyun GERÇEKTEN biter" idi. Koşu artık 8 saatlik tek hikâye:
+            //    son kontrol noktasına dönülüyor, kontrol noktaları nemesis toparlanmasıyla aşınıyor.
             s = Bellek(defiance: 0, lastStand: 0, recall: 0, checkpointSeconds: 80f);
             var (root5, clock5, rev5) = Kur(t, 100f);
             clock5.Spend(999f);
-            failed += Check(ref total, "⚠️ eşya yoksa OYUN BİTTİ", SaveFile.Current.gameOver, 1);
-            failed += Check(ref total, "oyun bitti DİSKE yazıldı (bellekte kalmadı)",
-                            DisktenOku().gameOver, 1);
-            failed += Check(ref total, "ölü kalıyorsun (diriltilmedin)", clock5.Dead, 1);
+            failed += Check(ref total, "⚠️ eşya yoksa oyun BİTMİYOR (gameOver yok)", !SaveFile.Current.gameOver, 0);
+            failed += Check(ref total, "⚠️ eşya yoksa kontrol noktasına dönülüyor", rev5.RecallCount == 1, rev5.RecallCount);
+            failed += Check(ref total, "ölüm DİSKE yazıldı (bellekte kalmadı)", DisktenOku().deaths >= 1, DisktenOku().deaths);
             Object.DestroyImmediate(root5);
 
             // ── 6) ONARIM zamanla ödeniyor ──
@@ -189,10 +190,11 @@ namespace TekCan.EditorTools
 
             var rm10Go = new GameObject("rooms"); rm10Go.transform.SetParent(root10.transform);
             var rm10 = rm10Go.AddComponent<RoomManager>();
-            // ⚠️ YENİ bir checkpoint odasına varış (oda 4). Faz 25'e kadar burada oda 1'e
+            // ⚠️ YENİ bir checkpoint odasına varış. Faz 25'e kadar burada oda 1'e
             // giriliyordu, ama kayıttaki checkpoint ZATEN oda 1'di — gerçek oyunda o, ÇAĞRI
             // ya da kapat-aç ile aynı odaya dönüş demek ve artık checkpoint'i ezmiyor (L1).
-            rm10.Init(t, clock10.transform, null, startRoom: 4);   // oda 4 = checkpoint → kaydeder
+            // Faz 28: kontrol noktası ilk mini boss'un ardındaki sunak odası (eskiden oda 4).
+            rm10.Init(t, clock10.transform, null, startRoom: RoomManager.SunakOdası(t, 0));
 
             failed += Check(ref total, "⚠️ checkpoint yükseltmeleri de KAYDEDİYOR",
                             Mathf.Abs(SaveFile.Current.harvestRate - hasatSonra) < 0.001f,
@@ -293,9 +295,8 @@ namespace TekCan.EditorTools
                             !SaveFile.WritesToPlayerSave, 1);
             SaveFile.PathOverride = unutkanYol;
 
-            // ── 12) Checkpoint aralığı ──
-            failed += Check(ref total, "checkpoint aralığı en az 1", t.checkpointEveryRooms >= 1,
-                            t.checkpointEveryRooms);
+            // ── 12) (Faz 28'de kalktı) "checkpoint aralığı" — kontrol noktası artık bölgenin
+            //    başı ve her mini boss'un ardındaki sunak odası (`Faz28SelfCheck`).
 
             Object.DestroyImmediate(t);
             Clock.Reset();

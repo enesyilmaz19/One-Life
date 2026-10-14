@@ -537,3 +537,24 @@ saldırıdır. Enes'in cümlesi doğruydu.
 - **Ölçüm penceresi başka olayları da yakalar:** bot "hazırlık başladı → vuruş indi" arasında
   saat düştüyse "bu saldırı vurdu" diyordu. Kalabalıkta (rakipler, işaretler) KOMİSYON+ 14/14
   göründü, gerçekte 0/4. Etkiyi ölçerken pencereyi etkinin KENDİ anına daralt (aynı kare).
+
+## Ders 16 — Saat şişmedi, float yuttu (2026-10-13, Faz 28 bot ölçümü)
+
+Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat neredeyse hiç akmıyordu
+(oda 43: 228 sn, akış −9.7). "Ekonomi çok cömert" diye kadran çevirmeye hazırdım.
+
+**Asıl sebep:** bot gizli pencerede saniyede ~3600 kare koşuyor. Kare başı akış ~0.0003 sn.
+`float` saatte 8192'nin üstünde iki sayı arası 0.001 — çıkarma yuvarlanıp KAYBOLUYOR;
+4096–8192 arasında ise yukarı yuvarlanıp FAZLA akıyor. Ölçüm çöp, ama çöpün bir kısmı
+(ilk ara bölgenin +960'ı) gerçekti — iki sorun üst üste binmişti.
+
+- **Kural:** kare kare biriken her şey (saat, toplam süre, toplam akış) `double` tutulur.
+  8 saatlik koşuda `RunTime` yüksek FPS'te aynı yolla bozulurdu — bot yalnızca erken gösterdi.
+- **Kural:** "saat akmıyor" gibi FİZİĞE aykırı bir ölçüm, ayar sorusu değil hata sorusudur.
+  Önce oyun zamanı / gerçek zaman / akış ayrımını ölç (bot nabzı, oda hesabında `süre`), sonra ayarla.
+- Kapı: `Faz28SelfCheck` 9000 sn'lik saatte 10 000 × 0.0003 sn'lik kare. float'la 9.77, doğrusu 7.50.
+- **Rapor kendi formülünü yazınca yalan söyler (aynı gün):** zorluk raporu düşmanın aurasını
+  kendisi hesaplıyordu (`Kind.AuraDrain + bossAuraDrain`); oyun ise boss'un KENDİ aurasını
+  kullanıyor (mini boss'ta yarısı). Rapor mini boss aurasını 10 kat fazla saydı, ORTA oyuncuyu
+  erken öldürdü. **Kural:** rapor oyunun değerini SORAR (`Enemy.AuraOranı`), kopyalamaz —
+  `RoomManager.Tür`, `Clock.Fiyat`, `Clock.Doyma` ile aynı ilke.

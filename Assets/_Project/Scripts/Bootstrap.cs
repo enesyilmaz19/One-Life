@@ -86,16 +86,17 @@ namespace TekCan
         }
 
         /// <summary>
-        /// `Restart` mı kuruyor (ÇAĞRI, R, F6) yoksa oyun mu AÇILIYOR. Oda başı kayıt
-        /// (K1) yalnızca açılışta okunur: ÇAĞRI checkpoint'e atmalı, oda başına değil.
+        /// `Restart` mı kuruyor (R, F6, eşyasız ölüm) yoksa oyun mu AÇILIYOR. Oda başı kayıt
+        /// (K1) açılışta okunur — bir de ÇAĞRI'da: ölüm sırası oraya ÖNCEKİ odayı yazıp
+        /// `Restart(odaBaşına: true)` diyor (Enes 2026-10-14).
         /// </summary>
-        static bool _yenidenKurulum;
+        static bool _yenidenKurulum, _odaBaşına;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Build()
         {
-            bool açılış = !_yenidenKurulum;
-            _yenidenKurulum = false;
+            bool açılış = !_yenidenKurulum || _odaBaşına;
+            _yenidenKurulum = false; _odaBaşına = false;
             ResetStatics();
             _runRoot = new GameObject("Run");
 
@@ -215,7 +216,7 @@ namespace TekCan
             // arenaya değil (bkz. RoomManager.PlaceAltars).
             systems.AddComponent<RoomManager>().Init(t, player.transform, camGo.transform, oda, bölge);
 
-            Debug.Log($"[Tek Can] Arena hazır — oda {oda}/{t.roomsPerRegion}" +
+            Debug.Log($"[Tek Can] Arena hazır — oda {oda}/{t.RoomsInRegion}" +
                       (odaBaşı ? " (ODA BAŞI kaydından)" : "") +
                       $", {clock.Seconds:0}s saat, {RevivalKind.IntactCount(save)} diriliş eşyası.");
         }
@@ -249,7 +250,7 @@ namespace TekCan
         }
 
         /// <summary>Sahneyi yeniden kurar — checkpoint'ten devam. Kaydı SIFIRLAMAZ.</summary>
-        public static void Restart()
+        public static void Restart(bool odaBaşına = false)
         {
             if (_runRoot != null)
             {
@@ -260,6 +261,7 @@ namespace TekCan
             }
             _runRoot = null;
             _yenidenKurulum = true;
+            _odaBaşına = odaBaşına;
             Build();
 
             // Çalışma anında üretilen varlıklar (ses klipleri, yay mesh'leri, `renderer.material`

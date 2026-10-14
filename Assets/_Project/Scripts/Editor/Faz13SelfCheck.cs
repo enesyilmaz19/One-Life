@@ -25,6 +25,7 @@ namespace TekCan.EditorTools
             int failed = 0, total = 0;
 
             var t = ScriptableObject.CreateInstance<Tuning>();
+            t.harvestSoftCap = 1e6f;   // Faz 28 hasat doyması bu kapının konusu değil (büyük saatte kazancı kısıyor)
             t.startSeconds = 5000f;
             t.enemyTimePool = 10f;
             t.harvestRate = 0.5f;
@@ -142,7 +143,7 @@ namespace TekCan.EditorTools
             for (int bölge = 0; bölge < Region.All.Length; bölge++)
             {
                 enterRegion.Invoke(rm, new object[] { bölge, 1 });
-                for (int oda = 1; oda <= t.roomsPerRegion; oda++)
+                for (int oda = 1; oda <= t.RoomsInRegion; oda++)
                     for (int i = 0; i < 12; i++)
                         çıkanlar.Add((EnemyKind)pick.Invoke(rm, new object[] { oda, i }));
             }

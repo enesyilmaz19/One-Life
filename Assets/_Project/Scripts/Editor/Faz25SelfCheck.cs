@@ -42,6 +42,7 @@ namespace TekCan.EditorTools
                 System.IO.Path.GetTempPath(), "tekcan_faz25_check.json");
 
             var t = ScriptableObject.CreateInstance<Tuning>();
+            t.roomWaves = 1;   // Faz 28: oda temizliğini ölçen kurgular tek dalga (dalgalar Faz28SelfCheck'te)
             t.bossMapAttackEvery = 0;    // yakın/uzak sırası ölçülüyor; harita sırası Faz26SelfCheck'te
             t.startSeconds = 500f;
             t.enemyTimePool = 10f;
@@ -462,7 +463,7 @@ namespace TekCan.EditorTools
             var kurulum = Bootstrap.BaşlangıçNoktası(s, t, false);
             failed += Check(ref total, "⚠️ K1: oyunu kapatıp AÇAN girdiği odanın başına, girdiği zamanla döner",
                             açılış.odaBaşı && açılış.oda == 2 && Mathf.Abs(açılış.saat - 321f) < 0.01f, açılış.oda);
-            failed += Check(ref total, "K1: ÇAĞRI / R / F6 oda başını KULLANMIYOR (checkpoint odası)",
+            failed += Check(ref total, "K1: R / F6 / eşyasız ölüm oda başını KULLANMIYOR (checkpoint odası)",
                             !kurulum.odaBaşı && kurulum.oda == s.checkpointRoom, kurulum.oda);
 
             // K1-c: yerinde diriliş oda başı zamanını düşürüyor
@@ -475,8 +476,9 @@ namespace TekCan.EditorTools
             // K1-d: ÇAĞRI oda başı kaydını siliyor
             s.intact[0] = 0; s.intact[1] = 0; s.intact[2] = 1;
             c.Spend(99999f);
-            failed += Check(ref total, "⚠️ K1: ÇAĞRI oda başı kaydını SİLİYOR (dönüş checkpoint'e)",
-                            s.resumeRoom == 0 && rev.RecallCount == 1, s.resumeRoom);
+            // Faz 28 (Enes 2026-10-14): ÇAĞRI artık bir ÖNCEKİ odanın başına — oda 2'de öldün, oda 1.
+            failed += Check(ref total, "⚠️ K1: ÇAĞRI oda başı kaydını bir ÖNCEKİ odaya çeviriyor (oda 2 → 1)",
+                            s.resumeRoom == 1 && rev.RecallCount == 1 && Bootstrap.BaşlangıçNoktası(s, t, true).oda == 1, s.resumeRoom);
 
             // K2-a: 4 sn'lik checkpoint, ÇAĞRI tabanla döndürüyor
             s.checkpointSeconds = 4f;
@@ -549,7 +551,7 @@ namespace TekCan.EditorTools
             float hasar0 = c.AttackDamage;
             Çağır(rm, "FullPower");
             // Faz 27: alımlar AZALAN getiriyle — toplam geometrik (adım × (1 − r^n) / (1 − r)).
-            int n = t.altarMaxPurchases * rm.RegionCount;
+            int n = t.altarMaxPurchases * Mathf.Max(1, t.subRegionsPerRegion) * rm.RegionCount;   // Faz 28: her ara bölgede sunak
             float azalma = t.altarStepDecay;
             float beklenen = hasar0 + (azalma >= 1f ? t.altarDamageStep * n
                                                     : t.altarDamageStep * (1f - Mathf.Pow(azalma, n)) / (1f - azalma));

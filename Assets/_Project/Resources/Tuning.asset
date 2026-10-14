@@ -47,17 +47,17 @@ MonoBehaviour:
   enemyDecayPerSecond: 0.4
   enemyFullSpeed: 3.5
   enemyHollowSpeed: 1.5
-  enemyFullHitCost: 4
-  enemyHollowHitCost: 1.5
+  enemyFullHitCost: 1.5
+  enemyHollowHitCost: 0.6
   enemyAttackRange: 1.8
   enemyAttackCooldown: 1.5
-  altarBasePrice: 6
-  altarPriceGrowth: 1.6
-  altarMaxPurchases: 3
+  altarBasePrice: 12
+  altarPriceGrowth: 1.15
+  altarMaxPurchases: 1
   altarUseRange: 2.5
-  altarHarvestStep: 0.08
-  altarDamageStep: 1.2
-  altarDashStep: 0.08
+  altarHarvestStep: 0.04
+  altarDamageStep: 0.5
+  altarDashStep: 0.03
   singleTargetAngle: 45
   faizliSwingCost: 0.5
   dashAttackDamageMult: 1.6
@@ -74,7 +74,7 @@ MonoBehaviour:
   bossSpeedMultiplier: 1.25
   bossWindupMultiplier: 0.85
   bossAttackAngleMultiplier: 1.5
-  bossHarvestMultiplier: 0.4
+  bossHarvestMultiplier: 0.2
   enemyCount: 5
   arenaRadius: 14
   camYaw: 45

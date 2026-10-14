@@ -118,7 +118,7 @@ namespace TekCan
         [Tooltip("AZALAN GETİRİ (Faz 27): aynı türden her alım bir öncekinin bu katı kadar verir. " +
                  "0.8 → hasar en fazla +adım/(1−0.8) = +5 adım (1.2 × 5 = +6). 1 = azalma yok. " +
                  "Kartopu kırılsın diye: bot 43 alımla hasarı ×5.8 yapıp oyunu 9 dk'da bitirdi.")]
-        public float altarStepDecay = 0.8f;
+        public float altarStepDecay = 0.9f;
 
         [Header("── SİLAHLAR (Faz 3) ──")]
         [Tooltip("Tek hedefli silahların koni açısı — dar, çünkü tek düşman seçiyor")]
@@ -183,15 +183,51 @@ namespace TekCan
         [Tooltip("Dash-atak menzil çarpanı")]
         public float dashAttackRangeMult = 1.15f;
 
-        [Header("── ODALAR / BÖLGE YAPISI (Faz 8) ──")]
-        [Tooltip("Bölgenin kaçıncı odasında boss var — o oda temizlenince KAZANILIR")]
-        public int roomsPerRegion = 6;
+        [Header("── YAPI: bölge → ara bölge → oda (Faz 28) ──")]
+        [Tooltip("Bölge başına ARA BÖLGE — her biri bir MİNİ BOSS'la biter, ardından sunak (kontrol noktası). " +
+                 "Enes 2026-10-12: tek koşu, hikâye 8 saat.")]
+        public int subRegionsPerRegion = 5;
+        [Tooltip("Ara bölge başına DÖVÜŞ odası (mini boss ve sunak odası hariç)")]
+        public int roomsPerSubRegion = 7;
+        [Tooltip("Dövüş odası kaç DALGA — dalga temizlenince sıradaki doğar, sonuncudan sonra kapı açılır")]
+        public int roomWaves = 5;
+        [Tooltip("Her ara bölgede düşman havuzu bu kat büyür (ara bölge İÇİNDE ayrıca roomPoolGrowth)")]
+        public float subRegionPoolGrowth = 1.12f;
+        [Tooltip("Mini boss havuzu = bölgenin TABAN boss havuzunun bu payı")]
+        public float miniBossPoolShare = 5f;
+        [Tooltip("Ana boss havuzu ek çarpanı — tempo: ana boss 6–8 dk")]
+        public float mainBossPoolScale = 12f;
+        [Tooltip("Boss ve mini boss odasında saat akışı çarpanı — uzun dövüşte saat (can) erimesin")]
+        public float bossRoomDrainMultiplier = 0.35f;
+        [Tooltip("Mini boss'un GERİ GELMESİ: ölümlerde kaybettiğin saniyeler, mini boss havuzunun bu katına ulaşınca")]
+        public float miniBossRecoveryShare = 1.5f;
+
+        // Enes (2026-10-14): "başlarda kolay ve oyuncu dostu, ilerledikçe zorlaşan ve bu zorluğu
+        // bufflar ile kapatan… iyi oyuncu bile absürt saatlere ulaşmamalı." Sunak için B seçildi.
+        [Header("── EKONOMİ: doyma · sunak yüzdesi · ilerleme (Faz 28) ──")]
+        [Tooltip("HASAT DOYMASI: saat bu sayının üstündeyken hasat ×(tavan / saat) — 1. bölgede")]
+        public float harvestSoftCap = 250f;
+        [Tooltip("Doyma tavanı her bölgede bu kat büyür (boss'lar büyüyor, tampon da büyümeli)")]
+        public float harvestSoftCapGrowth = 1.35f;
+        [Tooltip("Sunak fiyatı en az saatin bu payı — biriktiren daha çok öder")]
+        public float altarPricePercent = 0.10f;
+        [Tooltip("İLERLEME: düşman vuruşunun bedeli her ara bölgede (bölgeler boyunca sayılır) bu kat artar")]
+        public float hitCostProgressGrowth = 1.09f;
+
+        /// <summary>Bir ara bölgenin dövüş odası sayısı (en az 1).</summary>
+        public int DövüşOdası => Mathf.Max(1, roomsPerSubRegion);
+        /// <summary>Bir ara bölgenin oda sayısı: dövüş odaları + mini boss + sunak.</summary>
+        public int BlokBoyu => DövüşOdası + 2;
+        /// <summary>Bölgedeki oda sayısı — sonuncusu ANA BOSS.</summary>
+        public int RoomsInRegion => Mathf.Max(1, subRegionsPerRegion) * BlokBoyu + 1;
+
+        [Header("── ODALAR (Faz 8) ──")]
         [Tooltip("İlk odadaki düşman sayısı")]
         public float roomBaseCount = 3f;
         [Tooltip("Her odada kaç düşman eklenir")]
         public float roomCountGrowth = 1.5f;
         [Tooltip("Her odada düşman zaman havuzu bu kat büyür — odalar sertleşir")]
-        public float roomPoolGrowth = 1.18f;
+        public float roomPoolGrowth = 1.10f;
 
         [Header("── DÜŞMAN TÜRLERİ (Faz 13) ──")]
         [Tooltip("SİGORTA: bu yarıçaptaki düşmanların hasadını kısar")]
@@ -270,9 +306,6 @@ namespace TekCan
         public float regionBossGrowth = 1.35f;
 
         [Header("── DİRİLİŞ / CHECKPOINT (Faz 9) ──")]
-        [Tooltip("Kaç odada bir checkpoint. Gerçek oyunda 30dk-1sa'lik kesitler olacak; " +
-                 "greybox'ta oda sayısı o kesitin yerini tutuyor.")]
-        public int checkpointEveryRooms = 3;
         [Tooltip("ÖLÜM ALDATMA: checkpoint'teki zamanın bu kadarıyla yerinde kalkarsın")]
         public float defianceFraction = 0.35f;
         [Tooltip("GEÇİCİ DÖNÜŞ: bu kadar saniyen olur. Odayı temizlersen kurtulursun, " +

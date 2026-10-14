@@ -76,6 +76,7 @@ ilerletiyor; otopilot oyunun kendi karelerinde, Unity'nin SANAL klavye/faresiyle
 - İzle: `Tek Can → Otopilot (izle)` — gerçek hızda, ekranda yazılı, ekran görüntülü
 - Faz 26 playtest'i: `Tek Can → Otopilot — Faz 26 playtest (izle)` ya da batch `…OtopilotMenu.Playtest26` (~15 dk) — todo'daki 7 maddeyi oynayıp ölçer, sonunda saldırı başına vurulma tablosu
 - Tam koşu ölçümü (Faz 27): `Tek Can → Otopilot — tam koşu ölçümü (izle)` ya da batch `…OtopilotMenu.TamKosu` — bütün bölgeler atlamadan; oda/bölge/boss süreleri, sunak alımları, saatin bittiği yerler (F5 takviyesi)
+- Ekonomi ayarı (Faz 28): batch `…OtopilotMenu.AraBolge1Olcum` (~10 dk, 1. ara bölge: 7 oda + mini + sunak) · `…Bolge1Olcum` (~55 dk, 1. bölge) · `…MiniTeshis` (M ile ilk mini, 10 sn'de bir `[NABIZ]`: oyun zamanı / saat akışı) · `…MiniTesti` (5 bölge × 5 mini boss, beklenen güçle; süre / saat kaybı / darbe, ~1–1.5 saat)
 - Batch: `-executeMethod TekCan.EditorTools.OtopilotMenu.Batch` — **`-quit` YOK**, bot kendisi çıkar, ~12 dk
 - Çıktı: `Logs/Otopilot/<zaman>/rapor.md` + görüntüler. Uzun sürdüğü için `AllChecks`'te değil.
 - ⚠️ Batch'te pencere odakta olmuyor: bot girdi ayarının kopyasında `backgroundBehavior = IgnoreFocus` açıyor (yoksa tuşlar düşüyor).
@@ -121,6 +122,10 @@ Bu üç hata sınıfı projede defalarca çıktı. Yeni kod yazarken önce bunla
    `x?.Foo()` ölü nesneye yazar. Açık `if (x != null)` yaz. (`Clock.Reset` yorumu, ders 14.)
 6. **Kapıyı yazınca bir kere BOZ.** Hatayı geri koy, kırmızıya dönüyor mu bak. 2026-09-25
    denetiminde bozuk dört mekaniğin dördünün de kapısı yeşildi (ders 14).
+
+7. **Kare kare biriken sayı `double` olur.** Bot ~3600 kare/sn koşuyor; büyük `float` saate
+   0.0003 sn eklemek/çıkarmak yuvarlanıp kayboluyor (saat 9000'de hiç akmadı, ders 16).
+   Fizik dışı bir ölçüm (saat akmıyor) gördüğünde ayar değil hata ara.
 
 ## graphify
 
