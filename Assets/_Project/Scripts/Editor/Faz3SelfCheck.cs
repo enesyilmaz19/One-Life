@@ -462,8 +462,14 @@ namespace TekCan.EditorTools
                 var dipte = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.1f);
                 float dipteÖnce = dipte.TimeLeft;
                 dashStrike.Invoke(pc, null);
-                failed += Check(ref total, $"⚠️ {w.Name} DASH'i dibindekine vuruyor (çaresiz kalmıyor)",
+                // Faz 29 (Enes): İPOTEK'in dash-atağı HACİZ İHBARI — cevap GECİKMELİ ama geniş, işaretin
+                // alanı dibindekini de kapsıyor. Patlamayı bekle, sonra ölç.
+                var işaretler = Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include);
+                foreach (var m in işaretler) m.Step(99f);
+                failed += Check(ref total, $"⚠️ {w.Name} DASH'i dibindekine vuruyor (çaresiz kalmıyor{(w.DashSpecial(t) != null ? $" — {w.DashSpecial(t).Name}'nın alanı kapsıyor" : "")})",
                                 dipte.TimeLeft < dipteÖnce - 0.001f, dipteÖnce - dipte.TimeLeft);
+                foreach (var m in işaretler) if (m != null) Object.DestroyImmediate(m.gameObject);
+                GroundMark.ResetLiens();
             }
             ClearEnemies();
             YaylariTemizle();

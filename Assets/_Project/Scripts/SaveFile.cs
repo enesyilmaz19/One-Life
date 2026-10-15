@@ -79,6 +79,11 @@ namespace TekCan
         public float recallDamage = -1f;
         public float recallDash = -1f;
         public int[] recallBoughtCounts = new int[0];
+
+        // Faz 29 — SİLAH SUNAĞI: koşu boyu (ölüm geri almıyor — ana boss'un bölgesi geri gelmez).
+        // Bölge başına alım sayısı da burada: kapat-aç ile boss odasına dönüp yeniden almak olmasın.
+        public int[] weaponUpgrades = new int[0];
+        public int[] weaponAltarBought = new int[0];
     }
 
     /// <summary>

@@ -163,7 +163,8 @@ namespace TekCan.EditorTools
             {
                 var sp = w.Special(t);
                 if (sp == null) continue;
-                string bedel = sp.Cost > 0f ? $"peşin −{sp.Cost:0.0}sn" : "bedelsiz";
+                string bedel = sp.CostPercent > 0f ? $"peşin saatin %{sp.CostPercent * 100f:0}'i"
+                             : sp.Cost > 0f ? $"peşin −{sp.Cost:0.0}sn" : "bedelsiz";
                 string iade = sp.KillRefundMul > 0f ? $", öldürünce ×{sp.KillRefundMul:0.0} iade" : "";
                 sb.AppendLine($"     {w.Name,-8} {sp.Name,-14} her {sp.Cooldown:0}sn · " +
                               $"hasar ×{sp.DamageMul:0.0} · {bedel}{iade}");

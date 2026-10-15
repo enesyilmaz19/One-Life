@@ -297,15 +297,34 @@ namespace TekCan
                .SetParent(parent != null ? parent : null);
         }
 
-        public static void SpawnAltarRing(Tuning t, Transform player, Transform parent)
+        public static void SpawnAltarRing(Tuning t, Transform player, Transform parent,
+                                          Altar.Kind? dönen = null)
         {
-            var kinds = new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash };
+            // Faz 29: sabit üçü + ara bölgeye göre DÖNEN dördüncü (MUAFİYET / SABIR).
+            var kinds = dönen.HasValue
+                ? new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash, dönen.Value }
+                : new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash };
             for (int i = 0; i < kinds.Length; i++)
             {
                 float a = (360f / kinds.Length) * i * Mathf.Deg2Rad + Mathf.PI * 0.25f;
                 float r = t.arenaRadius * 0.28f;
                 SpawnAltar(t, new Vector3(Mathf.Cos(a) * r, ArenaCenter.y, Mathf.Sin(a) * r),
                            player, kinds[i], parent);
+            }
+        }
+
+        /// <summary>
+        /// SİLAH SUNAĞI (Faz 29) — ana boss düşünce boss odasının ortasında üç sunak: kuşanılan
+        /// silahın üç yükseltmesi. Silah değişince sunaklar da değişiyor.
+        /// </summary>
+        public static void SpawnWeaponAltars(Tuning t, Transform player, Transform parent)
+        {
+            for (int i = 0; i < SilahSunağı.SilahBaşına; i++)
+            {
+                float a = (360f / SilahSunağı.SilahBaşına) * i * Mathf.Deg2Rad + Mathf.PI * 0.5f;
+                float r = t.arenaRadius * 0.22f;
+                SpawnAltar(t, new Vector3(Mathf.Cos(a) * r, ArenaCenter.y, Mathf.Sin(a) * r),
+                           player, Altar.Kind.Weapon, parent, i);
             }
         }
 
@@ -320,7 +339,7 @@ namespace TekCan
         }
 
         static void SpawnAltar(Tuning t, Vector3 pos, Transform player, Altar.Kind kind,
-                               Transform parent = null)
+                               Transform parent = null, int yuva = 0)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = "Altar_" + kind;
@@ -328,7 +347,7 @@ namespace TekCan
             go.transform.position = pos + Vector3.up * 0.2f;
             go.transform.localScale = new Vector3(0.7f, 1.1f, 0.7f);
             Object.Destroy(go.GetComponent<Collider>());
-            go.AddComponent<Altar>().Init(t, player, kind);
+            go.AddComponent<Altar>().Init(t, player, kind, yuva);
         }
 
         /// <summary>

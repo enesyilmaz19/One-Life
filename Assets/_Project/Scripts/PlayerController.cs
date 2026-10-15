@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -29,6 +30,34 @@ namespace TekCan
         // ötekilerinkini de kilitliyordu. Ve HACİZ'in özelinin "gözükmemesi" de
         // buydu: başka silahın bekleme süresi onu yutuyordu.
         float[] _specialCd = new float[TekCan.Weapon.All.Length];
+        // Son özelin ödenen bedeli ve öldürme iadesi hakkı (İCRA, Faz 29) — vuruş anında okunuyor.
+        float _özelBedeli;
+        bool _özelİadeVar = true;
+
+        // ── SİLAH YÜKSELTMELERİ (Faz 29, ana boss sonrası SİLAH SUNAĞI) ──────────
+        // Yalnızca KUŞANILAN silahınki geçerli. Silahın verisi (`Weapon`) saf kalıyor; yükseltme
+        // değerin KULLANILDIĞI yerde uygulanıyor — savurma yayı da isabet de aynı değerden okuyor.
+        bool Y(SilahYükseltme y) => SilahSunağı.Silahı(y) == _weaponIndex && SilahSunağı.Var(y);
+        float SavurmaMenzili => Weapon.Range(_t) * (Y(SilahYükseltme.UzunKol) ? 1.25f : 1f);
+        float SavurmaAçısı => Weapon.Angle(_t) * (Y(SilahYükseltme.GenişAğ) ? 1.35f : 1f);
+        float ÖlüBölge => Weapon.MinRange(_t) * (Y(SilahYükseltme.DarÖlüBölge) ? 0.5f : 1f);
+        int SavurmaHedefi => Y(SilahYükseltme.Delici) ? 2 : Weapon.MaxTargets;
+        static readonly List<(Enemy e, float d)> _hedefler = new List<(Enemy e, float d)>();
+
+        /// <summary>Ne kadar dipte (0 güvende, 1 panikte) — İFLAS'ın eğrisi; DİP eşikleri ×1.5 öteliyor.</summary>
+        float DipOranı()
+        {
+            float saniye = Clock.Instance != null ? Clock.Instance.Seconds : _t.startSeconds;
+            if (Y(SilahYükseltme.Dip)) saniye /= 1.5f;
+            return Mathf.InverseLerp(_t.iflasSafeSeconds, _t.iflasPanicSeconds, saniye);
+        }
+
+        /// <summary>Sağ tık beklemesi: KISA SÜPÜRME / KISA İCRA ×0.7 · SABIR sunağı (Faz 29).</summary>
+        float ÖzelBeklemeÇarpanı()
+        {
+            float k = Y(SilahYükseltme.KısaSüpürme) || Y(SilahYükseltme.KısaİCRA) ? 0.7f : 1f;
+            return Clock.Instance != null ? k * Clock.Instance.SabırÇarpanı : k;
+        }
 
         // ── SERİ VURUŞ (İFLAS · TASFİYE) ──────────────────────────────────────
         // ⚠️ Coroutine YOK. Bu projede zaman güdümlü her şey `dt`'yi DIŞARIDAN
@@ -251,14 +280,20 @@ namespace TekCan
             if (sp == null) return;
 
             // Ödeyemiyorsan çalışmıyor — FAİZLİ'nin savurma kuralının aynısı.
+            // İCRA (Faz 29): bedel saatin yüzdesi (en az `Cost`). Öldürme iadesi yalnızca saat doyma
+            // tavanının altındayken — "eşiğin üstündeysen zaman vermez" (Enes).
             var clock = Clock.Instance;
-            if (sp.Cost > 0f)
+            float bedel = sp.Cost;
+            if (sp.CostPercent > 0f && clock != null) bedel = Mathf.Max(bedel, sp.CostPercent * clock.Seconds);
+            _özelBedeli = bedel;
+            _özelİadeVar = clock == null || clock.HasatDoyması >= 0.999f;
+            if (bedel > 0f)
             {
-                if (clock == null || clock.Seconds <= sp.Cost) return;
-                clock.Spend(sp.Cost);
+                if (clock == null || clock.Seconds <= bedel) return;
+                clock.Spend(bedel);
             }
 
-            _specialCd[_weaponIndex] = sp.Cooldown;
+            _specialCd[_weaponIndex] = sp.Cooldown * ÖzelBeklemeÇarpanı();
             _attackTimer = Weapon.Duration(_t);      // taahhüt: özel de bir savurma
             _attackHitDone = true;                   // vuruş BURADA indi, TickAttack tekrarlamasın
 
@@ -267,7 +302,17 @@ namespace TekCan
 
             Sfx.Swing();
 
-            // ── yer vuruşu olan özel (İPOTEK · HACİZ İHBARI) ──
+            // ── yer vuruşu olan özel ──
+            // İPOTEK YAĞMURU (Faz 29): Hits > 1 ise alandaki düşmanların üstüne peş peşe ipotek —
+            // ilki hemen, gerisi seri sayacıyla (TASFİYE ile aynı yol; dash ve silah değişimi keser).
+            if (sp.GroundDelay > 0f && sp.Hits > 1)
+            {
+                YağmurDamlası(sp);
+                _flurrySpecial = sp;
+                _flurryLeft = sp.Hits - 1;
+                _flurryTimer = sp.HitInterval;
+                return;
+            }
             if (sp.GroundDelay > 0f)
             {
                 PlaceGroundMark(Weapon.Range(_t) * sp.RangeMul, sp.GroundRadius, sp.GroundDelay,
@@ -279,12 +324,13 @@ namespace TekCan
             // ⚠️ SERİ VURUŞ (İFLAS · TASFİYE): ilk vuruş HEMEN iniyor, gerisi
             // sayaçla. "Bas ve bekle" hissi olmasın — silahın kimliği HIZ.
             SpecialStrike(sp);
-            if (sp.Hits > 1)
+            int vuruş = sp.Hits + (Y(SilahYükseltme.Seri) ? 2 : 0);   // SERİ (İFLAS, Faz 29)
+            if (vuruş > 1)
             {
                 _flurrySpecial = sp;
-                _flurryLeft = sp.Hits - 1;
+                _flurryLeft = vuruş - 1;
                 _flurryTimer = sp.HitInterval;
-                _attackTimer = sp.HitInterval * sp.Hits;   // seri boyunca taahhüt
+                _attackTimer = sp.HitInterval * vuruş;   // seri boyunca taahhüt
             }
         }
 
@@ -302,7 +348,8 @@ namespace TekCan
 
             _flurryTimer = _flurrySpecial.HitInterval;
             _flurryLeft--;
-            SpecialStrike(_flurrySpecial);
+            if (_flurrySpecial.GroundDelay > 0f) YağmurDamlası(_flurrySpecial);
+            else SpecialStrike(_flurrySpecial);
             if (_flurryLeft <= 0) _flurrySpecial = null;
         }
 
@@ -343,7 +390,7 @@ namespace TekCan
                       scaleFrom: sp.Hits > 1 ? 0.85f : 0.5f, scaleTo: 1f);
             SwingsSpawned++;
 
-            StrikeCone(range, angle, WeaponDamage() * sp.DamageMul,
+            StrikeCone(range, angle, WeaponDamage() * sp.DamageMul + _özelBedeli * sp.DamagePerCost,
                        _t.hitStopDuration * (sp.Hits > 1 ? 0.35f : 1.6f) * Weapon.HitStopMultiplier,
                        _t.hitShake * (sp.Hits > 1 ? 0.5f : 1.8f) * Weapon.ShakeMultiplier,
                        sp.MaxTargets, Weapon.HarvestMultiplier * sp.HarvestMul,
@@ -351,8 +398,8 @@ namespace TekCan
                        minRange: 0f, special: sp);
 
             // Öldürme iadesi (FAİZLİ · İCRA): bahsi kazandıysan bedelin katı geri geliyor.
-            if (kills > 0 && sp.KillRefundMul > 0f)
-                Clock.Instance?.Add(sp.Cost * sp.KillRefundMul * kills);
+            if (kills > 0 && sp.KillRefundMul > 0f && _özelİadeVar && Clock.Instance != null)
+                Clock.Instance.Add(_özelBedeli * sp.KillRefundMul * kills);
         }
 
         static bool ReadAttack()
@@ -481,6 +528,17 @@ namespace TekCan
             // ters çevriliyordu; dash kalkınca o dal da kalktı — Faz 25.)
             if (_dashDir.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(_dashDir);
 
+            // İPOTEK (Faz 29, Enes): dash-atak = eski sağ tık HACİZ İHBARI — nişan noktasına geniş,
+            // geç patlayan işaret. Yay vurmuyor.
+            var ds = Weapon.DashSpecial(_t);
+            if (ds != null && ds.GroundDelay > 0f)
+            {
+                PlaceGroundMark(Weapon.Range(_t) * ds.RangeMul, ds.GroundRadius, ds.GroundDelay,
+                                WeaponDamage() * ds.DamageMul, Weapon.HarvestMultiplier * ds.HarvestMul);
+                Sfx.Swing();
+                return;
+            }
+
             // Dash-atak artık SİLAHA GÖRE değişiyor: tek hedefli silah dash'te de tek
             // hedefli kalır ama çok sert vurur; koni süpürür ama vuruş başına daha az.
             // Eskiden hepsi aynı geniş alan vuruşuydu ve silahın kimliğini siliyordu.
@@ -536,16 +594,16 @@ namespace TekCan
             // olduğunu söylüyor. İşaretin kendi halkası zaten `GroundMark` içinde çiziliyor.
             if (Weapon.GroundMarkDelay(_t) <= 0f)
                 Arc.Spawn(transform.position, transform.rotation,
-                    Weapon.Range(_t), Weapon.Angle(_t), Weapon.Tint, _t.swingArcLife);
+                    SavurmaMenzili, SavurmaAçısı, Weapon.Tint, _t.swingArcLife);
 
             // ⚠️ ÖLÜ BÖLGE DE GÖRÜNMELİ (HACİZ). Boss'un simit göbeğiyle aynı gerekçe,
             // ama TERS ANLAM: boss'unki güvenli olduğu için YEŞİL, bu ise silahın
             // ÇALIŞMADIĞI yer, o yüzden kırmızı. Görünmeseydi oyuncu dibindekine
             // savurur, ıskalar ve sebebini asla anlamazdı — ders 10'un aynısı.
-            float ölüBölge = Weapon.MinRange(_t);
+            float ölüBölge = ÖlüBölge;
             if (ölüBölge > 0f)
                 Arc.Spawn(transform.position, transform.rotation,
-                    ölüBölge, Weapon.Angle(_t), new Color(0.95f, 0.35f, 0.3f, 0.3f),
+                    ölüBölge, SavurmaAçısı, new Color(0.95f, 0.35f, 0.3f, 0.3f),
                     _t.swingArcLife);
 
             SwingsSpawned++;
@@ -580,6 +638,7 @@ namespace TekCan
         {
             float baseDamage = Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage;
             float saniye = Clock.Instance != null ? Clock.Instance.Seconds : _t.startSeconds;
+            if (Y(SilahYükseltme.Dip)) saniye /= 1.5f;      // DİP (Faz 29): eşikler ×1.5, daha erken sertleşir
             return Weapon.Damage(_t, baseDamage) * Weapon.DesperationMultiplier(saniye, _t);
         }
 
@@ -590,14 +649,20 @@ namespace TekCan
             // veri + kanca, `PlayerController` içinde silah adı geçmiyor.
             if (Weapon.GroundMarkDelay(_t) > 0f) { PlaceLien(); return; }
 
-            StrikeCone(Weapon.Range(_t), Weapon.Angle(_t), WeaponDamage(),
+            StrikeCone(SavurmaMenzili, SavurmaAçısı, WeaponDamage(),
                        _t.hitStopDuration * Weapon.HitStopMultiplier,
                        _t.hitShake * Weapon.ShakeMultiplier,
-                       Weapon.MaxTargets, Weapon.HarvestMultiplier,
+                       SavurmaHedefi, Weapon.HarvestMultiplier,
                        out int hits, out int kills,
-                       minRange: Weapon.MinRange(_t));
+                       minRange: ÖlüBölge);
 
             Weapon.OnStrike(Clock.Instance, _t, hits, kills);
+
+            // FAİZLİ yükseltmeleri (Faz 29): BİLEŞİK öldürme iadesini ×2'den ×3'e çıkarıyor,
+            // TEMERRÜT ıskalayınca bedelin yarısını geri veriyor.
+            var saat = Clock.Instance;
+            if (saat != null && Y(SilahYükseltme.Bileşik) && kills > 0) saat.Add(_t.faizliSwingCost * kills);
+            if (saat != null && Y(SilahYükseltme.Temerrüt) && hits == 0) saat.Add(_t.faizliSwingCost * 0.5f);
         }
 
         /// <summary>
@@ -615,7 +680,7 @@ namespace TekCan
             // kısmak bunu çözmezdi, sadece geciktirirdi. Tek işaret kuralı silahın
             // kimliğini de netleştiriyor: koyduğunu BEKLEYECEKSİN — "nereye
             // gidecekler" sorusu ancak bekleyince gerçek bir soru.
-            if (GroundMark.ActiveLiens > 0) return;
+            if (GroundMark.ActiveLiens >= (Y(SilahYükseltme.ÇiftTapu) ? 2 : 1)) return;   // ÇİFT TAPU (Faz 29)
 
             PlaceGroundMark(Weapon.Range(_t), Weapon.GroundMarkRadius(_t),
                             Weapon.GroundMarkDelay(_t), WeaponDamage(), Weapon.HarvestMultiplier);
@@ -685,6 +750,10 @@ namespace TekCan
         {
             hits = 0; kills = 0;
             float half = angleDeg * 0.5f;
+            // KAPANIŞ (İFLAS): dipte hasat +%50 · GERİ TEPME (KONİ): itme +%60 — Faz 29
+            if (Y(SilahYükseltme.Kapanış)) harvestMult *= 1f + 0.5f * DipOranı();
+            float itme = special != null ? special.Knockback : Weapon.Knockback(_t);
+            if (Y(SilahYükseltme.GeriTepme)) itme = Mathf.Max(itme * 1.6f, 3f);   // savurma da itiyor
 
             if (maxTargets == 1)
             {
@@ -701,7 +770,7 @@ namespace TekCan
                 {
                     bool wasHollow = nearest.Hollow;
                     nearest.Push(nearest.transform.position - transform.position,
-                                 special != null ? special.Knockback : Weapon.Knockback(_t));
+                                 itme);
                     nearest.TakeDamage(MesafeliHasar(damage, nearest, special), harvestMult);
                     hits = 1;
                     if (wasHollow) kills = 1;          // boş düşmana vuruş öldürür
@@ -709,14 +778,21 @@ namespace TekCan
             }
             else
             {
-                for (int i = Enemy.All.Count - 1; i >= 0; i--)
+                // DELİCİ (Faz 29): sınırlı hedefte koni içindeki EN YAKIN n tanesi; sınırsızsa hepsi.
+                // Kopya listede dönülüyor — vuruş düşmanı öldürüp `Enemy.All`'dan çıkarabilir.
+                _hedefler.Clear();
+                foreach (var aday in Enemy.All)
+                    if (InHitCone(aday, range, half, out float uzak, minRange)) _hedefler.Add((aday, uzak));
+                if (maxTargets < _hedefler.Count)
                 {
-                    var e = Enemy.All[i];
-                    if (!InHitCone(e, range, half, out _, minRange)) continue;
-
+                    _hedefler.Sort((a, b) => a.d.CompareTo(b.d));
+                    _hedefler.RemoveRange(maxTargets, _hedefler.Count - maxTargets);
+                }
+                foreach (var (e, _) in _hedefler)
+                {
                     bool wasHollow = e.Hollow;
                     e.Push(e.transform.position - transform.position,
-                           special != null ? special.Knockback : Weapon.Knockback(_t));
+                           itme);
                     e.TakeDamage(MesafeliHasar(damage, e, special), harvestMult);
                     hits++;
                     if (wasHollow) kills++;
@@ -745,6 +821,8 @@ namespace TekCan
         void PlaceGroundMark(float menzil, float yarıçap, float gecikme,
                              float hasar, float hasat)
         {
+            if (Y(SilahYükseltme.HızlıTapu)) gecikme *= 0.7f;    // İPOTEK yükseltmeleri (Faz 29)
+            if (Y(SilahYükseltme.GenişArsa)) yarıçap *= 1.3f;
             Vector3 hedef = CursorGround(out Vector3 nokta)
                           ? nokta
                           : transform.position + transform.forward * menzil;
@@ -760,6 +838,37 @@ namespace TekCan
             var oda = RoomManager.Instance != null ? RoomManager.Instance.RoomRoot : null;
             GroundMark.SpawnLien(_t, transform.position + delta, yarıçap, gecikme,
                                  hasar, hasat, oda != null ? oda : transform.parent);
+        }
+
+        /// <summary>
+        /// İPOTEK YAĞMURU'nun bir damlası: alandaki canlı düşmanlardan RASTGELE birinin durduğu
+        /// yere ipotek (aynı hedefe yığılmasın diye rastgele). Alanda kimse yoksa alana rastgele.
+        /// İşaret normal ipotek: gecikme boyunca kaçabilir — silahın sorusu bu.
+        /// </summary>
+        void YağmurDamlası(WeaponSpecial sp)
+        {
+            float alan = Weapon.Range(_t) * sp.RangeMul;
+            Enemy hedef = null;
+            int aday = 0;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null) continue;
+                Vector3 d = e.transform.position - transform.position;
+                d.y = 0f;                                   // tuzak 2
+                if (d.magnitude > alan) continue;
+                if (Random.Range(0, ++aday) == 0) hedef = e;   // eşit olasılıkla biri
+            }
+            Vector3 yer = hedef != null
+                ? hedef.transform.position
+                : transform.position + Quaternion.Euler(0f, Random.Range(0f, 360f), 0f) * Vector3.forward * Random.Range(0f, alan);
+            yer.y = transform.position.y;
+
+            var oda = RoomManager.Instance != null ? RoomManager.Instance.RoomRoot : null;
+            GroundMark.SpawnLien(_t, yer, sp.GroundRadius * (Y(SilahYükseltme.GenişArsa) ? 1.3f : 1f),
+                                 sp.GroundDelay * (Y(SilahYükseltme.HızlıTapu) ? 0.7f : 1f),
+                                 WeaponDamage() * sp.DamageMul, Weapon.HarvestMultiplier * sp.HarvestMul,
+                                 oda != null ? oda : transform.parent);
+            SwingsSpawned++;
         }
 
         /// <summary>

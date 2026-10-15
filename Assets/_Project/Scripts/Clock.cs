@@ -91,7 +91,8 @@ namespace TekCan
             if (dashCd > 0f) DashCooldown = dashCd;
             // ⚠️ Sayım da geri yükleniyor: yoksa checkpoint'e dönen oyuncu güçlü ama fiyatlar
             // SIFIRDAN — kalıcı fiyat bir ölümle delinirdi. (Eski kayıtta dizi yok → 0.)
-            if (alınan != null && alınan.Length == _alınan.Length) System.Array.Copy(alınan, _alınan, _alınan.Length);
+            // Eski kayıtta 3 tür var (Faz 29'dan önce): olanı kopyala, yeniler 0.
+            if (alınan != null) System.Array.Copy(alınan, _alınan, Mathf.Min(alınan.Length, _alınan.Length));
         }
 
         // ── SUNAK EKONOMİSİ (Faz 27) ──────────────────────────────────────────
@@ -101,9 +102,9 @@ namespace TekCan
         // ⚠️ Tek yer: sunak, TAM GÜÇ (F7), kayıt ve zorluk raporu bunları çağırıyor.
 
         /// <summary>Türe göre (hasat, hasar, dash) bu koşuda kaç alım yapıldı.</summary>
-        readonly int[] _alınan = new int[3];
+        readonly int[] _alınan = new int[5];       // hasat, hasar, dash, MUAFİYET, SABIR
 
-        public int Alınan(Altar.Kind k) => k == Altar.Kind.Repair ? 0 : _alınan[(int)k];
+        public int Alınan(Altar.Kind k) => (int)k < _alınan.Length ? _alınan[(int)k] : 0;   // onarım, silah: sayılmıyor
         public int[] AlınanKopya => (int[])_alınan.Clone();
 
         /// <summary>
@@ -139,9 +140,30 @@ namespace TekCan
         {
             float adım = k == Altar.Kind.Harvest ? t.altarHarvestStep
                        : k == Altar.Kind.Damage ? t.altarDamageStep
-                       : k == Altar.Kind.Dash ? t.altarDashStep : 0f;
+                       : k == Altar.Kind.Dash ? t.altarDashStep
+                       : k == Altar.Kind.Insurance ? t.altarInsuranceStep
+                       : k == Altar.Kind.Patience ? t.altarPatienceStep : 0f;
             return adım * Mathf.Pow(t.altarStepDecay, n);
         }
+
+        /// <summary>SİLAH SUNAĞI fiyatı (Faz 29): taban × 2 × artış^alınan, ama en az saatin %15'i.</summary>
+        public static float SilahFiyatı(Tuning t, int n, float saat)
+            => Mathf.Max(t.altarBasePrice * t.weaponAltarBaseMul * Mathf.Pow(t.altarPriceGrowth, n),
+                         t.weaponAltarPricePercent * saat);
+
+        float AlımToplamı(Altar.Kind k)
+        {
+            if (_t == null) return 0f;
+            float s = 0f;
+            for (int i = 0; i < Alınan(k); i++) s += Getiri(_t, k, i);
+            return s;
+        }
+
+        /// <summary>MUAFİYET (Faz 29): düşman vuruşunun bedelinden düşen pay — alım sayısından, tavan %50.</summary>
+        public float Muafiyet => Mathf.Min(0.5f, AlımToplamı(Altar.Kind.Insurance));
+
+        /// <summary>SABIR (Faz 29): sağ tık beklemesinin çarpanı — alım sayısından, en az ×0.5.</summary>
+        public float SabırÇarpanı => 1f - Mathf.Min(0.5f, AlımToplamı(Altar.Kind.Patience));
 
         public float SıradakiFiyat(Altar.Kind k) => Fiyat(_t, Alınan(k), Seconds);
         public float SıradakiGetiri(Altar.Kind k) => Getiri(_t, k, Alınan(k));
@@ -149,11 +171,13 @@ namespace TekCan
         /// <summary>Bir alımın ETKİSİ (bedel `TryBuy`'da). Sayımı ilerletir.</summary>
         public void Yükselt(Altar.Kind k)
         {
-            if (k == Altar.Kind.Repair) return;
+            if ((int)k >= _alınan.Length) return;      // onarım ve silah sunağının kendi yolu var
             float d = SıradakiGetiri(k);
             if (k == Altar.Kind.Harvest) UpgradeHarvest(d);
             else if (k == Altar.Kind.Damage) UpgradeDamage(d);
-            else UpgradeDash(d);
+            else if (k == Altar.Kind.Dash) UpgradeDash(d);
+            // MUAFİYET ve SABIR'ın etkisi sayımdan türüyor (`Muafiyet`, `SabırÇarpanı`) — ayrı alan yok,
+            // kayıt da yalnızca sayımı taşıyor.
             _alınan[(int)k]++;
         }
 

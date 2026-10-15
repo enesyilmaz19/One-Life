@@ -53,10 +53,22 @@ namespace TekCan
         /// <summary>Peşin bedel (saniye). Kullanmadan ödenir; ödeyemiyorsan çalışmaz.</summary>
         public float Cost = 0f;
 
+        /// <summary>
+        /// &gt;0 ise peşin bedel saatin bu payı (en az `Cost`) — İCRA (Faz 29). Yüzde olduğu için
+        /// seni hiçbir zaman öldürmez: ne kadar azsan o kadar az ödersin.
+        /// </summary>
+        public float CostPercent = 0f;
+
+        /// <summary>Ödenen her saniye için ek hasar — "hasar ödenen bedele bağlı" (İCRA).</summary>
+        public float DamagePerCost = 0f;
+
         /// <summary>Öldürünce bedelin bu katı geri gelir. 0 = iade yok.</summary>
         public float KillRefundMul = 0f;
 
-        /// <summary>&gt;0 ise koni değil GECİKMELİ YER VURUŞU bırakır (İPOTEK).</summary>
+        /// <summary>
+        /// &gt;0 ise koni değil GECİKMELİ YER VURUŞU bırakır (İPOTEK). `Hits` &gt; 1 ile YAĞMUR olur:
+        /// `RangeMul` alanındaki düşmanların üstüne `HitInterval` arayla peş peşe işaret.
+        /// </summary>
         public float GroundDelay = 0f;
         public float GroundRadius = 0f;
 
@@ -80,6 +92,95 @@ namespace TekCan
 
         /// <summary>Ekrandaki yayın rengi — silahın kendi tonundan ayrışsın diye.</summary>
         public Color Tint = new Color(1f, 1f, 1f, 0.5f);
+    }
+
+    /// <summary>
+    /// Faz 29 — SİLAHA ÖZEL YÜKSELTMELER (Enes, eski Faz 20: "boss sonrası sunak, silaha özel
+    /// yetenekler"). Her silahın üçü; sıra `Weapon.All` sırası × 3. Ana boss düşünce boss odası
+    /// SİLAH SUNAĞI'na dönüyor ve KUŞANDIĞIN silahınkileri satıyor. Koşu boyu kalıyor: ana
+    /// boss'un temizlediği bölge geri gelmediği için hiçbir ölüm onları geri almıyor.
+    /// ⚠️ Yalnızca kuşanılan silahınki geçerli — etkiler `PlayerController`'da, silahın kendi
+    /// verisi (`Weapon`) saf kalıyor (silah sınıfları `Clock`/kayıt okumuyor).
+    /// </summary>
+    public enum SilahYükseltme
+    {
+        GenişAğ, KısaSüpürme, GeriTepme,       // KONİ
+        Bileşik, KısaİCRA, Temerrüt,           // FAİZLİ
+        UzunKol, Delici, DarÖlüBölge,          // HACİZ
+        ÇiftTapu, HızlıTapu, GenişArsa,        // İPOTEK
+        Dip, Seri, Kapanış                     // İFLAS
+    }
+
+    public static class SilahSunağı
+    {
+        public const int SilahBaşına = 3;
+
+        public static readonly string[] Ad =
+        {
+            "GENİŞ AĞ", "KISA SÜPÜRME", "GERİ TEPME",
+            "BİLEŞİK", "KISA İCRA", "TEMERRÜT",
+            "UZUN KOL", "DELİCİ", "DAR ÖLÜ BÖLGE",
+            "ÇİFT TAPU", "HIZLI TAPU", "GENİŞ ARSA",
+            "DİP", "SERİ", "KAPANIŞ",
+        };
+
+        public static readonly string[] NeYapar =
+        {
+            "savurma açısı +%35", "SÜPÜRME beklemesi −%30", "savurma da iter, SÜPÜRME itmesi +%60",
+            "öldürünce iade ×2 → ×3", "İCRA beklemesi −%30", "ıskalayınca bedelin yarısı geri",
+            "menzil +%25", "iki hedefe vurur", "ölü bölge yarıya",
+            "aynı anda iki ipotek", "ipotek gecikmesi −%30", "ipotek alanı +%30",
+            "dipte daha erken sertleşir (eşikler ×1.5)", "TASFİYE +2 vuruş", "dipte hasat +%50",
+        };
+
+        public static int Toplam => Weapon.All.Length * SilahBaşına;
+        public static int Silahı(SilahYükseltme y) => (int)y / SilahBaşına;
+        public static SilahYükseltme Yuvası(int silah, int yuva) => (SilahYükseltme)(silah * SilahBaşına + yuva);
+
+        public static bool Var(SilahYükseltme y)
+        {
+            var s = SaveFile.Current;
+            int i = (int)y;
+            return s != null && s.weaponUpgrades != null && i < s.weaponUpgrades.Length && s.weaponUpgrades[i] > 0;
+        }
+
+        public static int AlınanSayısı
+        {
+            get
+            {
+                var s = SaveFile.Current;
+                int n = 0;
+                if (s != null && s.weaponUpgrades != null) foreach (var v in s.weaponUpgrades) if (v > 0) n++;
+                return n;
+            }
+        }
+
+        /// <summary>Bu bölgenin boss'undan sonra kaç yükseltme alındı (boss başına sınır için).</summary>
+        public static int BölgeAlımı(int bölge)
+        {
+            var s = SaveFile.Current;
+            return s != null && s.weaponAltarBought != null && bölge < s.weaponAltarBought.Length
+                 ? s.weaponAltarBought[bölge] : 0;
+        }
+
+        /// <summary>Yükseltmeyi kayda yaz ve bölgenin alım sayısını artır — kaydın TEK yazma yolu.</summary>
+        public static void Al(SilahYükseltme y, int bölge)
+        {
+            var s = SaveFile.Current;
+            if (s == null) return;
+            s.weaponUpgrades = Sığdır(s.weaponUpgrades, Toplam);
+            s.weaponAltarBought = Sığdır(s.weaponAltarBought, bölge + 1);
+            s.weaponUpgrades[(int)y] = 1;
+            s.weaponAltarBought[bölge]++;
+        }
+
+        static int[] Sığdır(int[] dizi, int n)
+        {
+            if (dizi != null && dizi.Length >= n) return dizi;
+            var yeni = new int[n];
+            if (dizi != null) System.Array.Copy(dizi, yeni, dizi.Length);
+            return yeni;
+        }
     }
 
     public abstract class Weapon
@@ -130,6 +231,12 @@ namespace TekCan
         // ponytail: HUD her OnGUI olayında 5-6 küçük nesne kuruyor. Profilde görünürse
         // önbelleği Tuning DEĞERLERİNE bağla (referansına değil).
         public virtual WeaponSpecial Special(Tuning t) => null;
+
+        /// <summary>
+        /// Dash-atağın yerine geçen özel — null ise dash-atak silahın normal yayı. Yalnızca
+        /// İPOTEK (Faz 29): eski sağ tığı HACİZ İHBARI dash-atağa taşındı (Enes).
+        /// </summary>
+        public virtual WeaponSpecial DashSpecial(Tuning t) => null;
 
         // ── DASH-ATAK KİMLİĞİ ────────────────────────────────────────────────
         // Enes: *"her bir silahın özel dash attack olsun, burada çok belli olmuyor
@@ -245,15 +352,17 @@ namespace TekCan
         public override float ShakeMultiplier => 2.6f;
         public override float Knockback(Tuning t) => t.faizliKnockback;   // asıl "oturtan" şey
 
-        /// İCRA — bahsi büyütüyor. Peşin bedel ağır, hasar çok, öldürürsen ÜÇ KAT
-        /// geri geliyor. Sorusu değişmiyor ("bu savurma tutar mı"), sadece bedeli
-        /// ve ödülü büyüyor. Iskalarsan doğrudan ömründen gidiyor.
+        /// İCRA — bahsi büyütüyor. Faz 29 (Enes): bedel SAATİNİN YÜZDESİ, hasar ÖDEDİĞİNE bağlı —
+        /// ne kadar çok yatırırsan o kadar sert. Öldürürsen bedelin 1.5 katı geri, ama saat doyma
+        /// tavanının üstündeyse geri vermez ("eşiğin üstündeysen zaman vermez"). Sorusu yine
+        /// "bu savurma tutar mı"; zenginken bahis büyüyor ama kazancı kalkıyor.
         public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
         {
             Name = "İCRA", Cooldown = t.specialCooldownFaizli,
             MaxTargets = 1, Angle = t.singleTargetAngle * 0.8f, RangeMul = 1.3f,
-            DamageMul = 3.2f, HarvestMul = 1.2f, Knockback = t.faizliKnockback * 1.8f,
-            Cost = t.faizliSwingCost * 6f, KillRefundMul = 3f,
+            DamageMul = 1f, DamagePerCost = t.icraDamagePerCost, HarvestMul = 1.2f,
+            Knockback = t.faizliKnockback * 1.8f,
+            Cost = t.faizliSwingCost * 3f, CostPercent = t.icraCostPercent, KillRefundMul = t.icraKillRefund,
             Tint = new Color(1f, 0.8f, 0.25f, 0.6f)
         };
 
@@ -350,19 +459,29 @@ namespace TekCan
         public override float GroundMarkRadius(Tuning t) => t.ipotekRadius;
         public override float Damage(Tuning t, float baseDamage) => baseDamage * t.ipotekDamageMult;
 
-        /// HACİZ İHBARI — çok geniş, çok geç patlayan işaret. Sorusu aynı ("nereye
-        /// gidecekler") ama UFKU uzuyor: 0.85 saniye sonrasını değil, iki katını
-        /// tahmin edeceksin. Geniş olması affediciliği değil, tahminin ödülü.
+        /// İPOTEK YAĞMURU (Faz 29, Enes: "büyük alan içinde düşmanların üstüne birkaç saniye peş
+        /// peşe ipotek"). Sorusu aynı — "nereye gidecekler" — ama tek hedef yerine KALABALIK:
+        /// işaretler düşmanın DURDUĞU yere düşüyor, gecikme boyunca kaçabiliyorlar.
         public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
         {
-            Name = "HACİZ İHBARI", Cooldown = t.specialCooldownIpotek,
+            Name = "İPOTEK YAĞMURU", Cooldown = t.specialCooldownIpotek,
+            Hits = t.ipotekRainHits, HitInterval = t.ipotekRainInterval, RangeMul = t.ipotekRainRangeMul,
+            GroundDelay = t.ipotekDelay, GroundRadius = t.ipotekRadius * 0.8f,
+            DamageMul = 0.9f, HarvestMul = 1f,
+            Tint = new Color(1f, 0.45f, 0.95f, 0.5f)
+        };
+
+        /// HACİZ İHBARI — çok geniş, çok geç patlayan işaret. Eskiden sağ tıktı, Faz 29'dan beri
+        /// DASH-ATAK (Enes). Sorusu aynı ama UFKU uzuyor: iki katı sonrasını tahmin edeceksin.
+        /// ⚠️ NİŞAN noktasına düşüyor, dash'in başladığı yere değil — 2026-09-11'de arkana düşen
+        /// "hayalet ipotek" nişan aldığınınkinin yerini çalıyordu (Enes'in hatası, Faz 16 kapısı).
+        public override WeaponSpecial DashSpecial(Tuning t) => new WeaponSpecial
+        {
+            Name = "HACİZ İHBARI",
             GroundDelay = t.ipotekDelay * 2.1f, GroundRadius = t.ipotekRadius * 2f,
             RangeMul = 1f, DamageMul = 2.4f, HarvestMul = 1f,
             Tint = new Color(1f, 0.45f, 0.95f, 0.5f)
         };
-        // Dash'te ipotek BIRAKMIYOR (2026-09-11'de silindi: arkana hayalet ipotek
-        // düşürüp nişan aldığınınkinin yerini çalıyordu). Dash kimliği yukarıda:
-        // dash-atakta doğrudan yay vuruyor, menzilli silahın yakın cevabı.
     }
 
     /// <summary>

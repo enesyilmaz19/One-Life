@@ -31,6 +31,7 @@ namespace TekCan.EditorTools
 
             var t = ScriptableObject.CreateInstance<Tuning>();
             t.startSeconds = 400f;
+            t.harvestSoftCap = 1e6f;     // Faz 28 doyması bu kapının konusu değil (iade tavanın altında)
             t.enemyTimePool = 200f;      // tek vuruşta boşalmasın, hasar ölçülebilsin
             t.attackDamage = 4f;
             t.enemyDecayPerSecond = 0f;
@@ -140,13 +141,15 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "İCRA'nın bedeli normal savurmadan AĞIR",
                             icraBedeli > t.faizliSwingCost * 2f, icraBedeli / t.faizliSwingCost);
 
-            // Ve TUTARSA kârlı — bahsi kazanmanın karşılığı olmalı
+            // Ve ÖLDÜRÜRSE kârlı — bahsi kazanmanın karşılığı. Faz 29: bedel saatin yüzdesi; yalnızca
+            // vurmak bedeli örtmüyor, bahis ÖLDÜRMEK (iade bedelin 1.5 katı).
             ResetSpecial(pc);
             ClearEnemies();
-            MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.4f);
+            var borçlu = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 1.4f);
+            borçlu.TakeDamage(borçlu.TimeLeft);               // boşalt: İCRA vurunca ÖLÜR (boşa vuruş öldürür)
             float tutanÖnce = clock.Seconds;
             startSpecial.Invoke(pc, new object[] { Vector3.forward });
-            failed += Check(ref total, "⚠️ İCRA TUTARSA kârlı (bahis kazanıldı)",
+            failed += Check(ref total, "⚠️ İCRA ÖLDÜRÜRSE kârlı (bahis kazanıldı)",
                             clock.Seconds > tutanÖnce, clock.Seconds - tutanÖnce);
 
             // ── 7) ⚠️ HACİZ · UZUN VADE: UZAKTAKİNE DAHA ÇOK vuruyor ──
@@ -159,9 +162,9 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️ UZUN VADE uzaktakine DAHA ÇOK vuruyor",
                             uzakHasar > yakınHasar * 1.3f, uzakHasar / Mathf.Max(0.001f, yakınHasar));
 
-            // ── 8) ⚠️ İPOTEK · HACİZ İHBARI: daha GENİŞ ve daha GEÇ ──
+            // ── 8) ⚠️ İPOTEK · HACİZ İHBARI (Faz 29'dan beri DASH-ATAK): daha GENİŞ ve daha GEÇ ──
             var ipotek = System.Array.Find(Weapon.All, w => w is Ipotek);
-            var ihbar = ipotek.Special(t);
+            var ihbar = ipotek.DashSpecial(t);
             failed += Check(ref total, "⚠️ HACİZ İHBARI normalden GENİŞ",
                             ihbar.GroundRadius > ipotek.GroundMarkRadius(t) * 1.5f, ihbar.GroundRadius);
             failed += Check(ref total, "⚠️ HACİZ İHBARI daha GEÇ patlıyor (ufuk uzuyor)",
@@ -230,8 +233,9 @@ namespace TekCan.EditorTools
 
             // Seri, İFLAS'a ÖZEL — diğerlerinin özeli tek vuruş
             int seriSayısı = 0;
-            foreach (var w in Weapon.All) if (w.Special(t).Hits > 1) seriSayısı++;
-            failed += Check(ref total, "seri vuruş İFLAS'a özel (kimlik dağılmıyor)",
+            // Faz 29: İPOTEK YAĞMURU da Hits > 1 ama vuruş değil YER İŞARETİ — o ayrı bir kimlik.
+            foreach (var w in Weapon.All) if (w.Special(t).Hits > 1 && w.Special(t).GroundDelay <= 0f) seriSayısı++;
+            failed += Check(ref total, "seri VURUŞ İFLAS'a özel (kimlik dağılmıyor)",
                             seriSayısı == 1, seriSayısı);
 
             // ── 10) ⚠️ DASH KİMLİKLERİ ──
@@ -254,17 +258,20 @@ namespace TekCan.EditorTools
             // Kanca silindi; silahın ASIL dash kimliği zaten belgeliydi ve
             // yerinde duruyor — menzilli/yer silahının YAKIN CEVABI. Kapı artık
             // onu ölçüyor: dash yay vuruyor ve GERİDE İŞARET BIRAKMIYOR.
+            // Faz 29 (Enes): İPOTEK'in dash-atağı artık HACİZ İHBARI. Hayalet ipotek dersi geçerli:
+            // işaret NİŞAN noktasına (önüne, menzilde) düşmeli, dash'in başladığı yere (arkana) değil.
             pc.SetWeapon(Index<Ipotek>());
             ClearEnemies();
             TemizleIsaretler();
             int öncekiİşaret = MarkCount();
-            int öncekiYay = pc.SwingsSpawned;
             dashStrike.Invoke(pc, null);
-            failed += Check(ref total, "⚠️ İPOTEK dash'i DOĞRUDAN yay vuruyor (yakın cevabı)",
-                            pc.SwingsSpawned > öncekiYay,
-                            pc.SwingsSpawned - öncekiYay);
-            failed += Check(ref total, "⚠️ ...ve ARKASINA hayalet ipotek BIRAKMIYOR (Enes'in hatası)",
-                            MarkCount() == öncekiİşaret, MarkCount() - öncekiİşaret);
+            var yeniİşaretler = Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include);
+            Vector3 nereye = yeniİşaretler.Length > 0 ? yeniİşaretler[0].transform.position - pGo.transform.position : Vector3.zero;
+            nereye.y = 0f;
+            failed += Check(ref total, "⚠️ İPOTEK dash-atağı HACİZ İHBARI bırakıyor (tek işaret)",
+                            MarkCount() == öncekiİşaret + 1, MarkCount() - öncekiİşaret);
+            failed += Check(ref total, $"⚠️ ...NİŞAN noktasına, arkana değil ({nereye.magnitude:0.0} birim önde — Enes'in hayalet ipotek hatası)",
+                            Vector3.Dot(nereye, pGo.transform.forward) > ipotek.Range(t) * 0.5f, nereye.magnitude);
             TemizleIsaretler();
 
             ClearEnemies();

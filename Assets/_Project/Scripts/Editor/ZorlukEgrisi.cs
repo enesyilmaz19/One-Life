@@ -46,6 +46,7 @@ namespace TekCan.EditorTools
         {
             public float Hasat, Hasar;
             public float Saat;            // odaya girerken — DOYMA buna bakıyor (Faz 28)
+            public float Muafiyet;        // MUAFİYET sunağı (Faz 29): vuruş bedelinden düşen pay
             public int Alım;
             public int[] Türden;          // hasat, hasar, dash — koşu boyunca (Faz 27)
         }
@@ -101,7 +102,7 @@ namespace TekCan.EditorTools
                 int öldüBölge = -1, öldüOda = -1;
                 float tYürüme = 0f, tDövüş = 0f, tDarbe = 0f, tAura = 0f, tAlım = 0f;
 
-                var d = new Durum { Hasat = t.harvestRate, Hasar = t.attackDamage, Türden = new int[3] };
+                var d = new Durum { Hasat = t.harvestRate, Hasar = t.attackDamage, Türden = new int[5] };
 
                 int bölgeSayısı = Mathf.Clamp(t.regionsPerAct, 1, Region.All.Length);
                 for (int r = 0; r < bölgeSayısı; r++)
@@ -139,7 +140,8 @@ namespace TekCan.EditorTools
                         //    ayar turu hâlâ eski ekonomiye bakarak karar verir.
                         float harcandı = 0f;
                         if (alış.Alıyor && sunakOdası)
-                            harcandı = Alışverişi(t, ref d, ref saat, alış.Rezerv);
+                            harcandı = Alışverişi(t, ref d, ref saat, alış.Rezerv,
+                                                  RoomManager.AraBölge(t, oda) % 2 == 0 ? Altar.Kind.Insurance : Altar.Kind.Patience);
                         tAlım += harcandı;
 
                         string boss = tür == RoomManager.OdaTürü.Boss ? "B" : tür == RoomManager.OdaTürü.MiniBoss ? "M"
@@ -202,33 +204,38 @@ namespace TekCan.EditorTools
         /// Politika AÇIKÇA yazılı: rezerv kalacak şekilde, sırayla üç sunaktan
         /// tavana kadar alıyor. Politika gizli kalsaydı çıkan sayı yorumlanamazdı.
         /// </summary>
-        static float Alışverişi(Tuning t, ref Durum d, ref float saat, float rezerv)
+        static float Alışverişi(Tuning t, ref Durum d, ref float saat, float rezerv, Altar.Kind dönen)
         {
+            // Faz 29: dördüncü sunak dönüyor (oyundaki gibi). SABIR'ın etkisi (sağ tık) modellenmiyor —
+            // model ona para VERMİYOR; aksi hâlde karşılığı olmayan bir masraf sayardı.
+            var türler = new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash, dönen };
             float toplam = 0f;
 
             // Üç sunak: HASAT, KESKİNLİK, ÇEVİKLİK. Her biri `altarMaxPurchases` kez.
             // ⚠️ Fiyat ve getiri OYUNUN formülleri (`Clock.Fiyat` / `Clock.Getiri`) — model kopya
             // hesap tutmuyor. Sayım bölgeler arası sürüyor (`d.Türden`), oyundaki gibi.
-            for (int sunak = 0; sunak < 3; sunak++)
+            for (int sunak = 0; sunak < türler.Length; sunak++)
             {
-                var tür = (Altar.Kind)sunak;
+                var tür = türler[sunak];
+                if (tür == Altar.Kind.Patience) continue;
                 for (int i = 0; i < t.altarMaxPurchases; i++)
                 {
-                    int n = d.Türden[sunak];
+                    int n = d.Türden[(int)tür];
                     float fiyat = Clock.Fiyat(t, n, saat);
                     if (saat - fiyat < rezerv) break;
 
                     // Hasat tavana dayandıysa o sunağa para verme — oyuncu da vermez.
-                    if (sunak == 0 && d.Hasat >= t.harvestRateCap - 0.001f) break;
+                    if (tür == Altar.Kind.Harvest && d.Hasat >= t.harvestRateCap - 0.001f) break;
 
                     saat -= fiyat;
                     toplam += fiyat;
                     d.Alım++;
-                    d.Türden[sunak] = n + 1;
+                    d.Türden[(int)tür] = n + 1;
 
                     float getiri = Clock.Getiri(t, tür, n);
-                    if (sunak == 0) d.Hasat = Mathf.Min(t.harvestRateCap, d.Hasat + getiri);
-                    else if (sunak == 1) d.Hasar += getiri;
+                    if (tür == Altar.Kind.Harvest) d.Hasat = Mathf.Min(t.harvestRateCap, d.Hasat + getiri);
+                    else if (tür == Altar.Kind.Damage) d.Hasar += getiri;
+                    else if (tür == Altar.Kind.Insurance) d.Muafiyet = Mathf.Min(0.5f, d.Muafiyet + getiri);
                 }
             }
             return toplam;
@@ -322,7 +329,8 @@ namespace TekCan.EditorTools
                 mAura += düş.aura * geçen;                   // o ana kadar emmiş
             }
             float mDarbe = b.DarbePerDüşman * sayı * t.enemyFullHitCost * Region.HitCost
-                         * RoomManager.İlerlemeÇarpanı(t, bölge, RoomManager.AraBölge(t, oda));
+                         * RoomManager.İlerlemeÇarpanı(t, bölge, RoomManager.AraBölge(t, oda))
+                         * (1f - d.Muafiyet);
             float masraf = mDövüş + mYürüme + mAura + mDarbe;
 
             KillAll();

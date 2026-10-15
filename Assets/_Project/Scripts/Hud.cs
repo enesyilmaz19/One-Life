@@ -176,9 +176,12 @@ namespace TekCan
             float cd = pc.SpecialCooldownLeft;
             _small.normal.textColor = cd > 0.05f ? new Color(0.55f, 0.55f, 0.6f)
                                                  : new Color(0.95f, 0.9f, 0.55f);
+            // Dash-atağı özel olan silah (İPOTEK, Faz 29) bunu da söylemeli — yoksa görünmez.
+            var ds = pc.Weapon.DashSpecial(_t);
             GUI.Label(new Rect(0f, Screen.height - 108f, Screen.width, 20f),
                       $"[sağ tık] {sp.Name} — {SpecialNeYapar(sp)}   " +
-                      (cd > 0.05f ? $"({cd:0.0} sn)" : "HAZIR"), _small);
+                      (cd > 0.05f ? $"({cd:0.0} sn)" : "HAZIR") +
+                      (ds != null ? $"   ·   [dash + sol tık] {ds.Name} — {SpecialNeYapar(ds)}" : ""), _small);
             _small.normal.textColor = Color.white;
         }
 
@@ -189,9 +192,13 @@ namespace TekCan
         /// </summary>
         static string SpecialNeYapar(WeaponSpecial sp)
         {
+            if (sp.GroundDelay > 0f && sp.Hits > 1) return $"alandaki düşmanların üstüne {sp.Hits} ipotek yağdırır";
             if (sp.GroundDelay > 0f) return $"yere GENİŞ işaret, {sp.GroundDelay:0.0} sn sonra patlar";
             if (sp.Angle >= 360f) return "ÇEVRENDEKİ HERKESE vurur";
             if (sp.DamagePerDistance > 0f) return "hedef UZAKLAŞTIKÇA daha sert vurur";
+            if (sp.CostPercent > 0f)
+                return $"saatinin %{sp.CostPercent * 100f:0}'ini öder, ödediği kadar sert vurur; ÖLDÜRÜRSEN {sp.KillRefundMul:0.#}× geri (saat dolu değilse)";
+            if (sp.Hits > 1) return $"{sp.Hits} vuruşluk SERİ";
             if (sp.Cost > 0f && sp.KillRefundMul > 0f)
                 return $"{sp.Cost:0.0} sn öder, ÖLDÜRÜRSEN {sp.KillRefundMul:0}× geri alır";
             if (sp.Cost > 0f) return $"{sp.Cost:0.0} sn ödeyip çok sert vurur";

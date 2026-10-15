@@ -274,6 +274,8 @@ namespace TekCan
                 ? new[] { Kurulum(), MiniTeşhis(), Bitir() }
                 : senaryo == "minitest"
                 ? new[] { Kurulum(), MiniTesti(), Bitir() }
+                : senaryo == "p29"
+                ? new[] { Kurulum(), P29(), Bitir() }
                 : SessionState.GetInt(AdımAnahtar, 0) == 0
                 ? new[] { Kurulum(), GirdiKanıtı(), K1Hazırla() }          // K1: Play'den çıkıp giriyor
                 : new[] { K1Doğrula(), Bölge1(), Sunak(), Tahsildar(), Haciz(), Simsar(), Final(), Bitir() };
@@ -343,12 +345,152 @@ namespace TekCan
                     bool öldü = Oda != null && Oda.IsMiniBossRoom && !Oda.Cleared;
                     float süre = c.RunTime - g0, darbe = c.TotalHitCost - d0, hasat = c.TotalHarvested - h0;
                     float kayıp = giriş + (c.TotalGranted - b0) - c.Seconds;
-                    satırlar.Add($"B{b + 1}.{s + 1} {ad}: {süre / 60f:0.0} dk · saat −{kayıp:0} (%{kayıp / giriş * 100f:0}) · darbe −{darbe:0} · hasat +{hasat:0}" +
+                    satırlar.Add($"B{b + 1}.{s + 1} {ad}: {süre / 60f:0.0} dk · saat {-kayıp:+0;−0} (%{-kayıp / giriş * 100f:+0;−0}) · darbe −{darbe:0} · hasat +{hasat:0}" +
                                  (_takviye > t0 ? $" · ⚠️ {_takviye - t0} takviye" : "") + (öldü ? " · ❌ ÖLMEDİ" : ""));
                     Debug.Log($"[MİNİ TESTİ] {satırlar[satırlar.Count - 1]}");
                 }
             }
             Kaydet("MT", "Mini boss testi (beklenen güç, saat = doyma tavanı)", null, string.Join("<br>", satırlar));
+        }
+
+        // ── FAZ 29 PLAYTEST (Enes 2026-10-15: "test koşusunu bottan yaptır") ─────────
+        // Gerçek oyunda, gerçek girdiyle: silah sunağı, İPOTEK YAĞMURU, dash-atak HACİZ İHBARI,
+        // ÇİFT TAPU, İCRA, dönen MUAFİYET / SABIR. Kapı (Faz29SelfCheck) ETKİYİ elle ölçüyor;
+        // bu, oyuncunun yolunun (tuş → sunak → alım → silah) gerçekten açık olduğunu ölçüyor.
+        static readonly System.Reflection.FieldInfo İşaretAlanı =
+            typeof(GroundMark).GetField("_radius", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        static readonly System.Reflection.FieldInfo İşaretOyuncunun =
+            typeof(GroundMark).GetField("_hitsEnemies", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        /// <summary>Oyuncunun yeni ipotekleri (daha önce görülmemiş) — alanlarıyla.</summary>
+        static List<float> Yeniİpotekler(HashSet<GroundMark> görülen)
+        {
+            var l = new List<float>();
+            foreach (var m in FindObjectsByType<GroundMark>(FindObjectsSortMode.None))
+            {
+                if (m == null || !(bool)İşaretOyuncunun.GetValue(m) || !görülen.Add(m)) continue;
+                l.Add((float)İşaretAlanı.GetValue(m));
+            }
+            return l;
+        }
+
+        IEnumerator P29()
+        {
+            _bekçiDk = 40f;
+            // 1) SİLAH SUNAĞI — TAM GÜÇ ile (F7) boss çabuk düşsün; test sunağı ölçüyor, boss'u değil
+            Sahne("P29 1/4 SİLAH SUNAĞI", "B → boss'u kes → boss odası sunağa dönüyor mu, iki alım");
+            Bas(Key.B); yield return Bekle(1f);
+            Bas(Key.F7); yield return Bekle(0.5f);
+            yield return BossuÖldür(600f);
+            if (_bitti) yield break;
+            yield return Bekle(1f);
+            int sunak = 0;
+            foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.Weapon) sunak++;
+            Kaydet("29-1", "Boss düşünce SİLAH SUNAĞI", sunak == 3 && Saat.Frozen,
+                   $"{sunak} sunak · saat {(Saat.Frozen ? "durdu" : "AKIYOR")}");
+
+            Bas(Key.Digit4); yield return Bekle(0.5f);                 // İPOTEK
+            Bas(Key.F5); yield return Bekle(0.3f);
+            var alınan = new List<string>();
+            float s0 = Saat.Seconds;
+            for (int i = 0; i < 4; i++)
+            {
+                Altar hedef = null;
+                foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.Weapon && !a.SoldOut) { hedef = a; break; }
+                if (hedef == null) break;
+                string etiket = hedef.Label().Split('—')[0].Trim();
+                yield return Git(hedef.transform.position, 1.2f, 6f);
+                int alım = Saat.Purchases;
+                Bas(Key.E); yield return Bekle(0.4f);
+                if (Saat.Purchases == alım) break;
+                alınan.Add(etiket);
+            }
+            bool kapalı = true;
+            foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.Weapon && !a.SoldOut) kapalı = false;
+            Kaydet("29-2", "Silah sunağında iki alım, üçüncüsü kapalı", alınan.Count == 2 && kapalı,
+                   $"{string.Join(", ", alınan)} · {s0 - Saat.Seconds:0} sn ödendi");
+
+            // 2) İPOTEK — sonraki bölgenin ilk odası
+            Sahne("P29 2/4 İPOTEK", "YAĞMUR · dash-atak HACİZ İHBARI · ÇİFT TAPU");
+            yield return KapıdanÇık(25f);
+            yield return Bekle(1f);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            var görülen = new HashSet<GroundMark>();
+            Yeniİpotekler(görülen);
+            var hedefD = EnYakın();
+            if (hedefD != null) NişanAl(hedefD.transform.position);
+            _sağ = true;
+            var yağmur = new List<float>();
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 3.5f) { yağmur.AddRange(Yeniİpotekler(görülen)); yield return null; }
+            int beklenen = Oyuncu.Weapon.Special(_t).Hits;
+            Kaydet("29-3", "İPOTEK YAĞMURU (sağ tık)", yağmur.Count >= beklenen, $"{yağmur.Count} ipotek ({beklenen} bekleniyor)");
+
+            yield return Bekle(1.5f);
+            Yeniİpotekler(görülen);
+            hedefD = EnYakın();
+            if (hedefD != null) NişanAl(hedefD.transform.position);
+            Yürü(hedefD != null ? hedefD.transform.position - Ben : Vector3.forward);
+            Bas(Key.Space); yield return null;
+            _sol = true; yield return null;
+            Dur();
+            yield return Bekle(0.6f);
+            var ihbar = Yeniİpotekler(görülen);
+            float normal = Oyuncu.Weapon.GroundMarkRadius(_t);
+            Kaydet("29-4", "İPOTEK dash-atağı HACİZ İHBARI", ihbar.Count == 1 && ihbar[0] > normal * 1.5f,
+                   ihbar.Count > 0 ? $"{ihbar.Count} işaret, alan {ihbar[0]:0.0} (normal {normal:0.0})" : "işaret yok");
+
+            yield return Bekle(2.5f);
+            int enÇok = 0;
+            t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 2f)
+            {
+                hedefD = EnYakın();
+                if (hedefD != null) NişanAl(hedefD.transform.position);
+                if (!Oyuncu.Attacking) _sol = true;
+                enÇok = Mathf.Max(enÇok, GroundMark.ActiveLiens);
+                yield return null;
+            }
+            bool çift = SilahSunağı.Var(SilahYükseltme.ÇiftTapu);
+            Kaydet("29-5", "ÇİFT TAPU: aynı anda iki ipotek", !çift || enÇok >= 2, $"en çok {enÇok} ipotek aynı anda (ÇİFT TAPU {(çift ? "alındı" : "alınmadı")})");
+
+            // 3) İCRA
+            Sahne("P29 3/4 İCRA", "FAİZLİ: bedel saatin %12'si, ödediği kadar sert");
+            Bas(Key.Digit2); yield return Bekle(0.5f);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            hedefD = EnYakın();
+            if (hedefD != null) { yield return Git(hedefD.transform.position, 1.8f, 4f); hedefD = EnYakın(); }
+            if (hedefD != null) NişanAl(hedefD.transform.position);
+            float önce = Saat.Seconds;
+            var bedelAlanı = typeof(PlayerController).GetField("_özelBedeli", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            _sağ = true; yield return null; yield return null;
+            float ödenen = (float)bedelAlanı.GetValue(Oyuncu);
+            Kaydet("29-6", "İCRA bedeli saatin yüzdesi", Mathf.Abs(ödenen - _t.icraCostPercent * önce) < 0.5f,
+                   $"{ödenen:0.0} sn ödendi @ {önce:0} sn (%{ödenen / Mathf.Max(1f, önce) * 100f:0})");
+
+            // 4) Dönen sunak: M → mini → sunak (1. ara bölge MUAFİYET, 2. SABIR)
+            Sahne("P29 4/4 MUAFİYET · SABIR", "M → mini boss → sunak odasında 4. sunak");
+            Bas(Key.Digit1); yield return Bekle(0.3f);
+            foreach (var (tür, ad) in new[] { (Altar.Kind.Insurance, "MUAFİYET"), (Altar.Kind.Patience, "SABIR") })
+            {
+                Bas(Key.M); yield return Bekle(1f);
+                Bas(Key.F5); yield return Bekle(0.3f);
+                yield return OdayıGeç(600f);
+                yield return Bekle(1f);
+                Altar dördüncü = null;
+                foreach (var a in Altar.All)
+                    if (a != null && (a.Type == Altar.Kind.Insurance || a.Type == Altar.Kind.Patience)) dördüncü = a;
+                int sayım = Saat.Alınan(tür);
+                if (dördüncü != null && dördüncü.Type == tür)
+                {
+                    Bas(Key.F5); yield return Bekle(0.3f);
+                    yield return Git(dördüncü.transform.position, 1.2f, 6f);
+                    Bas(Key.E); yield return Bekle(0.4f);
+                }
+                Kaydet("29-7", $"Sunak odasında {ad}", dördüncü != null && dördüncü.Type == tür && Saat.Alınan(tür) == sayım + 1,
+                       dördüncü == null ? "4. sunak yok" : $"4. sunak {dördüncü.Type} · alım {sayım} → {Saat.Alınan(tür)}");
+                yield return KapıdanÇık(20f);
+            }
         }
 
         IEnumerator MiniTeşhis()

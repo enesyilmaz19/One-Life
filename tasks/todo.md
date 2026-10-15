@@ -7,8 +7,8 @@
 | 2 | 🎮 *(isteğe bağlı)* **Faz 26 his testi** | Bot 7 maddeyi oynadı (aşağıda). Sana kalan his: TAM TAHSİL/İHALE sıçraması okunuyor mu, ×5 ısrar adil mi | Gördüklerini yaz |
 | 4 | ✏️ **Adlandırma** | Kahraman, 5 boss, 5 bölge, 3 diriliş eşyası. Şimdikiler çalışma adı | `docs/TASARIM.md` "Açık" |
 | 6 | 🎮 **Faz 28 testi** | F6 yeni koşu → dövüş odası 5 dalga · **M** sıradaki mini boss · mini ölünce sunak (kontrol noktası) · eşyasız ölümde kontrol noktasına dönüş, birkaç ölümde "… TOPARLANDI" · **B** ana boss (saat yavaş akar). His: oda süresi, dalgalar, mini boss, saatin gidişi | Gördüklerini yaz |
-| 7 | ❓ **Ekonomi kararı** | İyi oynayıp alan kartopu, orta oyuncu erken ölüyor. Seçenekler mesajda | Cevap yaz |
-| 8 | ❓ **ÇAĞRI'nın rolü** | Eşyasız ölüm artık zaten kontrol noktasına döndürüyor; ÇAĞRI aynı işi yapıyor | Cevap yaz |
+| 7 | 🎮 *(isteğe bağlı)* **Faz 29 his testi** | Bot oynadı, 8/8 geçti. Sana kalan his: silah sunağı seçimi karar gibi mi, fiyatlar, MUAFİYET hissediliyor mu | Gördüklerini yaz |
+| 8 | ❓ **Faz 30 soruları** | FAZ 30 bölümündeki 4 soru (silah nasıl açılıyor, envanter nerede, combo nasıl, 7 yeni silah) | Cevap yaz |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 
 ---
@@ -222,16 +222,33 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 
 ---
 
-## ⚔️ FAZ 29 — Silaha özel yükseltmeler + yeni sunak güçlendirmeleri — **PLAN** (2026-10-14)
+## 🗡️ FAZ 30 — Silah kadrosu — **PLAN, sorular Enes'te** (2026-10-15)
+
+> Enes: *"Silahların hepsini oyunun başında vermeyeceğiz. Bazıları oyunun ileri kısmında açılacak (totalde 12 olabilir, her bölgede 2 tane açılan silahlar gibi, ilk bölgede 4 tane silah olcak). Kullanıcı yanına 3 tane silah alabilir sadece… bazı silahların birbiri ile combo saldırıları olsun. Kullanıcı yeni silahlar elde edince envanterini düzenleyip güçlendirme alıp ona göre oynayacak."*
+
+- **12 silah:** 1. bölgede 4 açık, sonraki her bölgede +2 (4 + 2×4 = 12). Bugün 5 var → **7 yeni silah** tasarlanacak (her biri yeni bir SORU sormalı — `Weapon.cs` ilkesi; elenenler `FIKIR_DEFTERI.md`'de).
+- **Envanter = 3 silah.** 1–3 tuşları kuşanılan üçü. Yeni silah açılınca envanter düzenlenir.
+- **Combo'lar:** bazı silah çiftleri birbirine bağlanıyor (biriyle vurup hemen öbürüne geçince ek etki).
+- Silah sunağı (Faz 29) envanterdeki silahlara satıyor; kalıcı yükseltme silahta kalıyor.
+- **❓ Sorular (Enes):**
+  1. Yeni silah nasıl açılıyor? *Önerim:* ana boss düşünce silah sunağının yanında 2 silah duruyor, ikisini de alıyorsun (ücretsiz) — "her bölgede 2 tane açılan".
+  2. Envanteri nerede düzenliyorsun? *Önerim:* yalnızca sunak odalarında ve silah sunağında (saat duruyor, karar anı) — dövüşte değil.
+  3. Combo nasıl çalışıyor? *Önerim:* A silahıyla vurduktan sonra 1 sn içinde B'ye geçip vurursan ek etki (ör. İPOTEK işaretinin içindekine HACİZ vurursa işaret hemen patlar).
+  4. İlk 4 silah hangileri? *Önerim:* KONİ, FAİZLİ, HACİZ, İPOTEK; İFLAS 2. bölgede açılsın (dipte oynamak öğrenilmiş bir şey).
+
+---
+
+## ⚔️ FAZ 29 — Silaha özel yükseltmeler + yeni sunak güçlendirmeleri — **BİTTİ** (2026-10-15)
 
 Enes: *"bu düzenlemelerden sonra commit at ve sonraki faza geç"*. Kaynak: eski "Faz 20" listesi (aşağıda) + birleşik playtest maddeleri 5, 7, 8.
 
 **Kararlaştırılmış — yapılıyor**
-- [ ] **A. İPOTEK:** dash-atak = bugünkü sağ tık (HACİZ İHBARI: geniş, geç patlayan işaret). **Yeni sağ tık = İPOTEK YAĞMURU:** büyük bir alanın içindeki düşmanların üstüne birkaç saniye boyunca peş peşe ipotek.
-- [ ] **B. FAİZLİ İCRA yeniden:** bedel saatin yüzdesi, hasar ödenen bedele bağlı. Eşiğin altındaysan İCRA seni öldürmez; eşiğin üstündeysen öldürünce zaman vermez. *Önerim:* eşik = hasat doyma tavanı (aynı sayı, yeni kural yok).
+- [x] **A. İPOTEK:** dash-atak = HACİZ İHBARI (nişan noktasına geniş, geç patlayan işaret — arkana değil). **Yeni sağ tık = İPOTEK YAĞMURU:** menzilin 1.6 katı alandaki düşmanlardan rastgele birinin üstüne 0.4 sn arayla 6 ipotek (`ipotekRain*`). İlki hemen düşüyor; dash ya da silah değişimi yağmuru kesiyor. ⚠️ Yağmur sürerken sol tık ipoteği bekliyor (aynı anda tek ipotek kuralı).
+- [x] **B. FAİZLİ İCRA yeniden:** bedel saatin **%12**'si (en az 1.5 sn) — yüzde olduğu için seni öldürmez. Hasar = silah hasarı + ödenen her saniye için **0.5**. Öldürürse bedelin **1.5 katı** geri, ama saat doyma tavanının üstündeyse geri vermez (eşik = doyma tavanı). Örnek: 250 sn saatte 30 sn öder, ~21 vurur (eskisi 19.6).
+- [x] Kapılar: `Faz29SelfCheck` 5 kontrol (yağmur düşmanların üstüne · patlayıp vuruyor · İCRA yüzdesi · hasar bedelle artıyor · iade tavanın altında var, üstünde yok) + Faz 3/16 yeni kurala uyarlandı · 6 bozmanın 6'sı kırmızı (2 koşu) · tüm kapılar ✅. ⚠️ "Öldürmek" = boş düşmana vurmak: İCRA bahsi boş düşmanı bitirmek.
 
-**Öneri — Enes'in onayını bekliyor**
-- [ ] **C. Silah sunağı (eski Faz 20):** ana boss ölünce boss odası sunağa dönüyor (saat durur). Kuşandığın silaha özel 2 yükseltme satıyor; koşu boyu kalıyor. Fiyat sunak kuralıyla (en az saatin %10'u).
+**Öneri — Enes: "devam et" (2026-10-15)**
+- [x] **C. Silah sunağı (eski Faz 20):** ana boss ölünce boss odası sunağa dönüyor (saat durur). Kuşandığın silaha özel 2 yükseltme satıyor; koşu boyu kalıyor. Fiyat sunak kuralıyla (en az saatin %10'u).
   | Silah | Yükseltme önerisi |
   |---|---|
   | KONİ | GENİŞ AĞ (açı +) · SÜPÜRME bekleme −%30 · GERİ TEPME (itme +) |
@@ -239,8 +256,13 @@ Enes: *"bu düzenlemelerden sonra commit at ve sonraki faza geç"*. Kaynak: eski
   | HACİZ | UZUN KOL (menzil +) · DELİCİ (2 hedef) · DAR ÖLÜ BÖLGE |
   | İPOTEK | ÇİFT TAPU (aynı anda 2 işaret) · HIZLI TAPU (gecikme −%30) · GENİŞ ARSA (alan +) |
   | İFLAS | DİP (panik eşiği yukarı) · SERİ (TASFİYE +2 vuruş) · KAPANIŞ (dipte hasat +) |
-- [ ] **D. Yeni ara bölge sunakları:** SİGORTA (vuruş bedeli −%8, azalan getiri — ilerleme zorluğuna karşı) · SABIR (özel saldırı bekleme −%10). *Önerim:* sabit 3 (hasat / hasar / dash) + her sunak odasında dönen 1.
-- [ ] E. Kapılar + bozma · bot: silah sunağı alımı ve İPOTEK YAĞMURU / İCRA ölçümü
+  - Yapıldığı gibi: ana boss düşünce (son bölge hariç) boss odasında 3 sunak çıkıyor, saat duruyor. Sunaklar KUŞANDIĞIN silahın üç yükseltmesini satıyor; silahı değiştirince sunak da değişiyor. Boss başına **2 alım**. Fiyat: en az saatin %15'i (taban 24 sn). Koşu boyu kalıcı (`SaveData.weaponUpgrades`) — ana boss'un bölgesi geri gelmediği için ölüm geri almıyor; kapat-aç ile yeniden almak da yok (bölge başına sayım kayıtta).
+  - GERİ TEPME değişti: KONİ'nin normal savurması hiç itmiyordu (×1.6 sıfırı büyütmez) → "savurma da iter, SÜPÜRME itmesi +%60".
+- [x] **D. Yeni ara bölge sunakları:** **MUAFİYET** (düşman vuruşu −%8, azalan getiri, tavan %50) · **SABIR** (sağ tık beklemesi −%10, tavan %50). Sabit 3 + dönen 1: 1., 3., 5. ara bölgede MUAFİYET, 2. ve 4.'de SABIR. ⚠️ Ad değişti: SİGORTA zaten bir düşmanın adı (hasadı kısan) — karışmasın diye MUAFİYET.
+- [x] E. Kapılar: `Faz29SelfCheck` **27 kontrol** — 15 yükseltmenin 15'i de ETKİSİYLE (konum taraması, iade, bekleme, işaret süresi/alanı, hasar, hasat), silah sunağının açılması, kuşanılan silaha göre değişmesi, boss başına 2 alım, MUAFİYET, SABIR, dönen sunak. **21 bozmanın 21'i kırmızı** (4 koşu, birbirini örtmesin diye). Tüm kapılar ✅.
+- [x] Hata (kapı yakaladı): sunak "tükendi" kuralı yalnızca tuşa basma yolundaydı; `Buy` kendisi bakmıyordu → kural `Buy`'ın başında.
+- [x] **Bot playtest'i** (`Otopilot — Faz 29 playtest`, Enes: "test koşusunu bottan yaptır"): 8/8 ✅ — boss düşünce 3 silah sunağı + saat durdu · iki alım (ÇİFT TAPU + HIZLI TAPU, 83 sn), üçüncü kapalı · YAĞMUR 6/6 ipotek · dash-atak HACİZ İHBARI (alan 4.8, normal 2.4) · ÇİFT TAPU ile aynı anda 2 ipotek · İCRA 35.9 sn @ 299 (%12) · sunak odasında MUAFİYET, sonrakinde SABIR alındı. İstisna yok, tüm kapılar ✅.
+- **Zorluk raporu:** TEMİZ + alan koşuyu 1306 sn ile bitiriyor (85 alım) · TEMİZ almayan bölge 2 · **ORTA + alan artık bölge 3'e** varıyor (önce 2) — MUAFİYET ilerleme zorluğunu kapatıyor · ORTA almayan bölge 1. Silah yükseltmeleri raporda modellenmiyor.
 
 ---
 
@@ -330,7 +352,8 @@ Enes: *"başla"* (YAPI taslağı ve tempo önerisi onaylı). Önce 1 bölge ile 
 1. ✅ **Faz 27 — kartopu:** sunak fiyatı kalıcı, azalan getiri, hasar tavanı (tempo Faz 28'e taşındı).
 2. **Faz 28 — yapı + tempo:** ara bölge + mini boss + kontrol noktası + nemesis toparlanması; dalgalı odalar (~1.5 dk), uzun boss (3–8 dk, boss odasında yavaş akış). Önce 1 bölge ile.
 3. **Faz 29 — silaha özel yükseltmeler + yeni sunak güçlendirmeleri** (Enes: "bir faza eklemeyi unutma"): eski "Faz 20" (boss sonrası sunak, silaha özel yetenekler), FAİZLİ İCRA yeniden, İPOTEK yeni sağ tık, sunaklara yeni güçlendirme türleri. Faz 27'nin ekonomi kurallarıyla (kalıcı fiyat, azalan getiri) çalışır.
-4. **Faz 30+ — içerik:** 25 mini boss, yeni düşman türleri, oda dizilişleri, bölge bölge.
+4. **Faz 30 — silah kadrosu** (Enes 2026-10-15): 12 silah, kilit açma, 3'lü envanter, combo'lar. Plan aşağıda.
+5. **Faz 31+ — içerik:** 25 mini boss, yeni düşman türleri, oda dizilişleri, bölge bölge.
 
 ---
 
@@ -408,7 +431,9 @@ Bot neredeyse hiç vurulmayan iyi bir oyuncu gibi oynuyor (boss saldırıların�
 
 ## 📝 Sonraya notlar (Enes, 2026-09-30)
 
-- **Ekstra oyun modu — tekrar oynanabilirlik için** (Enes, 2026-10-12). Oyun bittikten sonra bakılacak.
+- **Ekstra oyun modu — tekrar oynanabilirlik için** (Enes, 2026-10-12). Oyun bittikten sonra bakılacak. **2026-10-15:** *"tekrar tekrar oynanabilen, eğlenceli, kısa süreli (yarım saatlik falan) bir mod"* — ~30 dk.
+- **Silah yükseltmeleri büyüyecek** (Enes, 2026-10-15): *"şu anlık her silah için iki geliştirme iyi"* (şimdi silah başına 3, boss başına 2 alım) — ileride **her silahın en az 8 geliştirmesi**. Bazı geliştirmeler normalde combo yapmayan silahlar arasında combo açacak.
+- **5 bölgenin tamamı** içerikle doldurulacak (Enes, 2026-10-15).
 - Silahlar değişecek, yeni özellikler eklenecek (ileride bir revizyon)
 - Her geçiş (oda, faz, boss girişi…) çok ani. Araya animasyon ve bekleme
 - Oda şekilleri asset fazında her odada biraz değişecek (boyut + şekil)

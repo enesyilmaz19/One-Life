@@ -145,7 +145,7 @@ namespace TekCan
         public float specialCooldownFaizli = 9f;
         [Tooltip("HACİZ · UZUN VADE — hasar uzaklıkla artar")]
         public float specialCooldownHaciz = 6f;
-        [Tooltip("İPOTEK · HACİZ İHBARI — geniş ve geç patlayan işaret")]
+        [Tooltip("İPOTEK · İPOTEK YAĞMURU — alandaki düşmanlara peş peşe ipotek (HACİZ İHBARI artık dash-atak)")]
         public float specialCooldownIpotek = 8f;
         [Tooltip("İFLAS · TASFİYE — arka arkaya seri vuruş")]
         public float specialCooldownIflas = 10f;
@@ -213,6 +213,35 @@ namespace TekCan
         public float altarPricePercent = 0.10f;
         [Tooltip("İLERLEME: düşman vuruşunun bedeli her ara bölgede (bölgeler boyunca sayılır) bu kat artar")]
         public float hitCostProgressGrowth = 1.09f;
+
+        // Enes (eski Faz 20 listesi): "İPOTEK: dash-atak = şimdiki sağ tık, yeni sağ tık = büyük alan
+        // içinde düşmanların üstüne birkaç saniye peş peşe ipotek" · "FAİZLİ İCRA yeniden: bedel saatin
+        // yüzdesi, hasar ödenen bedele bağlı… eşiğin üstündeysen zaman vermez".
+        [Header("── Faz 29: İPOTEK YAĞMURU · İCRA ──")]
+        [Tooltip("İPOTEK YAĞMURU: kaç ipotek yağar")]
+        public int ipotekRainHits = 6;
+        [Tooltip("İPOTEK YAĞMURU: iki ipotek arası (sn)")]
+        public float ipotekRainInterval = 0.4f;
+        [Tooltip("İPOTEK YAĞMURU: alan = İPOTEK menzili × bu")]
+        public float ipotekRainRangeMul = 1.6f;
+        [Tooltip("İCRA bedeli = saatin bu payı (en az 3 savurma bedeli)")]
+        public float icraCostPercent = 0.12f;
+        [Tooltip("İCRA: ödenen her saniye için ek hasar")]
+        public float icraDamagePerCost = 0.5f;
+        [Tooltip("İCRA öldürürse bedelin bu katı geri — yalnızca saat doyma tavanının ALTINDAYSA")]
+        public float icraKillRefund = 1.5f;
+
+        [Header("── Faz 29: yeni sunaklar · silah sunağı ──")]
+        [Tooltip("MUAFİYET (ara bölge sunağı): ilk alım düşman vuruşunun bedelini bu kadar düşürür (azalan getiri, tavan %50)")]
+        public float altarInsuranceStep = 0.08f;
+        [Tooltip("SABIR (ara bölge sunağı): ilk alım sağ tık beklemesini bu kadar kısaltır (azalan getiri, tavan %50)")]
+        public float altarPatienceStep = 0.10f;
+        [Tooltip("SİLAH SUNAĞI (ana boss sonrası): bir boss odasında kaç yükseltme alınabilir")]
+        public int weaponAltarPurchases = 2;
+        [Tooltip("SİLAH SUNAĞI taban fiyatı = sunak tabanı × bu (× artış^alınan)")]
+        public float weaponAltarBaseMul = 2f;
+        [Tooltip("SİLAH SUNAĞI fiyatı en az saatin bu payı")]
+        public float weaponAltarPricePercent = 0.15f;
 
         /// <summary>Bir ara bölgenin dövüş odası sayısı (en az 1).</summary>
         public int DövüşOdası => Mathf.Max(1, roomsPerSubRegion);

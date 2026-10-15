@@ -558,3 +558,10 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   kullanıyor (mini boss'ta yarısı). Rapor mini boss aurasını 10 kat fazla saydı, ORTA oyuncuyu
   erken öldürdü. **Kural:** rapor oyunun değerini SORAR (`Enemy.AuraOranı`), kopyalamaz —
   `RoomManager.Tür`, `Clock.Fiyat`, `Clock.Doyma` ile aynı ilke.
+- **Kural tuşa basma yolunda yaşarsa başka çağıran deler (Faz 29):** sunağın "tükendi" kuralı
+  `Update`'te (`!SoldOut && UsePressed()`) duruyordu, `Buy` bakmıyordu. Silah sunağının "boss
+  başına iki alım" kapısı `Buy`'ı doğrudan çağırınca üçüncüyü sattı. **Kural:** sınır, bütün
+  çağıranların geçtiği fonksiyonun başında olur (ders 14'ün `SaveFile.Flush` dersiyle aynı).
+- **Bozmalar aynı satıra dokunursa biri öbürünü örter:** "yükseltme başka silaha geçmiyor"
+  bozması GENİŞ AĞ bozmasıyla aynı satırdaydı (`SavurmaAçısı`), ilk koşuda yeşil kaldı. Tek
+  başına koşunca kırmızı. Bozma turunu dokunulan SATIRA göre böl, mekaniğe göre değil.

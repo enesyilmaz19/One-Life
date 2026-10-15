@@ -15,7 +15,8 @@ namespace TekCan
     /// </summary>
     public class Altar : MonoBehaviour
     {
-        public enum Kind { Harvest, Damage, Dash, Repair }
+        // ⚠️ Sıra: ilk beşi `Clock._alınan` dizisinin indisi (sayım kayıtta) — araya ekleme yapma.
+        public enum Kind { Harvest, Damage, Dash, Insurance, Patience, Weapon, Repair }
 
         public static readonly List<Altar> All = new List<Altar>();
         public static void ResetAll() => All.Clear();
@@ -28,10 +29,16 @@ namespace TekCan
         public Kind Type { get; private set; }
         // ONARIM tükenmez ve fiyatı sabittir: yükseltme değil, ONARIM. Her ölümden sonra
         // aynı bedelle yeniden karşına çıkması gerekiyor.
-        public bool SoldOut => Type != Kind.Repair && _bought >= _t.altarMaxPurchases;
+        public bool SoldOut => Type == Kind.Weapon ? SilahTükendi()
+                             : Type != Kind.Repair && _bought >= _t.altarMaxPurchases;
+
+        /// <summary>SİLAH SUNAĞI'nın yuvası (0–2): kuşanılan silahın kaçıncı yükseltmesi.</summary>
+        public int Yuva { get; private set; }
         // ⚠️ Faz 27: fiyat bu SUNAĞIN değil, koşunun o türden alım sayısına bağlı — bölge
         // değişince sıfırlanmıyor (kartopu buradan büyüyordu). `_bought` yalnızca sunak başı tavan.
-        public float Price => Type == Kind.Repair ? _t.revivalRepairPrice
+        public float Price => Type == Kind.Weapon ? Clock.SilahFiyatı(_t, SilahSunağı.AlınanSayısı,
+                                                                      Clock.Instance != null ? Clock.Instance.Seconds : 0f)
+                            : Type == Kind.Repair ? _t.revivalRepairPrice
                             : Clock.Instance != null ? Clock.Instance.SıradakiFiyat(Type)
                             : Clock.Fiyat(_t, 0);
 
@@ -46,11 +53,12 @@ namespace TekCan
         static readonly Color RepairColor = new Color(1f, 0.85f, 0.35f);   // diriliş eşyalarının sarısı
         static readonly Color SoldOutColor = new Color(0.3f, 0.3f, 0.33f);
 
-        public void Init(Tuning tuning, Transform player, Kind kind)
+        public void Init(Tuning tuning, Transform player, Kind kind, int yuva = 0)
         {
             _t = tuning;
             _player = player;
             Type = kind;
+            Yuva = yuva;
             _renderer = GetComponentInChildren<Renderer>();
             All.Add(this);
             Paint();
@@ -65,6 +73,7 @@ namespace TekCan
             Vector3 to = _player.position - transform.position;
             to.y = 0f;
             PlayerInRange = to.magnitude <= _t.altarUseRange;
+            if (Type == Kind.Weapon && Silah() != _boyananSilah) Paint();   // silah değişince sunak da değişir
 
             transform.Rotate(Vector3.up, 40f * Time.deltaTime, Space.World);
 
@@ -81,6 +90,9 @@ namespace TekCan
 
         void Buy()
         {
+            // Tükenmişlik kuralı BURADA — tuşa basma yolunda değil yalnızca: silah sunağının
+            // "boss başına iki alım" sınırı başka bir çağıranla delinmesin (Faz 29 kapısı yakaladı).
+            if (SoldOut) return;
             var clock = Clock.Instance;
 
             // ⚠️ ONARIM ZAMANLA yapılır — ayrı malzeme YOK. Ayrı malzeme olsaydı ikinci
@@ -122,6 +134,19 @@ namespace TekCan
                 return;
             }
 
+            if (Type == Kind.Weapon)
+            {
+                var y = Yükseltme();
+                if (clock == null || SilahSunağı.Var(y) || !clock.TryBuy(Price)) return;
+                SilahSunağı.Al(y, Bölge());
+                SaveFile.Flush();          // koşu boyu kalıcı — hemen yazılıyor
+                Sfx.Buy();
+                IsoCamera.Shake(_t.hitShake * 0.7f);
+                foreach (var a in All) if (a != null) a.Paint();
+                Debug.Log($"[Tek Can] SİLAH SUNAĞI: {SilahSunağı.Ad[(int)y]} alındı ({Weapon.All[SilahSunağı.Silahı(y)].Name})");
+                return;
+            }
+
             if (clock == null || !clock.TryBuy(Price)) return;
 
             _bought++;
@@ -145,12 +170,22 @@ namespace TekCan
                 return $"ONARIM  {kırık.Name}   —   {Price:0.0} saniye   [E]";
             }
 
+            if (Type == Kind.Weapon)
+            {
+                var y = Yükseltme();
+                string ne = $"{Weapon.All[Silah()].Name} · {SilahSunağı.Ad[(int)y]} — {SilahSunağı.NeYapar[(int)y]}";
+                return SilahSunağı.Var(y) ? $"{ne}   [ALINDI]"
+                     : SoldOut ? $"{ne}   [bu sunaktan {_t.weaponAltarPurchases} alım yapıldı]"
+                     : $"{ne}   —   {Price:0.0} saniye   [E]   (silah değiştir: 1–5)";
+            }
             string what = Type switch
             {
                 // Gösterilen SIRADAKİ alımın getirisi — azalıyor, sabit adım yalan olurdu.
-                Kind.Harvest => $"HASAT  +%{Getiri() * 100f:0.0}",
-                Kind.Damage  => $"KESKİNLİK  +{Getiri():0.00}",
-                _            => $"ÇEVİKLİK  dash -{Getiri():0.000}sn",
+                Kind.Harvest   => $"HASAT  +%{Getiri() * 100f:0.0}",
+                Kind.Damage    => $"KESKİNLİK  +{Getiri():0.00}",
+                Kind.Insurance => $"MUAFİYET  düşman vuruşu −%{Getiri() * 100f:0.0}",
+                Kind.Patience  => $"SABIR  sağ tık beklemesi −%{Getiri() * 100f:0.0}",
+                _              => $"ÇEVİKLİK  dash -{Getiri():0.000}sn",
             };
             return SoldOut ? $"{what}   [TÜKENDİ]" : $"{what}   —   {Price:0.0} saniye   [E]";
         }
@@ -161,13 +196,36 @@ namespace TekCan
         void Paint()
         {
             if (_renderer == null) return;
+            _boyananSilah = Silah();
+            Color silahRengi = Weapon.All[_boyananSilah].Tint; silahRengi.a = 1f;
             _renderer.material.color = SoldOut ? SoldOutColor : Type switch
             {
                 Kind.Harvest => HarvestColor,
                 Kind.Damage => DamageColor,
+                Kind.Insurance => InsuranceColor,
+                Kind.Patience => PatienceColor,
+                Kind.Weapon => silahRengi,
                 Kind.Repair => FirstBroken() != null ? RepairColor : SoldOutColor,
                 _ => DashColor,
             };
         }
+
+        // ── SİLAH SUNAĞI (Faz 29) ──
+        static readonly Color InsuranceColor = new Color(0.75f, 0.75f, 0.85f);
+        static readonly Color PatienceColor = new Color(0.6f, 0.45f, 0.9f);
+        int _boyananSilah = -1;
+
+        int Silah()
+        {
+            var pc = _player != null ? _player.GetComponent<PlayerController>() : null;
+            return pc != null ? Mathf.Max(0, System.Array.IndexOf(Weapon.All, pc.Weapon)) : 0;
+        }
+
+        SilahYükseltme Yükseltme() => SilahSunağı.Yuvası(Silah(), Yuva);
+
+        static int Bölge() => RoomManager.Instance != null ? RoomManager.Instance.RegionIndex : 0;
+
+        bool SilahTükendi() => SilahSunağı.Var(Yükseltme())
+                            || SilahSunağı.BölgeAlımı(Bölge()) >= _t.weaponAltarPurchases;
     }
 }

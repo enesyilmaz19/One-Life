@@ -355,6 +355,14 @@ namespace TekCan
                 return;
             }
 
+            // Faz 29 — SİLAH SUNAĞI: ana boss düştü, oda sunağa dönüyor ve saat duruyor (sunak
+            // odasıyla aynı kural). Son bölgede yok: orada koşu bitiyor.
+            if (IsBossRoom)
+            {
+                Bootstrap.SpawnWeaponAltars(_t, _player, _roomRoot.transform);
+                if (Clock.Instance != null) Clock.Instance.Frozen = true;
+            }
+
             // Mini boss öldü: toparlanma borcu kapandı (geri gelmişse büyümesi de).
             if (IsMiniBossRoom) SaveFile.MiniDefterSıfırla(SubRegion);
 
@@ -588,7 +596,9 @@ namespace TekCan
             // Buff matematiği zaten oradan patlıyordu (39 alım, hasar ×7,9).
             // Tek odaya inince alışveriş bir KARAR ANI haline geliyor.
             if (!IsAltarRoom) return;
-            Bootstrap.SpawnAltarRing(_t, _player, _roomRoot.transform);
+            // Faz 29: dördüncü sunak ara bölgeye göre dönüyor — MUAFİYET, SABIR, MUAFİYET…
+            Bootstrap.SpawnAltarRing(_t, _player, _roomRoot.transform,
+                                     SubRegion % 2 == 0 ? Altar.Kind.Insurance : Altar.Kind.Patience);
         }
 
         static bool AnyEnemyAlive()
@@ -681,6 +691,7 @@ namespace TekCan
                 c.Yükselt(Altar.Kind.Harvest);   // sunağın kendi yolu: azalan getiri dahil
                 c.Yükselt(Altar.Kind.Damage);
                 c.Yükselt(Altar.Kind.Dash);
+                if (i % 2 == 0) c.Yükselt(Altar.Kind.Insurance); else c.Yükselt(Altar.Kind.Patience);   // dönen dördüncü
             }
             c.Revive(TestRefillSeconds);
             Sfx.Buy();

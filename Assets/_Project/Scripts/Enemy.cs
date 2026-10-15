@@ -175,7 +175,14 @@ namespace TekCan
                        * Growth                                    // ZAMANAŞIMI
                        * Rank.HitCostMultiplier(_t)                // İRİ: daha çok hasar
                        * (IsBoss ? _t.bossHitCostMultiplier : 1f)
-                       * İlerleme();                               // İLERLEDİKÇE pahalı (Faz 28)
+                       * İlerleme()                                // İLERLEDİKÇE pahalı (Faz 28)
+                       * Muafiyetli();                             // MUAFİYET sunağı (Faz 29)
+
+        static float Muafiyetli()
+        {
+            var c = Clock.Instance;
+            return c != null ? 1f - c.Muafiyet : 1f;
+        }
 
         float İlerleme()
         {
