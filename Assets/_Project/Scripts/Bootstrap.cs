@@ -328,6 +328,42 @@ namespace TekCan
             }
         }
 
+        /// <summary>KADRO sunağı (Faz 30) — envanter düzenleme; sunak odasında ve boss sonrası, onarımın karşısında.</summary>
+        public static void SpawnLoadoutAltar(Tuning t, Transform player, Transform parent)
+            => SpawnAltar(t, new Vector3(-t.arenaRadius * 0.22f, ArenaCenter.y, -t.arenaRadius * 0.55f),
+                          player, Altar.Kind.Loadout, parent);
+
+        /// <summary>Sunakta satılan silahlar (Faz 30) — odanın uzak yanında yan yana.</summary>
+        public static void SpawnUnlockAltars(Tuning t, Transform player, Transform parent, System.Collections.Generic.List<int> silahlar)
+        {
+            for (int i = 0; i < silahlar.Count; i++)
+            {
+                float x = (i - (silahlar.Count - 1) * 0.5f) * t.arenaRadius * 0.25f;
+                SpawnAltar(t, new Vector3(x, ArenaCenter.y, t.arenaRadius * 0.55f), player, Altar.Kind.Unlock, parent, silahlar[i]);
+            }
+        }
+
+        /// <summary>Combo'nun "+" hâli (Faz 30) — silah sunağının önünde.</summary>
+        public static void SpawnComboAltar(Tuning t, Transform player, Transform parent, ComboTür c)
+            => SpawnAltar(t, new Vector3(0f, ArenaCenter.y, -t.arenaRadius * 0.45f), player, Altar.Kind.ComboPlus, parent, (int)c);
+
+        /// <summary>KEŞİF (Faz 30): arenanın kenarında soluk parlayan köşe.</summary>
+        public static GizliSilah SpawnGizliSilah(Tuning t, Transform player, Transform parent, int silah)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            go.name = "GizliSilah_" + Weapon.All[silah].Name;
+            go.transform.SetParent(parent != null ? parent : _runRoot.transform);
+            float a = 205f * Mathf.Deg2Rad;
+            go.transform.position = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * t.arenaRadius * 0.85f + Vector3.up * 0.35f;
+            go.transform.localScale = Vector3.one * 0.35f;
+            Object.Destroy(go.GetComponent<Collider>());
+            var r = go.GetComponent<Renderer>();
+            if (r != null) { var c = Weapon.All[silah].Tint; r.material.color = new Color(c.r * 0.6f, c.g * 0.6f, c.b * 0.6f, 1f); }
+            var g = go.AddComponent<GizliSilah>();
+            g.Init(player, silah, 1.2f);
+            return g;
+        }
+
         /// <summary>
         /// ONARIM sunağı — girişe yakın, oyuncunun yolunun üstünde. Checkpoint odasında
         /// duruyor: soluklanma noktasında ömründen verip güvenlik ağını tamir ediyorsun.

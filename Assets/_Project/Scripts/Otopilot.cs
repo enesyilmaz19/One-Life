@@ -156,6 +156,18 @@ namespace TekCan
 
         void Bas(Key k) => _birKare.Add(k);
 
+        /// <summary>
+        /// Faz 30: tuşlar ENVANTER YUVASI. Test senaryosu silahı açıp (kendi yuvası yoksa 3. yuvaya)
+        /// koyar ve o yuvanın tuşuna basar — oyuncunun yolu: aç → envantere al → tuşla kuşan.
+        /// </summary>
+        void Kuşan(int silah)
+        {
+            Kadro.Aç(silah, "otopilot");
+            int yuva = Kadro.Yuvası(silah);
+            if (yuva < 0) { yuva = Kadro.Yuva - 1; Kadro.YuvayaKoy(yuva, silah); }
+            Bas(yuva == 0 ? Key.Digit1 : yuva == 1 ? Key.Digit2 : Key.Digit3);
+        }
+
         void Yürü(Vector3 dünyaYönü)
         {
             _tutulan.Remove(Key.W); _tutulan.Remove(Key.A);
@@ -276,6 +288,8 @@ namespace TekCan
                 ? new[] { Kurulum(), MiniTesti(), Bitir() }
                 : senaryo == "p29"
                 ? new[] { Kurulum(), P29(), Bitir() }
+                : senaryo == "p30"
+                ? new[] { Kurulum(), P30(), Bitir() }
                 : SessionState.GetInt(AdımAnahtar, 0) == 0
                 ? new[] { Kurulum(), GirdiKanıtı(), K1Hazırla() }          // K1: Play'den çıkıp giriyor
                 : new[] { K1Doğrula(), Bölge1(), Sunak(), Tahsildar(), Haciz(), Simsar(), Final(), Bitir() };
@@ -389,7 +403,7 @@ namespace TekCan
             Kaydet("29-1", "Boss düşünce SİLAH SUNAĞI", sunak == 3 && Saat.Frozen,
                    $"{sunak} sunak · saat {(Saat.Frozen ? "durdu" : "AKIYOR")}");
 
-            Bas(Key.Digit4); yield return Bekle(0.5f);                 // İPOTEK
+            Kuşan(Kadro.İPOTEK); yield return Bekle(0.5f);
             Bas(Key.F5); yield return Bekle(0.3f);
             var alınan = new List<string>();
             float s0 = Saat.Seconds;
@@ -456,7 +470,7 @@ namespace TekCan
 
             // 3) İCRA
             Sahne("P29 3/4 İCRA", "FAİZLİ: bedel saatin %12'si, ödediği kadar sert");
-            Bas(Key.Digit2); yield return Bekle(0.5f);
+            Kuşan(Kadro.FAİZLİ); yield return Bekle(0.5f);
             Bas(Key.F5); yield return Bekle(0.3f);
             hedefD = EnYakın();
             if (hedefD != null) { yield return Git(hedefD.transform.position, 1.8f, 4f); hedefD = EnYakın(); }
@@ -470,7 +484,7 @@ namespace TekCan
 
             // 4) Dönen sunak: M → mini → sunak (1. ara bölge MUAFİYET, 2. SABIR)
             Sahne("P29 4/4 MUAFİYET · SABIR", "M → mini boss → sunak odasında 4. sunak");
-            Bas(Key.Digit1); yield return Bekle(0.3f);
+            Kuşan(Kadro.KONİ); yield return Bekle(0.3f);
             foreach (var (tür, ad) in new[] { (Altar.Kind.Insurance, "MUAFİYET"), (Altar.Kind.Patience, "SABIR") })
             {
                 Bas(Key.M); yield return Bekle(1f);
@@ -491,6 +505,126 @@ namespace TekCan
                        dördüncü == null ? "4. sunak yok" : $"4. sunak {dördüncü.Type} · alım {sayım} → {Saat.Alınan(tür)}");
                 yield return KapıdanÇık(20f);
             }
+        }
+
+        // ── FAZ 30 PLAYTEST — kadro: 2 silahla başla, HACİZ sunakta, İPOTEK keşifte, KADRO, gerçek combo, İFLAS boss'tan ──
+        static readonly System.Reflection.MethodInfo OdayaGir =
+            typeof(RoomManager).GetMethod("EnterRoom", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        IEnumerator SunakOdasına(int araBölge)
+        {
+            // M → mini boss → temizle → sunak odası
+            Bas(Key.M); yield return Bekle(1f);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            yield return OdayıGeç(600f);
+            yield return Bekle(1f);
+        }
+
+        IEnumerator AltaraAl(Altar a)
+        {
+            if (a == null) yield break;
+            yield return Git(a.transform.position, 1.2f, 6f);
+            Bas(Key.E); yield return Bekle(0.4f);
+        }
+
+        IEnumerator P30()
+        {
+            _bekçiDk = 45f;
+            Sahne("P30 1/5 BAŞLANGIÇ", "2 silah, 3. yuva boş");
+            yield return Bekle(0.5f);
+            var önce = Oyuncu.Weapon;
+            Bas(Key.Digit3); yield return Bekle(0.3f);
+            bool üçBoş = Oyuncu.Weapon == önce;
+            Bas(Key.Digit2); yield return Bekle(0.3f);
+            Kaydet("30-1", "Oyun 2 silahla başlıyor, 3 boş, 2 = FAİZLİ", Kadro.AçıkSayısı == 2 && üçBoş && Oyuncu.Weapon == Weapon.All[Kadro.FAİZLİ],
+                   $"{Kadro.AçıkSayısı} açık · 3 tuşu {(üçBoş ? "hiçbir şey yapmadı" : "SİLAH DEĞİŞTİRDİ")} · 2 → {Oyuncu.Weapon.Name}");
+            Bas(Key.Digit1); yield return Bekle(0.3f);
+
+            Sahne("P30 2/5 HACİZ", "2. ara bölgenin sunağında satın");
+            yield return SunakOdasına(0);
+            bool ilkte = false;
+            foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.Unlock && a.Yuva == Kadro.HACİZ) ilkte = true;
+            yield return KapıdanÇık(20f);
+            yield return SunakOdasına(1);
+            Altar haciz = null;
+            foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.Unlock && a.Yuva == Kadro.HACİZ) haciz = a;
+            Bas(Key.F5); yield return Bekle(0.3f);
+            yield return AltaraAl(haciz);
+            Bas(Key.Digit3); yield return Bekle(0.3f);
+            Kaydet("30-2", "HACİZ 2. ara bölgenin sunağında, 3. yuvaya girdi", !ilkte && haciz != null && Kadro.Açık(Kadro.HACİZ) && Oyuncu.Weapon == Weapon.All[Kadro.HACİZ],
+                   $"1. sunakta {(ilkte ? "VAR" : "yok")} · 2. sunakta {(haciz != null ? "var" : "YOK")} · 3 → {Oyuncu.Weapon.Name}");
+
+            Sahne("P30 3/5 KEŞİF", "4. ara bölgenin 4. odası: köşe → İPOTEK");
+            SaveFile.MarkTestJump();
+            OdayaGir.Invoke(Oda, new object[] { 3 * _t.BlokBoyu + Kadro.KeşifOdası });
+            yield return Bekle(1f);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            Bas(Key.Digit1); yield return Bekle(0.3f);
+            float t0 = Time.realtimeSinceStartup;
+            while (Oda != null && !Oda.Cleared && Time.realtimeSinceStartup - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
+            Dur();
+            yield return Bekle(0.6f);
+            // Bot dövüşürken köşenin üstünden geçip silahı alabiliyor (köşe kenarda, bot kenarda dolaşıyor):
+            // ölçü köşenin kendisi değil, silahın KEŞİFLE açılması.
+            var köşe = FindFirstObjectByType<GizliSilah>();
+            if (köşe != null) yield return Git(köşe.transform.position, 0.6f, 10f);
+            yield return Bekle(0.4f);
+            bool keşifle = Kadro.SonMesaj != null && Kadro.SonMesaj.Contains("İPOTEK (keşif)");
+            Kaydet("30-3", "Keşif: oda temizlenince köşe, üstüne yürüyünce İPOTEK", keşifle && Kadro.Açık(Kadro.İPOTEK) && Kadro.AçıkSayısı == 4,
+                   $"İPOTEK {(keşifle ? "keşifle açıldı" : "KEŞİFLE AÇILMADI")} · {Kadro.AçıkSayısı} silah açık (ilk boss'tan önce 4)");
+            yield return KapıdanÇık(20f);
+
+            Sahne("P30 4/5 KADRO + COMBO", "KADRO ile İPOTEK'i 2. yuvaya al, KONİ → İPOTEK");
+            yield return SunakOdasına(3);
+            Bas(Key.Digit2); yield return Bekle(0.3f);                 // FAİZLİ
+            Altar kadro = null;
+            foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.Loadout) kadro = a;
+            yield return AltaraAl(kadro);
+            Kaydet("30-4", "KADRO sunağı: 2. yuvaya İPOTEK", Kadro.Yuvadaki(1) == Kadro.İPOTEK && Oyuncu.Weapon == Weapon.All[Kadro.İPOTEK],
+                   $"2. yuva {Weapon.All[Mathf.Max(0, Kadro.Yuvadaki(1))].Name} · kuşanılan {Oyuncu.Weapon.Name}");
+            yield return KapıdanÇık(20f);
+            yield return Bekle(1f);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            int c0 = Oyuncu.ComboSayısı, deneme = 0;
+            t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 60f && Oyuncu.ComboSayısı == c0)
+            {
+                var d = EnYakın();
+                if (d == null) { yield return null; continue; }
+                Bas(Key.Digit1); yield return null;                    // KONİ
+                yield return Git(d.transform.position, 1.3f, 3f);
+                if (d == null) continue;
+                NişanAl(d.transform.position);
+                float h0 = Saat.TotalHarvested;
+                _sol = true; yield return Bekle(0.4f);
+                if (Saat.TotalHarvested > h0 && d != null)
+                {
+                    deneme++;
+                    Bas(Key.Digit2); yield return null;                // İPOTEK — hızlı geçiş
+                    NişanAl(d.transform.position);
+                    _sol = true; yield return Bekle(0.7f);
+                }
+                yield return Bekle(0.2f);
+                if (Saat != null && Saat.Seconds < 60f) { Bas(Key.F5); yield return Bekle(0.3f); }
+            }
+            Kaydet("30-5", "Gerçek tuşlarla combo: KONİ → (2) İPOTEK = TOPLU İPOTEK", Oyuncu.ComboSayısı > c0,
+                   $"{Oyuncu.ComboSayısı - c0} combo · {deneme} deneme");
+
+            Sahne("P30 5/5 BOSS", "İFLAS 1. boss'tan, combo sunağı");
+            bool önceİflas = Kadro.Açık(Kadro.İFLAS);
+            Bas(Key.Digit1); yield return Bekle(0.3f);
+            Bas(Key.B); yield return Bekle(1f);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            yield return BossuÖldür(900f);
+            if (_bitti) yield break;
+            yield return Bekle(1f);
+            Altar combo = null;
+            foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.ComboPlus) combo = a;
+            Bas(Key.F5); yield return Bekle(0.3f);
+            yield return AltaraAl(combo);
+            Kaydet("30-6", "1. boss: İFLAS açıldı, combo sunağında artı hâli alındı",
+                   !önceİflas && Kadro.Açık(Kadro.İFLAS) && combo != null && Combo.Artı((ComboTür)combo.Yuva),
+                   $"İFLAS {(Kadro.Açık(Kadro.İFLAS) ? "açık" : "KAPALI")} · combo sunağı {(combo != null ? Combo.Bu((ComboTür)combo.Yuva).ArtıAd : "YOK")}");
         }
 
         IEnumerator MiniTeşhis()
@@ -779,7 +913,7 @@ namespace TekCan
         IEnumerator Haciz()
         {
             Sahne("6/9 HACİZ", "3'e bas, sağa dash at — sağa mı gidiyor?");
-            Bas(Key.Digit3);
+            Kuşan(Kadro.HACİZ);
             yield return Bekle(0.3f);
             var kam = Kamera;
             Vector3 sağ = kam != null ? Düz(kam.transform.right).normalized : Vector3.right;
@@ -790,7 +924,7 @@ namespace TekCan
             float ilerleme = Vector3.Dot(Düz(Ben - p0), sağ);
             Kaydet("6", "HACİZ dash'i gittiğin yöne", ilerleme > _t.dashDistance * 0.8f,
                    $"sağa {ilerleme:0.0} birim (dash {_t.dashDistance:0.0})");
-            Bas(Key.Digit1);
+            Kuşan(Kadro.KONİ);
             yield return Bekle(0.2f);
         }
 
@@ -981,7 +1115,8 @@ namespace TekCan
             {
                 Altar en = null;
                 foreach (var a in Altar.All)
-                    if (a != null && a.Type != Altar.Kind.Repair && !a.SoldOut && (en == null || a.Price < en.Price)) en = a;
+                    if (a != null && a.Type != Altar.Kind.Repair && a.Type != Altar.Kind.Loadout && a.Type != Altar.Kind.ComboPlus
+                        && !a.SoldOut && (en == null || a.Price < en.Price)) en = a;
                 if (en == null || Saat.Seconds - en.Price < yedek) break;
                 yield return Git(en.transform.position, 1.2f, 6f);
                 int alım = Saat.Purchases;

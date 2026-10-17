@@ -168,19 +168,12 @@ namespace TekCan
         {
             var s = SaveFile.Current;
             if (s == null) return;
-            s.weaponUpgrades = Sığdır(s.weaponUpgrades, Toplam);
-            s.weaponAltarBought = Sığdır(s.weaponAltarBought, bölge + 1);
+            s.weaponUpgrades = SaveFile.Büyüt(s.weaponUpgrades, Toplam);
+            s.weaponAltarBought = SaveFile.Büyüt(s.weaponAltarBought, bölge + 1);
             s.weaponUpgrades[(int)y] = 1;
             s.weaponAltarBought[bölge]++;
         }
 
-        static int[] Sığdır(int[] dizi, int n)
-        {
-            if (dizi != null && dizi.Length >= n) return dizi;
-            var yeni = new int[n];
-            if (dizi != null) System.Array.Copy(dizi, yeni, dizi.Length);
-            return yeni;
-        }
     }
 
     public abstract class Weapon

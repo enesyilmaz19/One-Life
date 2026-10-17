@@ -565,3 +565,10 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
 - **Bozmalar aynı satıra dokunursa biri öbürünü örter:** "yükseltme başka silaha geçmiyor"
   bozması GENİŞ AĞ bozmasıyla aynı satırdaydı (`SavurmaAçısı`), ilk koşuda yeşil kaldı. Tek
   başına koşunca kırmızı. Bozma turunu dokunulan SATIRA göre böl, mekaniğe göre değil.
+- **Vuruştan SONRA hedefe dokunma (Faz 30):** combo için vurulanın yerini `TakeDamage`'dan sonra
+  okudum; vuruş öldürünce düşman yok edildi ve `transform` patladı (Faz 1 kapısı yakaladı).
+  Hedefin bilgisini vuruştan ÖNCE al.
+- **Kapı kurgusu oyuncuyu taşır (Faz 30):** `RoomManager.Init` oyuncuyu odanın girişine koyuyor;
+  kapı onu ortada sanıp savurdu, iki kontrol yalan kırmızıydı. Oda kurulduktan sonra konumu yeniden kur.
+- **Ölçümü sökmeden önce al (Faz 30):** işaret odanın köküne bağlı; kapı oda yöneticisini silip SONRA
+  işarete baktı — "işaret yok". Unity nesnesini döndürme, sayıları döndür.

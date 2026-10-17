@@ -489,8 +489,9 @@ namespace TekCan.EditorTools
             var swapKeys = typeof(PlayerController).GetField("SwapKeys",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             int tuşSayısı = ((System.Array)swapKeys.GetValue(null)).Length;
-            failed += Check(ref total, "⚠️ HER SİLAHIN bir tuşu var (tanımlı ≠ ulaşılabilir)",
-                            tuşSayısı >= Weapon.All.Length, tuşSayısı - Weapon.All.Length);
+            // Faz 30: tuşlar ENVANTER YUVALARI — her yuvanın bir tuşu olmalı (silah KADRO sunağıyla yuvaya giriyor).
+            failed += Check(ref total, "⚠️ HER YUVANIN bir tuşu var (tanımlı ≠ ulaşılabilir)",
+                            tuşSayısı >= Kadro.Yuva, tuşSayısı - Kadro.Yuva);
 
             // ── 7) ⚠️ HER SİLAH GERÇEKTEN HASAR VEREBİLİYOR MU ──
             //    DURGUN bu kontrol olmadığı için tamamen kırık teslim edilmişti:

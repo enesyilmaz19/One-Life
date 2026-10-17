@@ -16,7 +16,7 @@ namespace TekCan
     public class Altar : MonoBehaviour
     {
         // ⚠️ Sıra: ilk beşi `Clock._alınan` dizisinin indisi (sayım kayıtta) — araya ekleme yapma.
-        public enum Kind { Harvest, Damage, Dash, Insurance, Patience, Weapon, Repair }
+        public enum Kind { Harvest, Damage, Dash, Insurance, Patience, Weapon, Loadout, Unlock, ComboPlus, Repair }
 
         public static readonly List<Altar> All = new List<Altar>();
         public static void ResetAll() => All.Clear();
@@ -30,14 +30,19 @@ namespace TekCan
         // ONARIM tükenmez ve fiyatı sabittir: yükseltme değil, ONARIM. Her ölümden sonra
         // aynı bedelle yeniden karşına çıkması gerekiyor.
         public bool SoldOut => Type == Kind.Weapon ? SilahTükendi()
+                             : Type == Kind.Loadout ? false
+                             : Type == Kind.Unlock ? Kadro.Açık(Yuva)
+                             : Type == Kind.ComboPlus ? Combo.Artı((ComboTür)Yuva) || Combo.BölgeAlımı(Bölge()) >= 1
                              : Type != Kind.Repair && _bought >= _t.altarMaxPurchases;
 
         /// <summary>SİLAH SUNAĞI'nın yuvası (0–2): kuşanılan silahın kaçıncı yükseltmesi.</summary>
         public int Yuva { get; private set; }
         // ⚠️ Faz 27: fiyat bu SUNAĞIN değil, koşunun o türden alım sayısına bağlı — bölge
         // değişince sıfırlanmıyor (kartopu buradan büyüyordu). `_bought` yalnızca sunak başı tavan.
-        public float Price => Type == Kind.Weapon ? Clock.SilahFiyatı(_t, SilahSunağı.AlınanSayısı,
-                                                                      Clock.Instance != null ? Clock.Instance.Seconds : 0f)
+        public float Price => Type == Kind.Weapon || Type == Kind.ComboPlus
+                                ? Clock.SilahFiyatı(_t, SilahSunağı.AlınanSayısı, Clock.Instance != null ? Clock.Instance.Seconds : 0f)
+                            : Type == Kind.Loadout ? 0f
+                            : Type == Kind.Unlock ? Clock.SilahAçmaFiyatı(_t, Clock.Instance != null ? Clock.Instance.Seconds : 0f, Kadro.Keşifti(Yuva))
                             : Type == Kind.Repair ? _t.revivalRepairPrice
                             : Clock.Instance != null ? Clock.Instance.SıradakiFiyat(Type)
                             : Clock.Fiyat(_t, 0);
@@ -94,6 +99,39 @@ namespace TekCan
             // "boss başına iki alım" sınırı başka bir çağıranla delinmesin (Faz 29 kapısı yakaladı).
             if (SoldOut) return;
             var clock = Clock.Instance;
+
+            // ── Faz 30 ──
+            if (Type == Kind.Loadout)
+            {
+                // KADRO: kuşandığın silahın yuvasına envanterde olmayan bir sonraki açık silah gelir.
+                int yuva = Mathf.Max(0, Kadro.Yuvası(Silah()));
+                int yeni = Kadro.Değiştir(yuva);
+                if (yeni < 0) return;
+                var pc = _player != null ? _player.GetComponent<PlayerController>() : null;
+                if (pc != null) pc.SetWeapon(yeni);
+                Sfx.Buy();
+                foreach (var a in All) if (a != null) a.Paint();
+                return;
+            }
+            if (Type == Kind.Unlock)
+            {
+                if (clock == null || !clock.TryBuy(Price)) return;
+                Kadro.Aç(Yuva, Kadro.Keşifti(Yuva) ? "keşifte kaçırılmıştı, satın alındı" : "satın alındı");
+                Sfx.Buy();
+                foreach (var a in All) if (a != null) a.Paint();
+                return;
+            }
+            if (Type == Kind.ComboPlus)
+            {
+                if (clock == null || !clock.TryBuy(Price)) return;
+                var c = (ComboTür)Yuva;
+                Combo.ArtıAl(c, Bölge());
+                SaveFile.Flush();
+                Combo.Duyur($"COMBO GELİŞTİ: {Combo.Bu(c).Ad} + {Combo.Bu(c).ArtıAd} — {Combo.Bu(c).ArtıNeYapar}", 5f);
+                Sfx.Buy();
+                foreach (var a in All) if (a != null) a.Paint();
+                return;
+            }
 
             // ⚠️ ONARIM ZAMANLA yapılır — ayrı malzeme YOK. Ayrı malzeme olsaydı ikinci
             // bir para birimi doğar ve "tek bir sayı var: saniye" yasası çatlardı.
@@ -170,6 +208,25 @@ namespace TekCan
                 return $"ONARIM  {kırık.Name}   —   {Price:0.0} saniye   [E]";
             }
 
+            if (Type == Kind.Loadout)
+            {
+                int yuva = Mathf.Max(0, Kadro.Yuvası(Silah()));
+                int aday = Kadro.Sıradaki(yuva);
+                return aday < 0 ? $"KADRO   [başka açık silah yok — {Kadro.AçıkSayısı} silah açık]"
+                                : $"KADRO — [E] {yuva + 1}. yuvadaki {Weapon.All[Silah()].Name} yerine {Weapon.All[aday].Name}   (1–3 ile yuva seç)";
+            }
+            if (Type == Kind.Unlock)
+            {
+                string ad = $"YENİ SİLAH: {Weapon.All[Yuva].Name}" + (Kadro.Keşifti(Yuva) ? "  (keşifte kaçırılmıştı)" : "");
+                return SoldOut ? $"{ad}   [ALINDI]" : $"{ad}   —   {Price:0.0} saniye   [E]";
+            }
+            if (Type == Kind.ComboPlus)
+            {
+                var c = Combo.Bu((ComboTür)Yuva);
+                string ad = $"COMBO · {c.Ad} + {c.ArtıAd} — {c.ArtıNeYapar}";
+                return Combo.Artı((ComboTür)Yuva) ? $"{ad}   [ALINDI]"
+                     : SoldOut ? $"{ad}   [bu boss'tan alındı]" : $"{ad}   —   {Price:0.0} saniye   [E]";
+            }
             if (Type == Kind.Weapon)
             {
                 var y = Yükseltme();
@@ -205,6 +262,9 @@ namespace TekCan
                 Kind.Insurance => InsuranceColor,
                 Kind.Patience => PatienceColor,
                 Kind.Weapon => silahRengi,
+                Kind.Loadout => new Color(0.9f, 0.9f, 0.95f),
+                Kind.Unlock => YuvaRengi(),
+                Kind.ComboPlus => new Color(1f, 0.8f, 0.2f),
                 Kind.Repair => FirstBroken() != null ? RepairColor : SoldOutColor,
                 _ => DashColor,
             };
@@ -215,6 +275,13 @@ namespace TekCan
         static readonly Color PatienceColor = new Color(0.6f, 0.45f, 0.9f);
         int _boyananSilah = -1;
 
+        Color YuvaRengi()
+        {
+            if (Yuva < 0 || Yuva >= Weapon.All.Length) return SoldOutColor;
+            var c = Weapon.All[Yuva].Tint; c.a = 1f;
+            return c;
+        }
+
         int Silah()
         {
             var pc = _player != null ? _player.GetComponent<PlayerController>() : null;
@@ -223,7 +290,7 @@ namespace TekCan
 
         SilahYükseltme Yükseltme() => SilahSunağı.Yuvası(Silah(), Yuva);
 
-        static int Bölge() => RoomManager.Instance != null ? RoomManager.Instance.RegionIndex : 0;
+        static int Bölge() => RoomManager.AktifBölge;
 
         bool SilahTükendi() => SilahSunağı.Var(Yükseltme())
                             || SilahSunağı.BölgeAlımı(Bölge()) >= _t.weaponAltarPurchases;

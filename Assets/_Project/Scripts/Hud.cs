@@ -331,6 +331,20 @@ namespace TekCan
 
             // ⚠️ TOPARLANMA GÖRÜNMELİ (Faz 28): kontrol noktası geri kaydıysa oyuncu NEDEN
             // önceki ara bölgeye düştüğünü bilmeli — yoksa "kayıt bozuldu" der.
+            // Faz 30: yeni silah · combo duyuruları
+            if (Kadro.SonMesaj != null && Time.unscaledTime - Kadro.SonMesajAnı < 7f)
+            {
+                _mid.normal.textColor = new Color(0.6f, 0.95f, 0.7f);
+                GUI.Label(new Rect(0f, Screen.height * 0.30f, Screen.width, 60f), Kadro.SonMesaj, _mid);
+                _mid.normal.textColor = Color.white;
+            }
+            if (Combo.SonCombo != null && Time.unscaledTime - Combo.SonComboAnı < Combo.SonComboSüresi)
+            {
+                _mid.normal.textColor = new Color(1f, 0.85f, 0.3f);
+                GUI.Label(new Rect(0f, Screen.height * 0.24f, Screen.width, 40f), Combo.SonCombo, _mid);
+                _mid.normal.textColor = Color.white;
+            }
+
             if (Time.unscaledTime - RevivalSystem.SonGeriGelmeAnı < 6f && RevivalSystem.SonGeriGelen != null)
             {
                 _mid.normal.textColor = new Color(1f, 0.5f, 0.4f);
@@ -406,13 +420,23 @@ namespace TekCan
             var pc = _player;
             if (pc == null) return;
 
+            // Faz 30: ENVANTER — 3 yuva (1–3). Açık ama envanterde olmayanlar KADRO sunağında.
             var weapons = Weapon.All;
-            float w = 150f, total = weapons.Length * w;
+            float w = 170f, total = Kadro.Yuva * w;
             float x = (Screen.width - total) * 0.5f;
             float y = Screen.height - 62f;
 
-            for (int i = 0; i < weapons.Length; i++)
+            int dolu = 0;
+            for (int yuva = 0; yuva < Kadro.Yuva; yuva++)
             {
+                int i = Kadro.Yuvadaki(yuva);
+                if (i < 0)
+                {
+                    _small.normal.textColor = new Color(0.5f, 0.5f, 0.55f);
+                    GUI.Label(new Rect(x + yuva * w, y, w, 56f), $"{yuva + 1}  —\n(boş yuva)", _small);
+                    continue;
+                }
+                dolu++;
                 bool equipped = weapons[i] == pc.Weapon;
                 var c = weapons[i].Tint; c.a = equipped ? 1f : 0.35f;
                 _small.normal.textColor = c;
@@ -432,8 +456,14 @@ namespace TekCan
                     : cd > 0.05f ? $"\n[sağ] {sp.Name} {cd:0.0}s"
                                  : $"\n[sağ] {sp.Name}";
 
-                GUI.Label(new Rect(x + i * w, y, w, 56f),
-                          $"{i + 1}  {weapons[i].Name}\n{tek} {mult}{özel}", _small);
+                GUI.Label(new Rect(x + yuva * w, y, w, 56f),
+                          $"{yuva + 1}  {weapons[i].Name}\n{tek} {mult}{özel}", _small);
+            }
+            int dışarıda = Kadro.AçıkSayısı - dolu;
+            if (dışarıda > 0)
+            {
+                _small.normal.textColor = new Color(0.75f, 0.75f, 0.8f);
+                GUI.Label(new Rect(x + total, y, 200f, 40f), $"+{dışarıda} silah\nKADRO sunağında", _small);
             }
             _small.normal.textColor = Color.white;
 

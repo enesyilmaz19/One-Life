@@ -8,7 +8,7 @@
 | 4 | ✏️ **Adlandırma** | Kahraman, 5 boss, 5 bölge, 3 diriliş eşyası. Şimdikiler çalışma adı | `docs/TASARIM.md` "Açık" |
 | 6 | 🎮 **Faz 28 testi** | F6 yeni koşu → dövüş odası 5 dalga · **M** sıradaki mini boss · mini ölünce sunak (kontrol noktası) · eşyasız ölümde kontrol noktasına dönüş, birkaç ölümde "… TOPARLANDI" · **B** ana boss (saat yavaş akar). His: oda süresi, dalgalar, mini boss, saatin gidişi | Gördüklerini yaz |
 | 7 | 🎮 *(isteğe bağlı)* **Faz 29 his testi** | Bot oynadı, 8/8 geçti. Sana kalan his: silah sunağı seçimi karar gibi mi, fiyatlar, MUAFİYET hissediliyor mu | Gördüklerini yaz |
-| 8 | ❓ **Faz 30 soruları** | FAZ 30 bölümündeki 4 soru (silah nasıl açılıyor, envanter nerede, combo nasıl, 7 yeni silah) | Cevap yaz |
+| 8 | 🎮 **Faz 30 testi** | **F6** yeni koşu: 2 silah, 3. yuva boş · **M** ile sunaklar: 2. ara bölgenin sunağında HACİZ · 4. ara bölgenin 4. odasında kenarda parlayan köşe (İPOTEK) · sunak odasında **KADRO** sunağı ([E] yuvadaki silahı değiştirir) · combo: KONİ'yle vur, hemen 2'ye geç, İPOTEK at · **B** boss → İFLAS + combo sunağı | Gördüklerini yaz: combo hissi, 0.8 sn yetiyor mu, köşe görünüyor mu |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 
 ---
@@ -222,7 +222,79 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 
 ---
 
-## 🗡️ FAZ 30 — Silah kadrosu — **PLAN, sorular Enes'te** (2026-10-15)
+## 🗡️ FAZ 30 — Silah kadrosu — **BİTTİ** (2026-10-18)
+
+**✅ Enes'in cevapları (2026-10-16)** — *"sonraki faza geçme"*: başlanmadı, sıradaki oturum buradan.
+1. **Silah açılması:** ana boss yenilince **1** silah. Öbürü ya **satın alınır** ya da **keşifle** bulunur — açık dünya yok, ama hikâye için mekânlara eşyalar gömülecek; silahlar gizli/saklı yerlerde bulunabilir.
+2. **Envanter:** sunak odalarında ve silah sunağında düzenleniyor (öneri onaylandı, "şimdilik öyle").
+3. **Combo:** **hızlı silah geçişleriyle.** Bazı silahlarla **3'lü combo**. Combo **istismar edilmemeli** (abuse). Combo'lar **gelişip yeni etki kazanabilmeli** (yükseltme).
+4. **Başlangıç:** oyun **2 silahla** başlıyor, ilk boss'a kadar **4 silah** oluyor (KONİ, FAİZLİ, HACİZ, İPOTEK). **İFLAS 2. bölgede** açılıyor. **Combo mekaniği** ilk boss'tan önce ya da 2. bölgede tanıtılsın.
+
+**📝 ÖNERİ (2026-10-17) — Enes'in onayını bekliyor**
+
+*7 yeni silah* — her biri YENİ bir soru soruyor (elenenler tekrar önerilmedi: VADELİ, DURGUN, TAKSİT):
+| Silah | Sorusu | Nasıl |
+|---|---|---|
+| **REHİN** | kimi tutayım? | Bir düşmanı yakalarsın; tutarken önden gelen vuruşu o yer, fırlatınca çarptığına vurur |
+| **ÇEK** | geri dönüş yolunu nasıl kurarım? | Fırlatılır, duvardan seker, sana döner — gidişte de dönüşte de vurur; dönene kadar silahsızsın |
+| **KARŞILIK** | ne zaman karşılamalıyım? | Kısa karşılama penceresi: o anda gelen darbe saatinden değil bir sonraki vuruşunun hasarına yazılır |
+| **TAHVİL** | ne kadar bekleyeyim? | Basılı tut, vuruş olgunlaşır (3 kademe); beklerken saat iki kat akar |
+| **MÜŞTEREK** | kimi kime bağlarım? | İki düşmanı birbirine bağlar; birine vurduğun öbürüne de iner |
+| **ARBİTRAJ** | arkasına geçebilir miyim? | Arkadan çok sert, önden zayıf (fikir defterindeki "arkadakine vuran kılıç") |
+| **KİRA** | bu alanı ne kadar tutayım? | Yere bir kule kurarsın; saniyede kira öder, kurulu kaldıkça vurur ve hasat eder |
+
+*Yeni silahların sağ tığı ve dash-atağı* (Enes 2026-10-17: "planlamayı unutma") — ilke aynı: özel, silahın ZATEN sorduğu soruyu güçlendirir, dash-atak onun YAKIN/hareketli cevabıdır:
+| Silah | Sağ tık | Dash-atak |
+|---|---|---|
+| **REHİN** | **TAKAS** — tuttuğun düşmanı en yakın ikinci düşmanla yer değiştirtip ikisine birden vurur | **SÜRÜKLEME** — dash boyunca yakaladığını önünde kalkan gibi taşır, dash sonunda yere çarpar |
+| **ÇEK** | **KARŞILIKSIZ** — üç çek yelpaze gibi fırlar, her biri bir kez seker | **CİRO** — dash'in sonunda havadaki çeki yakalayıp aynı yöne yeniden fırlatırsın (dönüşü beklemeden) |
+| **KARŞILIK** | **İTİRAZ** — uzun karşılama penceresi; o sırada gelen her darbe birikir, pencere bitince hepsi önündekilere geri iner | **KARŞI DAVA** — dash'le saldırgana atılırsın; karşılama penceresinde dash atarsan biriken hasarın iki katı |
+| **TAHVİL** | **VADESİ GELMİŞ** — o anki olgunluğu bekletmeden üç parçaya bölüp üç hedefe dağıtır | **ERKEN BOZDURMA** — dash'le olgunluğu harcar: yarı hasar ama beklemeden, dash yönünde geniş |
+| **MÜŞTEREK** | **ZİNCİRLEME** — bağı ikiden dörde çıkarır (dört düşmanı tek zincire takar) | **KOPARMA** — dash'le bağın ortasından geçersen bağ kopar, iki uç birbirine çekilip çarpışır |
+| **ARBİTRAJ** | **AÇIK POZİSYON** — kısa süre görünmez olursun, ilk vuruş her yönden "arkadan" sayılır | **TERS İŞLEM** — düşmanın içinden geçen dash; çıktığın an arkasındasın ve vuruş arkadan iner |
+| **KİRA** | **TAHLİYE** — kurulu kuleyi patlatırsın: kalan kira süresi kadar hasar, kira biter | **TAŞINMA** — dash'le kuleyi bulunduğun yere taşırsın (kira sürer) |
+
+*Açılış sırası* (her bölgede +2: 1 boss'tan, 1 satın alma ya da keşif):
+| Bölge | Açılan |
+|---|---|
+| Başlangıç | KONİ · FAİZLİ |
+| 1. bölge (boss'tan önce) | HACİZ (sunakta satın) · İPOTEK (keşif) |
+| 2. bölge | İFLAS (1. boss) · REHİN |
+| 3. bölge | ÇEK (2. boss) · KARŞILIK |
+| 4. bölge | TAHVİL (3. boss) · MÜŞTEREK |
+| 5. bölge | ARBİTRAJ (4. boss) · KİRA |
+
+*Keşif:* bazı dövüş odalarının kenarında soluk parlayan bir köşe; oda temizlenince oraya yürürsen silahı bulursun. Kaçırırsan aynı silah sonraki sunakta pahalıya satılır — hiçbir silah sonsuza dek kaçmaz.
+
+*Combo kuralları:*
+- A ile vur → **0.8 sn** içinde B'ye geç ve vur = 2'li combo. → 0.8 sn içinde C = **3'lü** bitiriş.
+- **İstismar yok:** her vuruş İSABET etmeli (boşa savurma sayılmaz) · aynı combo **4 sn** tekrar edilemez · aynı silah iki kez sayılmaz.
+- **Gelişme:** silah sunağında combo yükseltmesi — combo'ya yeni etki ekliyor.
+- İlk combo'lar mevcut silahlarla: **HACİZ → İPOTEK** (işaretin içindekine HACİZ vurursa işaret hemen patlar) · **KONİ → İPOTEK** (itip topladığının ortasına hızlı ipotek) · **FAİZLİ → İFLAS** (FAİZLİ'nin ödediği İFLAS'ın dip hesabına sayılır) · 3'lü **KONİ → HACİZ → İPOTEK**.
+- *Tanıtım:* ilk 2'li combo İPOTEK açılınca (1. boss'tan önce), 3'lü combo'lar 2. bölgede.
+
+**Faz 30 adımları (2026-10-18)**
+- [x] **Kadro altyapısı** (`Kadro.cs`): açılış tablosu (başta / sunak / keşif / boss), koşu boyu kalıcı (`SaveData.unlockedWeapons`, `loadout`). Oyun KONİ + FAİZLİ ile başlıyor; **1–3 tuşları envanter yuvası** (silah değil).
+- [x] **HACİZ** 1. bölgenin 2. ara bölgesinin sunağında satılıyor (taban 30 sn ya da saatin %15'i) → boş yuvaya giriyor.
+- [x] **İPOTEK keşifle** (`GizliSilah.cs`): 4. ara bölgenin 4. odası temizlenince arenanın kenarında soluk parlayan köşe; üstüne yürüyünce açılıyor. Kaçırılırsa o ara bölgenin sunağında ve sonrakilerde **2 kat** fiyatla satılıyor.
+- [x] **İFLAS 1. boss'tan.** Boss odasında artık: silah sunağı + KADRO + combo sunağı.
+- [x] **KADRO sunağı** (sunak odalarında ve boss sonrası): [E] kuşandığın yuvadaki silahı envanterde olmayan bir sonraki açık silahla değiştiriyor. HUD: 3 yuva + "+N silah KADRO sunağında".
+- [x] **Combo** (`Combo` + `PlayerController` zinciri): isabet şart · adım arası 0.8 sn (`comboWindow`) · aynı combo 4 sn tekrar yok (`comboCooldown`) · aynı silah iki kez sayılmaz.
+  | Combo | Sıra | Etki | "+" (silah sunağında, boss başına 1) |
+  |---|---|---|---|
+  | HACİZ KESİNLEŞTİ | İPOTEK → HACİZ | işaretin içindekine HACİZ vurursa işaret HEMEN patlar ×1.5 | KESİN HÜKÜM: HACİZ'in sağ tığı sıfırlanır |
+  | TOPLU İPOTEK | KONİ → İPOTEK | işaret vurulanların ortasına, gecikme ×0.4 | ÇİFT HACİZ: en uzaktaki düşmana ikinci ipotek |
+  | TEMERRÜT | FAİZLİ → İFLAS | İFLAS saatin yarıdaymış gibi sert | TEMERRÜT FAİZİ: o vuruşun hasadı ×2 |
+  | HACİZ KARARI (3'lü, 2. bölgeden) | KONİ → HACİZ → İPOTEK | HACİZ'in hedefine ×2 alan, gecikme ×0.3, hasar ×2 | TAHLİYE: patlama düşmanları dışa iter |
+- [x] Kapı: `Faz30SelfCheck` **18 kontrol** · **21 bozmanın 21'i kırmızı** (3 koşu) · tüm kapılar ✅. Faz 3 kapısı: tuş artık yuva başına.
+- [x] **Bot playtest'i** (`Otopilot — Faz 30 playtest`): **6/6 ✅**, istisna yok — 2 silahla başla (3 tuşu boş) · HACİZ 2. sunakta, 1.'de yok · İPOTEK keşifle (bot kenarda dolaşırken köşenin üstünden geçti) · KADRO ile 2. yuvaya İPOTEK · **gerçek tuşlarla TOPLU İPOTEK** (ilk denemede) · 1. boss → İFLAS + combo sunağında KESİN HÜKÜM. Not: bot 1. boss'ta KUŞATMA'dan 41'de 19 kez vuruldu (önceki ölçümlerde de en çok vuran saldırı).
+
+*Faz bölme önerisi* (tek faz çok büyük):
+- **Faz 30 — kadro altyapısı:** 3'lü envanter, kilit açma (boss / satın / keşif), mevcut 5 silahın açılış sırası, combo sistemi + 4 ilk combo.
+- **Faz 31 — yeni silahlar 1:** REHİN · ÇEK · KARŞILIK (+ combo'ları).
+- **Faz 32 — yeni silahlar 2:** TAHVİL · MÜŞTEREK · ARBİTRAJ · KİRA.
+- İçerik (25 mini boss, düşmanlar) bunlardan sonra.
+
 
 > Enes: *"Silahların hepsini oyunun başında vermeyeceğiz. Bazıları oyunun ileri kısmında açılacak (totalde 12 olabilir, her bölgede 2 tane açılan silahlar gibi, ilk bölgede 4 tane silah olcak). Kullanıcı yanına 3 tane silah alabilir sadece… bazı silahların birbiri ile combo saldırıları olsun. Kullanıcı yeni silahlar elde edince envanterini düzenleyip güçlendirme alıp ona göre oynayacak."*
 

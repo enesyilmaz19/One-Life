@@ -38,6 +38,12 @@ namespace TekCan.EditorTools
 
         public static void Playtest29() => Başlat(izle: false, senaryo: "p29");
 
+        /// <summary>Faz 30 playtest'i: 2 silahla başla, HACİZ sunakta, İPOTEK keşifte, KADRO, gerçek combo, İFLAS boss'tan. ~15 dk.</summary>
+        [MenuItem("Tek Can/Otopilot — Faz 30 playtest (izle)")]
+        public static void Playtest30Izle() => Başlat(izle: true, senaryo: "p30");
+
+        public static void Playtest30() => Başlat(izle: false, senaryo: "p30");
+
         /// <summary>Faz 27 ölçümü: bütün bölgeler atlamadan, bir tam koşu kaç dakika (Enes 2026-10-12).</summary>
         [MenuItem("Tek Can/Otopilot — tam koşu ölçümü (izle)")]
         public static void TamKosuIzle() => Başlat(izle: true, senaryo: "tam");

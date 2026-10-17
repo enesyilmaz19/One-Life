@@ -20,6 +20,9 @@ namespace TekCan
     public class RoomManager : MonoBehaviour
     {
         public static RoomManager Instance { get; private set; }
+
+        /// <summary>Şu anki bölge (oda yöneticisi yoksa — bazı öz-denetimler — 0).</summary>
+        public static int AktifBölge => Instance != null ? Instance.RegionIndex : 0;
         public static void Reset() => Instance = null;
 
         Tuning _t;
@@ -216,6 +219,7 @@ namespace TekCan
             Debug.Log($"[Tek Can] BÖLGE {RegionIndex + 1}/{RegionCount} — {Region.Current.Name}" +
                       (string.IsNullOrEmpty(Region.Current.RuleText) ? "" : $" ({Region.Current.RuleText})"));
 
+            Combo.BölgeTanıtımı(RegionIndex);            // Faz 30: 3'lü combo 2. bölgede
             EnterRoom(startRoom);
         }
 
@@ -359,8 +363,19 @@ namespace TekCan
             // odasıyla aynı kural). Son bölgede yok: orada koşu bitiyor.
             if (IsBossRoom)
             {
+                Kadro.BossAçılışı(RegionIndex);              // Faz 30: her boss bir silah açıyor
                 Bootstrap.SpawnWeaponAltars(_t, _player, _roomRoot.transform);
+                Bootstrap.SpawnLoadoutAltar(_t, _player, _roomRoot.transform);
+                var combo = Combo.Satılık(RegionIndex);
+                if (combo.HasValue) Bootstrap.SpawnComboAltar(_t, _player, _roomRoot.transform, combo.Value);
                 if (Clock.Instance != null) Clock.Instance.Frozen = true;
+            }
+
+            // Faz 30 — KEŞİF: bu odada saklı silah varsa temizlenince kenarda beliriyor.
+            if (Tür(_t, Room) == OdaTürü.Dövüş)
+            {
+                int gizli = Kadro.KeşifBurada(RegionIndex, SubRegion, AraOda(_t, Room));
+                if (gizli >= 0) Bootstrap.SpawnGizliSilah(_t, _player, _roomRoot.transform, gizli);
             }
 
             // Mini boss öldü: toparlanma borcu kapandı (geri gelmişse büyümesi de).
@@ -599,6 +614,9 @@ namespace TekCan
             // Faz 29: dördüncü sunak ara bölgeye göre dönüyor — MUAFİYET, SABIR, MUAFİYET…
             Bootstrap.SpawnAltarRing(_t, _player, _roomRoot.transform,
                                      SubRegion % 2 == 0 ? Altar.Kind.Insurance : Altar.Kind.Patience);
+            // Faz 30: envanter burada düzenleniyor; sırası gelen (ya da keşifte kaçırılan) silah satılıyor.
+            Bootstrap.SpawnLoadoutAltar(_t, _player, _roomRoot.transform);
+            Bootstrap.SpawnUnlockAltars(_t, _player, _roomRoot.transform, Kadro.Satılıklar(RegionIndex, SubRegion));
         }
 
         static bool AnyEnemyAlive()
@@ -685,6 +703,7 @@ namespace TekCan
             var c = Clock.Instance;
             if (c == null) return;
             SaveFile.MarkTestJump();   // ⚠️ İÇERİDE: öz-denetim kirlenmeyi de ölçebilsin
+            for (int w = 0; w < Weapon.All.Length; w++) Kadro.Aç(w, "TAM GÜÇ");   // Faz 30: bütün silahlar
             int alım = _t.altarMaxPurchases * Mathf.Max(1, _t.subRegionsPerRegion) * RegionCount;   // her ara bölgede bir sunak odası
             for (int i = 0; i < alım; i++)
             {

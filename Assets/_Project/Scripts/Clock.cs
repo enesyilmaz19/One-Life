@@ -151,6 +151,10 @@ namespace TekCan
             => Mathf.Max(t.altarBasePrice * t.weaponAltarBaseMul * Mathf.Pow(t.altarPriceGrowth, n),
                          t.weaponAltarPricePercent * saat);
 
+        /// <summary>Sunakta silah açma (Faz 30): taban ya da saatin %15'i; keşifte kaçırılmışsa iki kat.</summary>
+        public static float SilahAçmaFiyatı(Tuning t, float saat, bool kaçırıldı)
+            => Mathf.Max(t.weaponUnlockBase, t.weaponUnlockPercent * saat) * (kaçırıldı ? 2f : 1f);
+
         float AlımToplamı(Altar.Kind k)
         {
             if (_t == null) return 0f;

@@ -84,6 +84,13 @@ namespace TekCan
         // Bölge başına alım sayısı da burada: kapat-aç ile boss odasına dönüp yeniden almak olmasın.
         public int[] weaponUpgrades = new int[0];
         public int[] weaponAltarBought = new int[0];
+
+        // Faz 30 — KADRO: açılan silahlar ve 3'lü envanter (koşu boyu; ölüm geri almıyor),
+        // combo'ların "+" hâlleri ve combo sunağının bölge başına alımı.
+        public int[] unlockedWeapons = new int[0];
+        public int[] loadout = new int[0];
+        public int[] comboUpgrades = new int[0];
+        public int[] comboAltarBought = new int[0];
     }
 
     /// <summary>
@@ -321,6 +328,18 @@ namespace TekCan
             if (kind == null || Current == null || seconds <= 0f) return;
             Normalize();
             Current.bossLedger[kind.Index] += seconds;
+        }
+
+        /// <summary>
+        /// Kayıt dizisini en az n'e BÜYÜT (değerler korunur, kısaltmaz). Faz 29–30'un koşu boyu dizileri
+        /// (silah yükseltmesi, combo, bölge başına alım) eski kayıtta yok ya da kısa — tek yerden büyüyorlar.
+        /// </summary>
+        public static int[] Büyüt(int[] dizi, int n)
+        {
+            if (dizi != null && dizi.Length >= n) return dizi;
+            var yeni = new int[n];
+            if (dizi != null) System.Array.Copy(dizi, yeni, dizi.Length);
+            return yeni;
         }
 
         static int[] Fit(int[] src, int n)

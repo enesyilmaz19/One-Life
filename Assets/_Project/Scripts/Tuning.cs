@@ -243,6 +243,16 @@ namespace TekCan
         [Tooltip("SİLAH SUNAĞI fiyatı en az saatin bu payı")]
         public float weaponAltarPricePercent = 0.15f;
 
+        [Header("── Faz 30: kadro · combo ──")]
+        [Tooltip("COMBO: bir sonraki silahla vurmak için süre (sn) — hızlı geçiş")]
+        public float comboWindow = 0.8f;
+        [Tooltip("COMBO: aynı combo bu kadar sn tekrar etmez (istismar olmasın)")]
+        public float comboCooldown = 4f;
+        [Tooltip("Sunakta silah açma taban fiyatı (sn)")]
+        public float weaponUnlockBase = 30f;
+        [Tooltip("Sunakta silah açma: en az saatin bu payı (keşifte kaçırılmışsa ×2)")]
+        public float weaponUnlockPercent = 0.15f;
+
         /// <summary>Bir ara bölgenin dövüş odası sayısı (en az 1).</summary>
         public int DövüşOdası => Mathf.Max(1, roomsPerSubRegion);
         /// <summary>Bir ara bölgenin oda sayısı: dövüş odaları + mini boss + sunak.</summary>

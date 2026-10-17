@@ -138,9 +138,36 @@ namespace TekCan
 
         public bool Fired => _fired;
 
+        // ── COMBO kancaları (Faz 30) ──
+        /// <summary>TAHLİYE (HACİZ KARARI+): patlama içindekileri dışa iter.</summary>
+        public float İtme { get; set; }
+        public bool Bekliyor => _hitsEnemies && !_fired;
+        public float Yarıçap => _radius;
+
+        /// <summary>HACİZ KESİNLEŞTİ: bekleyen ipotek şimdi patlıyor, hasarı ×çarpan.</summary>
+        public void HemenPatlat(float hasarÇarpanı)
+        {
+            if (_fired) return;
+            _enemyDamage *= hasarÇarpanı;
+            _timer = 0f;
+            Step(0f);
+        }
+
+        /// <summary>Bu noktayı içine alan, henüz patlamamış oyuncu ipoteği (yoksa null).</summary>
+        public static GroundMark İçindekiİpotek(Vector3 nokta)
+        {
+            foreach (var m in FindObjectsByType<GroundMark>(FindObjectsSortMode.None))
+            {
+                if (m == null || !m.Bekliyor) continue;
+                var d = nokta - m.transform.position;
+                d.y = 0f;                                    // tuzak 2
+                if (d.magnitude <= m._radius) return m;
+            }
+            return null;
+        }
+
         /// <summary>Oyuncuya mı vuruyor (düşmanın tebligatı) — otopilot bundan kaçıyor.</summary>
         public bool OyuncuyaVurur => !_hitsEnemies;
-        public float Yarıçap => _radius;
 
         /// <summary>Patlamaya kalan süre — otopilot "çıkmaya yetişir miyim" diye soruyor.</summary>
         public float Kalan => _timer;
@@ -191,6 +218,7 @@ namespace TekCan
                 if (d.magnitude - e.Radius > _radius) continue;
 
                 e.TakeDamage(_enemyDamage, _harvestMult);
+                if (İtme > 0f) e.Push(d, İtme);              // TAHLİYE (Faz 30)
                 EnemiesHit++;
             }
         }

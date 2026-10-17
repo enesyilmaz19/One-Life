@@ -242,7 +242,7 @@ namespace TekCan.EditorTools
             failed += Check(ref total, $"⚠️ GENİŞ ARSA: alan ×1.3 ({r0:0.00} → {r1:0.00})", r0 > 0f && Mathf.Abs(r1 / r0 - 1.3f) < 0.01f, r1 / Mathf.Max(0.001f, r0));
 
             // İFLAS
-            float Hasar(bool açık) { Hazırla(SilahYükseltme.Dip, açık, t.iflasSafeSeconds); return (float)hasarı.Invoke(pc, null); }
+            float Hasar(bool açık) { Hazırla(SilahYükseltme.Dip, açık, t.iflasSafeSeconds); return (float)hasarı.Invoke(pc, new object[] { 1f }); }
             float h0 = Hasar(false), h1 = Hasar(true);
             failed += Check(ref total, $"⚠️ DİP: güvenli eşikte bile sertleşmeye başlıyor (hasar {h0:0.00} → {h1:0.00})", h1 > h0 + 0.01f, h1 - h0);
             int Seri(bool açık) { Hazırla(SilahYükseltme.Seri, açık, 200f); özel.Invoke(pc, new object[] { ileri }); return pc.FlurryLeft; }
