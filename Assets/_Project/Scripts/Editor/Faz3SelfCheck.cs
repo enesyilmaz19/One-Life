@@ -447,8 +447,8 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "⚠️ silahlar FARKLI SORU soruyor (ad farkı çeşitlilik değil)",
                             ayni == 0, ayni);
             // Faz 31: REHİN · ÇEK · KARŞILIK eklendi (hedef 12 — Enes 2026-10-17).
-            failed += Check(ref total, "kadro SEKİZ silah (Faz 31; hedef 12)",
-                            Weapon.All.Length == 8, Weapon.All.Length);
+            failed += Check(ref total, "kadro ON İKİ silah (Faz 32 — hedefe ulaştı)",
+                            Weapon.All.Length == 12, Weapon.All.Length);
 
             // ── 6e) ⚠️ MENZİLLİ SİLAHIN DASH'İ YAKIN CEVABIDIR ──
             //    HACİZ için ayrıca ölçüldü; İPOTEK için de geçerli olmalı, yoksa
@@ -512,7 +512,8 @@ namespace TekCan.EditorTools
                 // hedefin üstüne değil. Hedefi 1.2 birimde bırakmak İPOTEK'i "hasar
                 // veremiyor" diye gösteriyordu — üçüncü kez aynı ders: fixture silahın
                 // GERÇEK davranışını ithal etmeli, ortalama bir varsayım uydurmamalı.
-                float mesafe = pc.Weapon.GroundMarkDelay(t) > 0f
+                // KİRA (Faz 32) da İPOTEK gibi nişana KURUYOR: hedef kulenin yanında.
+                float mesafe = pc.Weapon.GroundMarkDelay(t) > 0f || pc.Weapon.Saldırı == Biçim.Kira
                              ? pc.Weapon.Range(t)
                              : Mathf.Max(1.2f, pc.Weapon.MinRange(t) * 1.6f);
                 var target = MakeEnemy(t, pGo.transform,
@@ -536,9 +537,12 @@ namespace TekCan.EditorTools
                 // ÇEK (Faz 31) uçarak vuruyor: uçuşu sonuna kadar götür.
                 for (int k = 0; k < 300 && CekUcusu.Uçanlar.Count > 0; k++)
                     foreach (var u in CekUcusu.Uçanlar.ToArray()) u.Step(0.02f);
+                // KİRA'nın kulesi ateş ederek vuruyor: bir saniye çalıştır, sonra kaldır.
+                foreach (var k in KiraKulesi.Tümü.ToArray()) k.Step(1f);
 
                 failed += Check(ref total, $"{pc.Weapon.Name} HASAR VEREBİLİYOR",
                                 target.TimeLeft < poolBefore - 0.001f, poolBefore - target.TimeLeft);
+                foreach (var k in KiraKulesi.Tümü.ToArray()) k.Bitir();
 
                 // ⚠️ İşareti yok etmek SAYACI düşürmüyor (üretimde `TearDown`/
                 // `ResetStatics` düşürüyor, `OnDestroy` DEĞİL — Unity edit modda o

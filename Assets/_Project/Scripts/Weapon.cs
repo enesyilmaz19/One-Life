@@ -27,7 +27,7 @@ namespace TekCan
 
     /// <summary>Saldırının biçimi (Faz 31): `PlayerController` buna göre dallanıyor, silah adına göre değil.
     /// Yer vuruşu (İPOTEK) ayrı biçim değil — `GroundMarkDelay` &gt; 0.</summary>
-    public enum Biçim { Koni, Rehin, Çek, Karşılık }
+    public enum Biçim { Koni, Rehin, Çek, Karşılık, Tahvil, Müşterek, Arbitraj, Kira }
 
     /// <summary>
     /// Sağ tık saldırısı — silahın İKİNCİ hamlesi. `BossAttack` ile aynı desen:
@@ -121,7 +121,11 @@ namespace TekCan
         Dip, Seri, Kapanış,                    // İFLAS
         AğırRehin, GenişKol, Kalkan,           // REHİN (Faz 31)
         ÇiftCiro, HızlıTahsil, DönüşKesintisi, // ÇEK
-        GenişPencere, TamKarşılık, İade        // KARŞILIK
+        GenişPencere, TamKarşılık, İade,       // KARŞILIK
+        KısaVade, YüksekFaiz, İskonto,         // TAHVİL (Faz 32)
+        SıkıBağ, UzunBağ, OrtakHasat,          // MÜŞTEREK
+        KeskinBıçak, GenişAçı, Gölge,          // ARBİTRAJ
+        UcuzKira, GenişArazi, UzunKontrat      // KİRA
     }
 
     public static class SilahSunağı
@@ -138,6 +142,10 @@ namespace TekCan
             "AĞIR REHİN", "GENİŞ KOL", "KALKAN",
             "ÇİFT CİRO", "HIZLI TAHSİL", "DÖNÜŞ KESİNTİSİ",
             "GENİŞ PENCERE", "TAM KARŞILIK", "İADE",
+            "KISA VADE", "YÜKSEK FAİZ", "İSKONTO",
+            "SIKI BAĞ", "UZUN BAĞ", "ORTAK HASAT",
+            "KESKİN BIÇAK", "GENİŞ AÇI", "GÖLGE",
+            "UCUZ KİRA", "GENİŞ ARAZİ", "UZUN KONTRAT",
         };
 
         public static readonly string[] NeYapar =
@@ -150,6 +158,10 @@ namespace TekCan
             "fırlatma hasarı ×1.6", "tutma menzili ×1.5", "yandan gelenleri de karşılar",
             "bir sekme daha", "çek ×1.4 hızlı", "dönüşte hasar ×1.5",
             "karşılama penceresi ×1.6", "biriken hasar ×1.5", "karşıladığın darbenin yarısı saate geri",
+            "kademeler ×0.7 sürede olgunlaşır", "3. kademe ×1.4", "beklerken saat ×1.5 akar (×2 değil)",
+            "bağlıya yayılan hasar %60 → %90", "bağın süresi ×2", "yayılan hasarın hasadı tam (yarım değil)",
+            "arkadan ×3.5", "arka sayılan açı 120° → 90°", "görünmezlik ×1.5",
+            "kira ×0.6", "kule menzili ×1.4", "kulenin ömrü ×1.5",
         };
 
         public static int Toplam => Weapon.All.Length * SilahBaşına;
@@ -308,6 +320,10 @@ namespace TekCan
               Saldırı == Biçim.Rehin    ? "tutma"
             : Saldırı == Biçim.Çek      ? "fırlatma"
             : Saldırı == Biçim.Karşılık ? "karşılama"
+            : Saldırı == Biçim.Tahvil   ? "olgunlaşma"
+            : Saldırı == Biçim.Müşterek ? "bağ"
+            : Saldırı == Biçim.Arbitraj ? "arkadan"
+            : Saldırı == Biçim.Kira     ? "kule"
             : GroundMarkDelay(t) > 0f ? "yer"
             : MinRange(t) > 0f        ? "menzil"
             : MaxTargets == 1         ? "tek"
@@ -335,7 +351,8 @@ namespace TekCan
         public static Weapon[] All => _all ??= new Weapon[]
         {
             new ConeBlade(), new Faizli(), new Haciz(), new Ipotek(), new Iflas(),
-            new Rehin(), new Cek(), new Karsilik()          // Faz 31
+            new Rehin(), new Cek(), new Karsilik(),         // Faz 31
+            new Tahvil(), new Musterek(), new Arbitraj(), new Kira()   // Faz 32
         };
         static Weapon[] _all;
     }
@@ -648,6 +665,108 @@ namespace TekCan
             Name = "İTİRAZ", Cooldown = t.specialCooldownKarsilik, Duruş = t.karsilikItirazSeconds, RangeMul = 1.5f,
             NeYapar = $"{t.karsilikItirazSeconds:0.0} sn karşılar, biriken hepsi önündekilere",
             Tint = new Color(0.95f, 0.95f, 0.6f, 0.6f)
+        };
+    }
+
+    // ══ FAZ 32 — yeni silahlar 2 ══════════════════════════════════════════════════════
+    // Davranış `PlayerController`'da (biçime göre), bağ `MusterekBag.cs`, kule `KiraKulesi.cs`.
+
+    /// <summary>
+    /// TAHVİL — "ne kadar bekleyeyim?" Sol tıkı basılı tut: vuruş kademe kademe olgunlaşır, beklerken
+    /// saat iki kat akar; bırakınca iner. Beklemenin bedeli de ödülü de saniye.
+    /// </summary>
+    public sealed class Tahvil : Weapon
+    {
+        public override string Name => "TAHVİL";
+        public override Color Tint => new Color(0.55f, 0.95f, 0.65f, 0.5f);
+        public override Biçim Saldırı => Biçim.Tahvil;
+        public override float HarvestMultiplier => 1.2f;
+        public override string DashAtakAdı => "ERKEN BOZDURMA";
+        public override string DashAtakNeYapar => "basılı tutarken dash: olgunluğun yarısı dash-atağa biner, geniş";
+
+        /// <summary>Kademenin hasar çarpanı (0 = olgunlaşmamış).</summary>
+        public static float KademeÇarpanı(int kademe) => kademe <= 0 ? 0.7f : kademe == 1 ? 1.6f : kademe == 2 ? 2.8f : 4.5f;
+
+        /// VADESİ GELMİŞ — o anki olgunluğu (en az 1. kademe) üç parçaya bölüp üç düşmana dağıtır.
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
+        {
+            Name = "VADESİ GELMİŞ", Cooldown = t.specialCooldownTahvil, MaxTargets = 3, RangeMul = 1.5f, Angle = 140f,
+            NeYapar = "o anki olgunluğu (en az 1. kademe) önündeki üç düşmana bölüştürür",
+            Tint = new Color(0.55f, 0.95f, 0.65f, 0.6f)
+        };
+    }
+
+    /// <summary>
+    /// MÜŞTEREK — "kimi kime bağlarım?" Vurduğunu işaretler, sonraki vuruşta ikinciyi ona bağlar:
+    /// birine inen hasarın bir payı öbürüne de iner — hangi silahtan gelirse gelsin.
+    /// </summary>
+    public sealed class Musterek : Weapon
+    {
+        public override string Name => "MÜŞTEREK";
+        public override Color Tint => new Color(0.95f, 0.6f, 0.9f, 0.5f);
+        public override Biçim Saldırı => Biçim.Müşterek;
+        public override int MaxTargets => 1;
+        public override float HarvestMultiplier => 1.6f;
+        public override float Range(Tuning t) => t.attackRange * 1.2f;
+        public override float Angle(Tuning t) => t.singleTargetAngle * 1.4f;
+        public override float Damage(Tuning t, float baseDamage) => baseDamage * 0.8f;
+        public override string DashAtakAdı => "KOPARMA";
+        public override string DashAtakNeYapar => "bağın üstünden dash'le geç: bağ kopar, uçlar birbirine çarpar (×2)";
+
+        /// ZİNCİRLEME — çevrendeki en yakın dört düşmanı tek zincire takar.
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
+        {
+            Name = "ZİNCİRLEME", Cooldown = t.specialCooldownMusterek, MaxTargets = 4, RangeMul = 2.5f, DamageMul = 0.5f,
+            NeYapar = "çevrendeki en yakın dört düşmanı tek zincire takar",
+            Tint = new Color(0.95f, 0.6f, 0.9f, 0.6f)
+        };
+    }
+
+    /// <summary>
+    /// ARBİTRAJ — "arkasına geçebilir miyim?" Arkadan çok sert, önden zayıf. Düşmanlar sana dönük
+    /// yürüdüğü için arkaya geçmek iş: dash'in (TERS İŞLEM) ya da görünmezliğin (AÇIK POZİSYON).
+    /// </summary>
+    public sealed class Arbitraj : Weapon
+    {
+        public override string Name => "ARBİTRAJ";
+        public override Color Tint => new Color(0.75f, 0.75f, 0.95f, 0.5f);
+        public override Biçim Saldırı => Biçim.Arbitraj;
+        public override int MaxTargets => 1;
+        public override float HarvestMultiplier => 1.7f;
+        public override float Angle(Tuning t) => t.singleTargetAngle * 1.6f;
+        public override string DashAtakAdı => "TERS İŞLEM";
+        public override string DashAtakNeYapar => "içinden geçtiğin düşmana dönüp arkadan vurursun";
+
+        /// AÇIK POZİSYON — kısa süre görünmez; ilk vuruş her yönden "arkadan".
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
+        {
+            Name = "AÇIK POZİSYON", Cooldown = t.specialCooldownArbitraj,
+            NeYapar = $"{t.arbitrajHideSeconds:0} sn görünmezsin: yeni saldırı yok, ilk vuruşun arkadan sayılır",
+            Tint = new Color(0.75f, 0.75f, 0.95f, 0.6f)
+        };
+    }
+
+    /// <summary>
+    /// KİRA — "bu alanı ne kadar tutayım?" Nişana kule kurarsın; kule kira öder (saniyende saniye),
+    /// kurulu kaldıkça en yakın düşmana ateş eder ve hasat eder. Kule varken sol tık zayıf bir savurma.
+    /// </summary>
+    public sealed class Kira : Weapon
+    {
+        public override string Name => "KİRA";
+        public override Color Tint => new Color(0.95f, 0.8f, 0.45f, 0.5f);
+        public override Biçim Saldırı => Biçim.Kira;
+        public override float HarvestMultiplier => 1.2f;
+        public override float Range(Tuning t) => t.attackRange * 2.5f;     // kurma menzili
+        public override float Damage(Tuning t, float baseDamage) => baseDamage * 0.6f;
+        public override string DashAtakAdı => "TAŞINMA";
+        public override string DashAtakNeYapar => "kuleyi bulunduğun yere taşırsın (kira sürer)";
+
+        /// TAHLİYE — kuleyi patlat: kalan kira süresi kadar hasar.
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
+        {
+            Name = "TAHLİYE", Cooldown = t.specialCooldownKira,
+            NeYapar = "kalan kirayı peşin ödersin, kule patlar: kalan kira süresi kadar hasar",
+            Tint = new Color(0.95f, 0.8f, 0.45f, 0.6f)
         };
     }
 }

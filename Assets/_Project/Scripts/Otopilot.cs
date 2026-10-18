@@ -292,6 +292,8 @@ namespace TekCan
                 ? new[] { Kurulum(), P30(), Bitir() }
                 : senaryo == "p31"
                 ? new[] { Kurulum(), P31(), Bitir() }
+                : senaryo == "p32"
+                ? new[] { Kurulum(), P32(), Bitir() }
                 : SessionState.GetInt(AdımAnahtar, 0) == 0
                 ? new[] { Kurulum(), GirdiKanıtı(), K1Hazırla() }          // K1: Play'den çıkıp giriyor
                 : new[] { K1Doğrula(), Bölge1(), Sunak(), Tahsildar(), Haciz(), Simsar(), Final(), Bitir() };
@@ -668,11 +670,17 @@ namespace TekCan
         }
 
         /// <summary>Oda temizlendiyse sonrakine geç; saat azsa doldur. Döngülerin ortak başı.</summary>
-        IEnumerator Sürdür()
+        IEnumerator Sürdür(float eşik = 60f)
         {
             if (Oda != null && Oda.Cleared) { yield return KapıdanÇık(20f); yield return Bekle(1f); }
-            if (Saat != null && Saat.Seconds < 60f) { Bas(Key.F5); yield return Bekle(0.3f); }
+            if (Saat != null && Saat.Seconds < eşik) { Bas(Key.F5); yield return Bekle(0.3f); }
         }
+
+        /// <summary>
+        /// Bu denemede combo oldu mu — AYNI oyuncu nesnesinde. Bot ölürse oyuncu yeniden kuruluyor ve
+        /// sayaçlar sıfırlanıyor (Faz 32 botu 5. bölgede öldü, "−1 combo" yazdı).
+        /// </summary>
+        bool ComboOldu(PlayerController pc, int önce) => pc != null && Oyuncu == pc && pc.ComboSayısı > önce;
 
         IEnumerator P31()
         {
@@ -828,6 +836,255 @@ namespace TekCan
             Kaydet("31-6", "KARŞILIK gerçek oyunda: karşılıyor, biriken vuruşa iniyor, (2) FAİZLİ = KARŞI İCRA",
                    Oyuncu.KarşılananSayısı > k0 && indi > 0 && Oyuncu.ComboSayısı > c0,
                    $"{Oyuncu.KarşılananSayısı - k0} darbe karşılandı · {vuruş} KARŞILIK isabeti ({indi}'inde biriken vardı) · {Oyuncu.ComboSayısı - c0} combo");
+        }
+
+        // ── FAZ 32 PLAYTEST — TAHVİL · MÜŞTEREK · ARBİTRAJ · KİRA ──────────────────────────────
+        /// <summary>
+        /// Bölgenin ana boss'unu kes. N ile atlanan bölgelerin sunakları hiç alınmadığı için bot taban güçle
+        /// kalıyordu (3. boss 15 dk'ya sığmadı): MiniTesti'nin "beklenen güç"ü — bu bölge dahil her sunaktan
+        /// türünden bir alım. Ölçülen şey silahın boss'tan AÇILMASI, boss dövüşü değil.
+        /// </summary>
+        IEnumerator BossuKes(float sınır = 900f)
+        {
+            Diz(Kadro.KONİ, Kadro.FAİZLİ, Kadro.İFLAS);
+            Bas(Key.Digit1); yield return Bekle(0.3f);
+            Bas(Key.B); yield return Bekle(1f);
+            var c = Saat;
+            if (c != null && Oda != null)
+            {
+                int beklenen = (Oda.RegionIndex + 1) * Mathf.Max(1, _t.subRegionsPerRegion);
+                foreach (Altar.Kind k in new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash })
+                    while (c.Alınan(k) < beklenen) c.Yükselt(k);
+            }
+            Bas(Key.F5); yield return Bekle(0.3f);
+            yield return BossuÖldür(sınır);
+        }
+
+        IEnumerator P32()
+        {
+            _bekçiDk = 120f;
+            int TAHVİL = Kadro.TAHVİL, MÜŞTEREK = Kadro.MÜŞTEREK, ARBİTRAJ = Kadro.ARBİTRAJ, KİRA = Kadro.KİRA;
+            float Şimdi() => Time.realtimeSinceStartup;
+
+            Sahne("P32 1/8 TAHVİL AÇILIŞI", "N N → 3. bölge, B → 3. boss");
+            Bas(Key.N); yield return Bekle(1.2f);
+            Bas(Key.N); yield return Bekle(1.2f);
+            bool önceTahvil = Kadro.Açık(TAHVİL);
+            yield return BossuKes();
+            if (_bitti) yield break;
+            yield return Bekle(1f);
+            Kaydet("32-1", "3. boss düşünce TAHVİL açıldı", !önceTahvil && Kadro.Açık(TAHVİL) && Kadro.SonMesaj != null && Kadro.SonMesaj.Contains("TAHVİL"),
+                   $"\"{Kadro.SonMesaj}\"");
+
+            Sahne("P32 2/8 TAHVİL", "basılı tut → 3. kademe → bırak · (2) FAİZLİ = VADE FARKI");
+            yield return KapıdanÇık(30f);
+            yield return Bekle(1f);
+            Diz(TAHVİL, Kadro.FAİZLİ, Kadro.KONİ);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            int enYüksek = -1, olgun = 0, combo = 0;
+            float t0 = Şimdi();
+            while (Şimdi() - t0 < 150f && (olgun == 0 || combo == 0))
+            {
+                yield return Sürdür(200f);
+                var pc = Oyuncu; int cb = pc != null ? pc.ComboSayısı : 0;
+                var d = EnYakınBaşka(null);
+                if (d == null) { yield return null; continue; }
+                Bas(Key.Digit1); yield return null;                          // TAHVİL
+                yield return Git(d.transform.position, 1.2f + d.Radius, 3f);
+                if (d == null) continue;
+                int kademe = -1;
+                float tb = Şimdi();
+                while (Şimdi() - tb < 1.7f && d != null)                     // basılı tut
+                {
+                    NişanAl(d.transform.position);
+                    _sol = true;
+                    kademe = Mathf.Max(kademe, Oyuncu.VadeKademesi);
+                    yield return null;
+                }
+                enYüksek = Mathf.Max(enYüksek, kademe);
+                float h0 = Saat.TotalHarvested;
+                yield return null; yield return null;                        // bırak → iner
+                yield return Bekle(0.1f);
+                if (Saat.TotalHarvested <= h0) continue;                     // ıska
+                if (kademe >= 3) olgun++;
+                Bas(Key.Digit2); yield return null;                          // FAİZLİ — hızlı geçiş
+                if (d != null) NişanAl(d.transform.position);
+                _sol = true; yield return Bekle(0.5f);
+                if (ComboOldu(pc, cb)) combo++;
+            }
+            Kaydet("32-2", "TAHVİL gerçek tuşlarla: basılı tut → 3. kademe → bırak · (2) FAİZLİ = VADE FARKI",
+                   olgun > 0 && enYüksek == 3 && combo > 0,
+                   $"en yüksek kademe {enYüksek} · {olgun} olgun isabet · {combo} combo");
+
+            Sahne("P32 3/8 MÜŞTEREK AÇILIŞI", "4. bölge: 2. sunakta yok, 3.'sünde satın");
+            yield return OdayaAtla(RoomManager.SunakOdası(_t, 1));
+            bool erken = AçmaSunağı(MÜŞTEREK) != null;
+            yield return OdayaAtla(RoomManager.SunakOdası(_t, 2));
+            var sunak = AçmaSunağı(MÜŞTEREK);
+            yield return AltaraAl(sunak);
+            Kaydet("32-3", "MÜŞTEREK 4. bölgenin 3. ara bölgesinin sunağında",
+                   Oda != null && Oda.RegionIndex == 3 && !erken && sunak != null && Kadro.Açık(MÜŞTEREK),
+                   $"bölge {(Oda != null ? Oda.RegionIndex + 1 : 0)} · 2. sunakta {(erken ? "VAR" : "yok")} · 3. sunakta {(sunak != null ? "var" : "YOK")}");
+
+            Sahne("P32 4/8 MÜŞTEREK", "iki düşmanı bağla → birine KONİ'yle vur, öbürüne de insin");
+            yield return OdayaAtla(RoomManager.SunakOdası(_t, 2) + 1);
+            Diz(MÜŞTEREK, Kadro.KONİ, TAHVİL);
+            int bağlandı = 0, yayıldı = 0;
+            t0 = Şimdi();
+            while (Şimdi() - t0 < 150f && yayıldı == 0)
+            {
+                yield return Sürdür(200f);
+                var a = EnYakınBaşka(null);
+                if (a == null) { yield return null; continue; }
+                Bas(Key.Digit1); yield return null;                          // MÜŞTEREK
+                yield return Git(a.transform.position, 1.6f + a.Radius, 3f);
+                if (a == null) continue;
+                NişanAl(a.transform.position); _sol = true; yield return Bekle(0.4f);
+                var b = EnYakınBaşka(a, 6f);
+                if (b == null) continue;
+                yield return Git(b.transform.position, 1.6f + b.Radius, 3f);
+                if (b == null) continue;
+                NişanAl(b.transform.position); _sol = true; yield return Bekle(0.4f);
+                var bağ = Oyuncu.SonBağ;
+                if (bağ == null) continue;
+                bağlandı++;
+                int y0 = bağ.Yayılma;
+                var hedef = bağ.Üyeler.Count > 0 ? bağ.Üyeler[0] : null;
+                if (hedef == null) continue;
+                Bas(Key.Digit2); yield return null;                          // KONİ
+                yield return Git(hedef.transform.position, 1.4f + hedef.Radius, 2f);
+                if (hedef != null) NişanAl(hedef.transform.position);
+                _sol = true; yield return Bekle(0.4f);
+                if (bağ.Yayılma > y0) yayıldı++;                             // yok edilse de C# nesnesinden
+            }
+            Kaydet("32-4", "MÜŞTEREK gerçek tuşlarla: iki vuruşla bağ, KONİ'nin vuruşu bağlıya da indi",
+                   bağlandı > 0 && yayıldı > 0, $"{bağlandı} bağ · {yayıldı} yayılma");
+
+            Sahne("P32 5/8 ARBİTRAJ AÇILIŞI", "B → 4. boss");
+            bool önceArb = Kadro.Açık(ARBİTRAJ);
+            yield return BossuKes(1800f);                 // SİMSAR'ın 2. fazı havuzu dolduruyor: 15 dk yetmedi
+            if (_bitti) yield break;
+            yield return Bekle(1f);
+            Kaydet("32-5", "4. boss düşünce ARBİTRAJ açıldı", !önceArb && Kadro.Açık(ARBİTRAJ) && Kadro.SonMesaj != null && Kadro.SonMesaj.Contains("ARBİTRAJ"),
+                   $"\"{Kadro.SonMesaj}\"");
+
+            Sahne("P32 6/8 ARBİTRAJ", "görünmezken arkadan · TERS İŞLEM · REHİN → ARBİTRAJ = AÇIĞA SATIŞ");
+            if (Oda != null && Oda.RegionIndex == 3 && Boss() != null) { Bas(Key.N); yield return Bekle(1.2f); }
+            else yield return KapıdanÇık(30f);
+            yield return Bekle(1f);
+            Diz(ARBİTRAJ, Kadro.REHİN, Kadro.KONİ);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            int gizli = 0, ters = 0, açığa = 0;
+            t0 = Şimdi();
+            while (Şimdi() - t0 < 240f && (gizli == 0 || ters == 0 || açığa == 0))
+            {
+                yield return Sürdür(200f);
+                var pc = Oyuncu; int cb = pc != null ? pc.ComboSayısı : 0;
+                var d = EnYakınBaşka(null);
+                if (d == null) { yield return null; continue; }
+                Bas(Key.Digit1); yield return null;                          // ARBİTRAJ
+                int a0 = Oyuncu.ArkadanVuruş;
+                if (gizli == 0 && Oyuncu.SpecialCooldownLeft <= 0f)          // AÇIK POZİSYON → arkadan
+                {
+                    _sağ = true; yield return Bekle(0.1f);
+                    yield return Git(d.transform.position, 1.2f + d.Radius, 2f);
+                    if (d == null) continue;
+                    NişanAl(d.transform.position); _sol = true; yield return Bekle(0.3f);
+                    if (Oyuncu == pc && pc.ArkadanVuruş > a0) gizli++;
+                    continue;
+                }
+                if (ters == 0)                                               // TERS İŞLEM: içinden geçen dash
+                {
+                    yield return Git(d.transform.position, 1.1f, 3f);
+                    if (d == null) continue;
+                    Yürü(d.transform.position - Ben); Bas(Key.Space);
+                    yield return null; yield return null;
+                    _sol = true; yield return null;                          // dash sırasında sol tık
+                    Dur(); yield return Bekle(0.4f);
+                    if (Oyuncu == pc && pc.ArkadanVuruş > a0) ters++;
+                    continue;
+                }
+                // AÇIĞA SATIŞ: REHİN'le yakala, fırlat, hemen ARBİTRAJ
+                Bas(Key.Digit2); yield return null;                          // REHİN
+                yield return Git(d.transform.position, 1.6f + d.Radius, 3f);
+                if (d == null) continue;
+                NişanAl(d.transform.position); _sol = true; yield return Bekle(0.4f);
+                var r = Oyuncu.Rehine;
+                if (r == null) continue;
+                var öbür = EnYakınBaşka(r, 4f);
+                NişanAl(öbür != null ? öbür.transform.position : Ben + Oyuncu.transform.forward * 3f);
+                _sol = true; yield return Bekle(0.3f);                       // FIRLAT
+                if (Oyuncu.Rehine != null) continue;
+                var vur = EnYakınBaşka(null, 2.4f);
+                Bas(Key.Digit1); yield return null;                          // ARBİTRAJ — hızlı geçiş
+                if (vur != null) NişanAl(vur.transform.position);
+                _sol = true; yield return Bekle(0.4f);
+                if (ComboOldu(pc, cb)) açığa++;
+            }
+            Kaydet("32-6", "ARBİTRAJ gerçek tuşlarla: görünmezken arkadan · TERS İŞLEM arkadan · AÇIĞA SATIŞ",
+                   gizli > 0 && ters > 0 && açığa > 0,
+                   $"görünmez arkadan {gizli} · ters işlem {ters} · {açığa} combo");
+
+            Sahne("P32 7/8 KİRA AÇILIŞI", "5. bölgenin 3. ara bölgesi, 4. oda: köşe");
+            bool önceKira = Kadro.Açık(KİRA);
+            Diz(Kadro.KONİ, ARBİTRAJ, Kadro.REHİN);
+            yield return OdayaAtla(2 * _t.BlokBoyu + Kadro.KeşifOdası);
+            Bas(Key.Digit1); yield return Bekle(0.3f);
+            t0 = Şimdi();
+            while (Oda != null && !Oda.Cleared && Şimdi() - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
+            Dur();
+            yield return Bekle(0.6f);
+            var köşe = FindFirstObjectByType<GizliSilah>();
+            if (köşe != null) yield return Git(köşe.transform.position, 0.6f, 10f);
+            yield return Bekle(0.4f);
+            bool keşifle = Kadro.SonMesaj != null && Kadro.SonMesaj.Contains("KİRA (keşif)");
+            Kaydet("32-7", "KİRA keşifle açıldı", !önceKira && keşifle && Kadro.Açık(KİRA),
+                   $"bölge {(Oda != null ? Oda.RegionIndex + 1 : 0)} · KİRA {(keşifle ? "keşifle açıldı" : "KEŞİFLE AÇILMADI")}");
+
+            Sahne("P32 8/8 KİRA", "kule kur → ateş eder · TAHLİYE · MÜŞTEREK → KİRA = ORTAK GİDER");
+            yield return KapıdanÇık(20f);
+            yield return Bekle(1f);
+            Diz(KİRA, MÜŞTEREK, Kadro.KONİ);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            int atış = 0, tahliye = 0, ortak = 0;
+            t0 = Şimdi();
+            while (Şimdi() - t0 < 240f && (atış == 0 || tahliye == 0 || ortak == 0))
+            {
+                yield return Sürdür(200f);
+                var pc = Oyuncu; int cb = pc != null ? pc.ComboSayısı : 0;
+                var d = EnYakınBaşka(null);
+                if (d == null) { yield return null; continue; }
+                if (atış == 0 || tahliye == 0)
+                {
+                    Bas(Key.Digit1); yield return null;                      // KİRA
+                    if (Oyuncu.Kule == null) { NişanAl(d.transform.position); _sol = true; yield return Bekle(0.3f); }
+                    var kule = Oyuncu.Kule;
+                    if (kule == null) continue;
+                    float tk = Şimdi();
+                    while (kule.Atış == 0 && !kule.Bitti && Şimdi() - tk < 4f) yield return null;
+                    if (kule.Atış > 0) atış++;
+                    _sağ = true; yield return Bekle(0.3f);                   // TAHLİYE
+                    if (kule.Bitti && Oyuncu.Kule == null) tahliye++;
+                    continue;
+                }
+                // ORTAK GİDER: MÜŞTEREK'le iki düşmanı bağla, hemen KİRA
+                Bas(Key.Digit2); yield return null;                          // MÜŞTEREK
+                yield return Git(d.transform.position, 1.6f + d.Radius, 3f);
+                if (d == null) continue;
+                NişanAl(d.transform.position); _sol = true; yield return Bekle(0.35f);
+                var b = EnYakınBaşka(d, 3f);
+                if (b == null) continue;
+                NişanAl(b.transform.position); _sol = true; yield return Bekle(0.3f);
+                if (Oyuncu.SonBağ == null) continue;
+                Bas(Key.Digit1); yield return null;                          // KİRA — hızlı geçiş
+                NişanAl(b != null ? b.transform.position : Ben);
+                _sol = true; yield return Bekle(0.4f);
+                if (ComboOldu(pc, cb)) ortak++;
+                else if (Oyuncu.Kule != null) { _sağ = true; yield return Bekle(0.3f); }   // olmadıysa kuleyi kaldır, yeniden dene
+            }
+            Kaydet("32-8", "KİRA gerçek tuşlarla: kule ateş etti · TAHLİYE · MÜŞTEREK → KİRA = ORTAK GİDER",
+                   atış > 0 && tahliye > 0 && ortak > 0,
+                   $"{atış} kule ateş etti · {tahliye} tahliye · {ortak} combo");
         }
 
         IEnumerator MiniTeşhis()

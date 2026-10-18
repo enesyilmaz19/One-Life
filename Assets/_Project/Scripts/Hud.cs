@@ -184,7 +184,10 @@ namespace TekCan
                       (ds != null ? $"   ·   [dash + sol tık] {ds.Name} — {SpecialNeYapar(ds)}"
                        : pc.Weapon.DashAtakAdı != null ? $"   ·   [dash + sol tık] {pc.Weapon.DashAtakAdı} — {pc.Weapon.DashAtakNeYapar}" : "") +
                       (pc.Rehine != null ? "   ·   REHİN TUTUYORSUN (önden gelen vuruşu o yer)" : "") +
-                      (pc.Biriken > 0.05f ? $"   ·   KARŞILIK birikti: {pc.Biriken:0.0} sn" : ""), _small);
+                      (pc.Biriken > 0.05f ? $"   ·   KARŞILIK birikti: {pc.Biriken:0.0} sn" : "") +
+                      (pc.VadeKademesi >= 0 ? $"   ·   VADE {pc.VadeKademesi}/3 (saat iki kat akıyor)" : "") +
+                      (pc.Görünmez ? "   ·   GÖRÜNMEZSİN" : "") +
+                      (pc.Kule != null ? $"   ·   KULE {pc.Kule.Kalan:0} sn" : ""), _small);
             _small.normal.textColor = Color.white;
         }
 

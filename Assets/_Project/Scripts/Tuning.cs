@@ -265,6 +265,25 @@ namespace TekCan
         [Tooltip("KARŞILIK: karşılanan her saniye bedel için bir sonraki vuruşa eklenen hasar")] public float karsilikDamagePerSecond = 2.5f;
         [Tooltip("KARŞILIK · İTİRAZ: uzun karşılama süresi (sn)")] public float karsilikItirazSeconds = 1.5f;
 
+        [Header("── Faz 32: TAHVİL · MÜŞTEREK · ARBİTRAJ · KİRA ──")]
+        [Tooltip("TAHVİL · VADESİ GELMİŞ bekleme")] public float specialCooldownTahvil = 8.5f;
+        [Tooltip("MÜŞTEREK · ZİNCİRLEME bekleme")] public float specialCooldownMusterek = 9.5f;
+        [Tooltip("ARBİTRAJ · AÇIK POZİSYON bekleme")] public float specialCooldownArbitraj = 10.5f;
+        [Tooltip("KİRA · TAHLİYE bekleme")] public float specialCooldownKira = 5.5f;
+        [Tooltip("TAHVİL: bir kademenin olgunlaşma süresi (sn)")] public float tahvilTierSeconds = 0.5f;
+        [Tooltip("TAHVİL: basılı tutarken hareket hızı çarpanı")] public float tahvilMoveDamping = 0.4f;
+        [Tooltip("MÜŞTEREK: bağlı düşmana yayılan hasar payı")] public float musterekShare = 0.6f;
+        [Tooltip("MÜŞTEREK: bağın süresi (sn)")] public float musterekSeconds = 8f;
+        [Tooltip("ARBİTRAJ: arkadan vuruş çarpanı")] public float arbitrajBackMul = 2.5f;
+        [Tooltip("ARBİTRAJ: önden vuruş çarpanı")] public float arbitrajFrontMul = 0.5f;
+        [Tooltip("ARBİTRAJ · AÇIK POZİSYON: görünmezlik süresi (sn)")] public float arbitrajHideSeconds = 2f;
+        [Tooltip("KİRA: kulenin kirası (saniyede saniye)")] public float kiraRentPerSecond = 0.6f;
+        [Tooltip("KİRA: kulenin ömrü (sn)")] public float kiraSeconds = 12f;
+        [Tooltip("KİRA: kulenin menzili")] public float kiraRadius = 4.5f;
+        [Tooltip("KİRA: kulenin atış aralığı (sn)")] public float kiraShotInterval = 0.6f;
+        [Tooltip("KİRA: kule atışı = silah hasarı × bu")] public float kiraShotMul = 2f;
+        [Tooltip("KİRA · TAHLİYE: kalan her kira saniyesi için silah hasarı × bu (kalan kira peşin ödenir)")] public float kiraEvictionPerSecond = 1.2f;
+
         /// <summary>Bir ara bölgenin dövüş odası sayısı (en az 1).</summary>
         public int DövüşOdası => Mathf.Max(1, roomsPerSubRegion);
         /// <summary>Bir ara bölgenin oda sayısı: dövüş odaları + mini boss + sunak.</summary>

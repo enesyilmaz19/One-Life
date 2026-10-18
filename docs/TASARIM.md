@@ -335,6 +335,28 @@ elendi** — vur-kaç-topla en iyi oyun oluyordu, yani dövüşmemeyi ödüllend
 | **İPOTEK** | **uzak** | alan | ×1.3 | *nereye GİDECEKLER* — yere gecikmeli vuruş (0.85 sn) |
 | **İFLAS** | yakın | tek | ×1.8 | *ne kadar dibe inerim* — saat düştükçe hasar ×0.7 → ×2.4 |
 
+### KADRO GENİŞLEDİ — 2026-10-18, 12 silah (Faz 30–32)
+
+Enes (2026-10-16/17): *"totalde 12 olabilir… ilk bölgede 4… kullanıcı yanına 3 tane silah alabilir…
+bazı silahların birbiri ile combo saldırıları olsun."* Oyun **KONİ + FAİZLİ** ile başlıyor; ilk boss'a
+kadar 4; sonra her bölgede +2 (biri boss'tan, öbürü sunakta satın ya da keşifle). **Envanter 3 yuva**
+(1–3 tuşları), KADRO sunağında düzenleniyor. Açılan silah koşu boyu kalıyor. Ayrıntı ve combo tablosu:
+`tasks/todo.md` Faz 30–32.
+
+| silah | açılış | sorduğu SORU |
+|---|---|---|
+| **REHİN** | 2. bölge, sunak | *kimi tutayım* — yakala, tutarken önden geleni o yer, fırlat |
+| **ÇEK** | 2. boss | *geri dönüş yolunu nasıl kurarım* — fırlat, seker, döner; dönene kadar silahsız |
+| **KARŞILIK** | 3. bölge, keşif | *ne zaman karşılamalıyım* — karşılanan darbe saatten düşmez, sonraki vuruşa biner |
+| **TAHVİL** | 3. boss | *ne kadar bekleyeyim* — basılı tut, olgunlaşır; beklerken saat iki kat akar |
+| **MÜŞTEREK** | 4. bölge, sunak | *kimi kime bağlarım* — bağlıya inen hasar öbürüne de iner |
+| **ARBİTRAJ** | 4. boss | *arkasına geçebilir miyim* — arkadan ×2.5, önden ×0.5 |
+| **KİRA** | 5. bölge, keşif | *bu alanı ne kadar tutayım* — kule kira öder, kurulu kaldıkça ateş edip hasat eder |
+
+**Combo:** A ile İSABET → 0.8 sn içinde B'ye geç ve vur (bazıları 3'lü). Iska sayılmıyor, aynı combo 4 sn
+tekrar etmiyor, her combo'nun boss sonrası alınan bir "+" hâli var. Silah başına 8 yükseltme ve combo
+AÇAN yükseltmeler: Faz 33.
+
 ### Denge ölçümü
 
 `Tek Can → Denge simülasyonu`, düşman başına net saniye (TEMİZ oyuncu):
@@ -851,7 +873,7 @@ ikinci faz, yardımcı çağırma, arena değişimi. Böylece doğurma bir kural
 boss doğurunca "bu farklı" diye okunuyor. Ayrıca en az iş çıkaran seçenek bu:
 odayı tasarlamak = dövüşü tasarlamak.
 
-### Silahlar ✅ — 5 tane
+### Silahlar ✅ — 5 tane *(⚠️ 2026-10-18'de aşıldı: 12 silah, 3'lü envanter — yukarıda "KADRO GENİŞLEDİ")*
 
 4+4 yuva fikri **elendi**: 8-10 saatlik oyun için gereksiz. **5 silah yeter**, eldekiler
 ayarlanır/değiştirilir. *(Şu an 4 var: KONİ · FAİZLİ · DURGUN · VADELİ.)*

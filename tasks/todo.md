@@ -10,6 +10,7 @@
 | 7 | 🎮 *(isteğe bağlı)* **Faz 29 his testi** | Bot oynadı, 8/8 geçti. Sana kalan his: silah sunağı seçimi karar gibi mi, fiyatlar, MUAFİYET hissediliyor mu | Gördüklerini yaz |
 | 8 | 🎮 **Faz 30 testi** | **F6** yeni koşu: 2 silah, 3. yuva boş · **M** ile sunaklar: 2. ara bölgenin sunağında HACİZ · 4. ara bölgenin 4. odasında kenarda parlayan köşe (İPOTEK) · sunak odasında **KADRO** sunağı ([E] yuvadaki silahı değiştirir) · combo: KONİ'yle vur, hemen 2'ye geç, İPOTEK at · **B** boss → İFLAS + combo sunağı | Gördüklerini yaz: combo hissi, 0.8 sn yetiyor mu, köşe görünüyor mu |
 | 9 | 🎮 **Faz 31 testi** | **F6** yeni koşu, **N** 2. bölge · 3. ara bölgenin sunağında REHİN: sol tık yakala, tekrar sol tık fırlat, hemen **1** KONİ = SİLİP SÜPÜR · sağ tık TAKAS · dash + sol tık SÜRÜKLEME · **B** 2. boss → ÇEK (KADRO sunağından envantere al): fırlat, değince HACİZ'e geç = SENET HACZİ · 3. bölgenin 3. ara bölgesinin 4. odasında köşe → KARŞILIK: düşman vurmadan hemen önce sol tık (karşılar), sonra FAİZLİ = KARŞI İCRA | Gördüklerini yaz: KARŞILIK penceresi (0.23 sn) yetiyor mu, rehine taşıma hissi, çekin dönüşü |
+| 10 | 🎮 **Faz 32 testi** | **F6**, **N N**, **B** 3. boss → TAHVİL: sol tıkı BASILI TUT (VADE 1/2/3 yazar, saat iki kat akar), bırak · hemen **2** FAİZLİ = VADE FARKI · 4. bölgenin 3. sunağında MÜŞTEREK: bir düşmana vur, sonra başkasına → pembe çizgi = bağ; birine ne vurursan öbürü de yer · sağ tık ZİNCİRLEME · bağın üstünden dash = KOPARMA · **B** 4. boss → ARBİTRAJ: arkadan ×2.5, önden ×0.5 · sağ tık görünmezlik · düşmanın içinden dash + sol tık = TERS İŞLEM · 5. bölgenin 3. ara bölgesinin 4. odasında köşe → KİRA: kule kur, sağ tık TAHLİYE (kalan kirayı peşin ödersin) | Gördüklerini yaz: basılı tutmak sıkıcı mı, bağ okunuyor mu, arkaya geçmek zevkli mi, kule kirası adil mi |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 
 ---
@@ -220,6 +221,46 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 - [x] Uyuyan boss'un süre etiketi donuyordu → uykuda da güncelleniyor
 - [x] Otopilot K1 payı → "kapanıştan değil girişten yakın mı"
 - [x] Otopilot üst yazısı → sol üst
+
+---
+
+## 🧮 FAZ 32 — Yeni silahlar 2: TAHVİL · MÜŞTEREK · ARBİTRAJ · KİRA — **BİTTİ, Enes'in testini bekliyor** (2026-10-18)
+
+> Sağ tık ve dash-atak onaylı plandan (2026-10-17). Normal saldırı ayrıntısı, yükseltmeler ve combo'lar benim önerim — Enes beğenmezse değişir.
+> Kadro bununla 12 silaha tamamlanıyor. Silah başına 8 yükseltme + combo AÇAN yükseltmeler → Faz 33.
+
+| Silah | Normal | Sağ tık | Dash-atak | Yükseltmeler |
+|---|---|---|---|---|
+| **TAHVİL** (4. bölge, 3. boss'tan) | sol tıkı BASILI TUT: vuruş olgunlaşır (0.5 sn'de bir kademe, 3 kademe: ×0.7 → ×1.6 → ×2.8 → ×4.5); beklerken saat İKİ KAT akar; bırakınca iner | **VADESİ GELMİŞ** — o anki olgunluğu (en az 1. kademe) üç parçaya bölüp önündeki üç düşmana dağıtır | **ERKEN BOZDURMA** — basılı tutarken dash: olgunluğun yarısı dash-atağa biner (düz dash-ataktan aşağı düşmez), geniş | KISA VADE (kademeler ×0.7 sürede) · YÜKSEK FAİZ (3. kademe ×1.4) · İSKONTO (beklerken saat ×1.5 akar, ×2 değil) |
+| **MÜŞTEREK** (4. bölge, sunakta) | tek hedef; vurduğunu işaretler, sonraki vuruşta ikinciyi ona BAĞLAR: birine inen hasarın %60'ı öbürüne de iner (her kaynaktan, 8 sn) | **ZİNCİRLEME** — çevrendeki en yakın dört düşmanı tek zincire takar | **KOPARMA** — dash'le bağın üstünden geçersen bağ kopar, uçlar birbirine çekilip çarpışır (×2) | SIKI BAĞ (%60 → %90) · UZUN BAĞ (süre ×2) · ORTAK HASAT (yayılan hasarın hasadı yarım değil tam) |
+| **ARBİTRAJ** (5. bölge, 4. boss'tan) | tek hedef; ARKADAN ×2.5, yandan ×1, ÖNDEN ×0.5 (düşmanlar sana dönük — arkaya geçmek iş) | **AÇIK POZİSYON** — 2 sn görünmezsin: düşmanlar yeni saldırı başlatmaz, ilk vuruşun her yönden "arkadan" sayılır (vurunca görünürsün) | **TERS İŞLEM** — düşmanın içinden geçen dash: çıktığın an ona dönüp arkadan vurursun | KESKİN BIÇAK (arkadan ×3.5) · GENİŞ AÇI (arka sayılan açı 120° → 90°) · GÖLGE (görünmezlik ×1.5) |
+| **KİRA** (5. bölge, keşif) | nişana KULE kurarsın (tek kule): saniyede 0.6 sn kira öder, 12 sn boyunca çevresindeki en yakın düşmana ateş eder ve hasat eder; kule varken sol tık zayıf bir savurma | **TAHLİYE** — kalan kirayı peşin ödersin (erken fesih), kule patlar: kalan kira süresi kadar hasar | **TAŞINMA** — dash'le kuleyi bulunduğun yere taşırsın (kira sürer) | UCUZ KİRA (kira ×0.6) · GENİŞ ARAZİ (kule menzili ×1.4) · UZUN KONTRAT (süre ×1.5) |
+
+*Yeni combo'lar:*
+| Combo | Sıra | Etki | "+" |
+|---|---|---|---|
+| **AÇIĞA SATIŞ** | REHİN → ARBİTRAJ | ARBİTRAJ'ın vuruşu her yönden "arkadan" sayılır | KALDIRAÇ: o vuruş ×1.5 daha |
+| **VADE FARKI** | TAHVİL → FAİZLİ | FAİZLİ, TAHVİL'in ulaştığı kademe çarpanıyla vurur (en az ×1.5) | KUPON: FAİZLİ'nin savurma bedeli geri |
+| **ORTAK GİDER** | MÜŞTEREK → KİRA | kurulan kulenin kirasını SEN değil bağlı düşmanlar öder (havuzlarından) | AİDAT: kule önce bağlılara ateş eder, ×1.5 |
+
+- [x] A. Silah verileri, biçimler, kadro tablosu (12 silah tamam), 36 yükseltme, 10 combo
+- [x] B. TAHVİL (basılı tutma; saat akışı tek kaynaktan: `Clock.AkışHızı`) · ARBİTRAJ (konum çarpanı isabetin tek yolunda, görünmezlik `Enemy`'de tek koşul, TERS İŞLEM)
+- [x] C. MÜŞTEREK (bağ: `MusterekBag.cs`, `Enemy.TakeDamage` her kaynaktan yayıyor) · KİRA (kule: `KiraKulesi.cs`; nişan kırpması İPOTEK'le tek yerde: `Nişan`)
+- [x] D. Combo'lar + HUD (VADE kademesi, GÖRÜNMEZSİN, KULE süresi)
+- [x] E. Kapılar: `Faz32SelfCheck` **39 kontrol** · **46 bozmanın 46'sı kırmızı** (6 koşu, her kontrol kendi bozmasıyla) · tüm kapılar ✅. Faz 3: kadro 12, KİRA kulesi ateşle vuruyor. Son kontrol öz-incelemeden: MÜŞTEREK'in işareti halkasıyla aynı ömürde (halka söner, işaret kalırdı — görsel yalan). `docs/TASARIM.md` 12 silahlık kadroya güncellendi.
+- [x] F. Bot playtest'i (`Playtest32`) — **7/8** (rapor `Logs/Otopilot/2026-10-18_15-58/`)
+  - ✅ 32-1 3. boss → TAHVİL · ✅ 32-2 basılı tut → 3. kademe → bırak, FAİZLİ = VADE FARKI · ✅ 32-3 MÜŞTEREK 4. bölgenin 3. sunağında (2.'sinde yok) · ✅ 32-4 iki vuruşla bağ, KONİ'nin vuruşu bağlıya indi
+  - ❌ 32-5 **bot 4. boss'u (SİMSAR) 30 dk'da kesemedi** — 2. fazda havuz doluyor. ARBİTRAJ'ın boss'tan açılması kapıda gerçek oda yöneticisi yoluyla doğrulandı. SİMSAR'ın botla kesilememesi AYRI iş (görev çipi açıldı): denge mi, botun boss dövüşü mü
+  - ✅ 32-6 görünmezken arkadan · TERS İŞLEM arkadan · REHİN → ARBİTRAJ = AÇIĞA SATIŞ · ✅ 32-7 KİRA 5. bölgede keşifle · ✅ 32-8 kule ateş etti, TAHLİYE, MÜŞTEREK → KİRA = ORTAK GİDER
+  - Bot düzeltmeleri: boss'tan önce bölgenin "beklenen güç"ü (N ile atlanan sunaklar); combo'lar aynı oyuncu nesnesinde sayılıyor (bot 5. bölgede öldüğünde sayaçlar sıfırlanıyordu)
+
+**Denge notu (Enes'e):** TERS İŞLEM tek vuruşta silah hasarının ~7 katı (KESKİN BIÇAK'la ~10). ZİNCİRLEME'deki dört düşmana KONİ değince her isabet öbür üçüne %60 yayılıyor. İkisi de geç bölge silahı; his testinde fazla gelirse kadranlar `Tuning`'de (`arbitrajBackMul`, `musterekShare`).
+
+**Commit:** atılmadı (Enes istemedi).
+
+**Yolda bulunan iki hata (düzeltildi, kapıda):**
+- ERKEN BOZDURMA ilk hâlinde 2. kademede düz dash-ataktan zayıftı (4.9 < 5.6) — beklemek cezalanıyordu. Şimdi olgunluğun yarısı dash-atağın üstüne biniyor, aşağı düşmüyor.
+- KİRA: "kur → hemen TAHLİYE" kira ödemeden her 5.5 sn'de tam patlama veriyordu. TAHLİYE artık kalan kirayı peşin ödetiyor (erken fesih); saniye başına hasarı 0.5 → 1.2.
 
 ---
 

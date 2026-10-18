@@ -50,6 +50,12 @@ namespace TekCan.EditorTools
 
         public static void Playtest31() => Başlat(izle: false, senaryo: "p31");
 
+        /// <summary>Faz 32 playtest'i: 3. ve 4. boss'tan TAHVİL/ARBİTRAJ, MÜŞTEREK sunakta, KİRA keşifte; gerçek tuşlarla hamleler ve üç combo. ~35 dk.</summary>
+        [MenuItem("Tek Can/Otopilot — Faz 32 playtest (izle)")]
+        public static void Playtest32Izle() => Başlat(izle: true, senaryo: "p32");
+
+        public static void Playtest32() => Başlat(izle: false, senaryo: "p32");
+
         /// <summary>Faz 27 ölçümü: bütün bölgeler atlamadan, bir tam koşu kaç dakika (Enes 2026-10-12).</summary>
         [MenuItem("Tek Can/Otopilot — tam koşu ölçümü (izle)")]
         public static void TamKosuIzle() => Başlat(izle: true, senaryo: "tam");

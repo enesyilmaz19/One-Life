@@ -80,6 +80,20 @@ namespace TekCan
 
         /// <summary>REHİN (Faz 31): tutuluyorsa onu tutan oyuncu — yapay zekâsı durur, oyuncunun önünde taşınır.</summary>
         public PlayerController Tutan { get; private set; }
+
+        /// <summary>MÜŞTEREK (Faz 32): bağlıysa bağı — bu düşmana inen hasarın payı öbür üyelere de iner.</summary>
+        public MusterekBag Bağ { get; set; }
+
+        PlayerController _oyuncu;
+        /// <summary>ARBİTRAJ · AÇIK POZİSYON (Faz 32): oyuncu görünmezken yeni saldırı başlamaz.</summary>
+        bool OyuncuGörünmez
+        {
+            get
+            {
+                if (_oyuncu == null && _player != null) _oyuncu = _player.GetComponent<PlayerController>();
+                return _oyuncu != null && _oyuncu.Görünmez;
+            }
+        }
         public void RehinAl(PlayerController p) => Tutan = p;
         public void Bırak() => Tutan = null;
 
@@ -463,7 +477,7 @@ namespace TekCan
                 case State.Chase:
                     _attackTimer -= dt;
                     ChaseMove(dt);
-                    if (_attackTimer <= 0f && SaldırıyaHazır(dt)) EnterWindup();
+                    if (_attackTimer <= 0f && !OyuncuGörünmez && SaldırıyaHazır(dt)) EnterWindup();
                     break;
 
                 case State.Windup:
@@ -1075,6 +1089,9 @@ namespace TekCan
             // geçip doğrudan onu döverdi — "hepsi ölünce kendisi gelsin" kuralı
             // sessizce anlamsızlaşırdı.
             if (Dormant) return;
+
+            // MÜŞTEREK (Faz 32): bağlıysa öbürlerine de — her kaynaktan; yayılan bir daha yayılmaz.
+            if (Bağ != null) Bağ.Dağıt(this, damage, harvestMult);
 
             if (Hollow)
             {

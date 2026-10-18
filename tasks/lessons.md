@@ -585,3 +585,9 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   diye ölçtü; havuz kendi kendine de akıyor. Bot çek atılmadan HACİZ'e geçti, geçiş ÇEK savurmasını
   iptal etti: 38 316 "atış", 0 combo. **Kural:** botta isabeti olayın KENDİ sayacından oku (çekin
   `İsabet`'i, hasat `TotalHarvested`), yan etkisinden değil.
+- **Yeni hamleyi en ucuz rakibiyle kıyasla (Faz 32):** ERKEN BOZDURMA "olgunluğun yarısı" diye yazıldı;
+  2. kademede beklemeden atılan düz dash-ataktan zayıf çıktı — beklemek cezaydı. Kapı ikisini yan yana
+  ölçünce göründü. **Kural:** bedel ödetilen bir hamle (beklemek, saat) bedelsiz seçenekten zayıf olamaz.
+- **Bedel zamanla ödeniyorsa "kur → hemen boz" yolunu say (Faz 32):** KİRA kulesi bedava kuruluyor, kira
+  saniye saniye; TAHLİYE kalan süreye göre vuruyordu → kira hiç ödenmeden tam patlama. Spam hesabı
+  (Faz 31 dersi) yakaladı. Erken bozmanın bedeli kalan borç olmalı.

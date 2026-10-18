@@ -60,6 +60,13 @@ namespace TekCan
         public float RunTime => (float)_runTime;
         /// <summary>Saatin kendi akışıyla (aura ve darbe HARİÇ) giden toplam — oda hesabı akışı auradan ayırıyor.</summary>
         public float TotalTickDrain => (float)_tickDrain;
+
+        /// <summary>
+        /// Şu anki akış (saniyede saniye) — TEK kaynak: `Tick` ve TAHVİL'in "beklerken iki kat akar"ı
+        /// (Faz 32) buradan okuyor. Dövüş dışı akış çarpanı (DARALMA) ve arka plan emişi (SIZINTI) dahil.
+        /// </summary>
+        public float AkışHızı => ((InCombat ? _t.drainInCombat : _t.drainOutOfCombat * Region.Drain)
+                                  + Region.Background) * DrainMultiplier;
         public float TotalHarvested { get; private set; }
         public float TotalSpent { get; private set; }
         public int EnemiesKilled { get; private set; }
@@ -261,8 +268,7 @@ namespace TekCan
             // ⚠️ BÖLGE KURALI buradan giriyor. Dövüş dışı akış çarpanı (DARALMA) ve
             // arka plan emişi (SIZINTI) — ikisi de saatten geçiyor, çünkü yasa o.
             // Bölgeye özel zırh/direnç olsaydı ikinci bir sistem doğardı.
-            float drain = InCombat ? _t.drainInCombat : _t.drainOutOfCombat * Region.Drain;
-            float akış = (drain + Region.Background) * DrainMultiplier * dt;
+            float akış = AkışHızı * dt;
             _seconds -= akış;
             _tickDrain += akış;
             CheckDeath();
