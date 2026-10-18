@@ -181,7 +181,10 @@ namespace TekCan
             GUI.Label(new Rect(0f, Screen.height - 108f, Screen.width, 20f),
                       $"[sağ tık] {sp.Name} — {SpecialNeYapar(sp)}   " +
                       (cd > 0.05f ? $"({cd:0.0} sn)" : "HAZIR") +
-                      (ds != null ? $"   ·   [dash + sol tık] {ds.Name} — {SpecialNeYapar(ds)}" : ""), _small);
+                      (ds != null ? $"   ·   [dash + sol tık] {ds.Name} — {SpecialNeYapar(ds)}"
+                       : pc.Weapon.DashAtakAdı != null ? $"   ·   [dash + sol tık] {pc.Weapon.DashAtakAdı} — {pc.Weapon.DashAtakNeYapar}" : "") +
+                      (pc.Rehine != null ? "   ·   REHİN TUTUYORSUN (önden gelen vuruşu o yer)" : "") +
+                      (pc.Biriken > 0.05f ? $"   ·   KARŞILIK birikti: {pc.Biriken:0.0} sn" : ""), _small);
             _small.normal.textColor = Color.white;
         }
 
@@ -192,6 +195,7 @@ namespace TekCan
         /// </summary>
         static string SpecialNeYapar(WeaponSpecial sp)
         {
+            if (!string.IsNullOrEmpty(sp.NeYapar)) return sp.NeYapar;      // verisinden türetilemeyenler (Faz 31)
             if (sp.GroundDelay > 0f && sp.Hits > 1) return $"alandaki düşmanların üstüne {sp.Hits} ipotek yağdırır";
             if (sp.GroundDelay > 0f) return $"yere GENİŞ işaret, {sp.GroundDelay:0.0} sn sonra patlar";
             if (sp.Angle >= 360f) return "ÇEVRENDEKİ HERKESE vurur";

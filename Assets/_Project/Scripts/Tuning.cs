@@ -253,6 +253,18 @@ namespace TekCan
         [Tooltip("Sunakta silah açma: en az saatin bu payı (keşifte kaçırılmışsa ×2)")]
         public float weaponUnlockPercent = 0.15f;
 
+        [Header("── Faz 31: REHİN · ÇEK · KARŞILIK ──")]
+        [Tooltip("REHİN · TAKAS bekleme")] public float specialCooldownRehin = 7.5f;
+        [Tooltip("ÇEK · KARŞILIKSIZ bekleme")] public float specialCooldownCek = 6.5f;
+        [Tooltip("KARŞILIK · İTİRAZ bekleme")] public float specialCooldownKarsilik = 11f;
+        [Tooltip("REHİN: fırlatma menzili")] public float rehinThrowRange = 8f;
+        [Tooltip("REHİN: fırlatma hasarı = silah hasarı × bu")] public float rehinThrowDamageMul = 2.2f;
+        [Tooltip("REHİN: rehinenin yediği vuruş, bedelinin bu katı hasar olarak ona iner")] public float rehinShieldDamagePerSecond = 3f;
+        [Tooltip("ÇEK: uçuş hızı (birim/sn)")] public float cekSpeed = 14f;
+        [Tooltip("ÇEK: kaç kez seker")] public int cekBounces = 1;
+        [Tooltip("KARŞILIK: karşılanan her saniye bedel için bir sonraki vuruşa eklenen hasar")] public float karsilikDamagePerSecond = 2.5f;
+        [Tooltip("KARŞILIK · İTİRAZ: uzun karşılama süresi (sn)")] public float karsilikItirazSeconds = 1.5f;
+
         /// <summary>Bir ara bölgenin dövüş odası sayısı (en az 1).</summary>
         public int DövüşOdası => Mathf.Max(1, roomsPerSubRegion);
         /// <summary>Bir ara bölgenin oda sayısı: dövüş odaları + mini boss + sunak.</summary>

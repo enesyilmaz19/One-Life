@@ -572,3 +572,16 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   kapı onu ortada sanıp savurdu, iki kontrol yalan kırmızıydı. Oda kurulduktan sonra konumu yeniden kur.
 - **Ölçümü sökmeden önce al (Faz 30):** işaret odanın köküne bağlı; kapı oda yöneticisini silip SONRA
   işarete baktı — "işaret yok". Unity nesnesini döndürme, sayıları döndür.
+- **Savunma penceresini spam'le hesapla (Faz 31):** KARŞILIK'ın ilk hâlinde karşılama savurmanın
+  %80'iydi; tıklamayı basılı tutan zamanın ~%75'inde dokunulmazdı. Kapılar yeşildi, çünkü hiçbiri
+  "spam'leyen oyuncu ne kadar korunuyor" diye sormadı — bot senaryosunu yazarken fark ettim. İkinci
+  delik: silah değiştirmek saldırıyı iptal ediyor, "tıkla → 2 → 1 → tıkla" toparlanmayı siliyordu.
+  **Kural:** koruma veren her hamle için (pencere ÷ döngü) oranını hesapla ve iptal yollarını
+  (dash, silah değişimi) say; sınırı iptalden bağımsız bir sayaca koy.
+- **Yok edilen nesnede Unity'nin `!= null`'ı false (Faz 31):** çek dönünce yok ediliyor; kapı
+  `u != null && u.İsabet == 2` diye sordu, isabet doğruyken kırmızı verdi. Sayıyı C# nesnesinden oku
+  (`ReferenceEquals`) ya da ölçümü yok edilmeden al.
+- **"Havuz düştü" isabet değil (Faz 31 botu):** bot çekin değip değmediğini düşmanın havuzu azaldı mı
+  diye ölçtü; havuz kendi kendine de akıyor. Bot çek atılmadan HACİZ'e geçti, geçiş ÇEK savurmasını
+  iptal etti: 38 316 "atış", 0 combo. **Kural:** botta isabeti olayın KENDİ sayacından oku (çekin
+  `İsabet`'i, hasat `TotalHarvested`), yan etkisinden değil.

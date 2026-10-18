@@ -175,6 +175,12 @@ namespace TekCan.EditorTools
                     sb.AppendLine($"  ⚠️ {w.Name} bu tabloda EKSİK ölçülüyor: simülasyon MESAFEYİ " +
                                   "ve KAÇMAYI modellemiyor, yani asıl bedeli (konumlanma / " +
                                   "gecikme penceresi) sayıda YOK. Rakam ÜST SINIR.");
+
+            // Faz 31: koni olmayan biçimler (tutma / fırlatma / karşılama) tabloda düz savurma gibi duruyor.
+            foreach (var w in Weapon.All)
+                if (w.Saldırı != Biçim.Koni)
+                    sb.AppendLine($"  ⚠️ {w.Name} ({w.Category(t)}) bu tabloda DÜZ SAVURMA gibi ölçülüyor: " +
+                                  "yakala-fırlat / çekin uçuşu / karşılanan bedel modellenmiyor. Rakam YANLIŞ olabilir, ölçü bot.");
         }
 
 

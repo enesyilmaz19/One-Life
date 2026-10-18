@@ -78,6 +78,11 @@ namespace TekCan
         /// </summary>
         public bool Dormant { get; private set; }
 
+        /// <summary>REHİN (Faz 31): tutuluyorsa onu tutan oyuncu — yapay zekâsı durur, oyuncunun önünde taşınır.</summary>
+        public PlayerController Tutan { get; private set; }
+        public void RehinAl(PlayerController p) => Tutan = p;
+        public void Bırak() => Tutan = null;
+
         /// <summary>
         /// Bu, son boss'un çağırdığı bir RAKİP mi.
         /// ⚠️ Faz değiştirmiyorlar: çağrılan boss da faz 2'ye geçip kendi
@@ -364,6 +369,14 @@ namespace TekCan
             // ve acı sesi üretiyordu — saat düşmese de ekran "hâlâ dövüşüyorsun" diyordu.
             var saat = Clock.Instance;
             if (saat != null && (saat.Dead || saat.Won)) return;
+
+            // REHİN: tutuluyor — saldırmıyor, yürümüyor; oyuncunun önünde taşınıyor.
+            if (Tutan != null)
+            {
+                transform.position = Tutan.RehinYeri;
+                if (_label != null) _label.Set(TimeLeft, Hollow);
+                return;
+            }
 
             if (Dormant)
             {

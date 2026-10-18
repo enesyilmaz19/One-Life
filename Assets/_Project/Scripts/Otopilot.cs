@@ -290,6 +290,8 @@ namespace TekCan
                 ? new[] { Kurulum(), P29(), Bitir() }
                 : senaryo == "p30"
                 ? new[] { Kurulum(), P30(), Bitir() }
+                : senaryo == "p31"
+                ? new[] { Kurulum(), P31(), Bitir() }
                 : SessionState.GetInt(AdımAnahtar, 0) == 0
                 ? new[] { Kurulum(), GirdiKanıtı(), K1Hazırla() }          // K1: Play'den çıkıp giriyor
                 : new[] { K1Doğrula(), Bölge1(), Sunak(), Tahsildar(), Haciz(), Simsar(), Final(), Bitir() };
@@ -625,6 +627,207 @@ namespace TekCan
             Kaydet("30-6", "1. boss: İFLAS açıldı, combo sunağında artı hâli alındı",
                    !önceİflas && Kadro.Açık(Kadro.İFLAS) && combo != null && Combo.Artı((ComboTür)combo.Yuva),
                    $"İFLAS {(Kadro.Açık(Kadro.İFLAS) ? "açık" : "KAPALI")} · combo sunağı {(combo != null ? Combo.Bu((ComboTür)combo.Yuva).ArtıAd : "YOK")}");
+        }
+
+        // ── FAZ 31 PLAYTEST — REHİN · ÇEK · KARŞILIK: açılış yolları + gerçek tuşlarla hamleler ve combo'lar ──
+        /// <summary>Test kurgusu: silahları aç ve sırayla 1–3 yuvalarına diz.</summary>
+        void Diz(params int[] silahlar)
+        {
+            for (int i = 0; i < silahlar.Length && i < Kadro.Yuva; i++)
+            {
+                Kadro.Aç(silahlar[i], "otopilot");
+                Kadro.YuvayaKoy(i, silahlar[i]);
+            }
+        }
+
+        static Altar AçmaSunağı(int silah)
+        {
+            foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.Unlock && a.Yuva == silah) return a;
+            return null;
+        }
+
+        /// <summary>En yakın düşman — rehineyi ve verilen düşmanı saymadan.</summary>
+        Enemy EnYakınBaşka(Enemy hariç, float menzil = float.MaxValue)
+        {
+            Enemy en = null; float d = menzil;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || e == hariç || e.Dormant || e.Tutan != null) continue;
+                float x = Düz(e.transform.position - Ben).magnitude;
+                if (x < d) { d = x; en = e; }
+            }
+            return en;
+        }
+
+        IEnumerator OdayaAtla(int oda)
+        {
+            SaveFile.MarkTestJump();
+            OdayaGir.Invoke(Oda, new object[] { oda });
+            yield return Bekle(1f);
+            Bas(Key.F5); yield return Bekle(0.3f);
+        }
+
+        /// <summary>Oda temizlendiyse sonrakine geç; saat azsa doldur. Döngülerin ortak başı.</summary>
+        IEnumerator Sürdür()
+        {
+            if (Oda != null && Oda.Cleared) { yield return KapıdanÇık(20f); yield return Bekle(1f); }
+            if (Saat != null && Saat.Seconds < 60f) { Bas(Key.F5); yield return Bekle(0.3f); }
+        }
+
+        IEnumerator P31()
+        {
+            _bekçiDk = 55f;
+            int REHİN = Kadro.REHİN, ÇEK = Kadro.ÇEK, KARŞILIK = Kadro.KARŞILIK;
+
+            Sahne("P31 1/6 REHİN AÇILIŞI", "2. bölge: 2. ara bölgenin sunağında yok, 3.'sünde satın");
+            Bas(Key.N); yield return Bekle(1.2f);
+            yield return OdayaAtla(RoomManager.SunakOdası(_t, 1));
+            bool erken = AçmaSunağı(REHİN) != null;
+            yield return OdayaAtla(RoomManager.SunakOdası(_t, 2));
+            var sunak = AçmaSunağı(REHİN);
+            yield return AltaraAl(sunak);
+            Bas(Key.Digit3); yield return Bekle(0.3f);
+            Kaydet("31-1", "REHİN 2. bölgenin 3. ara bölgesinin sunağında, 3. yuvaya girdi",
+                   Oda != null && Oda.RegionIndex == 1 && !erken && sunak != null && Kadro.Açık(REHİN) && Oyuncu.Weapon == Weapon.All[REHİN],
+                   $"bölge {(Oda != null ? Oda.RegionIndex + 1 : 0)} · 2. sunakta {(erken ? "VAR" : "yok")} · 3. sunakta {(sunak != null ? "var" : "YOK")} · 3 → {Oyuncu.Weapon.Name}");
+
+            Sahne("P31 2/6 REHİN", "yakala → fırlat → (1) KONİ = SİLİP SÜPÜR");
+            yield return OdayaAtla(RoomManager.SunakOdası(_t, 2) + 1);
+            int yakaladı = 0, fırlattı = 0, c0 = Oyuncu.ComboSayısı, kalkan0 = Oyuncu.KalkanSayısı;
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 150f && (Oyuncu.ComboSayısı == c0 || fırlattı == 0))
+            {
+                yield return Sürdür();
+                var d = EnYakınBaşka(null);
+                if (d == null) { yield return null; continue; }
+                Bas(Key.Digit3); yield return null;                          // REHİN
+                yield return Git(d.transform.position, 1.6f + d.Radius, 3f);
+                if (d == null) continue;
+                NişanAl(d.transform.position);
+                _sol = true; yield return Bekle(0.5f);                       // YAKALA
+                var r = Oyuncu.Rehine;
+                if (r == null) continue;
+                yakaladı++;
+                var hedef = EnYakınBaşka(r, 4f);
+                if (hedef == null) { yield return Bekle(1.2f); hedef = EnYakınBaşka(r, 6f); }   // gelen vuruşu rehine yesin
+                NişanAl(hedef != null ? hedef.transform.position : Ben + Oyuncu.transform.forward * 3f);
+                _sol = true; yield return Bekle(0.3f);                       // FIRLAT
+                if (Oyuncu.Rehine != null) continue;
+                fırlattı++;
+                var süpür = EnYakınBaşka(null, 2.6f);
+                Bas(Key.Digit1); yield return null;                          // KONİ — hızlı geçiş
+                if (süpür != null) NişanAl(süpür.transform.position);
+                _sol = true; yield return Bekle(0.5f);
+            }
+            Kaydet("31-2", "REHİN gerçek tuşlarla: yakala → fırlat → (1) KONİ = SİLİP SÜPÜR",
+                   yakaladı > 0 && fırlattı > 0 && Oyuncu.ComboSayısı > c0,
+                   $"{yakaladı} yakalama · {fırlattı} fırlatma · {Oyuncu.ComboSayısı - c0} combo · kalkan {Oyuncu.KalkanSayısı - kalkan0} vuruş yedi");
+
+            Sahne("P31 3/6 ÇEK AÇILIŞI", "2. boss → ÇEK");
+            bool önceÇek = Kadro.Açık(ÇEK);
+            Bas(Key.Digit1); yield return Bekle(0.3f);
+            Bas(Key.B); yield return Bekle(1f);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            yield return BossuÖldür(900f);
+            if (_bitti) yield break;
+            yield return Bekle(1f);
+            Kaydet("31-3", "2. boss düşünce ÇEK açıldı", !önceÇek && Kadro.Açık(ÇEK) && Kadro.SonMesaj != null && Kadro.SonMesaj.Contains("ÇEK"),
+                   $"ÇEK {(Kadro.Açık(ÇEK) ? "açık" : "KAPALI")} · \"{Kadro.SonMesaj}\"");
+
+            Sahne("P31 4/6 ÇEK", "fırlat → değince (2) HACİZ = SENET HACZİ");
+            yield return KapıdanÇık(30f);                                    // 3. bölgenin ilk odası
+            yield return Bekle(1f);
+            Diz(ÇEK, Kadro.HACİZ, Kadro.KONİ);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            int atış = 0, değdi = 0, enÇokİsabet = 0;
+            c0 = Oyuncu.ComboSayısı;
+            float bant = Weapon.All[Kadro.HACİZ].Range(_t) * 0.7f;
+            t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 150f && (Oyuncu.ComboSayısı == c0 || enÇokİsabet < 2))
+            {
+                yield return Sürdür();
+                var d = EnYakınBaşka(null);
+                if (d == null) { yield return null; continue; }
+                Bas(Key.Digit1); yield return null;                          // ÇEK
+                yield return Git(d.transform.position, bant, 3f);            // HACİZ'in bandında dur
+                if (d == null) continue;
+                NişanAl(d.transform.position);
+                _sol = true;
+                // ⚠️ İsabeti ÇEKİN KENDİSİNDEN oku. Havuz kendi kendine de akıyor: "havuz düştü" ilk koşuda
+                // çek daha atılmadan HACİZ'e geçirtti, geçiş de ÇEK savurmasını iptal etti (0 combo).
+                CekUcusu çek = null;
+                float ta = Time.realtimeSinceStartup;
+                while (çek == null && Time.realtimeSinceStartup - ta < 0.5f)
+                {
+                    if (CekUcusu.Uçanlar.Count > 0) çek = CekUcusu.Uçanlar[0];
+                    yield return null;
+                }
+                if (ReferenceEquals(çek, null)) continue;
+                atış++;
+                while (çek != null && çek.İsabet == 0 && Time.realtimeSinceStartup - ta < 1.5f) yield return null;
+                bool isabet = çek.İsabet > 0;                                // yok edilse de C# nesnesinden okunur
+                if (isabet)
+                {
+                    değdi++;
+                    Bas(Key.Digit2); yield return null;                      // HACİZ — hızlı geçiş
+                    if (d != null) NişanAl(d.transform.position);
+                    _sol = true;
+                }
+                float tb = Time.realtimeSinceStartup;
+                while (çek != null && Time.realtimeSinceStartup - tb < 2.5f) yield return null;   // çek dönene kadar
+                enÇokİsabet = Mathf.Max(enÇokİsabet, çek.İsabet);
+            }
+            Kaydet("31-4", "ÇEK gerçek tuşlarla: gidip dönüyor, değince (2) HACİZ = SENET HACZİ",
+                   değdi > 0 && enÇokİsabet >= 2 && Oyuncu.ComboSayısı > c0,
+                   $"{atış} atış · {değdi} isabet · bir çekte en çok {enÇokİsabet} isabet (gidiş + dönüş) · {Oyuncu.ComboSayısı - c0} combo");
+
+            Sahne("P31 5/6 KARŞILIK AÇILIŞI", "3. bölgenin 3. ara bölgesi, 4. oda: köşe");
+            bool önceKarşılık = Kadro.Açık(KARŞILIK);
+            Diz(Kadro.KONİ, Kadro.HACİZ, ÇEK);
+            yield return OdayaAtla(2 * _t.BlokBoyu + Kadro.KeşifOdası);
+            Bas(Key.Digit1); yield return Bekle(0.3f);
+            t0 = Time.realtimeSinceStartup;
+            while (Oda != null && !Oda.Cleared && Time.realtimeSinceStartup - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
+            Dur();
+            yield return Bekle(0.6f);
+            var köşe = FindFirstObjectByType<GizliSilah>();
+            if (köşe != null) yield return Git(köşe.transform.position, 0.6f, 10f);
+            yield return Bekle(0.4f);
+            bool keşifle = Kadro.SonMesaj != null && Kadro.SonMesaj.Contains("KARŞILIK (keşif)");
+            Kaydet("31-5", "KARŞILIK keşifle: oda temizlenince köşe, üstüne yürüyünce açılıyor", !önceKarşılık && keşifle && Kadro.Açık(KARŞILIK),
+                   $"bölge {(Oda != null ? Oda.RegionIndex + 1 : 0)} · KARŞILIK {(keşifle ? "keşifle açıldı" : "KEŞİFLE AÇILMADI")}");
+
+            Sahne("P31 6/6 KARŞILIK", "karşıla → biriken iner · (2) FAİZLİ = KARŞI İCRA");
+            yield return KapıdanÇık(20f);
+            yield return Bekle(1f);
+            Diz(KARŞILIK, Kadro.FAİZLİ, Kadro.KONİ);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            int k0 = Oyuncu.KarşılananSayısı, indi = 0, vuruş = 0;
+            c0 = Oyuncu.ComboSayısı;
+            t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 180f && (Oyuncu.ComboSayısı == c0 || Oyuncu.KarşılananSayısı == k0 || indi == 0))
+            {
+                yield return Sürdür();
+                var d = EnYakınBaşka(null);
+                if (d == null) { yield return null; continue; }
+                Bas(Key.Digit1); yield return null;                          // KARŞILIK
+                yield return Git(d.transform.position, 1.4f + d.Radius, 3f);
+                if (d == null) continue;
+                NişanAl(d.transform.position);
+                float h0 = Saat.TotalHarvested, bÖnce = Oyuncu.Biriken;
+                int kÖnce = Oyuncu.KarşılananSayısı;
+                _sol = true; yield return Bekle(0.3f);                       // pencere + biriken iner
+                bool vurdu = Saat.TotalHarvested > h0;                       // havuz kendi akar — hasat yalnızca vuruşla
+                if (!vurdu) { yield return Bekle(0.45f); continue; }         // toparlanma
+                vuruş++;
+                if ((bÖnce > 0f || Oyuncu.KarşılananSayısı > kÖnce) && Oyuncu.Biriken == 0f) indi++;   // biriken BU vuruşa indi
+                Bas(Key.Digit2); yield return null;                          // FAİZLİ — hızlı geçiş
+                if (d != null) NişanAl(d.transform.position);
+                _sol = true; yield return Bekle(0.6f);
+            }
+            Kaydet("31-6", "KARŞILIK gerçek oyunda: karşılıyor, biriken vuruşa iniyor, (2) FAİZLİ = KARŞI İCRA",
+                   Oyuncu.KarşılananSayısı > k0 && indi > 0 && Oyuncu.ComboSayısı > c0,
+                   $"{Oyuncu.KarşılananSayısı - k0} darbe karşılandı · {vuruş} KARŞILIK isabeti ({indi}'inde biriken vardı) · {Oyuncu.ComboSayısı - c0} combo");
         }
 
         IEnumerator MiniTeşhis()

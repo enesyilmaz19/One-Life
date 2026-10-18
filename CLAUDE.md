@@ -77,6 +77,7 @@ ilerletiyor; otopilot oyunun kendi karelerinde, Unity'nin SANAL klavye/faresiyle
 - Faz 26 playtest'i: `Tek Can → Otopilot — Faz 26 playtest (izle)` ya da batch `…OtopilotMenu.Playtest26` (~15 dk) — todo'daki 7 maddeyi oynayıp ölçer, sonunda saldırı başına vurulma tablosu
 - Faz 29 playtest'i: batch `…OtopilotMenu.Playtest29` (~5 dk) — silah sunağı, İPOTEK YAĞMURU, dash-atak HACİZ İHBARI, ÇİFT TAPU, İCRA, MUAFİYET/SABIR
 - Faz 30 playtest'i: batch `…OtopilotMenu.Playtest30` (~15 dk) — 2 silahla başla, HACİZ sunakta, İPOTEK keşifte, KADRO, gerçek tuşlarla combo, İFLAS boss'tan. ⚠️ 1–3 tuşları artık ENVANTER YUVASI; bot silahı `Kuşan(silah)` ile açıp yuvaya koyuyor.
+- Faz 31 playtest'i: batch `…OtopilotMenu.Playtest31` (~20 dk) — N ile 2. bölge: REHİN sunakta + yakala/fırlat/SİLİP SÜPÜR · 2. boss → ÇEK + SENET HACZİ · 3. bölgede keşifle KARŞILIK + karşılama/KARŞI İCRA. Bot `Diz(...)` ile silahları yuvalara diziyor.
 - Tam koşu ölçümü (Faz 27): `Tek Can → Otopilot — tam koşu ölçümü (izle)` ya da batch `…OtopilotMenu.TamKosu` — bütün bölgeler atlamadan; oda/bölge/boss süreleri, sunak alımları, saatin bittiği yerler (F5 takviyesi)
 - Ekonomi ayarı (Faz 28): batch `…OtopilotMenu.AraBolge1Olcum` (~10 dk, 1. ara bölge: 7 oda + mini + sunak) · `…Bolge1Olcum` (~55 dk, 1. bölge) · `…MiniTeshis` (M ile ilk mini, 10 sn'de bir `[NABIZ]`: oyun zamanı / saat akışı) · `…MiniTesti` (5 bölge × 5 mini boss, beklenen güçle; süre / saat kaybı / darbe, ~1–1.5 saat)
 - Batch: `-executeMethod TekCan.EditorTools.OtopilotMenu.Batch` — **`-quit` YOK**, bot kendisi çıkar, ~12 dk

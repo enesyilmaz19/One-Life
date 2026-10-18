@@ -446,8 +446,9 @@ namespace TekCan.EditorTools
             failed += Check(ref total, "her silahın adı var", adsiz == 0, adsiz);
             failed += Check(ref total, "⚠️ silahlar FARKLI SORU soruyor (ad farkı çeşitlilik değil)",
                             ayni == 0, ayni);
-            failed += Check(ref total, "kadro BEŞ silah (TASARIM.md kararı)",
-                            Weapon.All.Length == 5, Weapon.All.Length);
+            // Faz 31: REHİN · ÇEK · KARŞILIK eklendi (hedef 12 — Enes 2026-10-17).
+            failed += Check(ref total, "kadro SEKİZ silah (Faz 31; hedef 12)",
+                            Weapon.All.Length == 8, Weapon.All.Length);
 
             // ── 6e) ⚠️ MENZİLLİ SİLAHIN DASH'İ YAKIN CEVABIDIR ──
             //    HACİZ için ayrıca ölçüldü; İPOTEK için de geçerli olmalı, yoksa
@@ -532,6 +533,9 @@ namespace TekCan.EditorTools
                 if (gecikme > 0f)
                     foreach (var m in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include))
                         m.Step(gecikme + 0.05f);
+                // ÇEK (Faz 31) uçarak vuruyor: uçuşu sonuna kadar götür.
+                for (int k = 0; k < 300 && CekUcusu.Uçanlar.Count > 0; k++)
+                    foreach (var u in CekUcusu.Uçanlar.ToArray()) u.Step(0.02f);
 
                 failed += Check(ref total, $"{pc.Weapon.Name} HASAR VEREBİLİYOR",
                                 target.TimeLeft < poolBefore - 0.001f, poolBefore - target.TimeLeft);
@@ -651,7 +655,7 @@ namespace TekCan.EditorTools
 
             bool saateBağlı = !Mathf.Approximately(w.DesperationMultiplier(0f, t),
                                                    w.DesperationMultiplier(9999f, t));
-            return $"çoklu={w.MaxTargets != 1}|band={w.MinRange(t) > 0f}"
+            return $"biçim={w.Saldırı}|çoklu={w.MaxTargets != 1}|band={w.MinRange(t) > 0f}"
                  + $"|yer={w.GroundMarkDelay(t) > 0f}|bedelli={bedelli}"
                  + $"|saate={saateBağlı}|uzun={w.Range(t) > t.attackRange * 1.5f}";
         }

@@ -29,6 +29,9 @@ namespace TekCan
         public static int HACİZ => İ<Haciz>();
         public static int İPOTEK => İ<Ipotek>();
         public static int İFLAS => İ<Iflas>();
+        public static int REHİN => İ<Rehin>();
+        public static int ÇEK => İ<Cek>();
+        public static int KARŞILIK => İ<Karsilik>();
 
         /// <summary>Açılış sırası (Enes: "oyun başında 2 silah… boss öncesine kadar 4… iflas 2. bölgede").
         /// Yeni silahlar (Faz 31–32) buraya satır ekler.</summary>
@@ -39,6 +42,9 @@ namespace TekCan
             new Açılış(HACİZ, Yol.Sunak, 0, 1),     // 1. bölge, 2. ara bölgenin sunağında satın
             new Açılış(İPOTEK, Yol.Keşif, 0, 3),    // 1. bölge, 4. ara bölgede gizli köşe
             new Açılış(İFLAS, Yol.Boss, 0),         // 1. boss'tan
+            new Açılış(REHİN, Yol.Sunak, 1, 2),     // 2. bölge, 3. ara bölgenin sunağında (Faz 31)
+            new Açılış(ÇEK, Yol.Boss, 1),           // 2. boss'tan
+            new Açılış(KARŞILIK, Yol.Keşif, 2, 2),  // 3. bölge, 3. ara bölgede gizli köşe
         };
 
         /// <summary>Keşif silahı ara bölgenin kaçıncı dövüş odasında saklı (1'den).</summary>
@@ -199,7 +205,7 @@ namespace TekCan
     }
 
     /// <summary>Faz 30 — COMBO türleri. Sıra `Combo.Tümü` ile aynı.</summary>
-    public enum ComboTür { HacizKesinleşti, Toplu, Temerrüt, HacizKararı }
+    public enum ComboTür { HacizKesinleşti, Toplu, Temerrüt, HacizKararı, KarşıİCRA, SenetHaczi, SilipSüpür }
 
     /// <summary>
     /// Faz 30 — COMBO (Enes: "hızlı silah geçişleri ile combo saldırılar… bazı silahlarla 3'lü
@@ -231,6 +237,16 @@ namespace TekCan
             new Tanım { Ad = "HACİZ KARARI", Sıra = () => new[] { Kadro.KONİ, Kadro.HACİZ, Kadro.İPOTEK }, MinBölge = 1,
                         NeYapar = "KONİ → HACİZ → İPOTEK: HACİZ'in hedefine büyük, hızlı ipotek (×2)",
                         ArtıAd = "TAHLİYE", ArtıNeYapar = "patlama düşmanları dışa iter" },
+            // Faz 31
+            new Tanım { Ad = "KARŞI İCRA", Sıra = () => new[] { Kadro.KARŞILIK, Kadro.FAİZLİ },
+                        NeYapar = "KARŞILIK'la vur → FAİZLİ: vuruş ×2",
+                        ArtıAd = "İCRA EMRİ", ArtıNeYapar = "FAİZLİ'nin sağ tık (İCRA) beklemesi sıfırlanır" },
+            new Tanım { Ad = "SENET HACZİ", Sıra = () => new[] { Kadro.ÇEK, Kadro.HACİZ },
+                        NeYapar = "ÇEK isabet etti → HACİZ: vuruş ×2",
+                        ArtıAd = "SENET ZİNCİRİ", ArtıNeYapar = "HACİZ vuruşu yanındaki düşmana da seker" },
+            new Tanım { Ad = "SİLİP SÜPÜR", Sıra = () => new[] { Kadro.REHİN, Kadro.KONİ },
+                        NeYapar = "REHİN'le vur (fırlat · takas · sürükle; yakalamak sayılmaz) → KONİ: sert iter, vuruş ×1.5",
+                        ArtıAd = "TOZ DUMAN", ArtıNeYapar = "KONİ vuruşu çevrendeki herkesi süpürür (360°)" },
         };
 
         public static int Sayı => Tümü.Length;

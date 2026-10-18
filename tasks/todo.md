@@ -9,6 +9,7 @@
 | 6 | 🎮 **Faz 28 testi** | F6 yeni koşu → dövüş odası 5 dalga · **M** sıradaki mini boss · mini ölünce sunak (kontrol noktası) · eşyasız ölümde kontrol noktasına dönüş, birkaç ölümde "… TOPARLANDI" · **B** ana boss (saat yavaş akar). His: oda süresi, dalgalar, mini boss, saatin gidişi | Gördüklerini yaz |
 | 7 | 🎮 *(isteğe bağlı)* **Faz 29 his testi** | Bot oynadı, 8/8 geçti. Sana kalan his: silah sunağı seçimi karar gibi mi, fiyatlar, MUAFİYET hissediliyor mu | Gördüklerini yaz |
 | 8 | 🎮 **Faz 30 testi** | **F6** yeni koşu: 2 silah, 3. yuva boş · **M** ile sunaklar: 2. ara bölgenin sunağında HACİZ · 4. ara bölgenin 4. odasında kenarda parlayan köşe (İPOTEK) · sunak odasında **KADRO** sunağı ([E] yuvadaki silahı değiştirir) · combo: KONİ'yle vur, hemen 2'ye geç, İPOTEK at · **B** boss → İFLAS + combo sunağı | Gördüklerini yaz: combo hissi, 0.8 sn yetiyor mu, köşe görünüyor mu |
+| 9 | 🎮 **Faz 31 testi** | **F6** yeni koşu, **N** 2. bölge · 3. ara bölgenin sunağında REHİN: sol tık yakala, tekrar sol tık fırlat, hemen **1** KONİ = SİLİP SÜPÜR · sağ tık TAKAS · dash + sol tık SÜRÜKLEME · **B** 2. boss → ÇEK (KADRO sunağından envantere al): fırlat, değince HACİZ'e geç = SENET HACZİ · 3. bölgenin 3. ara bölgesinin 4. odasında köşe → KARŞILIK: düşman vurmadan hemen önce sol tık (karşılar), sonra FAİZLİ = KARŞI İCRA | Gördüklerini yaz: KARŞILIK penceresi (0.23 sn) yetiyor mu, rehine taşıma hissi, çekin dönüşü |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 
 ---
@@ -219,6 +220,39 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 - [x] Uyuyan boss'un süre etiketi donuyordu → uykuda da güncelleniyor
 - [x] Otopilot K1 payı → "kapanıştan değil girişten yakın mı"
 - [x] Otopilot üst yazısı → sol üst
+
+---
+
+## 🪢 FAZ 31 — Yeni silahlar 1: REHİN · ÇEK · KARŞILIK — **BİTTİ, Enes'in testini bekliyor** (2026-10-18)
+
+> Enes: *"tüm silahlara özel geliştirmeler ve bu geliştirmelerin açtığı comboları ekledin mi?"* — Bugün: 5 silahın 3'er yükseltmesi (Faz 29) + 4 combo ve "+" hâlleri (Faz 30). **Silah başına 8 yükseltme ve combo AÇAN yükseltmeler → Faz 33** (yeni silahlar geldikten sonra, iki kez yazılmasın diye). Faz 31–32'de her yeni silah kendi 3 yükseltmesi ve combo'larıyla geliyor.
+
+| Silah | Normal | Sağ tık | Dash-atak | Yükseltmeler |
+|---|---|---|---|---|
+| **REHİN** (2. bölge, sunakta) | yakındakini YAKALA (boss değil); tutarken önden gelen vuruşu o yer; ikinci vuruş FIRLAT: ilk çarptığına sert vurur | **TAKAS** — tuttuğunu en yakın ikinci düşmanla yer değiştirtir, ikisine vurur | **SÜRÜKLEME** — tutuyorsan dash sonunda yere çarpar (çevresine de), tutmuyorsan yakalar | AĞIR REHİN (fırlatma ×1.6) · GENİŞ KOL (tutma menzili ×1.5) · KALKAN (yandan gelenleri de karşılar) |
+| **ÇEK** (3. bölge, 2. boss'tan) | fırlatılır, arena kenarından seker, döner; gidişte de dönüşte de vurur; dönene kadar silahsızsın | **KARŞILIKSIZ** — üç çek yelpaze gibi | **CİRO** — havadaki çeki yakalayıp dash yönüne yeniden fırlatırsın | ÇİFT CİRO (bir sekme daha) · HIZLI TAHSİL (hız ×1.4) · DÖNÜŞ KESİNTİSİ (dönüşte hasar ×1.5) |
+| **KARŞILIK** (3. bölge, keşif) | kısa karşılama (0.23 sn, sonra 0.43 sn toparlanma): o anda gelen darbe saatinden düşmez, birikir; pencere bitince önüne iner | **İTİRAZ** — uzun karşılama, biriken hepsi önündekilere | **KARŞI DAVA** — biriken varsa dash-atak onun iki katıyla vurur | GENİŞ PENCERE (×1.6) · TAM KARŞILIK (biriken ×1.5) · İADE (karşıladığının yarısı saate geri) |
+
+*Yeni combo'lar:* **KARŞI İCRA** (KARŞILIK → FAİZLİ: FAİZLİ ×2; + İCRA beklemesi sıfır) · **SENET HACZİ** (ÇEK değdi → HACİZ: HACİZ ×2; + yanındaki düşmana da seker) · **SİLİP SÜPÜR** (REHİN'le vur — fırlat/takas/sürükle, yakalamak sayılmaz → KONİ: sert iter, hasar ×1.5; + 360° süpürür).
+
+- [x] A. Saldırı biçimi (`Weapon.Saldırı`: koni / rehin / çek / karşılık) ve üç silahın normal saldırısı. ÇEK'in uçuşu ayrı dosya: `CekUcusu.cs`
+- [x] B. Sağ tık (TAKAS, KARŞILIKSIZ, İTİRAZ) ve dash-atakları (SÜRÜKLEME, CİRO, KARŞI DAVA)
+- [x] C. 9 yükseltme, kadro tablosu (REHİN 2. bölge 3. sunak · ÇEK 2. boss · KARŞILIK 3. bölge 3. ara bölge keşif), 3 combo + "+"
+- [x] D. Kapılar: `Faz31SelfCheck` **36 kontrol** · **42 bozmanın 42'si kırmızı** (4 koşu; her kontrol en az bir kez) · tüm kapılar ✅. Faz 3: kadro 8 silah, ÇEK uçarak vuruyor. Faz 16: "farklı soru" silahın biçimini de sayıyor.
+- [x] E. Bot playtest'i (`…OtopilotMenu.Playtest31`) — **6/6** (rapor `Logs/Otopilot/2026-10-18_13-59/`)
+  - ✅ 31-1 REHİN 2. bölgenin 3. sunağında (2.'sinde yok), 3. yuvaya girdi
+  - ✅ 31-2 gerçek tuşlarla yakala → fırlat → KONİ = SİLİP SÜPÜR, ilk denemede · kalkan 1 vuruş yedi
+  - ✅ 31-3 2. boss düşünce ÇEK açıldı
+  - ✅ 31-4 çek gidip döndü (bir atışta 4 isabet), değince HACİZ = SENET HACZİ, ilk atışta
+  - ✅ 31-5 KARŞILIK 3. bölgenin 3. ara bölgesinde keşifle açıldı
+  - ✅ 31-6 karşıladı, biriken vuruşa indi, FAİZLİ = KARŞI İCRA (2 combo). Bot şansla karşılıyor (1 karşılama) — pencerenin hissi Enes'te
+  - İlk koşuda 31-4 kırmızıydı: hata botun ölçüsündeydi ("havuz düştü" = isabet sanıyordu), oyunda değil. Ders lessons.md'de.
+
+**Yolda bulunan iki istismar (düzeltildi, kapıda):**
+- KARŞILIK'ın ilk hâlinde pencere savurmanın %80'iydi → tıklamayı basılı tutan zamanın ~%75'inde dokunulmazdı. Şimdi pencere 0.23 sn + 0.43 sn toparlanma → ~%35, toparlanırken karşılayamıyor.
+- Silah değiştirmek saldırıyı iptal ediyor → "tıkla → 2 → 1 → tıkla" toparlanmayı siliyordu. KARŞILIK'a silah değişiminden bağımsız bekleme kondu.
+
+**Commit:** atılmadı (Enes istemedi).
 
 ---
 

@@ -38,7 +38,9 @@ namespace TekCan
         // Yalnızca KUŞANILAN silahınki geçerli. Silahın verisi (`Weapon`) saf kalıyor; yükseltme
         // değerin KULLANILDIĞI yerde uygulanıyor — savurma yayı da isabet de aynı değerden okuyor.
         bool Y(SilahYükseltme y) => SilahSunağı.Silahı(y) == _weaponIndex && SilahSunağı.Var(y);
-        float SavurmaMenzili => Weapon.Range(_t) * (Y(SilahYükseltme.UzunKol) ? 1.25f : 1f);
+        float SavurmaMenzili => Weapon.Range(_t) * (Y(SilahYükseltme.UzunKol) ? 1.25f : 1f)
+                                                 * (Y(SilahYükseltme.GenişKol) ? 1.5f : 1f);      // REHİN (Faz 31)
+        float SavurmaSüresi => Weapon.Duration(_t) * (Y(SilahYükseltme.GenişPencere) ? 1.6f : 1f);  // KARŞILIK
         float SavurmaAçısı => Weapon.Angle(_t) * (Y(SilahYükseltme.GenişAğ) ? 1.35f : 1f);
         float ÖlüBölge => Weapon.MinRange(_t) * (Y(SilahYükseltme.DarÖlüBölge) ? 0.5f : 1f);
         int SavurmaHedefi => Y(SilahYükseltme.Delici) ? 2 : Weapon.MaxTargets;
@@ -149,6 +151,226 @@ namespace TekCan
             return en;
         }
 
+        // ── FAZ 31: REHİN · ÇEK · KARŞILIK ───────────────────────────────────
+        // Davranış silahın BİÇİMİNDEN (`Weapon.Saldırı`), adından değil. İsabet yine tek yerden
+        // (`InHitCone` / `StrikeCone`); yalnızca koni olmayan vuruşlar (fırlatma, takas, çek) kendi
+        // hedefini seçiyor.
+        static readonly ComboTür[] Bitirenler = { ComboTür.Temerrüt, ComboTür.KarşıİCRA, ComboTür.SenetHaczi, ComboTür.SilipSüpür };
+        Enemy _rehine, _sonVurulan;
+        float _biriken, _itirazKalan;
+        // Silah değişimi saldırıyı iptal ediyor; KARŞILIK'ta bu toparlanmayı da silerdi ("tıkla → 2 → 1 →
+        // tıkla" ile pencere hiç kapanmazdı). Bekleme silah değişiminden bağımsız sayıyor.
+        float _karşılamaBekleme;
+
+        /// <summary>Tutulan düşman (yoksa null). Öldüyse `Enemy.All`'dan çıkmış — Destroy ertelense de (tuzak 1).</summary>
+        public Enemy Rehine => Tutuyor ? _rehine : null;
+        bool Tutuyor => _rehine != null && Enemy.All.Contains(_rehine);
+        public Vector3 RehinYeri => transform.position + transform.forward * (0.7f + (_rehine != null ? _rehine.Radius : 0.5f));
+
+        /// <summary>KARŞILIK: karşılanıp biriken bedel (sn) — sonraki vuruşa hasar olarak iner.</summary>
+        public float Biriken => _biriken;
+        public int KarşılananSayısı { get; private set; }
+        /// <summary>REHİN kalkanının yediği vuruş sayısı — otopilot raporu.</summary>
+        public int KalkanSayısı { get; private set; }
+
+        /// <summary>KARŞILIK: savurmanın vuruşa kadarki kısmı ya da İTİRAZ boyunca gelen darbe saatten düşmüyor.</summary>
+        bool Karşılıyor => Weapon.Saldırı == Biçim.Karşılık && (_itirazKalan > 0f || (Attacking && !_attackHitDone));
+
+        void RehineyiBırak()
+        {
+            if (_rehine != null) _rehine.Bırak();
+            _rehine = null;
+        }
+
+        void VuruşHissi(float k)
+        {
+            Sfx.Hit();
+            HitStop.Freeze(_t.hitStopDuration * k);
+            IsoCamera.Shake(_t.hitShake * k);
+        }
+
+        /// <summary>REHİN · YAKALA: konideki en yakın (boss değil) düşman. Boştaysa yakalanmaz, ölür.</summary>
+        bool Yakala(float menzil, float açı)
+        {
+            Enemy en = null; float enYakın = float.MaxValue;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || e.IsBoss || e.Tutan != null) continue;
+                if (!InHitCone(e, menzil, açı * 0.5f, out float d)) continue;
+                if (d < enYakın) { enYakın = d; en = e; }
+            }
+            if (en == null) return false;
+            bool boştu = en.Hollow;
+            en.TakeDamage(WeaponDamage() * 0.5f, Weapon.HarvestMultiplier);
+            VuruşHissi(0.6f);
+            if (!boştu && Enemy.All.Contains(en)) { _rehine = en; en.RehinAl(this); }
+            return true;
+        }
+
+        void RehinVuruşu()
+        {
+            if (!Tutuyor) { Yakala(SavurmaMenzili, SavurmaAçısı); return; }   // yakalamak combo adımı DEĞİL
+
+            // FIRLAT: yön boyunca rehinenin genişliğinde bir hat; ilk çarptığına sert vurur, rehine de yer.
+            var r = _rehine;
+            RehineyiBırak();
+            Vector3 ileri = transform.forward;
+            float menzil = _t.rehinThrowRange;
+            Enemy hedef = null; float enYakın = float.MaxValue;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || e == r || e.Dormant) continue;
+                Vector3 to = e.transform.position - transform.position; to.y = 0f;
+                float boy = Vector3.Dot(to, ileri);
+                if (boy <= 0f || boy - e.Radius > menzil) continue;
+                if ((to - ileri * boy).magnitude > e.Radius + r.Radius) continue;
+                if (boy < enYakın) { enYakın = boy; hedef = e; }
+            }
+            float hasar = WeaponDamage() * _t.rehinThrowDamageMul * (Y(SilahYükseltme.AğırRehin) ? 1.6f : 1f);
+            Vector3 varış = hedef != null
+                ? hedef.transform.position - ileri * (hedef.Radius + r.Radius)
+                : transform.position + ileri * menzil;
+            varış.y = r.transform.position.y;
+            r.transform.position = varış;                 // ponytail: anlık uçuş; animasyon VFX fazında
+            Arc.Spawn(transform.position, transform.rotation, (varış - transform.position).magnitude, 8f, Weapon.Tint, _t.swingArcLife);
+            Arc.Spawn(varış, transform.rotation, 1.2f, 360f, Weapon.Tint, _t.swingArcLife, scaleFrom: 0.5f, scaleTo: 1.3f);
+
+            int hits = 1;
+            if (hedef != null)
+            {
+                hedef.Push(ileri, 6f);
+                hedef.TakeDamage(hasar, Weapon.HarvestMultiplier);
+                hits++;
+            }
+            r.Push(ileri, 4f);
+            r.TakeDamage(hasar * 0.5f, Weapon.HarvestMultiplier);
+            _isabetYeri = varış;
+            VuruşHissi(1.4f);
+            İsabetSonrası(hits);
+        }
+
+        /// <summary>REHİN · TAKAS: tuttuğunu en yakın ikinci düşmanla yer değiştirt, ikisine vur; yeni rehine o.</summary>
+        void Takas(WeaponSpecial sp)
+        {
+            if (!Tutuyor) { Yakala(SavurmaMenzili * 2f, SavurmaAçısı); return; }
+            var eski = _rehine;
+            Enemy yeni = null; float enYakın = _t.rehinThrowRange;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || e == eski || e.IsBoss || e.Dormant) continue;
+                Vector3 d = e.transform.position - transform.position; d.y = 0f;
+                if (d.magnitude < enYakın) { enYakın = d.magnitude; yeni = e; }
+            }
+            if (yeni == null) return;
+            Vector3 yer = yeni.transform.position;
+            RehineyiBırak();
+            eski.transform.position = new Vector3(yer.x, eski.transform.position.y, yer.z);
+            float hasar = WeaponDamage() * sp.DamageMul;
+            bool yeniBoştu = yeni.Hollow;
+            eski.TakeDamage(hasar, Weapon.HarvestMultiplier);
+            yeni.TakeDamage(hasar, Weapon.HarvestMultiplier);
+            if (!yeniBoştu && Enemy.All.Contains(yeni)) { _rehine = yeni; yeni.RehinAl(this); }
+            Arc.Spawn(yer, transform.rotation, 1.2f, 360f, sp.Tint, _t.swingArcLife * 1.4f, scaleFrom: 0.4f, scaleTo: 1.3f);
+            SwingsSpawned++;
+            _isabetYeri = yer;
+            VuruşHissi(1.2f);
+            İsabetSonrası(2);
+        }
+
+        /// <summary>REHİN · SÜRÜKLEME (dash-atak): tutuyorsan yere çarp (çevresine de), tutmuyorsan yakala.</summary>
+        void Sürükle()
+        {
+            Sfx.Swing();
+            if (!Tutuyor) { Yakala(Weapon.Range(_t) * _t.dashAttackRangeMult, Weapon.DashAngle(_t)); return; }
+            var r = _rehine;
+            RehineyiBırak();
+            Vector3 yer = r.transform.position;
+            float alan = 2f;
+            _hedefler.Clear();
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || e == r || e.Dormant) continue;
+                Vector3 d = e.transform.position - yer; d.y = 0f;
+                if (d.magnitude - e.Radius <= alan) _hedefler.Add((e, d.magnitude));
+            }
+            int hits = 1;
+            foreach (var (e, _) in _hedefler)
+            {
+                e.Push(e.transform.position - yer, 6f);
+                e.TakeDamage(WeaponDamage(), Weapon.HarvestMultiplier);
+                hits++;
+            }
+            r.TakeDamage(WeaponDamage() * 2f * (Y(SilahYükseltme.AğırRehin) ? 1.6f : 1f), Weapon.HarvestMultiplier);
+            Arc.Spawn(yer, transform.rotation, alan, 360f, Weapon.Tint, _t.swingArcLife * 1.3f, scaleFrom: 0.4f, scaleTo: 1.2f);
+            SwingsSpawned++;
+            _isabetYeri = yer;
+            VuruşHissi(1.5f);
+            İsabetSonrası(hits);
+        }
+
+        /// <summary>ÇEK'i fırlat. Yükseltmeler fırlatma anında çekin içine yazılıyor (kuşanılan ÇEK).</summary>
+        void ÇekFırlat(Vector3 yön, float hasarÇarpanı)
+        {
+            var oda = RoomManager.Instance != null ? RoomManager.Instance.RoomRoot : null;
+            CekUcusu.Fırlat(this, _t, yön, Weapon.Range(_t), _t.cekSpeed * (Y(SilahYükseltme.HızlıTahsil) ? 1.4f : 1f),
+                            WeaponDamage() * hasarÇarpanı, Weapon.HarvestMultiplier,
+                            _t.cekBounces + (Y(SilahYükseltme.ÇiftCiro) ? 1 : 0),
+                            Y(SilahYükseltme.DönüşKesintisi) ? 1.5f : 1f,
+                            oda != null ? oda : transform.parent);
+            SwingsSpawned++;
+        }
+
+        /// <summary>Çek bir düşmana değdi — silah o an kuşanılan olmasa da adım ÇEK'in (SENET HACZİ).</summary>
+        public void Çekİsabeti(Vector3 yer)
+        {
+            _isabetYeri = yer;
+            VuruşHissi(0.5f);
+            ZincireYaz(Kadro.ÇEK, yer);
+        }
+
+        /// <summary>ÇEK · CİRO (dash-atak): havadaki çeki yakala, dash yönüne yeniden fırlat.</summary>
+        void Ciro()
+        {
+            CekUcusu.Yakala(this);
+            ÇekFırlat(_dashDir, 1.3f);
+            Sfx.Swing();
+        }
+
+        /// <summary>KARŞILIK'ın hasarı: biriken yoksa zayıf, varsa biriken × `karsilikDamagePerSecond` eklenir.</summary>
+        float KarşılıkHasarı() => WeaponDamage() * (_biriken > 0f ? 1f : 0.6f) + _biriken * _t.karsilikDamagePerSecond;
+
+        /// <summary>KARŞILIK · İTİRAZ duruşu. ⚠️ dt DIŞARIDAN. Bitince biriken hepsi önündekilere (geniş koni).</summary>
+        public void Tickİtiraz(float dt)
+        {
+            if (_itirazKalan <= 0f) return;
+            _itirazKalan -= dt;
+            if (_itirazKalan > 0f) return;
+            _itirazKalan = 0f;
+            var sp = Weapon.Special(_t);
+            float menzil = SavurmaMenzili * (sp != null ? sp.RangeMul : 1f);
+            Arc.Spawn(transform.position, transform.rotation, menzil, 120f, Weapon.Tint, _t.swingArcLife * 1.6f, scaleFrom: 0.5f, scaleTo: 1f);
+            SwingsSpawned++;
+            StrikeCone(menzil, 120f, KarşılıkHasarı(), _t.hitStopDuration * 1.6f, _t.hitShake * 1.8f,
+                       int.MaxValue, Weapon.HarvestMultiplier, out int hits, out _);
+            if (hits > 0) _biriken = 0f;
+            İsabetSonrası(hits);
+        }
+
+        /// <summary>SENET ZİNCİRİ (SENET HACZİ +): HACİZ'in vuruşu hedefin yanındakine de seker.</summary>
+        void SenetZinciri(float hasar, float hasat)
+        {
+            Enemy yan = null; float enYakın = 4f;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || e == _sonVurulan || e.Dormant) continue;
+                Vector3 d = e.transform.position - _isabetYeri; d.y = 0f;
+                if (d.magnitude < enYakın) { enYakın = d.magnitude; yan = e; }
+            }
+            if (yan == null) return;
+            Arc.Spawn(yan.transform.position, transform.rotation, 0.9f, 360f, Weapon.Tint, _t.swingArcLife, scaleFrom: 0.4f, scaleTo: 1.2f);
+            yan.TakeDamage(hasar, hasat);
+        }
+
         // ── SERİ VURUŞ (İFLAS · TASFİYE) ──────────────────────────────────────
         // ⚠️ Coroutine YOK. Bu projede zaman güdümlü her şey `dt`'yi DIŞARIDAN
         // alıyor (`Arc.Step`, `Mote.Step`, `Enemy.TickPush`) — sebebi editör
@@ -248,6 +470,8 @@ namespace TekCan
             _iFrames -= Time.deltaTime;
             for (int i = 0; i < _specialCd.Length; i++) _specialCd[i] -= Time.deltaTime;
             TickFlurry(Time.deltaTime);
+            Tickİtiraz(Time.deltaTime);
+            _karşılamaBekleme -= Time.deltaTime;
             TickHurt(Time.deltaTime);
             TickCombo(Time.deltaTime);
             ReadWeaponSwap();
@@ -333,6 +557,7 @@ namespace TekCan
             _weaponIndex = index;
             _attackTimer = 0f;                                    // yarım savurma taşınmasın
             CancelFlurry();                                       // seri ESKİ silaha aitti
+            RehineyiBırak();                                      // REHİN'i başka silahla tutamazsın
 
             // ⚠️ Eskiden burada ekran sarsılıyordu. Enes: *"silahlar arası geçişi
             // daha hızlı yapabilmeliyiz, kombolar için."* Geçiş KODDA zaten anlıktı
@@ -377,6 +602,7 @@ namespace TekCan
         {
             var sp = Weapon.Special(_t);
             if (sp == null) return;
+            if (Weapon.Saldırı == Biçim.Çek && CekUcusu.Sahibinin(this) > 0) return;   // dönene kadar silahsız
 
             // Ödeyemiyorsan çalışmıyor — FAİZLİ'nin savurma kuralının aynısı.
             // İCRA (Faz 29): bedel saatin yüzdesi (en az `Cost`). Öldürme iadesi yalnızca saat doyma
@@ -400,6 +626,22 @@ namespace TekCan
             if (aim.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(aim);
 
             Sfx.Swing();
+
+            // ── kendi biçimi olan özeller (Faz 31) ──
+            if (Weapon.Saldırı == Biçim.Rehin) { Takas(sp); return; }
+            if (Weapon.Saldırı == Biçim.Çek)                         // KARŞILIKSIZ: yelpaze
+            {
+                for (int i = 0; i < sp.Hits; i++)
+                    ÇekFırlat(Quaternion.Euler(0f, (i - (sp.Hits - 1) * 0.5f) * 20f, 0f) * transform.forward, sp.DamageMul);
+                return;
+            }
+            if (sp.Duruş > 0f)                                       // İTİRAZ: uzun karşılama
+            {
+                _itirazKalan = sp.Duruş;
+                _attackTimer = sp.Duruş;
+                Arc.Spawn(transform.position, transform.rotation, 1.1f, 360f, sp.Tint, sp.Duruş, follow: transform, scaled: true);
+                return;
+            }
 
             // ── yer vuruşu olan özel ──
             // İPOTEK YAĞMURU (Faz 29): Hits > 1 ise alandaki düşmanların üstüne peş peşe ipotek —
@@ -473,6 +715,7 @@ namespace TekCan
         {
             _flurryLeft = 0;
             _flurrySpecial = null;
+            _itirazKalan = 0f;          // İTİRAZ da süren bir saldırı: aynı yerler keser (biriken kalır)
         }
 
         /// <summary>
@@ -640,12 +883,18 @@ namespace TekCan
                 return;
             }
 
+            if (Weapon.Saldırı == Biçim.Rehin) { Sürükle(); return; }   // SÜRÜKLEME (Faz 31)
+            if (Weapon.Saldırı == Biçim.Çek) { Ciro(); return; }        // CİRO
+
             // Dash-atak artık SİLAHA GÖRE değişiyor: tek hedefli silah dash'te de tek
             // hedefli kalır ama çok sert vurur; koni süpürür ama vuruş başına daha az.
             // Eskiden hepsi aynı geniş alan vuruşuydu ve silahın kimliğini siliyordu.
             float range = Weapon.Range(_t) * _t.dashAttackRangeMult;
             float angle = Weapon.DashAngle(_t);
             float damage = WeaponDamage() * Weapon.DashDamageMultiplier(_t);
+            // KARŞI DAVA (KARŞILIK): biriken karşılığın İKİ katı dash-atağa biniyor.
+            float karşıDava = Weapon.Saldırı == Biçim.Karşılık ? _biriken * 2f * _t.karsilikDamagePerSecond : 0f;
+            damage += karşıDava;
 
             // Silahın kendi rengi ama daha parlak — dash-atak olduğu okunsun.
             var tint = Weapon.Tint; tint.a = Mathf.Min(1f, tint.a * 1.5f);
@@ -660,6 +909,7 @@ namespace TekCan
                        _t.hitStopDuration * 1.4f * Weapon.HitStopMultiplier,
                        _t.hitShake * 1.5f * Weapon.ShakeMultiplier,
                        Weapon.DashTargets, Weapon.HarvestMultiplier, out int hits, out int kills);
+            if (karşıDava > 0f && hits > 0) _biriken = 0f;
 
             // ⚠️ FAİZLİ: dash-atak TUTARSA savurma bedeli geri geliyor. Silahın
             // sorusu "tutar mı"; dash onu en zor haliyle soruyor (hareket halinde,
@@ -675,9 +925,12 @@ namespace TekCan
         void StartAttack(Vector3 input)
         {
             // Silah savurmayı reddedebilir (FAİZLİ: peşin bedeli ödeyemiyorsan susar).
+            if (Weapon.Saldırı == Biçim.Çek && CekUcusu.Sahibinin(this) > 0) return;   // dönene kadar silahsız
+            if (Weapon.Saldırı == Biçim.Karşılık && _karşılamaBekleme > 0f) return;      // toparlanma bitmeden yok
             if (!Weapon.OnSwingStart(Clock.Instance, _t)) return;
 
-            _attackTimer = Weapon.Duration(_t);
+            _attackTimer = SavurmaSüresi;
+            if (Weapon.Saldırı == Biçim.Karşılık) _karşılamaBekleme = SavurmaSüresi;
             _attackHitDone = false;
 
             // ⚠️ NİŞAN İMLEÇTEN ALINIR, hareket yönünden değil.
@@ -694,9 +947,16 @@ namespace TekCan
             // VURMUYOR. Enes bildirdi. Bu, "mekanik doğru görsel yalan" hatasının
             // DÖRDÜNCÜSÜ — ve en kötüsü, çünkü yay burada isabet alanının kendisi
             // olduğunu söylüyor. İşaretin kendi halkası zaten `GroundMark` içinde çiziliyor.
-            if (Weapon.GroundMarkDelay(_t) <= 0f)
+            // REHİN tutarken: fırlatmanın dar hattı. ÇEK: yay yok, çekin kendisi görünüyor.
+            if (Weapon.Saldırı == Biçim.Rehin && Tutuyor)
+                Arc.Spawn(transform.position, transform.rotation, _t.rehinThrowRange, 10f, Weapon.Tint, _t.swingArcLife);
+            else if (Weapon.GroundMarkDelay(_t) <= 0f && Weapon.Saldırı != Biçim.Çek)
                 Arc.Spawn(transform.position, transform.rotation,
                     SavurmaMenzili, SavurmaAçısı, Weapon.Tint, _t.swingArcLife);
+            // KARŞILIK: karşılama penceresi her yönden — halka, pencere bitene kadar.
+            if (Weapon.Saldırı == Biçim.Karşılık)
+                Arc.Spawn(transform.position, transform.rotation, 1.1f, 360f, new Color(0.95f, 0.95f, 0.6f, 0.35f),
+                          SavurmaSüresi * Weapon.HitMoment(_t), follow: transform, scaled: true);
 
             // ⚠️ ÖLÜ BÖLGE DE GÖRÜNMELİ (HACİZ). Boss'un simit göbeğiyle aynı gerekçe,
             // ama TERS ANLAM: boss'unki güvenli olduğu için YEŞİL, bu ise silahın
@@ -722,9 +982,9 @@ namespace TekCan
             // Saldırıyı bozan tek şey DASH olmalı, WASD değil.
             Move(input, _t.attackMoveDamping, rotate: false);
 
-            float duration = Weapon.Duration(_t);
+            float duration = SavurmaSüresi;
             float elapsed = duration - _attackTimer;
-            if (!_attackHitDone && elapsed >= duration * _t.attackHitMoment)
+            if (!_attackHitDone && elapsed >= duration * Weapon.HitMoment(_t))
             {
                 _attackHitDone = true;
                 Strike();
@@ -750,19 +1010,44 @@ namespace TekCan
             // Silahın kendi vuruş biçimi olması `Weapon`'ın deseniyle uyumlu —
             // veri + kanca, `PlayerController` içinde silah adı geçmiyor.
             if (Weapon.GroundMarkDelay(_t) > 0f) { PlaceLien(); return; }
+            if (Weapon.Saldırı == Biçim.Rehin) { RehinVuruşu(); return; }
+            if (Weapon.Saldırı == Biçim.Çek)
+            {
+                ÇekFırlat(transform.forward, 1f);
+                Weapon.OnStrike(Clock.Instance, _t, 0, 0);
+                return;
+            }
 
-            // TEMERRÜT (FAİZLİ → İFLAS, Faz 30): İFLAS saatin yarıdaymış gibi vurur; "+" hasadı ×2.
-            bool temerrüt = ComboHazır(ComboTür.Temerrüt);
-            float hasat = Weapon.HarvestMultiplier * (temerrüt && Combo.Artı(ComboTür.Temerrüt) ? 2f : 1f);
-            StrikeCone(SavurmaMenzili, SavurmaAçısı, WeaponDamage(temerrüt ? 0.5f : 1f),
+            // COMBO bitirenleri (Faz 30–31) — zincirin son adımı bu koni vuruşu:
+            //   TEMERRÜT (FAİZLİ → İFLAS): saat yarıdaymış gibi; "+" hasat ×2
+            //   KARŞI İCRA (KARŞILIK → FAİZLİ) ×2; "+" İCRA'nın beklemesi sıfır
+            //   SENET HACZİ (ÇEK → HACİZ) ×2; "+" yanındakine seker
+            //   SİLİP SÜPÜR (REHİN → KONİ) ×1.5, sert iter; "+" 360°
+            ComboTür? bitiren = null;
+            foreach (var c in Bitirenler) if (ComboHazır(c)) { bitiren = c; break; }
+            bool artı = bitiren.HasValue && Combo.Artı(bitiren.Value);
+            float hasarÇ = bitiren == ComboTür.KarşıİCRA || bitiren == ComboTür.SenetHaczi ? 2f
+                         : bitiren == ComboTür.SilipSüpür ? 1.5f : 1f;
+            float hasat = Weapon.HarvestMultiplier * (bitiren == ComboTür.Temerrüt && artı ? 2f : 1f);
+            float açı = bitiren == ComboTür.SilipSüpür && artı ? 360f : SavurmaAçısı;          // TOZ DUMAN
+            if (açı >= 360f) Arc.Spawn(transform.position, transform.rotation, SavurmaMenzili, 360f, Weapon.Tint, _t.swingArcLife * 1.4f);
+            bool karşılık = Weapon.Saldırı == Biçim.Karşılık;
+            float hasar = karşılık ? KarşılıkHasarı() : WeaponDamage(bitiren == ComboTür.Temerrüt ? 0.5f : 1f) * hasarÇ;
+            StrikeCone(SavurmaMenzili, açı, hasar,
                        _t.hitStopDuration * Weapon.HitStopMultiplier,
                        _t.hitShake * Weapon.ShakeMultiplier,
                        SavurmaHedefi, hasat,
                        out int hits, out int kills,
-                       minRange: ÖlüBölge);
+                       minRange: ÖlüBölge, itmeTaban: bitiren == ComboTür.SilipSüpür ? 8f : 0f);
+            if (karşılık && hits > 0) _biriken = 0f;
 
             Weapon.OnStrike(Clock.Instance, _t, hits, kills);
-            if (temerrüt && hits > 0) ComboTetikle(ComboTür.Temerrüt);
+            if (bitiren.HasValue && hits > 0)
+            {
+                ComboTetikle(bitiren.Value);
+                if (artı && bitiren == ComboTür.KarşıİCRA) _specialCd[Kadro.FAİZLİ] = 0f;   // İCRA EMRİ
+                if (artı && bitiren == ComboTür.SenetHaczi) SenetZinciri(hasar, hasat);       // SENET ZİNCİRİ
+            }
             else İsabetSonrası(hits);
 
             // FAİZLİ yükseltmeleri (Faz 29): BİLEŞİK öldürme iadesini ×2'den ×3'e çıkarıyor,
@@ -876,15 +1161,17 @@ namespace TekCan
 
         void StrikeCone(float range, float angleDeg, float damage, float hitStop, float shake,
                         int maxTargets, float harvestMult, out int hits, out int kills,
-                        float minRange = 0f, WeaponSpecial special = null)
+                        float minRange = 0f, WeaponSpecial special = null, float itmeTaban = 0f)
         {
             hits = 0; kills = 0;
             _isabetToplam = Vector3.zero;
+            _sonVurulan = null;
             float half = angleDeg * 0.5f;
             // KAPANIŞ (İFLAS): dipte hasat +%50 · GERİ TEPME (KONİ): itme +%60 — Faz 29
             if (Y(SilahYükseltme.Kapanış)) harvestMult *= 1f + 0.5f * DipOranı();
             float itme = special != null ? special.Knockback : Weapon.Knockback(_t);
             if (Y(SilahYükseltme.GeriTepme)) itme = Mathf.Max(itme * 1.6f, 3f);   // savurma da itiyor
+            itme = Mathf.Max(itme, itmeTaban);                                      // SİLİP SÜPÜR
 
             if (maxTargets == 1)
             {
@@ -901,6 +1188,7 @@ namespace TekCan
                 {
                     bool wasHollow = nearest.Hollow;
                     _isabetToplam = nearest.transform.position;   // ÖNCE: vuruş öldürüp yok edebilir
+                    _sonVurulan = nearest;
                     nearest.Push(nearest.transform.position - transform.position,
                                  itme);
                     nearest.TakeDamage(MesafeliHasar(damage, nearest, special), harvestMult);
@@ -1042,6 +1330,35 @@ namespace TekCan
             // Koşu bittiyse (ölüm ya da zafer) darbe yok — ne bedel ne geri bildirim.
             var clock = Clock.Instance;
             if (clock != null && (clock.Dead || clock.Won)) return 0f;
+
+            // KARŞILIK (Faz 31): pencere içinde gelen darbe saatten düşmüyor, birikiyor. Nemesis
+            // hesabına da yazılmıyor — inmedi. İADE: yarısı saate (doyma tavanına tabi).
+            if (Karşılıyor)
+            {
+                _biriken += secondsCost * (Y(SilahYükseltme.TamKarşılık) ? 1.5f : 1f);
+                if (Y(SilahYükseltme.İade) && clock != null) clock.Add(secondsCost * 0.5f * clock.HasatDoyması);
+                KarşılananSayısı++;
+                Arc.Spawn(transform.position, transform.rotation, 1.3f, 360f, new Color(0.95f, 0.95f, 0.6f, 0.8f), 0.2f,
+                          scaleFrom: 0.5f, scaleTo: 1.4f);
+                Sfx.Hit();
+                return 0f;
+            }
+
+            // REHİN (Faz 31): önden gelen vuruşu rehine yer (KALKAN: yandan da). Bedelinin katı hasar
+            // olarak ona iner, sana hasat yok.
+            if (Tutuyor && saldıran != _rehine)
+            {
+                Vector3 gelen = fromPosition - transform.position; gelen.y = 0f;
+                float eşik = Y(SilahYükseltme.Kalkan) ? 0f : 0.7071f;      // cos 45°
+                if (gelen.sqrMagnitude < 0.0001f || Vector3.Dot(transform.forward, gelen.normalized) >= eşik)
+                {
+                    _rehine.TakeDamage(secondsCost * _t.rehinShieldDamagePerSecond, 0f);
+                    KalkanSayısı++;
+                    if (!Tutuyor) RehineyiBırak();
+                    Sfx.Hit();
+                    return 0f;
+                }
+            }
 
             // ⚠️ GERÇEKTEN İNEN miktar ölçülüyor, istenen değil. Saatinde 2 saniye
             // kalmışken 4 saniyelik darbe yersen boss 4 değil 2 almıştır — nemesis

@@ -25,6 +25,10 @@ namespace TekCan
     /// sınıfın gerekçesini okur.
     /// </summary>
 
+    /// <summary>Saldırının biçimi (Faz 31): `PlayerController` buna göre dallanıyor, silah adına göre değil.
+    /// Yer vuruşu (İPOTEK) ayrı biçim değil — `GroundMarkDelay` &gt; 0.</summary>
+    public enum Biçim { Koni, Rehin, Çek, Karşılık }
+
     /// <summary>
     /// Sağ tık saldırısı — silahın İKİNCİ hamlesi. `BossAttack` ile aynı desen:
     /// veri sınıfı, davranış değil. `PlayerController` bunu okuyup uyguluyor,
@@ -37,6 +41,12 @@ namespace TekCan
     public sealed class WeaponSpecial
     {
         public string Name = "";
+
+        /// <summary>HUD'da ne yaptığı — verisinden türetilemeyen özeller için (Faz 31).</summary>
+        public string NeYapar = "";
+
+        /// <summary>&gt;0 ise DURUŞ: bu kadar sn karşılama (KARŞILIK · İTİRAZ).</summary>
+        public float Duruş = 0f;
 
         /// <summary>Kaç saniyede bir kullanılabilir — silahtan silaha değişir (Enes).</summary>
         public float Cooldown = 6f;
@@ -108,7 +118,10 @@ namespace TekCan
         Bileşik, KısaİCRA, Temerrüt,           // FAİZLİ
         UzunKol, Delici, DarÖlüBölge,          // HACİZ
         ÇiftTapu, HızlıTapu, GenişArsa,        // İPOTEK
-        Dip, Seri, Kapanış                     // İFLAS
+        Dip, Seri, Kapanış,                    // İFLAS
+        AğırRehin, GenişKol, Kalkan,           // REHİN (Faz 31)
+        ÇiftCiro, HızlıTahsil, DönüşKesintisi, // ÇEK
+        GenişPencere, TamKarşılık, İade        // KARŞILIK
     }
 
     public static class SilahSunağı
@@ -122,6 +135,9 @@ namespace TekCan
             "UZUN KOL", "DELİCİ", "DAR ÖLÜ BÖLGE",
             "ÇİFT TAPU", "HIZLI TAPU", "GENİŞ ARSA",
             "DİP", "SERİ", "KAPANIŞ",
+            "AĞIR REHİN", "GENİŞ KOL", "KALKAN",
+            "ÇİFT CİRO", "HIZLI TAHSİL", "DÖNÜŞ KESİNTİSİ",
+            "GENİŞ PENCERE", "TAM KARŞILIK", "İADE",
         };
 
         public static readonly string[] NeYapar =
@@ -131,6 +147,9 @@ namespace TekCan
             "menzil +%25", "iki hedefe vurur", "ölü bölge yarıya",
             "aynı anda iki ipotek", "ipotek gecikmesi −%30", "ipotek alanı +%30",
             "dipte daha erken sertleşir (eşikler ×1.5)", "TASFİYE +2 vuruş", "dipte hasat +%50",
+            "fırlatma hasarı ×1.6", "tutma menzili ×1.5", "yandan gelenleri de karşılar",
+            "bir sekme daha", "çek ×1.4 hızlı", "dönüşte hasar ×1.5",
+            "karşılama penceresi ×1.6", "biriken hasar ×1.5", "karşıladığın darbenin yarısı saate geri",
         };
 
         public static int Toplam => Weapon.All.Length * SilahBaşına;
@@ -231,6 +250,16 @@ namespace TekCan
         /// </summary>
         public virtual WeaponSpecial DashSpecial(Tuning t) => null;
 
+        /// <summary>Saldırı biçimi (Faz 31) — yeni silahlar kendi biçimini söylüyor.</summary>
+        public virtual Biçim Saldırı => Biçim.Koni;
+
+        /// <summary>Savurmanın kaçta kaçında vuruş iniyor. KARŞILIK'ta geç: o ana kadar karşılıyor.</summary>
+        public virtual float HitMoment(Tuning t) => t.attackHitMoment;
+
+        /// <summary>Dash-atağın adı ve ne yaptığı — HUD için (yalnızca kendine özgü dash-atağı olanlar).</summary>
+        public virtual string DashAtakAdı => null;
+        public virtual string DashAtakNeYapar => null;
+
         // ── DASH-ATAK KİMLİĞİ ────────────────────────────────────────────────
         // Enes: *"her bir silahın özel dash attack olsun, burada çok belli olmuyor
         // neyin ne yaptığı."*
@@ -276,7 +305,10 @@ namespace TekCan
         /// etiket sessizce yalan söylemeye başlardı.
         /// </summary>
         public string Category(Tuning t) =>
-              GroundMarkDelay(t) > 0f ? "yer"
+              Saldırı == Biçim.Rehin    ? "tutma"
+            : Saldırı == Biçim.Çek      ? "fırlatma"
+            : Saldırı == Biçim.Karşılık ? "karşılama"
+            : GroundMarkDelay(t) > 0f ? "yer"
             : MinRange(t) > 0f        ? "menzil"
             : MaxTargets == 1         ? "tek"
                                       : "koni";
@@ -302,7 +334,8 @@ namespace TekCan
 
         public static Weapon[] All => _all ??= new Weapon[]
         {
-            new ConeBlade(), new Faizli(), new Haciz(), new Ipotek(), new Iflas()
+            new ConeBlade(), new Faizli(), new Haciz(), new Ipotek(), new Iflas(),
+            new Rehin(), new Cek(), new Karsilik()          // Faz 31
         };
         static Weapon[] _all;
     }
@@ -533,5 +566,88 @@ namespace TekCan
             float k = Mathf.InverseLerp(t.iflasSafeSeconds, t.iflasPanicSeconds, seconds);
             return Mathf.Lerp(GüvendekiÇarpan, t.iflasMaxDamageMult, k);
         }
+    }
+
+    // ══ FAZ 31 — yeni silahlar 1 (Enes 2026-10-17 onayı) ═══════════════════════════════
+    // Davranış `PlayerController`'da `Saldırı` biçimine göre; burada yalnızca veri ve kimlik.
+
+    /// <summary>
+    /// REHİN — "kimi tutayım?" İlk vuruş yakındakini YAKALAR (boss yakalanmaz). Tutarken önden gelen
+    /// vuruşu rehine yer — kalkan. İkinci vuruş FIRLATIR: yön boyunca ilk çarptığına sert vurur.
+    /// </summary>
+    public sealed class Rehin : Weapon
+    {
+        public override string Name => "REHİN";
+        public override Color Tint => new Color(0.8f, 0.6f, 0.4f, 0.5f);
+        public override Biçim Saldırı => Biçim.Rehin;
+        public override int MaxTargets => 1;
+        public override float HarvestMultiplier => 1.8f;
+        public override float Range(Tuning t) => t.attackRange * 1.1f;      // tutma menzili
+        public override float Angle(Tuning t) => 120f;
+        public override float Duration(Tuning t) => t.attackDuration * 1.1f;
+        public override string DashAtakAdı => "SÜRÜKLEME";
+        public override string DashAtakNeYapar => "tutuyorsan dash sonunda yere çarpar (çevresine de), tutmuyorsan yakalar";
+
+        /// TAKAS — tuttuğunu en yakın ikinci düşmanla yer değiştirtir, ikisine birden vurur; yeni rehine
+        /// o ikincisi. Tutmuyorsan iki kat menzilden yakalar.
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
+        {
+            Name = "TAKAS", Cooldown = t.specialCooldownRehin, DamageMul = 1.4f,
+            NeYapar = "tuttuğunu en yakın ikinci düşmanla yer değiştirtir, ikisine vurur",
+            Tint = new Color(0.8f, 0.6f, 0.4f, 0.6f)
+        };
+    }
+
+    /// <summary>
+    /// ÇEK — "geri dönüş yolunu nasıl kurarım?" Fırlatılır, arena kenarından seker, sana döner;
+    /// gidişte de dönüşte de vurur. Dönene kadar silahsızsın (`CekUcusu`).
+    /// </summary>
+    public sealed class Cek : Weapon
+    {
+        public override string Name => "ÇEK";
+        public override Color Tint => new Color(0.6f, 0.85f, 0.95f, 0.5f);
+        public override Biçim Saldırı => Biçim.Çek;
+        public override float HarvestMultiplier => 1.3f;
+        public override float Range(Tuning t) => t.attackRange * 4f;        // gidiş mesafesi
+        public override float Damage(Tuning t, float baseDamage) => baseDamage * 0.9f;
+        public override string DashAtakAdı => "CİRO";
+        public override string DashAtakNeYapar => "havadaki çeki yakalayıp dash yönüne yeniden fırlatır";
+
+        /// KARŞILIKSIZ — üç çek yelpaze gibi, her biri bir kez seker.
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
+        {
+            Name = "KARŞILIKSIZ", Cooldown = t.specialCooldownCek, Hits = 3, DamageMul = 0.6f,
+            NeYapar = "üç çek yelpaze gibi fırlar, her biri seker",
+            Tint = new Color(0.6f, 0.85f, 0.95f, 0.6f)
+        };
+    }
+
+    /// <summary>
+    /// KARŞILIK — "ne zaman karşılamalıyım?" Kısa karşılama: o anda gelen darbe saatinden düşmez,
+    /// birikir; pencere bitince biriken önündekilere iner. Kimse vurmadıysa zayıf bir vuruş.
+    /// </summary>
+    public sealed class Karsilik : Weapon
+    {
+        public override string Name => "KARŞILIK";
+        public override Color Tint => new Color(0.95f, 0.95f, 0.6f, 0.5f);
+        public override Biçim Saldırı => Biçim.Karşılık;
+        public override float HarvestMultiplier => 1.4f;
+        public override float Angle(Tuning t) => 100f;
+        /// Pencere = süre × vuruş anı ≈ 0.23 sn, ardından ~0.43 sn TOPARLANMA. Ortak vuruş anıyla (%12)
+        /// pencere 0.05 sn olurdu — oynanmaz. Toparlanma yoksa (ilk hâli: pencere savurmanın %80'i)
+        /// tıklamayı basılı tutan zamanın ~%75'inde dokunulmaz oluyordu; şimdi ~%35 ve açık kaldığı
+        /// an karşılayamıyor. Spam değil zamanlama ödüllendiriliyor.
+        public override float Duration(Tuning t) => t.attackDuration * 2.2f;
+        public override float HitMoment(Tuning t) => 0.35f;
+        public override string DashAtakAdı => "KARŞI DAVA";
+        public override string DashAtakNeYapar => "biriken karşılık varsa dash-atak onun iki katıyla vurur";
+
+        /// İTİRAZ — uzun karşılama; o sırada gelen her darbe birikir, sonunda hepsi önündekilere.
+        public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
+        {
+            Name = "İTİRAZ", Cooldown = t.specialCooldownKarsilik, Duruş = t.karsilikItirazSeconds, RangeMul = 1.5f,
+            NeYapar = $"{t.karsilikItirazSeconds:0.0} sn karşılar, biriken hepsi önündekilere",
+            Tint = new Color(0.95f, 0.95f, 0.6f, 0.6f)
+        };
     }
 }

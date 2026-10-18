@@ -68,7 +68,7 @@ namespace TekCan.EditorTools
             int aynı = 0;
             for (int a = 0; a < Weapon.All.Length; a++)
                 for (int b = a + 1; b < Weapon.All.Length; b++)
-                    if (Soru(Weapon.All[a].Special(t)) == Soru(Weapon.All[b].Special(t)))
+                    if (Soru(Weapon.All[a], t) == Soru(Weapon.All[b], t))
                     {
                         aynı++;
                         Debug.LogError($"     aynı özel: {Weapon.All[a].Name} = {Weapon.All[b].Name}");
@@ -234,7 +234,9 @@ namespace TekCan.EditorTools
             // Seri, İFLAS'a ÖZEL — diğerlerinin özeli tek vuruş
             int seriSayısı = 0;
             // Faz 29: İPOTEK YAĞMURU da Hits > 1 ama vuruş değil YER İŞARETİ — o ayrı bir kimlik.
-            foreach (var w in Weapon.All) if (w.Special(t).Hits > 1 && w.Special(t).GroundDelay <= 0f) seriSayısı++;
+            // Faz 31: KARŞILIKSIZ'ın Hits'i aynı anda fırlayan ÇEK sayısı — seri değil; yalnızca koni silahlar sayılıyor.
+            foreach (var w in Weapon.All)
+                if (w.Saldırı == Biçim.Koni && w.Special(t).Hits > 1 && w.Special(t).GroundDelay <= 0f) seriSayısı++;
             failed += Check(ref total, "seri VURUŞ İFLAS'a özel (kimlik dağılmıyor)",
                             seriSayısı == 1, seriSayısı);
 
@@ -286,8 +288,10 @@ namespace TekCan.EditorTools
         }
 
         /// <summary>Özel saldırının SORDUĞU SORU — adı değil. Silah ölçüsünün aynısı.</summary>
-        static string Soru(WeaponSpecial s) =>
-            $"halka={s.Angle >= 360f}|tek={s.MaxTargets == 1}|yer={s.GroundDelay > 0f}"
+        // Faz 31: silahın biçimi de soru — TAKAS rehineyi, KARŞILIKSIZ uçan çeki, İTİRAZ duruşu soruyor.
+        static string Soru(Weapon w, Tuning t) => Soru(w.Special(t), w.Saldırı);
+        static string Soru(WeaponSpecial s, Biçim b) =>
+            $"biçim={b}|duruş={s.Duruş > 0f}|halka={s.Angle >= 360f}|tek={s.MaxTargets == 1}|yer={s.GroundDelay > 0f}"
           + $"|bedelli={s.Cost > 0f}|iade={s.KillRefundMul > 0f}|mesafeli={s.DamagePerDistance > 0f}"
           + $"|seri={s.Hits > 1}";   // İFLAS'ın kimlik ekseni
 
