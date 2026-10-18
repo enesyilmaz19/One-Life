@@ -12,6 +12,8 @@
 | 9 | 🎮 **Faz 31 testi** | **F6** yeni koşu, **N** 2. bölge · 3. ara bölgenin sunağında REHİN: sol tık yakala, tekrar sol tık fırlat, hemen **1** KONİ = SİLİP SÜPÜR · sağ tık TAKAS · dash + sol tık SÜRÜKLEME · **B** 2. boss → ÇEK (KADRO sunağından envantere al): fırlat, değince HACİZ'e geç = SENET HACZİ · 3. bölgenin 3. ara bölgesinin 4. odasında köşe → KARŞILIK: düşman vurmadan hemen önce sol tık (karşılar), sonra FAİZLİ = KARŞI İCRA | Gördüklerini yaz: KARŞILIK penceresi (0.23 sn) yetiyor mu, rehine taşıma hissi, çekin dönüşü |
 | 10 | 🎮 **Faz 32 testi** | **F6**, **N N**, **B** 3. boss → TAHVİL: sol tıkı BASILI TUT (VADE 1/2/3 yazar, saat iki kat akar), bırak · hemen **2** FAİZLİ = VADE FARKI · 4. bölgenin 3. sunağında MÜŞTEREK: bir düşmana vur, sonra başkasına → pembe çizgi = bağ; birine ne vurursan öbürü de yer · sağ tık ZİNCİRLEME · bağın üstünden dash = KOPARMA · **B** 4. boss → ARBİTRAJ: arkadan ×2.5, önden ×0.5 · sağ tık görünmezlik · düşmanın içinden dash + sol tık = TERS İŞLEM · 5. bölgenin 3. ara bölgesinin 4. odasında köşe → KİRA: kule kur, sağ tık TAHLİYE (kalan kirayı peşin ödersin) | Gördüklerini yaz: basılı tutmak sıkıcı mı, bağ okunuyor mu, arkaya geçmek zevkli mi, kule kirası adil mi |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
+| 11 | ⚖️ **SİMSAR süresi — denge kararı** (teşhis 2026-10-18, `…OtopilotMenu.SimsarTeshis`) | Beklenen güçte bot SİMSAR'ı **990–1130 sn** oyun zamanında kesiyor (KEFİL 340 sn). Havuz kuralı suçlu değil: faz 2 havuzu yalnızca azalıyor, vuruş başı hasar aynı. Süreyi uzatan işaretler: bot zamanın yalnızca %25–44'ünde vurabiliyor (işaret kaçışı faz 1'de %23, faz 2'de %36–48). Faz 2 hasat vermediği için bota **~2400 sn saate** mal oldu (9–10 F5); 4. bölgede doyma tavanı ~615 sn. 4. boss ~16–19 dk sürsün mü, faz 2'nin saat bedeli bu mu kalsın? | Karar yaz |
+| 12 | 🤖 **Bot düzeltmesi onayı** | İşaretten çıkarken boss'u menzilde tutan nokta: SİMSAR %11 kısa (faz 1 %20), ama faz 2'de %22 fazla darbe. Ölçüm aracının davranışını değiştirdiği için uygulanmadı; patch `Logs/Otopilot/2026-10-18_17-49/simsar-isaret-cikisi.patch`. **Enes (2026-10-18): şimdilik uygulama, önce #11** | #11'den sonra "uygula" / "uygulama" |
 
 ---
 
@@ -221,6 +223,64 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 - [x] Uyuyan boss'un süre etiketi donuyordu → uykuda da güncelleniyor
 - [x] Otopilot K1 payı → "kapanıştan değil girişten yakın mı"
 - [x] Otopilot üst yazısı → sol üst
+
+---
+
+## 🧩 FAZ 33 — Silah başına 8 yükseltme + combo AÇAN yükseltmeler — **33a BİTTİ, Enes'in testini bekliyor** (2026-10-18)
+
+**✅ Enes'in cevapları (2026-10-18):**
+1. **ENDERLİK** — 4 tip: **YAYGIN · NADİR · EPİK · EFSANEVİ**. Mini boss'tan **1** yükseltme (yaygın ya da nadir). Ana boss'tan **1 yaygın/nadir + 1 epik/efsanevi**. Ayrıca **şansa bağlı**, enderlik bakılmaksızın sunaklarda da satılabilsin. ("bundan kaynaklı biraz daha güçlendirme eklenebilir")
+2. **Üst enderlikteki yükseltmelerin combo'ları da ekstra güçlü** olmalı (33c).
+3. Sunakta **rastgele 3**.
+4. Liste uygun, **33a'yla başla**.
+
+**33a yapı kararları (benim, Enes beğenmezse değişir):**
+- Silah başına 8 = **3 yaygın · 2 nadir · 2 epik (biri combo açan, 33c) · 1 efsanevi**. Mevcut 36 yükseltme de bu dağılıma yerleştirildi (aşağıdaki tablo).
+- Satış: sunak odasında (mini boss sonrası) 3 YAYGIN/NADİR sunak, **1 alım**. Boss odasında 3 YAYGIN/NADİR + 3 EPİK/EFSANEVİ, **her sıradan 1 alım**. **ŞANS SUNAĞI:** sunak odalarında %30 ihtimalle bir sunak daha — herhangi bir enderlik, fiyat ×1.5, 1 alım.
+- "Rastgele 3" ODA ve SİLAH başına sabit: silah değiştirip yeni zar atılamaz (istismar kapısı).
+- Fiyat enderlikle artıyor (yaygın ×1 · nadir ×1.5 · epik ×2.5 · efsanevi ×4 — kadran `Tuning`'de). Yasa: saniyeyle ödenir.
+- Yeni yükseltmeler sıranın SONUNA eklenir: eski 36'nın numarası değişmez, kayıtlar bozulmaz.
+
+**33a adımları (2026-10-18)**
+- [x] Yapı: `Enderlik` + `SunakGrubu`; 24 yeni yükseltme sıranın sonunda (kayıt uyumu); "rastgele 3" teklif ağırlıklı (yaygın 3 · nadir 2 · epik 2 · efsanevi 1), tohum koşu + sunak + silah; sunak teklifi silah başına önbellekte (alım yapınca kalanlar kaymıyor); grup başına 1 alım kayıtta (`upgradeGroupBought`); fiyat `Clock.SilahFiyatı(t, saat, enderlik)` — alım sayısıyla büyüme kalktı.
+- [x] Sunaklar: sunak odasında 3 mini (solda) + %30 şans sunağı (sağda); boss odasında 3 alt (iç halka) + 3 üst (dış halka).
+- [x] 24 yükseltmenin etkisi (KONİ · FAİZLİ · HACİZ · İPOTEK · İFLAS · REHİN). Düşmana etkiler `Enemy`'de (YORGUNLUK hazırlık ×1.3, İHTAR yavaşlık, TEHDİT saldırı başlatmama); İPOTEK işaretinin yükseltmeleri tek yerden (`İpotekYükselt`: normal ipotek + YAĞMUR damlası); sıçrama tek yerden (`Sıçrat`: SENET ZİNCİRİ, SIÇRAMA, DOMİNO).
+- [x] Kapılar: `Faz33SelfCheck` **35 kontrol** · **39 bozmanın hepsi kırmızı** (5 koşu; çift korunan iki kontrol — teklif önbelleği + tohum — ayrı koşularda; öz-incelemeden: şans fiyatı ×1.5 ve her mini boss'un sunağı ayrı sayılıyor) · tüm kapılar ✅. Faz 29 kapısı yeni sunak kuralına (3 + 3, her sıradan 1), Faz 31/32'nin "36 yükseltme" sayısı tablo tutarlılığına çevrildi; Faz 11 için enderlik fiyatı dizi değil dört kadran.
+- [x] Bot playtest'i (`Playtest33`) **2/2**: mini boss sunağında KONİ'nin 3 yaygın/nadir yükseltmesi (+ şans sunağı çıktı), [E] ile 1 alım, ikincisi kapalı · boss'ta 3 + 3, alınan HALKA bir daha teklif edilmedi, her sıradan 1 alım, sonra hepsi kapalı.
+- Eski `Playtest29` botunun "boss'ta 3 sunak" beklentisi 3 + 3'e çevrildi (alım adımı yeni kuralda da geçiyor: her sıradan 1).
+- ⚠️ Geçici boşluk: 33a'nın 6 silahında şimdilik 2 epik/efsanevi var (8.'si combo açan, 33c) → boss'un üst sırasının 3. sunağı "alınacak yükseltme kalmadı" diyor. 33b'nin 6 silahında (ÇEK, KARŞILIK, TAHVİL, MÜŞTEREK, ARBİTRAJ, KİRA) bugün HİÇ epik/efsanevi yok: o silah kuşanılıyken üst sıra boş — silah değiştirince doluyor. 33b ve 33c bunu kapatıyor.
+
+> Enes (2026-10-17): *"her bir silahın en az 8 geliştirmesi olacak. Bazı geliştirmeler de normalde combo olmayan
+> silahlar ile combo yapılabilmesini sağlayacak."* Bugün 12 silah × 3 = 36 yükseltme var. Öneri: silah başına
+> **+4 yükseltme** (48) ve **+1 combo açan** (12) → silah başına 8, toplam 96. İlke (fikir defteri): silah
+> göründüğü için değil KARARLARI değiştirdiği için özgün — yükseltme de sayı büyütmekten çok kararı değiştirsin.
+
+**Bugünkü satış:** ana boss'tan sonra kuşandığın silahın yükseltmeleri silah sunağında, **boss başına 2 alım**.
+Son boss oyunu bitirdiği için koşu başına **8 alım**. 96'lık havuzda 8 alım = her koşu farklı bir yapı (roguelike),
+ama silah başına 8'in çoğu hiç görülmez. → Soru 1–2 aşağıda.
+
+**Kayıt uyumu:** yeni yükseltmeler sıranın SONUNA ekleniyor (eski 36'nın numarası değişmiyor) — mevcut kayıtlar bozulmaz.
+
+*Silah başına 4 yeni yükseltme + 1 combo açan (🔗):*
+| Silah (sorusu) | 4 yeni yükseltme | 🔗 combo açan |
+|---|---|---|
+| **KONİ** (kaç kişiye birden) | KALABALIK (3+ düşmana değen savurmada hasat ×1.3) · YANKI (her 3. savurma yarım hasarla bir kez daha iner) · HALKA (dash-atak 360°) · YORGUNLUK (vurduklarının saldırı hazırlığı 1 sn ×1.3 uzar) | **SÜRÜ** — KONİ → MÜŞTEREK: MÜŞTEREK'in vuruşu KONİ'nin vurduğu herkesi (en çok 4) tek zincire takar |
+| **FAİZLİ** (bu savurma tutar mı) | SERMAYE (saat doyma tavanının üstündeyken bedel yarı) · SIÇRAMA (öldürünce yanındakine bedel kadar hasar) · KREDİ (bedeli ödeyemezken de savurur, borç sonraki hasattan düşer) · FAİZ ORANI (öldürme iadesi hasadı da ×1.3) | **TAKİP** — FAİZLİ → ARBİTRAJ: FAİZLİ'nin vurduğu düşman 2 sn sırtını döner |
+| **HACİZ** (yaklaşmalı mıyım) | GERİ ÇEKİL (vurunca 1 birim geri kayarsın, mesafe korunur) · İHTAR (vurulan 1 sn yavaşlar) · SON SÖZ (menzilin son çeyreğinde ×1.4) · UZUN VADE+ (özelin mesafe hasarı ×1.5) | **ÖNCELİK** — HACİZ → REHİN: HACİZ'in vurduğu uzaktaki düşmanı REHİN yanına çekip yakalar |
+| **İPOTEK** (nereye gidecekler) | ÇEKİM (patlamadan önce içindekileri merkeze hafif çeker) · ZİNCİR TAPU (patlama içindekilerden birinin yerine küçük ikinci işaret bırakır) · DERİN TEMEL (merkezde ×1.5) · BOŞ ARSA (boşa patlarsa sağ tık beklemesi −2 sn) | **TEMİNAT** — İPOTEK → KİRA: kule işaretin yerine kurulur, ilk 4 sn kira yok |
+| **İFLAS** (ne kadar dibe inerim) | CESARET (dipteyken alınan darbe −%20) · KURTARMA (dipte öldürünce +3 sn) · SON KUYRUK (saat 30'un altında dash beklemesi yarı) · TASFİYE+ (serinin son darbesi ×2) | **KONKORDATO** — İFLAS → KARŞILIK: İFLAS'ın vurduğunun yarısı KARŞILIK'ın birikenine yazılır |
+| **REHİN** (kimi tutayım) | SORGU (tutarken rehinenin havuzu akar, sana hasat olur) · DOMİNO (fırlatılan rehine çarptığından bir kez daha seker) · SIKI TUTUŞ (kalkan rehineyi yarı yıpratır) · TEHDİT (tutarken önündekiler saldırı başlatmaz) | **KEFALET** — REHİN → HACİZ: fırlatılan rehineye HACİZ'in ölü bölgesi yok, ×2 |
+| **ÇEK** (dönüş yolunu nasıl kurarım) | KARŞILIKSIZ+ (üç yerine beş çek) · TAHSİLAT (dönünce vurduğu düşman başına +0.5 sn) · YÖNELİM (sekince en yakın düşmana döner) · PROTESTO (dönerken yolundakileri sana çeker) | **CİRO HATTI** — ÇEK → İPOTEK: İPOTEK çekin yolu boyunca üç küçük işaret bırakır |
+| **KARŞILIK** (ne zaman karşılamalıyım) | YANKI (biriken iki vuruşa bölünür) · SABIR (3 sn tutulan biriken ×1.5) · RED (karşılanan saldırgan 1 sn saldıramaz) · TEMYİZ (İTİRAZ ×1.5 uzun) | **MUKABELE** — KARŞILIK → ÇEK: biriken çeke biner, her isabette taşır |
+| **TAHVİL** (ne kadar bekleyeyim) | ROLLOVER (basılıyken dash atınca olgunluk bir kez korunur) · KİLİT (3. kademede beklemek saat akıtmaz) · HAREKETLİ (basılıyken hareket ×0.8) · VADE SONU (3. kademe 360°) | **KUPON** — TAHVİL → KONİ: TAHVİL'in kademesi KONİ'nin açısına biner (kademe başına +30°) |
+| **MÜŞTEREK** (kimi kime bağlarım) | GENİŞ ORTAKLIK (ikinci vuruş üçüncüyü de bağlar) · MÜTESELSİL (bağlı biri ölünce öbürleri havuzunun %10'unu kaybeder) · ZİNCİRLEME+ (dört yerine altı) · ÇEKİŞME (bağlılar birbirine sürüklenir) | **ORTAKLIK** — MÜŞTEREK → İFLAS: İFLAS bağlıya vurursa yayılma %100 |
+| **ARBİTRAJ** (arkasına geçebilir miyim) | SESSİZ ADIM (görünmezken hareket ×1.3) · YAYILMA (arkadan vuruş yanındakine yarım iner) · KISA POZİSYON (arkadan öldürünce görünmezlik beklemesi sıfır) · ÇİFT İŞLEM (TERS İŞLEM iki kez vurur) | **SPEKÜLASYON** — ARBİTRAJ → TAHVİL: arkadan vuruştan sonra TAHVİL 1. kademe dolu başlar |
+| **KİRA** (bu alanı ne kadar tutayım) | ÇİFT KULE (aynı anda iki kule) · DEPOZİTO (süresi dolunca ödenen kiranın %30'u geri) · AİDAT TOPLAMA (kule öldürünce +1 sn) · SAĞLAM YAPI (TAŞINMA kuleyi bir kez daha uzatır, +3 sn) | **KİRA GELİRİ** — KİRA → FAİZLİ: kule ateş ederken FAİZLİ'nin bedelini kule öder (kiraya eklenir) |
+
+*Faz bölme önerisi* (tek faz çok büyük — Faz 32'nin 4 katı yükseltme):
+- **33a:** yapı (8 yuva, kayıt uyumu, satış düzeni — soru 1–2) + KONİ · FAİZLİ · HACİZ · İPOTEK · İFLAS · REHİN'in 4'er yükseltmesi
+- **33b:** ÇEK · KARŞILIK · TAHVİL · MÜŞTEREK · ARBİTRAJ · KİRA'nın 4'er yükseltmesi
+- **33c:** 12 combo açan yükseltme + 12 combo
 
 ---
 

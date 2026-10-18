@@ -81,9 +81,13 @@ namespace TekCan
         public int[] recallBoughtCounts = new int[0];
 
         // Faz 29 — SİLAH SUNAĞI: koşu boyu (ölüm geri almıyor — ana boss'un bölgesi geri gelmez).
-        // Bölge başına alım sayısı da burada: kapat-aç ile boss odasına dönüp yeniden almak olmasın.
         public int[] weaponUpgrades = new int[0];
-        public int[] weaponAltarBought = new int[0];
+
+        // Faz 33 — ENDERLİK: sunak grubu başına alım (mini boss sunağı, boss'un iki sırası, şans sunağı; kapat-aç
+        // ile sunağa dönüp yeniden almak olmasın diye kayıtta) ve
+        // koşunun teklif tohumu ("rastgele 3" oda ve silah başına sabit: silah değiştirip yeni zar atılamasın).
+        public int[] upgradeGroupBought = new int[0];
+        public int upgradeSeed;
 
         // Faz 30 — KADRO: açılan silahlar ve 3'lü envanter (koşu boyu; ölüm geri almıyor),
         // combo'ların "+" hâlleri ve combo sunağının bölge başına alımı.

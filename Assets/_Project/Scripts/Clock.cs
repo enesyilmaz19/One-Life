@@ -154,9 +154,14 @@ namespace TekCan
         }
 
         /// <summary>SİLAH SUNAĞI fiyatı (Faz 29): taban × 2 × artış^alınan, ama en az saatin %15'i.</summary>
-        public static float SilahFiyatı(Tuning t, int n, float saat)
-            => Mathf.Max(t.altarBasePrice * t.weaponAltarBaseMul * Mathf.Pow(t.altarPriceGrowth, n),
-                         t.weaponAltarPricePercent * saat);
+        /// <summary>
+        /// Silah yükseltmesi (Faz 33): taban ya da saatin yüzdesi, ENDERLİKLE çarpılı. ⚠️ Alım sayısıyla
+        /// büyümüyor artık: Faz 29'da koşu başına 8 alım vardı (24 × 1.15^8 ≈ 73 sn); mini boss sunaklarıyla
+        /// ~30 alımda aynı formül ~1600 sn ederdi. Kartopunu saatin yüzdesi zaten kesiyor (Faz 28).
+        /// </summary>
+        public static float SilahFiyatı(Tuning t, float saat, Enderlik e)
+            => Mathf.Max(t.altarBasePrice * t.weaponAltarBaseMul, t.weaponAltarPricePercent * saat)
+             * t.EnderlikFiyatı(e);
 
         /// <summary>Sunakta silah açma (Faz 30): taban ya da saatin %15'i; keşifte kaçırılmışsa iki kat.</summary>
         public static float SilahAçmaFiyatı(Tuning t, float saat, bool kaçırıldı)

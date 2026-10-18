@@ -130,6 +130,13 @@ namespace TekCan
         {
             if (_fired) return;
             _timer -= dt;
+            if (Çekim > 0f && _hitsEnemies)                                    // ÇEKİM (Faz 33)
+                foreach (var e in Enemy.All)
+                {
+                    if (e == null) continue;
+                    Vector3 d = transform.position - e.transform.position; d.y = 0f;
+                    if (d.magnitude - e.Radius <= _radius * 1.2f && d.magnitude > 0.3f) e.Push(d, Çekim);
+                }
             if (_timer > 0f) return;
             _fired = true;
             if (_hitsEnemies) ActiveLiens = Mathf.Max(0, ActiveLiens - 1);
@@ -141,6 +148,19 @@ namespace TekCan
         // ── COMBO kancaları (Faz 30) ──
         /// <summary>TAHLİYE (HACİZ KARARI+): patlama içindekileri dışa iter.</summary>
         public float İtme { get; set; }
+
+        // ── İPOTEK yükseltmeleri (Faz 33) ──
+        /// <summary>DERİN TEMEL: merkezde (yarıçapın yarısı içinde) hasar × bu.</summary>
+        public float MerkezÇarpanı { get; set; } = 1f;
+        /// <summary>ÇEKİM: beklerken içindekileri merkeze çeken itme.</summary>
+        public float Çekim { get; set; }
+        /// <summary>ZİNCİR TAPU'nun bıraktığı ikinci işaret — o bir daha zincirlemez.</summary>
+        public bool İkincil { get; set; }
+        /// <summary>Patlayınca (oyuncu ipoteği): BOŞ ARSA ve ZİNCİR TAPU buradan.</summary>
+        public System.Action<GroundMark> Patladı;
+        public readonly System.Collections.Generic.List<Vector3> VurulanYerler = new System.Collections.Generic.List<Vector3>();
+        public float Hasar => _enemyDamage;
+        public float HasatÇarpanı => _harvestMult;
         public bool Bekliyor => _hitsEnemies && !_fired;
         public float Yarıçap => _radius;
 
@@ -181,7 +201,7 @@ namespace TekCan
                       _hitsEnemies ? LienBlastColor : WarnBlastColor, 0.25f, scaleFrom: 0.9f, scaleTo: 1.25f);
             Sfx.Slam();
 
-            if (_hitsEnemies) { VurDüşmanlara(); return; }
+            if (_hitsEnemies) { VurDüşmanlara(); Patladı?.Invoke(this); return; }
 
             if (_player == null) return;
 
@@ -217,7 +237,9 @@ namespace TekCan
                 d.y = 0f;
                 if (d.magnitude - e.Radius > _radius) continue;
 
-                e.TakeDamage(_enemyDamage, _harvestMult);
+                VurulanYerler.Add(e.transform.position);                       // ÖNCE: vuruş öldürebilir
+                float merkez = d.magnitude <= _radius * 0.5f ? MerkezÇarpanı : 1f;   // DERİN TEMEL (Faz 33)
+                e.TakeDamage(_enemyDamage * merkez, _harvestMult);
                 if (İtme > 0f) e.Push(d, İtme);              // TAHLİYE (Faz 30)
                 EnemiesHit++;
             }

@@ -521,8 +521,9 @@ namespace TekCan.EditorTools
             var kategoriler = yeniler.Select(w => Weapon.All[w].Category(_t)).Distinct().Count();
             failed += Check(ref total, $"yeni silahların sağ tığı ve dash-atağı HUD'da anlatılıyor ({eksik} eksik), kategorileri ayrı ({kategoriler}/3)",
                             eksik == 0 && kategoriler == 3, eksik);
-            failed += Check(ref total, $"yükseltme tablosu tam: {Weapon.All.Length} silah × 3 = {SilahSunağı.Toplam} (ad {SilahSunağı.Ad.Length}, açıklama {SilahSunağı.NeYapar.Length})",
-                            SilahSunağı.Toplam == Weapon.All.Length * 3 && SilahSunağı.Ad.Length == SilahSunağı.Toplam
+            failed += Check(ref total, $"yükseltme tablosu tam: {SilahSunağı.Toplam} yükseltme (ad {SilahSunağı.Ad.Length}, açıklama {SilahSunağı.NeYapar.Length}); yeni üç silahın 3'er yükseltmesi",
+                            new[] { Kadro.REHİN, Kadro.ÇEK, Kadro.KARŞILIK }.All(w => SilahSunağı.Yükseltmeleri(w).Count >= 3)
+                            && SilahSunağı.Ad.Length == SilahSunağı.Toplam
                             && SilahSunağı.NeYapar.Length == SilahSunağı.Toplam
                             && System.Enum.GetValues(typeof(SilahYükseltme)).Length == SilahSunağı.Toplam, SilahSunağı.Ad.Length);
             failed += Check(ref total, $"her combo'nun \"+\" hâli var ({Combo.Sayı} combo)",

@@ -182,6 +182,13 @@ namespace TekCan
         /// yani "ne kadar hazırım" sorusu somut bir düşmana bakarak soruluyor.
         /// </summary>
         public bool IsAltarRoom => Tür(_t, Room) == OdaTürü.Sunak;
+
+        /// <summary>Bu odanın silah sunağı grubunun kayıt anahtarı (Faz 33) — sunak da şans zarı da buradan.</summary>
+        public int SunakAnahtarı(SunakGrubu g)
+        {
+            int S = Mathf.Max(1, _t.subRegionsPerRegion);
+            return SilahSunağı.Anahtar(RegionIndex, IsBossRoom ? S : SubRegion, S, g);
+        }
         public bool Cleared { get; private set; }
         public RoomLayout Layout { get; private set; }
 
@@ -364,7 +371,9 @@ namespace TekCan
             if (IsBossRoom)
             {
                 Kadro.BossAçılışı(RegionIndex);              // Faz 30: her boss bir silah açıyor
-                Bootstrap.SpawnWeaponAltars(_t, _player, _roomRoot.transform);
+                // Faz 33 (Enes): boss'tan 1 yaygın/nadir + 1 epik/efsanevi.
+                Bootstrap.SpawnWeaponAltars(_t, _player, _roomRoot.transform, SunakGrubu.BossAlt);
+                Bootstrap.SpawnWeaponAltars(_t, _player, _roomRoot.transform, SunakGrubu.BossÜst);
                 Bootstrap.SpawnLoadoutAltar(_t, _player, _roomRoot.transform);
                 var combo = Combo.Satılık(RegionIndex);
                 if (combo.HasValue) Bootstrap.SpawnComboAltar(_t, _player, _roomRoot.transform, combo.Value);
@@ -617,6 +626,10 @@ namespace TekCan
             // Faz 30: envanter burada düzenleniyor; sırası gelen (ya da keşifte kaçırılan) silah satılıyor.
             Bootstrap.SpawnLoadoutAltar(_t, _player, _roomRoot.transform);
             Bootstrap.SpawnUnlockAltars(_t, _player, _roomRoot.transform, Kadro.Satılıklar(RegionIndex, SubRegion));
+            // Faz 33 (Enes): mini boss'tan 1 yaygın/nadir; şansa bağlı, enderlik bakılmaksızın bir sunak daha.
+            Bootstrap.SpawnWeaponAltars(_t, _player, _roomRoot.transform, SunakGrubu.Mini);
+            if (SilahSunağı.ŞansVar(_t, SunakAnahtarı(SunakGrubu.Şans)))
+                Bootstrap.SpawnWeaponAltars(_t, _player, _roomRoot.transform, SunakGrubu.Şans);
         }
 
         static bool AnyEnemyAlive()

@@ -287,25 +287,29 @@ namespace TekCan.EditorTools
             foreach (var e in Enemy.All.ToArray()) if (e != null) Object.DestroyImmediate(e.gameObject);
             Enemy.All.Clear();
             güncelle.Invoke(rm, null);                                                 // boss düştü
+            // Faz 33 (Enes): boss'tan 1 yaygın/nadir (alt sıra) + 1 epik/efsanevi (üst sıra), her sırada teklifin 3'ü.
             var silahSunakları = Altar.All.Where(a => a != null && a.Type == Altar.Kind.Weapon).ToList();
-            failed += Check(ref total, $"⚠️⚠️ ana boss düşünce boss odası SİLAH SUNAĞI'na dönüyor ({silahSunakları.Count} sunak, saat {(clock.Frozen ? "DURDU" : "akıyor")})",
-                            silahSunakları.Count == SilahSunağı.SilahBaşına && clock.Frozen, silahSunakları.Count);
-            if (silahSunakları.Count < SilahSunağı.SilahBaşına) { Temizle(); Object.DestroyImmediate(rmGo); RoomManager.Reset(); return failed; }
+            var alt = silahSunakları.Where(a => a.Grup == SunakGrubu.BossAlt).ToList();
+            var üst = silahSunakları.Where(a => a.Grup == SunakGrubu.BossÜst).ToList();
+            failed += Check(ref total, $"⚠️⚠️ ana boss düşünce boss odası SİLAH SUNAĞI'na dönüyor ({alt.Count} yaygın/nadir + {üst.Count} epik/efsanevi sunak, saat {(clock.Frozen ? "DURDU" : "akıyor")})",
+                            alt.Count == SilahSunağı.TeklifSayısı && üst.Count == SilahSunağı.TeklifSayısı && clock.Frozen, silahSunakları.Count);
+            if (alt.Count < 2 || üst.Count < 1) { Temizle(); Object.DestroyImmediate(rmGo); RoomManager.Reset(); return failed; }
 
-            string önceEtiket = silahSunakları[0].Label();
+            var önce = alt[0].Yükseltme();
             pc.SetWeapon(3);                                                           // İPOTEK
-            string sonraEtiket = silahSunakları[0].Label();
-            failed += Check(ref total, $"⚠️ sunak KUŞANILAN silahınkini satıyor (silah değişince: '{önceEtiket.Split('—')[0].Trim()}' → '{sonraEtiket.Split('—')[0].Trim()}')",
-                            önceEtiket.Contains(SilahSunağı.Ad[0]) && sonraEtiket.Contains(SilahSunağı.Ad[(int)SilahYükseltme.ÇiftTapu]), 0f);
+            var sonra = alt[0].Yükseltme();
+            failed += Check(ref total, $"⚠️ sunak KUŞANILAN silahın teklifini satıyor (silah değişince: {(önce.HasValue ? SilahSunağı.Ad[(int)önce.Value] : "—")} → {(sonra.HasValue ? SilahSunağı.Ad[(int)sonra.Value] : "—")})",
+                            önce.HasValue && SilahSunağı.Silahı(önce.Value) == 0 && sonra.HasValue && SilahSunağı.Silahı(sonra.Value) == 3, 0f);
 
             float s0 = clock.Seconds;
-            al.Invoke(silahSunakları[0], null); al.Invoke(silahSunakları[1], null);
-            bool üçüncüKapalı = silahSunakları[2].SoldOut;
-            al.Invoke(silahSunakları[2], null);
-            failed += Check(ref total, $"⚠️ boss başına {t.weaponAltarPurchases} alım: ÇİFT TAPU + HIZLI TAPU alındı, üçüncü kapalı ({SilahSunağı.AlınanSayısı} yükseltme, {s0 - clock.Seconds:0} sn ödendi)",
-                            SilahSunağı.Var(SilahYükseltme.ÇiftTapu) && SilahSunağı.Var(SilahYükseltme.HızlıTapu)
-                            && !SilahSunağı.Var(SilahYükseltme.GenişArsa) && üçüncüKapalı && SilahSunağı.AlınanSayısı == 2
-                            && s0 - clock.Seconds > 0f, SilahSunağı.AlınanSayısı);
+            var a0 = alt[0].Yükseltme(); var a1 = alt[1].Yükseltme(); var ü0 = üst[0].Yükseltme();
+            al.Invoke(alt[0], null);
+            bool ikinciKapalı = alt[1].SoldOut;
+            al.Invoke(alt[1], null);
+            al.Invoke(üst[0], null);
+            failed += Check(ref total, $"⚠️ her sıradan 1 alım: alt sıradan biri alındı, ikincisi kapalı; üst sıradan biri alındı ({SilahSunağı.AlınanSayısı} yükseltme, {s0 - clock.Seconds:0} sn ödendi)",
+                            a0.HasValue && SilahSunağı.Var(a0.Value) && a1.HasValue && !SilahSunağı.Var(a1.Value) && ikinciKapalı
+                            && ü0.HasValue && SilahSunağı.Var(ü0.Value) && SilahSunağı.AlınanSayısı == 2 && s0 - clock.Seconds > 0f, SilahSunağı.AlınanSayısı);
 
             // MUAFİYET: aynı düşmanın vuruşu ucuzluyor · SABIR: sağ tık beklemesi kısalıyor
             gir.Invoke(rm, new object[] { 3 });

@@ -85,15 +85,27 @@ namespace TekCan
         public MusterekBag Bağ { get; set; }
 
         PlayerController _oyuncu;
-        /// <summary>ARBİTRAJ · AÇIK POZİSYON (Faz 32): oyuncu görünmezken yeni saldırı başlamaz.</summary>
-        bool OyuncuGörünmez
+        /// <summary>
+        /// Yeni saldırı başlatamaz: oyuncu görünmez (ARBİTRAJ · AÇIK POZİSYON, Faz 32) ya da rehine
+        /// tutarken bu düşman önünde (REHİN · TEHDİT, Faz 33).
+        /// </summary>
+        bool SaldıramazOyuncu
         {
             get
             {
                 if (_oyuncu == null && _player != null) _oyuncu = _player.GetComponent<PlayerController>();
-                return _oyuncu != null && _oyuncu.Görünmez;
+                return _oyuncu != null && (_oyuncu.Görünmez || _oyuncu.Tehdit(this));
             }
         }
+
+        // Faz 33 — silah yükseltmelerinin düşmana etkileri (dt'li, TickState sayıyor).
+        float _yorgunKalan, _yavaşKalan, _yavaşÇarpan = 1f;
+        /// <summary>KONİ · YORGUNLUK: bu süre boyunca saldırı hazırlığı ×1.3 uzun.</summary>
+        public void Yor(float sn) => _yorgunKalan = Mathf.Max(_yorgunKalan, sn);
+        /// <summary>HACİZ · İHTAR: bu süre boyunca hız × çarpan.</summary>
+        public void Yavaşlat(float sn, float çarpan) { _yavaşKalan = Mathf.Max(_yavaşKalan, sn); _yavaşÇarpan = çarpan; }
+        public bool Yorgun => _yorgunKalan > 0f;
+        public bool Yavaş => _yavaşKalan > 0f;
         public void RehinAl(PlayerController p) => Tutan = p;
         public void Bırak() => Tutan = null;
 
@@ -188,7 +200,8 @@ namespace TekCan
                          * Kind.SpeedMultiplier
                          * Rank.SpeedMultiplier                                // ZIRHLI / İRİ ağır
                          * Mathf.Min(Growth, 1.5f)                             // ZAMANAŞIMI (hafif)
-                         * (Fleeing ? _t.runnerFleeSpeedMultiplier : 1f);
+                         * (Fleeing ? _t.runnerFleeSpeedMultiplier : 1f)
+                         * (_yavaşKalan > 0f ? _yavaşÇarpan : 1f);                 // HACİZ · İHTAR (Faz 33)
         float HitCost => (Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost)
                        * Region.HitCost                            // AĞIRLIK bölgesi kuralı
                        * Growth                                    // ZAMANAŞIMI
@@ -467,6 +480,8 @@ namespace TekCan
         void TickState(float dt)
         {
             _stateTimer -= dt;
+            _yorgunKalan -= dt;
+            _yavaşKalan -= dt;
 
             // ⚠️ Savrulma DURUMDAN BAĞIMSIZ: hazırlıktayken de vurulunca savrulmalı,
             // yoksa "ağır darbe" yalnızca kovalarken görünür ve tesadüfi hissedilir.
@@ -477,7 +492,7 @@ namespace TekCan
                 case State.Chase:
                     _attackTimer -= dt;
                     ChaseMove(dt);
-                    if (_attackTimer <= 0f && !OyuncuGörünmez && SaldırıyaHazır(dt)) EnterWindup();
+                    if (_attackTimer <= 0f && !SaldıramazOyuncu && SaldırıyaHazır(dt)) EnterWindup();
                     break;
 
                 case State.Windup:
@@ -755,6 +770,7 @@ namespace TekCan
             float dur = _attack != null && _attack.WindupSeconds > 0f
                       ? _attack.WindupSeconds
                       : WindupDuration * (_attack?.WindupMul ?? 1f) + TepkiPayı;
+            if (_yorgunKalan > 0f) dur *= 1.3f;                                   // KONİ · YORGUNLUK (Faz 33)
             EnterState(State.Windup, dur);
             // ORTAYA SIÇRAMA (TAM TAHSİL): uyarı çizilmeden ÖNCE — halka ortadan çiziliyor.
             if (_attack != null && _attack.ArenaOranı > 0f)

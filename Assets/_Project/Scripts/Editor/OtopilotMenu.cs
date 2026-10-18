@@ -56,6 +56,15 @@ namespace TekCan.EditorTools
 
         public static void Playtest32() => Başlat(izle: false, senaryo: "p32");
 
+        /// <summary>Faz 33a playtest'i: mini boss sunağında 1 yaygın/nadir, boss sunağında 1 + 1 epik/efsanevi — gerçek odalarda, [E] ile. ~10 dk.</summary>
+        [MenuItem("Tek Can/Otopilot — Faz 33 playtest (izle)")]
+        public static void Playtest33Izle() => Başlat(izle: true, senaryo: "p33");
+
+        public static void Playtest33() => Başlat(izle: false, senaryo: "p33");
+
+        /// <summary>Teşhis (2026-10-18): P32'nin yolunda 3. boss (kontrol) ve SİMSAR, 10 sn'de bir `[BOSS-NABIZ]`. ≤ 50 dk.</summary>
+        public static void SimsarTeshis() => Başlat(izle: false, senaryo: "simsar");
+
         /// <summary>Faz 27 ölçümü: bütün bölgeler atlamadan, bir tam koşu kaç dakika (Enes 2026-10-12).</summary>
         [MenuItem("Tek Can/Otopilot — tam koşu ölçümü (izle)")]
         public static void TamKosuIzle() => Başlat(izle: true, senaryo: "tam");

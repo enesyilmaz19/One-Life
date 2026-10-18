@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace TekCan
@@ -125,8 +126,21 @@ namespace TekCan
         KısaVade, YüksekFaiz, İskonto,         // TAHVİL (Faz 32)
         SıkıBağ, UzunBağ, OrtakHasat,          // MÜŞTEREK
         KeskinBıçak, GenişAçı, Gölge,          // ARBİTRAJ
-        UcuzKira, GenişArazi, UzunKontrat      // KİRA
+        UcuzKira, GenişArazi, UzunKontrat,     // KİRA
+        // Faz 33a — silah başına +4. Sıranın SONUNA: eski 36'nın numarası değişmiyor, kayıtlar bozulmuyor.
+        Kalabalık, Yankı, Halka, Yorgunluk,            // KONİ
+        Sermaye, FaizOranı, Sıçrama, FaizsizKredi,     // FAİZLİ
+        İhtar, SonSöz, UzunVadeArtı, GeriÇekil,        // HACİZ
+        BoşArsa, DerinTemel, Çekim, ZincirTapu,        // İPOTEK
+        SonKuyruk, Cesaret, Kurtarma, İflasZinciri,    // İFLAS
+        SıkıTutuş, Sorgu, Domino, Tehdit               // REHİN
     }
+
+    /// <summary>Faz 33 — yükseltmenin enderliği (Enes 2026-10-18). Silah başına hedef: 3 yaygın · 2 nadir · 2 epik · 1 efsanevi.</summary>
+    public enum Enderlik { Yaygın, Nadir, Epik, Efsanevi }
+
+    /// <summary>Faz 33 — sunak grubu: hangi enderlikleri satar, kaç alım (her gruptan 1).</summary>
+    public enum SunakGrubu { Mini, BossAlt, BossÜst, Şans }
 
     public static class SilahSunağı
     {
@@ -146,6 +160,12 @@ namespace TekCan
             "SIKI BAĞ", "UZUN BAĞ", "ORTAK HASAT",
             "KESKİN BIÇAK", "GENİŞ AÇI", "GÖLGE",
             "UCUZ KİRA", "GENİŞ ARAZİ", "UZUN KONTRAT",
+            "KALABALIK", "YANKI", "HALKA", "YORGUNLUK",
+            "SERMAYE", "FAİZ ORANI", "SIÇRAMA", "FAİZSİZ KREDİ",
+            "İHTAR", "SON SÖZ", "UZUN VADE+", "GERİ ÇEKİL",
+            "BOŞ ARSA", "DERİN TEMEL", "ÇEKİM", "ZİNCİR TAPU",
+            "SON KUYRUK", "CESARET", "KURTARMA", "İFLAS ZİNCİRİ",
+            "SIKI TUTUŞ", "SORGU", "DOMİNO", "TEHDİT",
         };
 
         public static readonly string[] NeYapar =
@@ -162,11 +182,110 @@ namespace TekCan
             "bağlıya yayılan hasar %60 → %90", "bağın süresi ×2", "yayılan hasarın hasadı tam (yarım değil)",
             "arkadan ×3.5", "arka sayılan açı 120° → 90°", "görünmezlik ×1.5",
             "kira ×0.6", "kule menzili ×1.4", "kulenin ömrü ×1.5",
+            "3+ düşmana değen savurmada hasat ×1.3", "her savurma yarım hasarla bir kez daha iner", "dash-atak çevrendeki herkese (360°)", "vurduklarının saldırı hazırlığı 2 sn boyunca ×1.3 uzun",
+            "saat doyma tavanının üstündeyken savurma bedeli yarı", "öldürme iadesi ×2 → ×2.6", "öldürünce yanındakine aynı hasar sıçrar", "isabet eden savurma bedel ödemez",
+            "vurulan 1.5 sn yarı hızla yürür", "menzilin son çeyreğinde vuruş ×1.4", "UZUN VADE'nin mesafe hasarı ×1.5", "vurunca bir adım geri kayarsın — mesafe korunur",
+            "işaret boşa patlarsa İPOTEK'in sağ tık beklemesi −2 sn", "işaretin merkezinde hasar ×1.5", "patlamadan önce içindekileri merkeze çeker", "patlama vurduklarından birinin yerine küçük ikinci işaret bırakır",
+            "saat 30'un altındayken dash beklemesi yarı", "dipteyken alınan darbe −%20", "dipteyken öldürünce +3 sn", "TASFİYE öldürürse beklemesi sıfırlanır",
+            "kalkan rehineyi yarı yıpratır", "tutarken rehinenin havuzu akar, sana hasat olur", "fırlatılan rehine çarptığından bir kez daha seker", "tutarken önündekiler saldırı başlatmaz",
         };
 
-        public static int Toplam => Weapon.All.Length * SilahBaşına;
-        public static int Silahı(SilahYükseltme y) => (int)y / SilahBaşına;
-        public static SilahYükseltme Yuvası(int silah, int yuva) => (SilahYükseltme)(silah * SilahBaşına + yuva);
+        // Enderlik — sıra `SilahYükseltme` ile aynı (Y yaygın · N nadir · E epik · F efsanevi).
+        const Enderlik Y = Enderlik.Yaygın, N = Enderlik.Nadir, E = Enderlik.Epik, F = Enderlik.Efsanevi;
+        public static readonly Enderlik[] Ender =
+        {
+            Y, Y, N,   N, Y, Y,   Y, N, Y,   E, Y, Y,   Y, N, Y,   Y, Y, N,      // KONİ … REHİN
+            N, Y, Y,   Y, Y, N,   Y, Y, N,   Y, Y, N,   N, Y, Y,   Y, Y, N,      // ÇEK … KİRA
+            N, F, Y, E,   Y, N, E, F,   Y, N, E, F,   Y, N, N, F,   Y, N, E, F,   Y, N, E, F,   // Faz 33a
+        };
+
+        public static readonly string[] EnderlikAdı = { "YAYGIN", "NADİR", "EPİK", "EFSANEVİ" };
+
+        public static int Toplam => System.Enum.GetValues(typeof(SilahYükseltme)).Length;
+
+        // İlk 36 (Faz 29–32) silah × 3 + yuva sırasında; Faz 33'ten sonrakiler sonda, silahı tabloda.
+        const int İlkSıra = 36;
+        static int[] _ekSilah;
+        static int[] EkSilah => _ekSilah ??= new[]
+        {
+            Kadro.KONİ, Kadro.KONİ, Kadro.KONİ, Kadro.KONİ,     Kadro.FAİZLİ, Kadro.FAİZLİ, Kadro.FAİZLİ, Kadro.FAİZLİ,
+            Kadro.HACİZ, Kadro.HACİZ, Kadro.HACİZ, Kadro.HACİZ, Kadro.İPOTEK, Kadro.İPOTEK, Kadro.İPOTEK, Kadro.İPOTEK,
+            Kadro.İFLAS, Kadro.İFLAS, Kadro.İFLAS, Kadro.İFLAS, Kadro.REHİN, Kadro.REHİN, Kadro.REHİN, Kadro.REHİN,
+        };
+
+        public static int Silahı(SilahYükseltme y) => (int)y < İlkSıra ? (int)y / SilahBaşına : EkSilah[(int)y - İlkSıra];
+
+        /// <summary>Bir silahın bütün yükseltmeleri, sırayla.</summary>
+        public static List<SilahYükseltme> Yükseltmeleri(int silah)
+        {
+            var l = new List<SilahYükseltme>();
+            for (int i = 0; i < Toplam; i++) if (Silahı((SilahYükseltme)i) == silah) l.Add((SilahYükseltme)i);
+            return l;
+        }
+
+        public static SilahYükseltme Yuvası(int silah, int yuva) => Yükseltmeleri(silah)[yuva];
+
+        // ── TEKLİF (Faz 33): sunak grubu, enderlik, rastgele 3 ──
+        public const int TeklifSayısı = 3;
+        static readonly Enderlik[][] Gruplar =
+        {
+            new[] { Enderlik.Yaygın, Enderlik.Nadir },                                  // mini boss sunağı
+            new[] { Enderlik.Yaygın, Enderlik.Nadir },                                  // boss: alt sıra
+            new[] { Enderlik.Epik, Enderlik.Efsanevi },                                 // boss: üst sıra
+            new[] { Enderlik.Yaygın, Enderlik.Nadir, Enderlik.Epik, Enderlik.Efsanevi }, // şans sunağı
+        };
+        static readonly int[] Ağırlık = { 3, 2, 2, 1 };                                 // yaygın sık, efsanevi seyrek
+
+        public static bool Satar(SunakGrubu g, Enderlik e) => System.Array.IndexOf(Gruplar[(int)g], e) >= 0;
+
+        /// <summary>Koşunun teklif tohumu — yeni koşuda bir kez atılıyor, kayıtta (devam edince aynı teklifler).</summary>
+        public static int Tohum
+        {
+            get
+            {
+                var s = SaveFile.Current;
+                if (s == null) return 1;
+                if (s.upgradeSeed == 0) s.upgradeSeed = UnityEngine.Random.Range(1, int.MaxValue);
+                return s.upgradeSeed;
+            }
+        }
+
+        /// <summary>Sunak grubunun kayıt anahtarı: bölge × ara bölge (boss odası = son ara bölgeden sonra) × grup.</summary>
+        public static int Anahtar(int bölge, int araBölge, int araBölgeSayısı, SunakGrubu g)
+            => (bölge * (araBölgeSayısı + 1) + araBölge) * 4 + (int)g;
+
+        /// <summary>
+        /// Teklif: silahın bu grubun enderliklerinden ALINMAMIŞ yükseltmeleri arasından ağırlıklı rastgele 3. Tohum
+        /// koşu + sunak anahtarı + silah — silah değiştirip dönünce aynı teklif (yeni zar yok).
+        /// </summary>
+        public static List<SilahYükseltme> Teklif(int silah, SunakGrubu g, int anahtar)
+        {
+            var aday = new List<SilahYükseltme>();
+            foreach (var y in Yükseltmeleri(silah)) if (Satar(g, Ender[(int)y]) && !Var(y)) aday.Add(y);
+            var r = new System.Random(unchecked(Tohum * 31 + anahtar * 7919 + silah * 104729));
+            var seçilen = new List<SilahYükseltme>();
+            while (seçilen.Count < TeklifSayısı && aday.Count > 0)
+            {
+                int toplam = 0;
+                foreach (var y in aday) toplam += Ağırlık[(int)Ender[(int)y]];
+                int zar = r.Next(toplam), i = 0;
+                while (zar >= Ağırlık[(int)Ender[(int)aday[i]]]) { zar -= Ağırlık[(int)Ender[(int)aday[i]]]; i++; }
+                seçilen.Add(aday[i]);
+                aday.RemoveAt(i);
+            }
+            return seçilen;
+        }
+
+        /// <summary>Bu sunak odasında ŞANS sunağı var mı — koşunun tohumundan, odaya sabit.</summary>
+        public static bool ŞansVar(Tuning t, int anahtar)
+            => new System.Random(unchecked(Tohum * 17 + anahtar * 31337)).NextDouble() < t.chanceAltarProbability;
+
+        public static int GrupAlımı(int anahtar)
+        {
+            var s = SaveFile.Current;
+            return s != null && s.upgradeGroupBought != null && anahtar >= 0 && anahtar < s.upgradeGroupBought.Length
+                 ? s.upgradeGroupBought[anahtar] : 0;
+        }
 
         public static bool Var(SilahYükseltme y)
         {
@@ -186,23 +305,16 @@ namespace TekCan
             }
         }
 
-        /// <summary>Bu bölgenin boss'undan sonra kaç yükseltme alındı (boss başına sınır için).</summary>
-        public static int BölgeAlımı(int bölge)
-        {
-            var s = SaveFile.Current;
-            return s != null && s.weaponAltarBought != null && bölge < s.weaponAltarBought.Length
-                 ? s.weaponAltarBought[bölge] : 0;
-        }
-
-        /// <summary>Yükseltmeyi kayda yaz ve bölgenin alım sayısını artır — kaydın TEK yazma yolu.</summary>
-        public static void Al(SilahYükseltme y, int bölge)
+        /// <summary>Yükseltmeyi kayda yaz ve sunak grubunun alım sayısını artır — kaydın TEK yazma yolu.</summary>
+        public static void Al(SilahYükseltme y, int anahtar)
         {
             var s = SaveFile.Current;
             if (s == null) return;
             s.weaponUpgrades = SaveFile.Büyüt(s.weaponUpgrades, Toplam);
-            s.weaponAltarBought = SaveFile.Büyüt(s.weaponAltarBought, bölge + 1);
             s.weaponUpgrades[(int)y] = 1;
-            s.weaponAltarBought[bölge]++;
+            if (anahtar < 0) return;
+            s.upgradeGroupBought = SaveFile.Büyüt(s.upgradeGroupBought, anahtar + 1);
+            s.upgradeGroupBought[anahtar]++;
         }
 
     }

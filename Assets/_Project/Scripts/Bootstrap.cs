@@ -317,14 +317,26 @@ namespace TekCan
         /// SİLAH SUNAĞI (Faz 29) — ana boss düşünce boss odasının ortasında üç sunak: kuşanılan
         /// silahın üç yükseltmesi. Silah değişince sunaklar da değişiyor.
         /// </summary>
-        public static void SpawnWeaponAltars(Tuning t, Transform player, Transform parent)
+        /// <summary>
+        /// SİLAH SUNAKLARI (Faz 33): grup başına teklifin 3'ü. Boss odasında alt sıra (yaygın/nadir) iç halkada,
+        /// üst sıra (epik/efsanevi) dış halkada; sunak odasında mini sıra solda, şans sunağı sağda.
+        /// </summary>
+        public static void SpawnWeaponAltars(Tuning t, Transform player, Transform parent, SunakGrubu grup)
         {
-            for (int i = 0; i < SilahSunağı.SilahBaşına; i++)
+            if (grup == SunakGrubu.Şans)
             {
-                float a = (360f / SilahSunağı.SilahBaşına) * i * Mathf.Deg2Rad + Mathf.PI * 0.5f;
-                float r = t.arenaRadius * 0.22f;
+                SpawnAltar(t, new Vector3(t.arenaRadius * 0.5f, ArenaCenter.y, 0f), player, Altar.Kind.Weapon, parent, 0, grup);
+                return;
+            }
+            for (int i = 0; i < SilahSunağı.TeklifSayısı; i++)
+            {
+                float derece = grup == SunakGrubu.Mini ? 160f + 20f * i
+                             : grup == SunakGrubu.BossAlt ? 90f + 120f * i
+                             : 150f + 120f * i;
+                float r = t.arenaRadius * (grup == SunakGrubu.Mini ? 0.5f : grup == SunakGrubu.BossAlt ? 0.22f : 0.42f);
+                float a = derece * Mathf.Deg2Rad;
                 SpawnAltar(t, new Vector3(Mathf.Cos(a) * r, ArenaCenter.y, Mathf.Sin(a) * r),
-                           player, Altar.Kind.Weapon, parent, i);
+                           player, Altar.Kind.Weapon, parent, i, grup);
             }
         }
 
@@ -375,7 +387,7 @@ namespace TekCan
         }
 
         static void SpawnAltar(Tuning t, Vector3 pos, Transform player, Altar.Kind kind,
-                               Transform parent = null, int yuva = 0)
+                               Transform parent = null, int yuva = 0, SunakGrubu grup = SunakGrubu.Mini)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = "Altar_" + kind;
@@ -383,7 +395,7 @@ namespace TekCan
             go.transform.position = pos + Vector3.up * 0.2f;
             go.transform.localScale = new Vector3(0.7f, 1.1f, 0.7f);
             Object.Destroy(go.GetComponent<Collider>());
-            go.AddComponent<Altar>().Init(t, player, kind, yuva);
+            go.AddComponent<Altar>().Init(t, player, kind, yuva, grup);
         }
 
         /// <summary>

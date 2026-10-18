@@ -294,6 +294,10 @@ namespace TekCan
                 ? new[] { Kurulum(), P31(), Bitir() }
                 : senaryo == "p32"
                 ? new[] { Kurulum(), P32(), Bitir() }
+                : senaryo == "p33"
+                ? new[] { Kurulum(), P33(), Bitir() }
+                : senaryo == "simsar"
+                ? new[] { Kurulum(), SimsarTeşhis(), Bitir() }
                 : SessionState.GetInt(AdımAnahtar, 0) == 0
                 ? new[] { Kurulum(), GirdiKanıtı(), K1Hazırla() }          // K1: Play'den çıkıp giriyor
                 : new[] { K1Doğrula(), Bölge1(), Sunak(), Tahsildar(), Haciz(), Simsar(), Final(), Bitir() };
@@ -404,7 +408,8 @@ namespace TekCan
             yield return Bekle(1f);
             int sunak = 0;
             foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.Weapon) sunak++;
-            Kaydet("29-1", "Boss düşünce SİLAH SUNAĞI", sunak == 3 && Saat.Frozen,
+            // Faz 33 (Enes): boss'ta iki sıra — 3 yaygın/nadir + 3 epik/efsanevi.
+            Kaydet("29-1", "Boss düşünce SİLAH SUNAĞI (3 + 3)", sunak == 2 * SilahSunağı.TeklifSayısı && Saat.Frozen,
                    $"{sunak} sunak · saat {(Saat.Frozen ? "durdu" : "AKIYOR")}");
 
             Kuşan(Kadro.İPOTEK); yield return Bekle(0.5f);
@@ -425,7 +430,7 @@ namespace TekCan
             }
             bool kapalı = true;
             foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.Weapon && !a.SoldOut) kapalı = false;
-            Kaydet("29-2", "Silah sunağında iki alım, üçüncüsü kapalı", alınan.Count == 2 && kapalı,
+            Kaydet("29-2", "Silah sunağında her sıradan bir alım (iki), sonra hepsi kapalı", alınan.Count == 2 && kapalı,
                    $"{string.Join(", ", alınan)} · {s0 - Saat.Seconds:0} sn ödendi");
 
             // 2) İPOTEK — sonraki bölgenin ilk odası
@@ -860,6 +865,72 @@ namespace TekCan
             yield return BossuÖldür(sınır);
         }
 
+        /// <summary>
+        /// TEŞHİS (2026-10-18): P32 5/8'de SİMSAR beklenen güçle 30 dk'da ölmedi; 3. boss aynı kurulumla öldü.
+        /// P32'nin yolu (N N → 3. boss → çık → B → 4. boss), ikisinde de 10 sn'de bir `[BOSS-NABIZ]`.
+        /// </summary>
+        IEnumerator SimsarTeşhis()
+        {
+            _bekçiDk = 60f;
+            var nabız = StartCoroutine(BossNabzı());
+            Bas(Key.N); yield return Bekle(1.2f);
+            Bas(Key.N); yield return Bekle(1.2f);
+            yield return BossuKes();
+            if (_bitti) yield break;
+            Kaydet("S-1", "3. boss (kontrol) öldü", Boss() == null, BossAdı(Boss()));
+            yield return Bekle(1f);
+            // ⚠️ KapıdanÇık YETMİYOR: KEFİL'in çağırdıkları sağken oda temiz değil, kapı kapalı —
+            // bot 30 sn kapıya yürüyüp kaldı, B yine KEFİL'i açtı (ilk teşhis koşusu).
+            yield return OdayıGeç(60f);
+            yield return Bekle(1f);
+            Kaydet("S-1b", "4. bölgeye geçildi", Oda != null && Oda.RegionIndex == 3, $"bölge {(Oda != null ? Oda.RegionIndex + 1 : 0)}");
+            yield return BossuKes(1800f);
+            if (_bitti) yield break;
+            Kaydet("S-2", "4. boss öldü", Boss() == null, BossAdı(Boss()));
+            StopCoroutine(nabız);
+        }
+
+        /// <summary>10 sn OYUN zamanında bir: havuz, inen hasar (karelik düşüşlerin toplamı), botun dalları.</summary>
+        IEnumerator BossNabzı()
+        {
+            float başla = 0f; string önceki = null;
+            while (!_bitti)
+            {
+                float g0 = Time.time, r0 = Time.realtimeSinceStartup;
+                var c0 = Saat;
+                float darbe0 = c0 != null ? c0.TotalHitCost : 0f, hasar = 0f, mesafe = 0f, havuz = -1f;
+                int t0 = _takviye, kare = 0, sw0 = Oyuncu != null ? Oyuncu.SwingsSpawned : 0;
+                _dal.Clear();
+                while (Time.time - g0 < 10f && !_bitti)
+                {
+                    float h = 0f; Enemy bb = null;
+                    foreach (var e in Enemy.All)                       // KEFİL ikiye bölünüyor: hepsinin toplamı
+                        if (e != null && e.IsBoss && !e.SummonedRival) { h += e.TimeLeft; bb = e; }
+                    if (bb != null && havuz >= 0f && h < havuz) hasar += havuz - h;   // fullenme (artış) sayılmıyor
+                    havuz = bb != null ? h : -1f;
+                    if (bb != null) { mesafe += Düz(bb.transform.position - Ben).magnitude; kare++; }
+                    yield return null;
+                }
+                var boss = Boss(); var c = Saat;
+                if (boss == null || c == null || c != c0 || kare == 0) continue;
+                if (boss.Boss.Name != önceki) { başla = g0; önceki = boss.Boss.Name; }
+                float pencere = Mathf.Max(0.01f, Time.time - g0);
+                int yardımcı = 0, işaret = 0;
+                foreach (var e in Enemy.All) if (e != null && !e.IsBoss) yardımcı++;
+                foreach (var g in FindObjectsByType<GroundMark>(FindObjectsSortMode.None))
+                    if (g != null && g.OyuncuyaVurur && !g.Fired) işaret++;
+                var dallar = new List<KeyValuePair<string, float>>(_dal);
+                dallar.Sort((x, y) => y.Value.CompareTo(x.Value));
+                var sb = new StringBuilder();
+                foreach (var kv in dallar) sb.Append($" {kv.Key} %{100f * kv.Value / pencere:0}");
+                int sw = (Oyuncu != null ? Oyuncu.SwingsSpawned : 0) - sw0;
+                Debug.Log($"[BOSS-NABIZ] {boss.Boss.Name} faz {boss.Phase}{(boss.OnCredit ? " KREDİ" : "")} · {Time.time - başla:0} sn · " +
+                          $"havuz {havuz:0} · hasar {hasar:0} · savurma {sw} · hasar gücü {c.AttackDamage:0.00} · mesafe {mesafe / kare:0.0} · " +
+                          $"yardımcı {yardımcı} · işaret {işaret} · saat {c.Seconds:0} · F5 {_takviye - t0} · darbe {c.TotalHitCost - darbe0:0} · " +
+                          $"gerçek {Time.realtimeSinceStartup - r0:0.0} sn |{sb}");
+            }
+        }
+
         IEnumerator P32()
         {
             _bekçiDk = 120f;
@@ -1085,6 +1156,75 @@ namespace TekCan
             Kaydet("32-8", "KİRA gerçek tuşlarla: kule ateş etti · TAHLİYE · MÜŞTEREK → KİRA = ORTAK GİDER",
                    atış > 0 && tahliye > 0 && ortak > 0,
                    $"{atış} kule ateş etti · {tahliye} tahliye · {ortak} combo");
+        }
+
+        // ── FAZ 33a PLAYTEST — enderlik: mini boss sunağı (1 yaygın/nadir) · boss sunağı (1 + 1) ──
+        static List<Altar> SilahSunakları(SunakGrubu g)
+        {
+            var l = new List<Altar>();
+            foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.Weapon && a.Grup == g) l.Add(a);
+            return l;
+        }
+
+        static string Etiketler(List<Altar> l)
+        {
+            var sb = new StringBuilder();
+            foreach (var a in l)
+            {
+                var y = a.Yükseltme();
+                sb.Append(y.HasValue ? $"[{SilahSunağı.EnderlikAdı[(int)SilahSunağı.Ender[(int)y.Value]]}] {SilahSunağı.Ad[(int)y.Value]}" : "—").Append(a.SoldOut ? " (kapalı)" : "").Append(" · ");
+            }
+            return sb.ToString();
+        }
+
+        IEnumerator P33()
+        {
+            _bekçiDk = 40f;
+            Sahne("P33 1/2 MİNİ SUNAĞI", "M → mini boss → sunak odası: kuşanılan silahın 3 yaygın/nadir yükseltmesi, 1 alım");
+            yield return SunakOdasına(0);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            var mini = SilahSunakları(SunakGrubu.Mini);
+            bool ender = mini.Count == 3, silahın = true;
+            foreach (var a in mini)
+            {
+                var y = a.Yükseltme();
+                if (y.HasValue && SilahSunağı.Ender[(int)y.Value] > Enderlik.Nadir) ender = false;
+                if (y.HasValue && SilahSunağı.Silahı(y.Value) != System.Array.IndexOf(Weapon.All, Oyuncu.Weapon)) silahın = false;
+            }
+            int önce = SilahSunağı.AlınanSayısı;
+            Altar ilk = null, öbür = null;
+            foreach (var a in mini) { if (ilk == null && !a.SoldOut) ilk = a; else if (öbür == null && a != ilk) öbür = a; }
+            yield return AltaraAl(ilk);
+            bool aldı = SilahSunağı.AlınanSayısı == önce + 1;
+            yield return AltaraAl(öbür);                                     // ikinci alım denemesi
+            bool ikinciYok = SilahSunağı.AlınanSayısı == önce + 1;
+            Kaydet("33-1", "Mini boss sunağı: kuşanılan silahın 3 yaygın/nadir yükseltmesi, [E] ile 1 alım, ikincisi kapalı",
+                   ender && silahın && aldı && ikinciYok,
+                   $"{mini.Count} sunak · {Etiketler(mini)}şans sunağı {SilahSunakları(SunakGrubu.Şans).Count}");
+
+            Sahne("P33 2/2 BOSS SUNAĞI", "B → 1. boss → 3 yaygın/nadir + 3 epik/efsanevi, her sıradan 1");
+            yield return BossuKes();
+            if (_bitti) yield break;
+            yield return Bekle(1f);
+            Bas(Key.F5); yield return Bekle(0.3f);
+            var alt = SilahSunakları(SunakGrubu.BossAlt);
+            var üst = SilahSunakları(SunakGrubu.BossÜst);
+            string önceEtiket = $"alt: {Etiketler(alt)}| üst: {Etiketler(üst)}";
+            int ö2 = SilahSunağı.AlınanSayısı;
+            Altar altta = null, üstte = null;
+            foreach (var a in alt) if (altta == null && !a.SoldOut) altta = a;
+            foreach (var a in üst) if (üstte == null && !a.SoldOut) üstte = a;
+            var üstY = üstte != null ? üstte.Yükseltme() : null;
+            yield return AltaraAl(altta);
+            yield return AltaraAl(üstte);
+            bool ikisi = SilahSunağı.AlınanSayısı == ö2 + 2;
+            bool üstEnder = üstY.HasValue && SilahSunağı.Ender[(int)üstY.Value] >= Enderlik.Epik && SilahSunağı.Var(üstY.Value);
+            bool hepsiKapalı = true;
+            foreach (var a in alt) if (!a.SoldOut) hepsiKapalı = false;
+            foreach (var a in üst) if (!a.SoldOut) hepsiKapalı = false;
+            Kaydet("33-2", "Boss sunağı: 3 yaygın/nadir + 3 epik/efsanevi, her sıradan [E] ile 1 alım",
+                   alt.Count == 3 && üst.Count == 3 && ikisi && üstEnder && hepsiKapalı,
+                   $"{önceEtiket} · alınan {SilahSunağı.AlınanSayısı - ö2}");
         }
 
         IEnumerator MiniTeşhis()
@@ -1924,6 +2064,13 @@ namespace TekCan
         /// 6'da 4 gösteren buydu.
         /// </summary>
         bool _kaçıyor;
+        /// <summary>
+        /// `DövüşAdımı`'nın hangi dalında ne kadar OYUN zamanı geçti (vur / yaklaş / bekle / kaç·&lt;saldırı&gt; / işaret).
+        /// `BossNabzı` 10 sn'de bir okuyup sıfırlıyor. (2026-10-18: SİMSAR 30 dk'da ölmedi — bot ne yapıyordu?)
+        /// </summary>
+        readonly Dictionary<string, float> _dal = new Dictionary<string, float>();
+        string _kaçNeden = "";
+        void Dal(string ad) { _dal.TryGetValue(ad, out var s); _dal[ad] = s + Time.deltaTime; }
         /// <summary>Saldırı adı → (bota dönük hazırlık, isabet). Haksız aday tablosu bundan.</summary>
         readonly Dictionary<string, Vector2Int> _saldırıİst = new Dictionary<string, Vector2Int>();
         float _sonTakviye = -99f, _sonVuruş = -99f, _bossİlkHavuz;
@@ -1984,8 +2131,8 @@ namespace TekCan
 
             bool kaçan = mod == Mod.Dövüş || mod == Mod.ÇokUzak || mod == Mod.DibindeKaçar;
             _kaçıyor = kaçan;
-            if (kaçan && Kaç(ben)) return;
-            if (kaçan && İşarettenKaç(ben)) return;
+            if (kaçan && Kaç(ben)) { Dal("kaç·" + _kaçNeden); return; }
+            if (kaçan && İşarettenKaç(ben)) { Dal("işaret"); return; }
 
             if (hedef == null || hedef.Dormant) hedef = EnYakın();
             if (hedef == null) { Dur(); return; }
@@ -1997,9 +2144,10 @@ namespace TekCan
             {
                 case Mod.Dövüş:
                     float menzil = pc.Weapon.Range(_t) * 0.8f + hedef.Radius;
-                    if (d > menzil) { if (AlanaGirer(ben, to)) Dur(); else Yürü(to); }
+                    if (d > menzil) { if (AlanaGirer(ben, to)) { Dur(); Dal("bekle"); } else { Yürü(to); Dal("yaklaş"); } }
                     else
                     {
+                        Dal("vur");
                         Dur();
                         if (!pc.Attacking && Time.time - _sonVuruş > 0.15f) { _sol = true; _sonVuruş = Time.time; }
                         if (pc.SpecialCooldownLeft <= 0f && d < menzil * 0.8f) _sağ = true;
@@ -2177,6 +2325,8 @@ namespace TekCan
                 kalan = Mathf.Min(kalan, e.KalanHazırlık);
             }
             if (tehdit.Count == 0) return false;
+            var bt = tehdit.Find(x => x.IsBoss);
+            _kaçNeden = bt != null && bt.CurrentAttack != null ? bt.CurrentAttack.Name : tehdit[0].Kind.Name;
 
             Vector3 merkez = Vector3.zero;
             foreach (var e in tehdit) merkez += e.transform.position;

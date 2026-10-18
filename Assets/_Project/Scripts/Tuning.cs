@@ -236,9 +236,7 @@ namespace TekCan
         public float altarInsuranceStep = 0.08f;
         [Tooltip("SABIR (ara bölge sunağı): ilk alım sağ tık beklemesini bu kadar kısaltır (azalan getiri, tavan %50)")]
         public float altarPatienceStep = 0.10f;
-        [Tooltip("SİLAH SUNAĞI (ana boss sonrası): bir boss odasında kaç yükseltme alınabilir")]
-        public int weaponAltarPurchases = 2;
-        [Tooltip("SİLAH SUNAĞI taban fiyatı = sunak tabanı × bu (× artış^alınan)")]
+        [Tooltip("SİLAH SUNAĞI taban fiyatı = sunak tabanı × bu (× enderlik — Faz 33'ten beri alım sayısıyla büyümüyor)")]
         public float weaponAltarBaseMul = 2f;
         [Tooltip("SİLAH SUNAĞI fiyatı en az saatin bu payı")]
         public float weaponAltarPricePercent = 0.15f;
@@ -283,6 +281,17 @@ namespace TekCan
         [Tooltip("KİRA: kulenin atış aralığı (sn)")] public float kiraShotInterval = 0.6f;
         [Tooltip("KİRA: kule atışı = silah hasarı × bu")] public float kiraShotMul = 2f;
         [Tooltip("KİRA · TAHLİYE: kalan her kira saniyesi için silah hasarı × bu (kalan kira peşin ödenir)")] public float kiraEvictionPerSecond = 1.2f;
+
+        [Header("── Faz 33: ENDERLİK ──")]
+        // ⚠️ Tek tek sayı, dizi değil: profil denetimi (Faz 11) alanları değer değer karşılaştırıyor, dizi hep "farklı" görünür.
+        [Tooltip("YAYGIN yükseltmenin fiyat çarpanı")] public float rarityPriceCommon = 0.6f;
+        [Tooltip("NADİR yükseltmenin fiyat çarpanı")] public float rarityPriceRare = 1f;
+        [Tooltip("EPİK yükseltmenin fiyat çarpanı")] public float rarityPriceEpic = 1.5f;
+        [Tooltip("EFSANEVİ yükseltmenin fiyat çarpanı")] public float rarityPriceLegendary = 2.2f;
+        public float EnderlikFiyatı(Enderlik e) => e == Enderlik.Yaygın ? rarityPriceCommon : e == Enderlik.Nadir ? rarityPriceRare
+                                                 : e == Enderlik.Epik ? rarityPriceEpic : rarityPriceLegendary;
+        [Tooltip("Sunak odasında ŞANS sunağı çıkma ihtimali (her enderlikten satar)")] public float chanceAltarProbability = 0.3f;
+        [Tooltip("ŞANS sunağının fiyat çarpanı")] public float chanceAltarPriceMul = 1.5f;
 
         /// <summary>Bir ara bölgenin dövüş odası sayısı (en az 1).</summary>
         public int DövüşOdası => Mathf.Max(1, roomsPerSubRegion);
