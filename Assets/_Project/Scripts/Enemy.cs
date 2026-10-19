@@ -100,14 +100,17 @@ namespace TekCan
         }
 
         // Faz 33 — silah yükseltmelerinin düşmana etkileri (dt'li, TickState sayıyor).
-        float _yorgunKalan, _yavaşKalan, _yavaşÇarpan = 1f, _susKalan;
-        /// <summary>KONİ · YORGUNLUK: bu süre boyunca saldırı hazırlığı ×1.3 uzun.</summary>
+        float _yorgunKalan, _yavaşKalan, _yavaşÇarpan = 1f, _susKalan, _sırtKalan;
+        /// <summary>KONİ · YORGUNLUK: bu süre boyunca saldırı hazırlığı ×1.8 uzun.</summary>
         public void Yor(float sn) => _yorgunKalan = Mathf.Max(_yorgunKalan, sn);
         /// <summary>HACİZ · İHTAR: bu süre boyunca hız × çarpan.</summary>
         public void Yavaşlat(float sn, float çarpan) { _yavaşKalan = Mathf.Max(_yavaşKalan, sn); _yavaşÇarpan = çarpan; }
         /// <summary>KARŞILIK · RED (Faz 33b): bu süre boyunca yeni saldırı başlatamaz.</summary>
         public void Sustur(float sn) => _susKalan = Mathf.Max(_susKalan, sn);
         public bool Susturulmuş => _susKalan > 0f;
+        /// <summary>TAKİP combo'su (Faz 33c): bu süre boyunca ARBİTRAJ'a hep sırtı dönük sayılır.</summary>
+        public void SırtDön(float sn) => _sırtKalan = Mathf.Max(_sırtKalan, sn);
+        public bool SırtDönük => _sırtKalan > 0f;
         public bool Yorgun => _yorgunKalan > 0f;
         public bool Yavaş => _yavaşKalan > 0f;
         public void RehinAl(PlayerController p) => Tutan = p;
@@ -172,8 +175,13 @@ namespace TekCan
         /// ⚠️ Bu olmadan büyük düşmanlar "bazen vurulamıyor" oluyordu: boss 1.9 kat büyük,
         /// gövdesine değecek kadar yakınken merkezler arası mesafe hâlâ menzilin dışında
         /// kalabiliyordu. Oyuncu gördüğü şeye vuramıyordu — görsel ile isabet ayrışmıştı.
+        ///
+        /// ⚠️ `_baseScale`'den, `transform.localScale`'den DEĞİL: isabet parlaması ölçeği
+        /// %28 şişiriyor ve ölçekten okununca her vuruştan sonra `hitFlashDuration`
+        /// boyunca vuruş alanı da büyüyordu (2026-10-19). Kalıcı boy değişimi
+        /// (rütbe, NEMESİS, ikiz) `_baseScale`'e yazılmalı.
         /// </summary>
-        public float Radius => transform.localScale.x * 0.5f;
+        public float Radius => _baseScale.x * 0.5f;
 
         // ── boss ölçekleri ───────────────────────────────────────────────────
         // Boss yalnızca "kalın bir düşman" olmasın: daha hızlı, daha az uyarı verir,
@@ -487,6 +495,7 @@ namespace TekCan
             _yorgunKalan -= dt;
             _yavaşKalan -= dt;
             _susKalan -= dt;
+            _sırtKalan -= dt;
 
             // ⚠️ Savrulma DURUMDAN BAĞIMSIZ: hazırlıktayken de vurulunca savrulmalı,
             // yoksa "ağır darbe" yalnızca kovalarken görünür ve tesadüfi hissedilir.
@@ -587,9 +596,9 @@ namespace TekCan
         /// ⚠️ `Boss.Attacks()` her çağrıda YENİ dizi üretiyor; kareye bir
         /// çağırmak çöp toplayıcıyı beslerdi.
         /// ⚠️ Yalnızca SALDIRILAR önbellekte, menzil DEĞİL: `AttackRange` boss'ta
-        /// `Radius`'u içeriyor ve `Radius` isabet parlamasında %28 şişiyor. Menzili
-        /// faz başına bir kez hesaplamak geçici titreşimi bütün faza yayardı
-        /// (Faz 23'ün bayat önbellek hatası).
+        /// `Radius`'u içeriyor. Eskiden `Radius` isabet parlamasında şişiyordu ve faz
+        /// başına bir kez hesaplamak o anlık boyu bütün faza yayardı (Faz 23'ün bayat
+        /// önbellek hatası). Artık şişmiyor (2026-10-19), ama menzil ucuz — önbelleğe değmez.
         /// </summary>
         BossAttack[] Dağarcık
         {
@@ -775,7 +784,7 @@ namespace TekCan
             float dur = _attack != null && _attack.WindupSeconds > 0f
                       ? _attack.WindupSeconds
                       : WindupDuration * (_attack?.WindupMul ?? 1f) + TepkiPayı;
-            if (_yorgunKalan > 0f) dur *= 1.3f;                                   // KONİ · YORGUNLUK (Faz 33)
+            if (_yorgunKalan > 0f) dur *= 1.8f;                                   // KONİ · YORGUNLUK (Faz 33)
             EnterState(State.Windup, dur);
             // ORTAYA SIÇRAMA (TAM TAHSİL): uyarı çizilmeden ÖNCE — halka ortadan çiziliyor.
             if (_attack != null && _attack.ArenaOranı > 0f)

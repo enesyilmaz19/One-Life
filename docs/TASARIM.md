@@ -354,8 +354,9 @@ kadar 4; sonra her bölgede +2 (biri boss'tan, öbürü sunakta satın ya da ke�
 | **KİRA** | 5. bölge, keşif | *bu alanı ne kadar tutayım* — kule kira öder, kurulu kaldıkça ateş edip hasat eder |
 
 **Combo:** A ile İSABET → 0.8 sn içinde B'ye geç ve vur (bazıları 3'lü). Iska sayılmıyor, aynı combo 4 sn
-tekrar etmiyor, her combo'nun boss sonrası alınan bir "+" hâli var. Silah başına 8 yükseltme ve combo
-AÇAN yükseltmeler: Faz 33.
+tekrar etmiyor. İlk 10 combo baştan açık ve boss sonrası alınan bir "+" hâli var. Faz 33c'nin 12 combo'su
+(her silahtan bir: SÜRÜ, TAKİP, ÖNCELİK, TEMİNAT, KONKORDATO, KEFALET, CİRO HATTI, MUKABELE, TEMETTÜ,
+KONSORSİYUM, SPEKÜLASYON, KİRA GELİRİ) EPİK bir "açan" yükseltmeyle açılıyor, daha sert ve "+"sız.
 
 ### YÜKSELTMELER — ENDERLİK (Faz 33, 2026-10-18)
 
@@ -372,7 +373,8 @@ KUŞANDIĞIN silahınkini satıyor, her sırada rastgele 3 (koşu tohumundan; si
 
 Fiyat saniye (yasa): saatin %15'i (en az 24 sn) × yaygın 0.6 · nadir 1 · epik 1.5 · efsanevi 2.2 — alım
 sayısıyla büyümüyor. Bot ölçümü (2026-10-18): fiyatlar ödenebilir, iyi yükseltme 1–9 odada kendini ödüyor;
-ama bazı epik/efsaneviler yaygından zayıf — denge kararı Enes'te (`tasks/todo.md` masası #14).
+ama bazı epik/efsaneviler yaygından zayıftı. Enes'in kararı A (2026-10-19): fiyat aynı, güç ayarlandı (zayıf üst
+enderlikler güçlendi, aşırı güçlü yaygınlar üst enderliğe taşındı) — bot ölçümünde sıra artık yaygın < nadir < epik < efsanevi.
 
 ### Denge ölçümü
 

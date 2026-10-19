@@ -72,6 +72,12 @@ namespace TekCan.EditorTools
         /// <summary>Aynı ölçüm, 33b'nin altı silahı (ÇEK … KİRA) — rakipsiz. Hızlandırılmış ~2.5 dk.</summary>
         public static void FiyatOlcum33b() => Başlat(izle: false, senaryo: "fiyat33b");
 
+        /// <summary>Faz 33c playtest'i: 12 yeni combo gerçek tuşlarla (açanlar verilmiş). Hızlandırılmış ~1 dk.</summary>
+        [MenuItem("Tek Can/Otopilot — Faz 33c combo'ları (izle)")]
+        public static void Playtest33cIzle() => Başlat(izle: true, senaryo: "p33c");
+
+        public static void Playtest33c() => Başlat(izle: false, senaryo: "p33c");
+
         /// <summary>Faz 27 ölçümü: bütün bölgeler atlamadan, bir tam koşu kaç dakika (Enes 2026-10-12).</summary>
         [MenuItem("Tek Can/Otopilot — tam koşu ölçümü (izle)")]
         public static void TamKosuIzle() => Başlat(izle: true, senaryo: "tam");

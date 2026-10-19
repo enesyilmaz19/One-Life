@@ -558,8 +558,8 @@ namespace TekCan.EditorTools
             //    bile menzil dışında kalırdı — oyuncu GÖRDÜĞÜ şeye vuramazdı.
             ClearEnemies();
             pc.SetWeapon(0);
-            var big = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 3.0f);
-            big.transform.localScale = Bootstrap.EnemyScale * 1.9f;   // boss ölçeği
+            // Boy Init'ten ÖNCE: `Radius` Init'te yakalanan `_baseScale`'den okunuyor.
+            var big = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 3.0f, 1.9f);   // boss ölçeği
 
             float centerDist = 3.0f;
             failed += Check(ref total, "test kurgusu: merkez mesafesi menzilin DIŞINDA",
@@ -571,6 +571,23 @@ namespace TekCan.EditorTools
             strike.Invoke(pc, null);
             failed += Check(ref total, "BÜYÜK DÜŞMAN YÜZEYİNDEN VURULDU",
                             big.TimeLeft < bigPoolBefore - 0.001f, bigPoolBefore - big.TimeLeft);
+
+            // ── 8b) ⚠️ İSABET PARLAMASI GÖVDEYİ BÜYÜTÜYOR, VURUŞ ALANINI DEĞİL (2026-10-19)
+            //    Parlama ölçeği %28 şişiriyor; `Radius` ölçekten okunduğu için her isabetten
+            //    sonra düşman `hitFlashDuration` boyunca daha kolay vuruluyordu. Bütün isabet
+            //    hesapları `Radius`'tan geçiyor — tek kontrol hepsini kapsıyor.
+            ClearEnemies();
+            var parlayan = MakeEnemy(t, pGo.transform, Bootstrap.ArenaCenter + Vector3.forward * 3.0f, 1.9f);
+            float rÖnce = parlayan.Radius, boyÖnce = parlayan.transform.localScale.x;
+            float eskiAdım = Time.captureDeltaTime;
+            Time.captureDeltaTime = 1f / 60f;            // `HitStop.Adım` sabit: parlama tek karede sönmesin
+            parlayan.TakeDamage(1f);
+            typeof(Enemy).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(parlayan, null);
+            Time.captureDeltaTime = eskiAdım;
+            failed += Check(ref total, "test kurgusu: parlama gövdeyi gerçekten büyüttü",
+                            parlayan.transform.localScale.x > boyÖnce * 1.1f, parlayan.transform.localScale.x / boyÖnce);
+            failed += Check(ref total, "⚠️ isabet parlaması vuruş yarıçapını (`Radius`) DEĞİŞTİRMİYOR",
+                            Mathf.Abs(parlayan.Radius - rÖnce) < 0.0001f, parlayan.Radius - rÖnce);
 
             // ── 9) Dash-atak silaha göre değişiyor mu ──
             failed += Check(ref total, "KONİ dash-atağı süpürüyor",
@@ -619,11 +636,11 @@ namespace TekCan.EditorTools
             MakeEnemy(t, player, Bootstrap.ArenaCenter + new Vector3(0.25f, 0f, 1.7f));
         }
 
-        static Enemy MakeEnemy(Tuning t, Transform player, Vector3 pos)
+        static Enemy MakeEnemy(Tuning t, Transform player, Vector3 pos, float boy = 1f)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             go.transform.position = pos;
-            go.transform.localScale = Bootstrap.EnemyScale;
+            go.transform.localScale = Bootstrap.EnemyScale * boy;
             var e = go.AddComponent<Enemy>();
             e.Init(t, player, null);
             return e;

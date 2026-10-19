@@ -272,6 +272,7 @@ namespace TekCan.EditorTools
             FazıKur(boss, f);
             Random.InitState(tohum);
             boss.transform.localScale *= ölçek;                       // NEMESİS büyümesi
+            Alan(boss, "_baseScale", boss.transform.localScale);      // `Radius` buradan okuyor (Init'teki gibi)
             boss.transform.position = new Vector3(bossYeri.x, boss.transform.position.y, bossYeri.z);
             var oyuncu = r.transform.Find("player");
             oyuncu.position = oyuncuYeri;

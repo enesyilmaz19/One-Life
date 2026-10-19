@@ -611,3 +611,18 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   oldu (donan kare sayısı makinenin hızına bağlıydı). **Kural:** test aracında süre = oyun saati; gerçek
   saat yalnızca "takıldı mı" bekçisi için. Ve kare hızı ölçümün parçası: 3600 kare/sn'lik bot insanüstü
   tepki veriyordu, 60'a inince sayılar kaydı — farklı kare hızındaki ölçümleri karşılaştırma.
+- **"Görsel" sandığın efekt oyunu değiştirebilir (2026-10-19):** vurulma parlaması düşmanı %28 büyütüyor,
+  vuruş yarıçapı da ölçekten okunuyor. Parlama gerçek saatle söndüğü için hızlandırılmış ölçümde düşmanlar
+  uzun süre büyük kaldı ve sayılar şişti. Ölçüm aracını hızlandırırken "bu yalnız görsel" deme — saate bağlı
+  her şeyin oyun durumuna (ölçek, konum, renk eşiği) dokunup dokunmadığını oku.
+- **Bedeli ödenen yükseltme zarar ettirmesin — botla say (Faz 33 A):** UZUN KONTRAT kuleyi uzatıp fazla kira
+  ödetiyordu (−7 sn/oda), ROLLOVER ERKEN BOZDURMA'yı yutuyordu (−5.5), KARŞILIKSIZ+ beş çek dönene kadar
+  silahsız bırakıyordu (−3). Kapı "etki var mı" diye sordu ve hepsi yeşildi; "net kazanç var mı" diye soran
+  bot ölçümü yakaladı. **Kural:** bir yükseltme bir şey verip bir şey alıyorsa (süre ↔ kira, seçenek ↔ seçenek),
+  aldığını sıfırla ya da net değeri ölç.
+- **Bot combo'yu oyuncunun ritmiyle yapsın, sabit beklemeyle değil (Faz 33c):** sabit 0.25 sn sonra silah
+  değiştiren bot HACİZ'in ağır vuruşunu kesiyordu; saldırının bitmesini bekleyince de 0.8 sn'lik pencere
+  kaçıyordu; HACİZ'i ölü bölgenin sınırına (3.2) atıyordu. Üç koşu "combo bozuk mu?" diye düşündürdü —
+  kapı ikisini de yeşil gösteriyordu, haklıydı. **Kural:** bot "an"ı olayın kendi sayacından beklesin
+  (`AdımSayısı`, çekin `İsabet`'i), hedefi silahın sorusuna göre seçsin; bot kırmızısında önce denemeye
+  ölçüm koy (adım yazıldı mı, mesafe), sonra koda bak.

@@ -29,6 +29,8 @@ namespace TekCan
         public bool Yönelim { get; set; }
         /// <summary>PROTESTO: dönüşte vurduklarını sahibinin dibine çeker; yakalanınca çevresine bir kez iner.</summary>
         public bool Protesto { get; set; }
+        /// <summary>KARŞILIKSIZ+: havadayken sahibini silahsız bırakmaz (`Sahibinin` saymıyor).</summary>
+        public bool Serbest { get; set; }
 
         public bool Dönüyor { get; private set; }
         public int Sekti { get; private set; }
@@ -37,7 +39,7 @@ namespace TekCan
         public static int Sahibinin(PlayerController p)
         {
             int n = 0;
-            foreach (var u in Uçanlar) if (u != null && u._sahibi == p) n++;
+            foreach (var u in Uçanlar) if (u != null && u._sahibi == p && !u.Serbest) n++;
             return n;
         }
 
@@ -159,7 +161,7 @@ namespace TekCan
             return en;
         }
 
-        /// <summary>PROTESTO: çek sahibine dönünce çevresine (2.5 birim) dönüş hasarıyla bir kez iner.</summary>
+        /// <summary>PROTESTO: çek sahibine dönünce çevresine (2.5 birim) dönüş hasarının iki katıyla bir kez iner.</summary>
         void Yakalandı()
         {
             Vector3 o = _sahibi.transform.position;
@@ -173,7 +175,7 @@ namespace TekCan
             foreach (var e in _aday)
             {
                 Vector3 yer = e.transform.position;
-                e.TakeDamage(_hasar * _dönüşÇarpanı, _hasat);
+                e.TakeDamage(_hasar * _dönüşÇarpanı * 2f, _hasat);
                 İsabet++;
                 _sahibi.Çekİsabeti(yer);
             }

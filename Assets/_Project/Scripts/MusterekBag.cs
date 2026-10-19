@@ -11,6 +11,8 @@ namespace TekCan
     public class MusterekBag : MonoBehaviour
     {
         public static readonly List<MusterekBag> Tümü = new List<MusterekBag>();
+        /// <summary>KONSORSİYUM combo'su (Faz 33c): bu vuruş boyunca yayılma tam (%100). Vuruşu yapan açıp kapatıyor.</summary>
+        public static bool TamPay;
 
         public readonly List<Enemy> Üyeler = new List<Enemy>();
         public float Pay { get; private set; }
@@ -55,7 +57,7 @@ namespace TekCan
             if (_dağıtıyor || Bitti) return;
             _dağıtıyor = true;
             foreach (var e in Üyeler.ToArray())                       // vuruş öldürüp listeden çıkarabilir
-                if (e != null && e != kaynak && Enemy.All.Contains(e)) { e.TakeDamage(hasar * Pay, hasat * HasatPayı); Yayılma++; }
+                if (e != null && e != kaynak && Enemy.All.Contains(e)) { e.TakeDamage(hasar * (TamPay ? 1f : Pay), hasat * HasatPayı); Yayılma++; }
             _dağıtıyor = false;
         }
 

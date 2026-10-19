@@ -27,6 +27,8 @@ namespace TekCan
         /// <summary>STOPAJ (Faz 33b): kule öldürünce bu kadar sn (doymaya tabi).</summary>
         public float Stopaj { get; set; }
         float _saattenÖdenen;
+        /// <summary>TEMİNAT combo'su (Faz 33c): bu kadar sn kira yok.</summary>
+        public float KirasızKalan { get; set; }
         bool _uzatıldı;
         bool OrtakÖdüyor => _ortak != null && !_ortak.Bitti;
 
@@ -80,6 +82,7 @@ namespace TekCan
             // Kira: saatten — ORTAK GİDER'de bağlı düşmanın havuzundan (yarım saniyelik dilimlerle: her
             // `TakeDamage` bir isabet halkası çiziyor, kare başına çağırmak ekranı doldururdu).
             float borç = _kira * dt;
+            if (KirasızKalan > 0f) { KirasızKalan -= dt; borç = 0f; }      // TEMİNAT
             ÖdenenKira += borç;
             if (OrtakÖdüyor)
             {
@@ -150,6 +153,9 @@ namespace TekCan
             _uzatıldı = true;
             Kalan += sn;
         }
+
+        /// <summary>KİRA GELİRİ combo'su (Faz 33c): FAİZLİ'nin bedelini kule ömründen öder.</summary>
+        public void Kısalt(float sn) => Kalan -= sn;
 
         /// <summary>TAŞINMA: kuleyi oraya taşı (kira sürer).</summary>
         public void Taşı(Vector3 yer) => transform.position = new Vector3(yer.x, yer.y, yer.z);

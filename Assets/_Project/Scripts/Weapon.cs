@@ -140,7 +140,10 @@ namespace TekCan
         Hareketli, Rollover, Kilit, VadeSonu,                  // TAHVİL
         ZincirlemeArtı, Çekişme, GenişOrtaklık, Müteselsil,    // MÜŞTEREK
         SessizAdım, Yayılma, Çiftİşlem, KısaPozisyon,          // ARBİTRAJ
-        SağlamYapı, Depozito, Stopaj, ÇiftKule                 // KİRA
+        SağlamYapı, Depozito, Stopaj, ÇiftKule,                // KİRA
+        // Faz 33c — combo AÇAN (her silaha bir, EPİK): adı açtığı combo'nun adı
+        Sürü, Takip, Öncelik, Teminat, Konkordato, Kefalet,
+        CiroHattı, Mukabele, Temettü, Konsorsiyum, Spekülasyon, KiraGeliri
     }
 
     /// <summary>Faz 33 — yükseltmenin enderliği (Enes 2026-10-18). Silah başına hedef: 3 yaygın · 2 nadir · 2 epik · 1 efsanevi.</summary>
@@ -179,6 +182,8 @@ namespace TekCan
             "ZİNCİRLEME+", "ÇEKİŞME", "GENİŞ ORTAKLIK", "MÜTESELSİL",
             "SESSİZ ADIM", "YAYILMA", "ÇİFT İŞLEM", "KISA POZİSYON",
             "SAĞLAM YAPI", "DEPOZİTO", "STOPAJ", "ÇİFT KULE",
+            "SÜRÜ", "TAKİP", "ÖNCELİK", "TEMİNAT", "KONKORDATO", "KEFALET",
+            "CİRO HATTI", "MUKABELE", "TEMETTÜ", "KONSORSİYUM", "SPEKÜLASYON", "KİRA GELİRİ",
         };
 
         public static readonly string[] NeYapar =
@@ -194,29 +199,39 @@ namespace TekCan
             "kademeler ×0.7 sürede olgunlaşır", "3. kademe ×1.4", "beklerken saat ×1.5 akar (×2 değil)",
             "bağlıya yayılan hasar %60 → %90", "bağın süresi ×2", "yayılan hasarın hasadı tam (yarım değil)",
             "arkadan ×3.5", "arka sayılan açı 120° → 90°", "görünmezlik ×1.5",
-            "kira ×0.6", "kule menzili ×1.4", "kulenin ömrü ×1.5",
-            "3+ düşmana değen savurmada hasat ×1.3", "her savurma yarım hasarla bir kez daha iner", "dash-atak çevrendeki herkese (360°)", "vurduklarının saldırı hazırlığı 2 sn boyunca ×1.3 uzun",
+            "kira ×0.6", "kule menzili ×1.4", "kulenin ömrü ×1.5, toplam kira aynı",
+            "2+ düşmana değen savurmada hasat ×1.3", "her savurma yarım hasarla bir kez daha iner", "dash-atak çevrendeki herkese (360°)", "vurduklarının saldırı hazırlığı 3 sn boyunca ×1.8 uzun",
             "saat doyma tavanının üstündeyken savurma bedeli yarı", "öldürme iadesi ×2 → ×2.6", "öldürünce yanındakine aynı hasar sıçrar", "isabet eden savurma bedel ödemez",
             "vurulan 1.5 sn yarı hızla yürür", "menzilin son çeyreğinde vuruş ×1.4", "UZUN VADE'nin mesafe hasarı ×1.5", "vurunca bir adım geri kayarsın — mesafe korunur",
-            "işaret boşa patlarsa İPOTEK'in sağ tık beklemesi −2 sn", "işaretin merkezinde hasar ×1.5", "patlamadan önce içindekileri merkeze çeker", "patlama vurduklarından birinin yerine küçük ikinci işaret bırakır",
-            "saat 30'un altındayken dash beklemesi yarı", "dipteyken alınan darbe −%20", "dipteyken öldürünce +3 sn", "TASFİYE öldürürse beklemesi sıfırlanır",
+            "işaret boşa patlarsa İPOTEK'in sağ tık beklemesi −2 sn", "işaretin merkezinde hasar ×1.5", "patlamadan önce içindekileri merkeze çeker", "patlama vurduklarının yerine (en çok 3) küçük ikinci işaret bırakır, tam hasarla",
+            "saat 30'un altındayken dash beklemesi yarı", "dipteyken alınan darbe −%20", "dipteyken öldürünce +3 sn", "TASFİYE öldürürse beklemesi sıfırlanır, öldürdüğü her düşman seriye +1 vuruş (en çok +3)",
             "kalkan rehineyi yarı yıpratır", "tutarken rehinenin havuzu akar, sana hasat olur", "fırlatılan rehine çarptığından bir kez daha seker", "tutarken önündekiler saldırı başlatmaz",
-            "dönüşte vurduğu her düşman için +0.5 sn", "sekince en yakın düşmana döner", "KARŞILIKSIZ üç yerine beş çek atar", "dönüşte vurduklarını yanına çeker, yakalayınca çevrene iner",
+            "dönüşte vurduğu her düşman için +0.25 sn", "sekince en yakın düşmana döner", "KARŞILIKSIZ üç yerine beş çek, beklemesi −%30, havadayken de savurursun", "dönüşte vurduklarını yanına çeker, yakalayınca çevrene dönüş hasarının iki katı iner",
             "İTİRAZ ×1.5 uzun", "karşıladığın saldırgan 1 sn yeni saldırı başlatamaz", "biriken tutuldukça büyür: saniyede +%25, en çok ×2", "biriken inince yarısı kalır",
-            "basılı tutarken yürüyüş ×0.4 → ×0.8", "basılıyken ilk dash olgunluğu bozmaz", "3. kademede beklemek saat akıtmaz", "3. kademe çevrendeki herkese (360°)",
+            "basılı tutarken yürüyüş ×0.4 → ×0.8", "basılıyken ilk dash ERKEN BOZDURMA'yı da vurur, olgunluğu da bozmaz", "3. kademede beklemek saat akıtmaz", "3. kademe çevrendeki herkese (360°)",
             "ZİNCİRLEME dört yerine altı düşman", "bağlılar birbirine sürüklenir", "ikinci vuruş yanındakini de bağlar (üçlü bağ)", "bağlı biri ölünce öbürleri havuzunun %10'unu kaybeder",
             "görünmezken yürüyüş ×1.3", "arkadan vuruşun yarısı yanındakine iner", "TERS İŞLEM iki kez vurur", "arkadan öldürünce AÇIK POZİSYON hemen hazır",
-            "TAŞINMA kuleyi bir kez +3 sn uzatır", "kule süresi dolunca ödediğin kiranın %30'u geri", "kule öldürünce +1 sn", "aynı anda iki kule; TAHLİYE ikisini birden",
+            "TAŞINMA kuleyi bir kez +3 sn uzatır", "kule süresi dolunca ödediğin kiranın %30'u geri", "kule öldürünce +1.5 sn", "aynı anda iki kule, kule başı kira yarım; TAHLİYE ikisini birden",
+            "COMBO açar: KONİ → MÜŞTEREK", "COMBO açar: FAİZLİ → ARBİTRAJ", "COMBO açar: HACİZ → REHİN",
+            "COMBO açar: İPOTEK → KİRA", "COMBO açar: İFLAS → KARŞILIK", "COMBO açar: REHİN → HACİZ",
+            "COMBO açar: ÇEK → İPOTEK", "COMBO açar: KARŞILIK → ÇEK", "COMBO açar: TAHVİL → KONİ",
+            "COMBO açar: MÜŞTEREK → İFLAS", "COMBO açar: ARBİTRAJ → TAHVİL", "COMBO açar: KİRA → FAİZLİ",
         };
 
         // Enderlik — sıra `SilahYükseltme` ile aynı (Y yaygın · N nadir · E epik · F efsanevi).
+        // Denge (Enes 2026-10-19, karar A): bot fiyat ölçümünde değerine göre takas — silah başına 3·2·1·1 aynı.
+        // FAİZLİ SERMAYE↔FAİZ ORANI · HACİZ DAR ÖLÜ BÖLGE F, GERİ ÇEKİL E, İHTAR N, SON SÖZ ve UZUN VADE+ Y ·
+        // REHİN AĞIR REHİN↔KALKAN · ÇEK HIZLI TAHSİL↔YÖNELİM · TAHVİL KISA VADE↔ROLLOVER, İSKONTO↔KİLİT ·
+        // KİRA UCUZ KİRA ve GENİŞ ARAZİ N, UZUN KONTRAT ve DEPOZİTO Y. İkinci ölçümden: HACİZ İHTAR E ↔ GERİ ÇEKİL N,
+        // ÇEK TAHSİLAT N ↔ ÇİFT CİRO Y, FAİZLİ SIÇRAMA F ↔ FAİZSİZ KREDİ E.
         const Enderlik Y = Enderlik.Yaygın, N = Enderlik.Nadir, E = Enderlik.Epik, F = Enderlik.Efsanevi;
         public static readonly Enderlik[] Ender =
         {
-            Y, Y, N,   N, Y, Y,   Y, N, Y,   E, Y, Y,   Y, N, Y,   Y, Y, N,      // KONİ … REHİN
-            N, Y, Y,   Y, Y, N,   Y, Y, N,   Y, Y, N,   N, Y, Y,   Y, Y, N,      // ÇEK … KİRA
-            N, F, Y, E,   Y, N, E, F,   Y, N, E, F,   Y, N, N, F,   Y, N, E, F,   Y, N, E, F,   // Faz 33a
-            Y, N, E, F,   Y, N, E, F,   Y, N, E, F,   Y, N, E, F,   Y, N, E, F,   Y, N, E, F,   // Faz 33b
+            Y, Y, N,   N, Y, Y,   Y, N, F,   E, Y, Y,   Y, N, Y,   N, Y, Y,      // KONİ … REHİN
+            Y, N, Y,   Y, Y, N,   N, Y, E,   Y, Y, N,   N, Y, Y,   N, N, Y,      // ÇEK … KİRA
+            N, F, Y, E,   N, Y, F, E,   E, Y, Y, N,   Y, N, N, F,   Y, N, E, F,   Y, N, E, F,   // Faz 33a
+            N, Y, E, F,   Y, N, E, F,   Y, Y, N, F,   Y, N, E, F,   Y, N, E, F,   Y, Y, E, F,   // Faz 33b
+            E, E, E, E, E, E,   E, E, E, E, E, E,                                                    // Faz 33c — combo açanlar
         };
 
         public static readonly string[] EnderlikAdı = { "YAYGIN", "NADİR", "EPİK", "EFSANEVİ" };
@@ -234,6 +249,8 @@ namespace TekCan
             Kadro.ÇEK, Kadro.ÇEK, Kadro.ÇEK, Kadro.ÇEK,         Kadro.KARŞILIK, Kadro.KARŞILIK, Kadro.KARŞILIK, Kadro.KARŞILIK,
             Kadro.TAHVİL, Kadro.TAHVİL, Kadro.TAHVİL, Kadro.TAHVİL, Kadro.MÜŞTEREK, Kadro.MÜŞTEREK, Kadro.MÜŞTEREK, Kadro.MÜŞTEREK,
             Kadro.ARBİTRAJ, Kadro.ARBİTRAJ, Kadro.ARBİTRAJ, Kadro.ARBİTRAJ, Kadro.KİRA, Kadro.KİRA, Kadro.KİRA, Kadro.KİRA,
+            Kadro.KONİ, Kadro.FAİZLİ, Kadro.HACİZ, Kadro.İPOTEK, Kadro.İFLAS, Kadro.REHİN,
+            Kadro.ÇEK, Kadro.KARŞILIK, Kadro.TAHVİL, Kadro.MÜŞTEREK, Kadro.ARBİTRAJ, Kadro.KİRA,
         };
 
         public static int Silahı(SilahYükseltme y) => (int)y < İlkSıra ? (int)y / SilahBaşına : EkSilah[(int)y - İlkSıra];

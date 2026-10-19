@@ -589,7 +589,7 @@ namespace TekCan.EditorTools
             failed += Check(ref total, $"yükseltme tablosu tam: {SilahSunağı.Toplam} yükseltme (ad {SilahSunağı.Ad.Length}, açıklama {SilahSunağı.NeYapar.Length}), 12 silahın her birinde en az 3; {Combo.Sayı} combo'nun hepsinin \"+\" hâli var",
                             Enumerable.Range(0, Weapon.All.Length).All(w => SilahSunağı.Yükseltmeleri(w).Count >= 3)
                             && SilahSunağı.Ad.Length == SilahSunağı.Toplam && SilahSunağı.NeYapar.Length == SilahSunağı.Toplam
-                            && Combo.Tümü.All(c => !string.IsNullOrEmpty(c.ArtıAd)) && System.Enum.GetValues(typeof(ComboTür)).Length == Combo.Sayı, 0f);
+                            && Combo.Tümü.All(c => c.Açan.HasValue != !string.IsNullOrEmpty(c.ArtıAd)) && System.Enum.GetValues(typeof(ComboTür)).Length == Combo.Sayı, 0f);
             return failed;
         }
 
