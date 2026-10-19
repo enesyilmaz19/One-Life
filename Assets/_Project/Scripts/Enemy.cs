@@ -86,24 +86,28 @@ namespace TekCan
 
         PlayerController _oyuncu;
         /// <summary>
-        /// Yeni saldırı başlatamaz: oyuncu görünmez (ARBİTRAJ · AÇIK POZİSYON, Faz 32) ya da rehine
-        /// tutarken bu düşman önünde (REHİN · TEHDİT, Faz 33).
+        /// Yeni saldırı başlatamaz: oyuncu görünmez (ARBİTRAJ · AÇIK POZİSYON, Faz 32), rehine
+        /// tutarken bu düşman önünde (REHİN · TEHDİT, Faz 33) ya da karşılanıp susturuldu (KARŞILIK · RED, Faz 33b).
         /// </summary>
         bool SaldıramazOyuncu
         {
             get
             {
+                if (_susKalan > 0f) return true;
                 if (_oyuncu == null && _player != null) _oyuncu = _player.GetComponent<PlayerController>();
                 return _oyuncu != null && (_oyuncu.Görünmez || _oyuncu.Tehdit(this));
             }
         }
 
         // Faz 33 — silah yükseltmelerinin düşmana etkileri (dt'li, TickState sayıyor).
-        float _yorgunKalan, _yavaşKalan, _yavaşÇarpan = 1f;
+        float _yorgunKalan, _yavaşKalan, _yavaşÇarpan = 1f, _susKalan;
         /// <summary>KONİ · YORGUNLUK: bu süre boyunca saldırı hazırlığı ×1.3 uzun.</summary>
         public void Yor(float sn) => _yorgunKalan = Mathf.Max(_yorgunKalan, sn);
         /// <summary>HACİZ · İHTAR: bu süre boyunca hız × çarpan.</summary>
         public void Yavaşlat(float sn, float çarpan) { _yavaşKalan = Mathf.Max(_yavaşKalan, sn); _yavaşÇarpan = çarpan; }
+        /// <summary>KARŞILIK · RED (Faz 33b): bu süre boyunca yeni saldırı başlatamaz.</summary>
+        public void Sustur(float sn) => _susKalan = Mathf.Max(_susKalan, sn);
+        public bool Susturulmuş => _susKalan > 0f;
         public bool Yorgun => _yorgunKalan > 0f;
         public bool Yavaş => _yavaşKalan > 0f;
         public void RehinAl(PlayerController p) => Tutan = p;
@@ -382,7 +386,7 @@ namespace TekCan
             // görünmezdi (denetim 2026-09-23).
             if (_flashTimer > 0f)
             {
-                _flashTimer -= Time.unscaledDeltaTime;   // hit-stop sırasında da sönsün
+                _flashTimer -= HitStop.Adım;             // hit-stop sırasında da sönsün
 
                 // Ölçek darbesi: isabetin en ucuz ve en okunur işareti. Renk solsa da görünür.
                 float k = Mathf.Clamp01(_flashTimer / Mathf.Max(0.0001f, _t.hitFlashDuration));
@@ -482,6 +486,7 @@ namespace TekCan
             _stateTimer -= dt;
             _yorgunKalan -= dt;
             _yavaşKalan -= dt;
+            _susKalan -= dt;
 
             // ⚠️ Savrulma DURUMDAN BAĞIMSIZ: hazırlıktayken de vurulunca savrulmalı,
             // yoksa "ağır darbe" yalnızca kovalarken görünür ve tesadüfi hissedilir.
@@ -1680,6 +1685,7 @@ namespace TekCan
         void Kill()
         {
             if (_telegraph != null) _telegraph.Cancel();   // ölünce uyarı yayı ortada kalmasın
+            if (Bağ != null) Bağ.Öldü(this, _startingPool);  // MÜŞTEREK: bağdan hemen çık (MÜTESELSİL, Faz 33b)
 
             // Ölüm halkası TÜRÜN renginde: kalabalıkta neyi devirdiğin okunuyor.
             // Boss daha geniş — devrilişi olay olmalı, sıradan bir düşman gibi sönmemeli.

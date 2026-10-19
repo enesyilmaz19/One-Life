@@ -357,6 +357,23 @@ kadar 4; sonra her bölgede +2 (biri boss'tan, öbürü sunakta satın ya da ke�
 tekrar etmiyor, her combo'nun boss sonrası alınan bir "+" hâli var. Silah başına 8 yükseltme ve combo
 AÇAN yükseltmeler: Faz 33.
 
+### YÜKSELTMELER — ENDERLİK (Faz 33, 2026-10-18)
+
+Enes: *"4 tip enderlik… mini bosslardan bir tane yaygın veya nadir, bosslardan 1 yaygın veya nadir 1 de epik
+veya efsanevi… şansa bağlı olacak şekilde nadirlik bakılmaksızın sunaklarda da satılma ihtimali olsun."*
+Her silahın 8 yükseltmesi: **3 YAYGIN · 2 NADİR · 2 EPİK (biri combo açan) · 1 EFSANEVİ.** Sunak yalnızca
+KUŞANDIĞIN silahınkini satıyor, her sırada rastgele 3 (koşu tohumundan; silah değiştirip yeni zar yok).
+
+| sunak | ne satıyor | alım |
+|---|---|---|
+| mini boss sonrası | 3 yaygın/nadir | 1 |
+| ana boss sonrası | iç halka 3 yaygın/nadir · dış halka 3 epik/efsanevi | her halkadan 1 |
+| ŞANS (sunak odasında %30) | her enderlik, fiyat ×1.5 | 1 |
+
+Fiyat saniye (yasa): saatin %15'i (en az 24 sn) × yaygın 0.6 · nadir 1 · epik 1.5 · efsanevi 2.2 — alım
+sayısıyla büyümüyor. Bot ölçümü (2026-10-18): fiyatlar ödenebilir, iyi yükseltme 1–9 odada kendini ödüyor;
+ama bazı epik/efsaneviler yaygından zayıf — denge kararı Enes'te (`tasks/todo.md` masası #14).
+
 ### Denge ölçümü
 
 `Tek Can → Denge simülasyonu`, düşman başına net saniye (TEMİZ oyuncu):

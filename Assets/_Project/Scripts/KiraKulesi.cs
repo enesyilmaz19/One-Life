@@ -22,6 +22,12 @@ namespace TekCan
         public int Atış { get; private set; }
         public float ÖdenenKira { get; private set; }
         public bool Bitti { get; private set; }
+        /// <summary>DEPOZİTO (Faz 33b): süresi dolunca SAATTEN ödenen kiranın bu payı geri (TAHLİYE'de değil).</summary>
+        public float Depozito { get; set; }
+        /// <summary>STOPAJ (Faz 33b): kule öldürünce bu kadar sn (doymaya tabi).</summary>
+        public float Stopaj { get; set; }
+        float _saattenÖdenen;
+        bool _uzatıldı;
         bool OrtakÖdüyor => _ortak != null && !_ortak.Bitti;
 
         public static KiraKulesi Kur(Tuning t, Vector3 yer, float süre, float kira, float yarıçap,
@@ -87,12 +93,16 @@ namespace TekCan
             else
             {
                 var saat = Clock.Instance;
-                if (saat != null && !saat.Frozen) saat.Spend(borç);
+                if (saat != null && !saat.Frozen) { saat.Spend(borç); _saattenÖdenen += borç; }
             }
 
             _atışSayacı -= dt;
             if (_atışSayacı <= 0f) { _atışSayacı = _t.kiraShotInterval; Ateş(); }
-            if (Kalan <= 0f) Bitir();
+            if (Kalan <= 0f)
+            {
+                if (Depozito > 0f && Clock.Instance != null) Clock.Instance.Add(_saattenÖdenen * Depozito);   // süresi doldu
+                Bitir();
+            }
         }
 
         void Ateş()
@@ -111,8 +121,10 @@ namespace TekCan
             float hasar = _hasar * (_aidat && OrtakÖdüyor && hedef.Bağ == _ortak ? 1.5f : 1f);
             Arc.Spawn(hedef.transform.position, hedef.transform.rotation, 0.6f, 360f,
                       new Color(0.95f, 0.8f, 0.45f, 0.8f), 0.15f, scaleFrom: 0.4f, scaleTo: 1.2f);
+            bool öldürür = hedef.Hollow;                                         // boşu vurmak öldürür
             hedef.TakeDamage(hasar, _hasat);
             Atış++;
+            if (öldürür && Stopaj > 0f && Clock.Instance != null) Clock.Instance.Add(Stopaj * Clock.Instance.HasatDoyması);
         }
 
         /// <summary>
@@ -129,6 +141,14 @@ namespace TekCan
             else if (Clock.Instance != null && !Clock.Instance.Frozen) Clock.Instance.Spend(bedel);
             Bitir();
             return kalan;
+        }
+
+        /// <summary>SAĞLAM YAPI (Faz 33b): kuleyi bir kez uzat (kira da o kadar sürer).</summary>
+        public void Uzat(float sn)
+        {
+            if (_uzatıldı || Bitti) return;
+            _uzatıldı = true;
+            Kalan += sn;
         }
 
         /// <summary>TAŞINMA: kuleyi oraya taşı (kira sürer).</summary>

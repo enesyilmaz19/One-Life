@@ -591,3 +591,23 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
 - **Bedel zamanla ödeniyorsa "kur → hemen boz" yolunu say (Faz 32):** KİRA kulesi bedava kuruluyor, kira
   saniye saniye; TAHLİYE kalan süreye göre vuruyordu → kira hiç ödenmeden tam patlama. Spam hesabı
   (Faz 31 dersi) yakaladı. Erken bozmanın bedeli kalan borç olmalı.
+- **Kapı kurgusu paylaşılan bayrağı da sıfırlamalı (Faz 33b):** sunak odası testi saati DONDURDU,
+  `Clock.Init` donmayı sıfırlamıyor; sonraki "beklerken saat akıyor mu" (KİLİT) ve "kira saatten ödeniyor
+  mu" (DEPOZİTO) testleri saat hiç akmadığı için kırmızıydı. Oyunda her oda girişi sıfırlıyor, testte
+  kimse. **Kural:** test kurgusu, oda kodunun yazdığı her bayrağı (Frozen, akış çarpanı) kendisi kurar.
+- **Ölüm tetikli etki ölmekte olanı vurmasın (Faz 33b):** MÜTESELSİL "biri ölünce öbürleri kaybeder";
+  vurulan boş üye bağın yayılmasıyla önce öbür boşu öldürdü, o da geri dönüp vurulanı vurdu → düşman iki
+  kez öldü, iki kez ödedi, Unity nesnesi patladı. **Kural:** ölümde başkasına hasar veren her etki, boşalmış
+  (zaten ölecek) üyeleri atlar ve ölüyü önce listeden çıkarır.
+- **Değeri, yükseltmenin çalıştığı yerde ölç (Faz 33 fiyat botu):** saat 250'de İFLAS'ın "dipte" yükseltmeleri
+  sıfır çıktı — dip hiç yok. Sabit saatte ölçüm durumsal yükseltmeyi "işe yaramaz" gösterir. Ve gürültü
+  silaha göre 40 kat değişiyor (KONİ ±0.2, REHİN ±10): yükseltmesiz denemeyi blok başında VE sonunda koş,
+  gürültüyü sayı olarak yaz, içinde kalanı "ölçülemedi" de.
+- **Bot gerçek saatle beklerse hızlandırılamaz (2026-10-18):** bot görünmezde binlerce kare koşuyordu ama
+  her kareye gerçek süre kadar oyun zamanı düşüyordu — 100 dk'lık ölçüm. Kareye sabit oyun zamanı
+  (`Time.captureDeltaTime`) verince ×6; botun 57 beklemesini gerçek saatten oyun saatine çevirmek gerekti (yoksa
+  "0.6 sn bekle" 36 oyun saniyesi olurdu). ×6'da takılmasının sebebi oyunun KENDİ gerçek saatiydi: hit-stop donmayı
+  `unscaledTime` ile sayıyordu, her isabet gerçek 0.05–0.1 sn yiyordu. Kareyle saydırınca ×30 — ve sonuç tekrarlanır
+  oldu (donan kare sayısı makinenin hızına bağlıydı). **Kural:** test aracında süre = oyun saati; gerçek
+  saat yalnızca "takıldı mı" bekçisi için. Ve kare hızı ölçümün parçası: 3600 kare/sn'lik bot insanüstü
+  tepki veriyordu, 60'a inince sayılar kaydı — farklı kare hızındaki ölçümleri karşılaştırma.

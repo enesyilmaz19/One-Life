@@ -123,6 +123,7 @@ namespace TekCan
             if (_fare != null) InputSystem.RemoveDevice(_fare);
             if (_eskiAyar != null) InputSystem.settings = _eskiAyar;
             AudioListener.volume = _eskiSes;
+            Time.captureDeltaTime = 0f;                          // Play'den çıkınca elle oyun gerçek hızda
             if (_ayar != null) Destroy(_ayar);
         }
 
@@ -219,6 +220,17 @@ namespace TekCan
 
         // ── rapor ─────────────────────────────────────────────────────────────
         bool _izle, _bitti;
+
+        // ── HIZLANDIRILMIŞ ZAMAN (Enes 2026-10-18: "her test çok uzun sürüyor, kısaltacak bir çözüm") ──
+        // Bot görünmez pencerede saniyede binlerce kare koşuyor ama her kareye GERÇEK geçen süre kadar
+        // oyun zamanı düşüyordu: 1 oyun saniyesi = 1 gerçek saniye. İzlenmeyen koşuda her kare sabit
+        // `KareSüresi` oyun saniyesi (`Time.captureDeltaTime`): oyun bilgisayarın yetiştiği hızda akar, her
+        // kare aynı uzunlukta olduğu için sonuç da tekrarlanabilir. ⚠️ Botun bütün beklemeleri ve süre
+        // sınırları bu yüzden OYUN saatiyle (`Şimdi`) — gerçek saatle yazılsaydı hızlanınca "0.6 sn bekle"
+        // 30 oyun saniyesi olurdu. Gerçek saatte kalan: bekçi (takılmaya karşı) ve iki nabız teşhisi.
+        const float KareSüresi = 1f / 60f;
+        static float Şimdi => Time.time;
+        float _oyunBaşı;
         float _bekçiDk = 30f;
         float _başlangıç;
         string _sahne = "", _ne = "";
@@ -271,6 +283,8 @@ namespace TekCan
         IEnumerator Start()
         {
             _başlangıç = Time.realtimeSinceStartup;
+            _oyunBaşı = Time.time;
+            if (!_izle) Time.captureDeltaTime = KareSüresi;
             _t = Resources.Load<Tuning>("Tuning");
             yield return null; yield return null;           // Bootstrap kurulsun
 
@@ -298,6 +312,10 @@ namespace TekCan
                 ? new[] { Kurulum(), P33(), Bitir() }
                 : senaryo == "simsar"
                 ? new[] { Kurulum(), SimsarTeşhis(), Bitir() }
+                : senaryo == "fiyat"
+                ? new[] { Kurulum(), FiyatÖlçümü(Kadro.KONİ, Kadro.FAİZLİ, Kadro.HACİZ, Kadro.İPOTEK, Kadro.İFLAS, Kadro.REHİN), Bitir() }
+                : senaryo == "fiyat33b"
+                ? new[] { Kurulum(), FiyatÖlçümü(Kadro.ÇEK, Kadro.KARŞILIK, Kadro.TAHVİL, Kadro.MÜŞTEREK, Kadro.ARBİTRAJ, Kadro.KİRA), Bitir() }
                 : SessionState.GetInt(AdımAnahtar, 0) == 0
                 ? new[] { Kurulum(), GirdiKanıtı(), K1Hazırla() }          // K1: Play'den çıkıp giriyor
                 : new[] { K1Doğrula(), Bölge1(), Sunak(), Tahsildar(), Haciz(), Simsar(), Final(), Bitir() };
@@ -444,8 +462,8 @@ namespace TekCan
             if (hedefD != null) NişanAl(hedefD.transform.position);
             _sağ = true;
             var yağmur = new List<float>();
-            float t0 = Time.realtimeSinceStartup;
-            while (Time.realtimeSinceStartup - t0 < 3.5f) { yağmur.AddRange(Yeniİpotekler(görülen)); yield return null; }
+            float t0 = Şimdi;
+            while (Şimdi - t0 < 3.5f) { yağmur.AddRange(Yeniİpotekler(görülen)); yield return null; }
             int beklenen = Oyuncu.Weapon.Special(_t).Hits;
             Kaydet("29-3", "İPOTEK YAĞMURU (sağ tık)", yağmur.Count >= beklenen, $"{yağmur.Count} ipotek ({beklenen} bekleniyor)");
 
@@ -465,8 +483,8 @@ namespace TekCan
 
             yield return Bekle(2.5f);
             int enÇok = 0;
-            t0 = Time.realtimeSinceStartup;
-            while (Time.realtimeSinceStartup - t0 < 2f)
+            t0 = Şimdi;
+            while (Şimdi - t0 < 2f)
             {
                 hedefD = EnYakın();
                 if (hedefD != null) NişanAl(hedefD.transform.position);
@@ -569,8 +587,8 @@ namespace TekCan
             yield return Bekle(1f);
             Bas(Key.F5); yield return Bekle(0.3f);
             Bas(Key.Digit1); yield return Bekle(0.3f);
-            float t0 = Time.realtimeSinceStartup;
-            while (Oda != null && !Oda.Cleared && Time.realtimeSinceStartup - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
+            float t0 = Şimdi;
+            while (Oda != null && !Oda.Cleared && Şimdi - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
             Dur();
             yield return Bekle(0.6f);
             // Bot dövüşürken köşenin üstünden geçip silahı alabiliyor (köşe kenarda, bot kenarda dolaşıyor):
@@ -595,8 +613,8 @@ namespace TekCan
             yield return Bekle(1f);
             Bas(Key.F5); yield return Bekle(0.3f);
             int c0 = Oyuncu.ComboSayısı, deneme = 0;
-            t0 = Time.realtimeSinceStartup;
-            while (Time.realtimeSinceStartup - t0 < 60f && Oyuncu.ComboSayısı == c0)
+            t0 = Şimdi;
+            while (Şimdi - t0 < 60f && Oyuncu.ComboSayısı == c0)
             {
                 var d = EnYakın();
                 if (d == null) { yield return null; continue; }
@@ -707,8 +725,8 @@ namespace TekCan
             Sahne("P31 2/6 REHİN", "yakala → fırlat → (1) KONİ = SİLİP SÜPÜR");
             yield return OdayaAtla(RoomManager.SunakOdası(_t, 2) + 1);
             int yakaladı = 0, fırlattı = 0, c0 = Oyuncu.ComboSayısı, kalkan0 = Oyuncu.KalkanSayısı;
-            float t0 = Time.realtimeSinceStartup;
-            while (Time.realtimeSinceStartup - t0 < 150f && (Oyuncu.ComboSayısı == c0 || fırlattı == 0))
+            float t0 = Şimdi;
+            while (Şimdi - t0 < 150f && (Oyuncu.ComboSayısı == c0 || fırlattı == 0))
             {
                 yield return Sürdür();
                 var d = EnYakınBaşka(null);
@@ -755,8 +773,8 @@ namespace TekCan
             int atış = 0, değdi = 0, enÇokİsabet = 0;
             c0 = Oyuncu.ComboSayısı;
             float bant = Weapon.All[Kadro.HACİZ].Range(_t) * 0.7f;
-            t0 = Time.realtimeSinceStartup;
-            while (Time.realtimeSinceStartup - t0 < 150f && (Oyuncu.ComboSayısı == c0 || enÇokİsabet < 2))
+            t0 = Şimdi;
+            while (Şimdi - t0 < 150f && (Oyuncu.ComboSayısı == c0 || enÇokİsabet < 2))
             {
                 yield return Sürdür();
                 var d = EnYakınBaşka(null);
@@ -769,15 +787,15 @@ namespace TekCan
                 // ⚠️ İsabeti ÇEKİN KENDİSİNDEN oku. Havuz kendi kendine de akıyor: "havuz düştü" ilk koşuda
                 // çek daha atılmadan HACİZ'e geçirtti, geçiş de ÇEK savurmasını iptal etti (0 combo).
                 CekUcusu çek = null;
-                float ta = Time.realtimeSinceStartup;
-                while (çek == null && Time.realtimeSinceStartup - ta < 0.5f)
+                float ta = Şimdi;
+                while (çek == null && Şimdi - ta < 0.5f)
                 {
                     if (CekUcusu.Uçanlar.Count > 0) çek = CekUcusu.Uçanlar[0];
                     yield return null;
                 }
                 if (ReferenceEquals(çek, null)) continue;
                 atış++;
-                while (çek != null && çek.İsabet == 0 && Time.realtimeSinceStartup - ta < 1.5f) yield return null;
+                while (çek != null && çek.İsabet == 0 && Şimdi - ta < 1.5f) yield return null;
                 bool isabet = çek.İsabet > 0;                                // yok edilse de C# nesnesinden okunur
                 if (isabet)
                 {
@@ -786,8 +804,8 @@ namespace TekCan
                     if (d != null) NişanAl(d.transform.position);
                     _sol = true;
                 }
-                float tb = Time.realtimeSinceStartup;
-                while (çek != null && Time.realtimeSinceStartup - tb < 2.5f) yield return null;   // çek dönene kadar
+                float tb = Şimdi;
+                while (çek != null && Şimdi - tb < 2.5f) yield return null;   // çek dönene kadar
                 enÇokİsabet = Mathf.Max(enÇokİsabet, çek.İsabet);
             }
             Kaydet("31-4", "ÇEK gerçek tuşlarla: gidip dönüyor, değince (2) HACİZ = SENET HACZİ",
@@ -799,8 +817,8 @@ namespace TekCan
             Diz(Kadro.KONİ, Kadro.HACİZ, ÇEK);
             yield return OdayaAtla(2 * _t.BlokBoyu + Kadro.KeşifOdası);
             Bas(Key.Digit1); yield return Bekle(0.3f);
-            t0 = Time.realtimeSinceStartup;
-            while (Oda != null && !Oda.Cleared && Time.realtimeSinceStartup - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
+            t0 = Şimdi;
+            while (Oda != null && !Oda.Cleared && Şimdi - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
             Dur();
             yield return Bekle(0.6f);
             var köşe = FindFirstObjectByType<GizliSilah>();
@@ -817,8 +835,8 @@ namespace TekCan
             Bas(Key.F5); yield return Bekle(0.3f);
             int k0 = Oyuncu.KarşılananSayısı, indi = 0, vuruş = 0;
             c0 = Oyuncu.ComboSayısı;
-            t0 = Time.realtimeSinceStartup;
-            while (Time.realtimeSinceStartup - t0 < 180f && (Oyuncu.ComboSayısı == c0 || Oyuncu.KarşılananSayısı == k0 || indi == 0))
+            t0 = Şimdi;
+            while (Şimdi - t0 < 180f && (Oyuncu.ComboSayısı == c0 || Oyuncu.KarşılananSayısı == k0 || indi == 0))
             {
                 yield return Sürdür();
                 var d = EnYakınBaşka(null);
@@ -935,7 +953,6 @@ namespace TekCan
         {
             _bekçiDk = 120f;
             int TAHVİL = Kadro.TAHVİL, MÜŞTEREK = Kadro.MÜŞTEREK, ARBİTRAJ = Kadro.ARBİTRAJ, KİRA = Kadro.KİRA;
-            float Şimdi() => Time.realtimeSinceStartup;
 
             Sahne("P32 1/8 TAHVİL AÇILIŞI", "N N → 3. bölge, B → 3. boss");
             Bas(Key.N); yield return Bekle(1.2f);
@@ -953,8 +970,8 @@ namespace TekCan
             Diz(TAHVİL, Kadro.FAİZLİ, Kadro.KONİ);
             Bas(Key.F5); yield return Bekle(0.3f);
             int enYüksek = -1, olgun = 0, combo = 0;
-            float t0 = Şimdi();
-            while (Şimdi() - t0 < 150f && (olgun == 0 || combo == 0))
+            float t0 = Şimdi;
+            while (Şimdi - t0 < 150f && (olgun == 0 || combo == 0))
             {
                 yield return Sürdür(200f);
                 var pc = Oyuncu; int cb = pc != null ? pc.ComboSayısı : 0;
@@ -964,8 +981,8 @@ namespace TekCan
                 yield return Git(d.transform.position, 1.2f + d.Radius, 3f);
                 if (d == null) continue;
                 int kademe = -1;
-                float tb = Şimdi();
-                while (Şimdi() - tb < 1.7f && d != null)                     // basılı tut
+                float tb = Şimdi;
+                while (Şimdi - tb < 1.7f && d != null)                     // basılı tut
                 {
                     NişanAl(d.transform.position);
                     _sol = true;
@@ -1001,8 +1018,8 @@ namespace TekCan
             yield return OdayaAtla(RoomManager.SunakOdası(_t, 2) + 1);
             Diz(MÜŞTEREK, Kadro.KONİ, TAHVİL);
             int bağlandı = 0, yayıldı = 0;
-            t0 = Şimdi();
-            while (Şimdi() - t0 < 150f && yayıldı == 0)
+            t0 = Şimdi;
+            while (Şimdi - t0 < 150f && yayıldı == 0)
             {
                 yield return Sürdür(200f);
                 var a = EnYakınBaşka(null);
@@ -1046,8 +1063,8 @@ namespace TekCan
             Diz(ARBİTRAJ, Kadro.REHİN, Kadro.KONİ);
             Bas(Key.F5); yield return Bekle(0.3f);
             int gizli = 0, ters = 0, açığa = 0;
-            t0 = Şimdi();
-            while (Şimdi() - t0 < 240f && (gizli == 0 || ters == 0 || açığa == 0))
+            t0 = Şimdi;
+            while (Şimdi - t0 < 240f && (gizli == 0 || ters == 0 || açığa == 0))
             {
                 yield return Sürdür(200f);
                 var pc = Oyuncu; int cb = pc != null ? pc.ComboSayısı : 0;
@@ -1101,8 +1118,8 @@ namespace TekCan
             Diz(Kadro.KONİ, ARBİTRAJ, Kadro.REHİN);
             yield return OdayaAtla(2 * _t.BlokBoyu + Kadro.KeşifOdası);
             Bas(Key.Digit1); yield return Bekle(0.3f);
-            t0 = Şimdi();
-            while (Oda != null && !Oda.Cleared && Şimdi() - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
+            t0 = Şimdi;
+            while (Oda != null && !Oda.Cleared && Şimdi - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
             Dur();
             yield return Bekle(0.6f);
             var köşe = FindFirstObjectByType<GizliSilah>();
@@ -1118,8 +1135,8 @@ namespace TekCan
             Diz(KİRA, MÜŞTEREK, Kadro.KONİ);
             Bas(Key.F5); yield return Bekle(0.3f);
             int atış = 0, tahliye = 0, ortak = 0;
-            t0 = Şimdi();
-            while (Şimdi() - t0 < 240f && (atış == 0 || tahliye == 0 || ortak == 0))
+            t0 = Şimdi;
+            while (Şimdi - t0 < 240f && (atış == 0 || tahliye == 0 || ortak == 0))
             {
                 yield return Sürdür(200f);
                 var pc = Oyuncu; int cb = pc != null ? pc.ComboSayısı : 0;
@@ -1131,8 +1148,8 @@ namespace TekCan
                     if (Oyuncu.Kule == null) { NişanAl(d.transform.position); _sol = true; yield return Bekle(0.3f); }
                     var kule = Oyuncu.Kule;
                     if (kule == null) continue;
-                    float tk = Şimdi();
-                    while (kule.Atış == 0 && !kule.Bitti && Şimdi() - tk < 4f) yield return null;
+                    float tk = Şimdi;
+                    while (kule.Atış == 0 && !kule.Bitti && Şimdi - tk < 4f) yield return null;
                     if (kule.Atış > 0) atış++;
                     _sağ = true; yield return Bekle(0.3f);                   // TAHLİYE
                     if (kule.Bitti && Oyuncu.Kule == null) tahliye++;
@@ -1227,6 +1244,121 @@ namespace TekCan
                    $"{önceEtiket} · alınan {SilahSunağı.AlınanSayısı - ö2}");
         }
 
+        // ── FAZ 33 FİYAT ÖLÇÜMÜ — Enes (2026-10-18): "fiyat uygunluğunu bot üzerinden deneyelim" ──
+        // Her yükseltme aynı iki dövüş odasında (1. bölge, oda 1–2) VAR ve YOK diye oynanır; saat her
+        // odada doyma tavanından başlar. DEĞER = oda başı net saat farkı (saat = can = para: hasat,
+        // darbe, akış hepsi içinde). GERİ ÖDEME = fiyat / değer, oda cinsinden. Rakip: aynı saatte bir
+        // HASAT / HASAR / DASH sunağı alımı. Gürültü: yükseltmesiz deneme bloğun başında VE sonunda.
+        static readonly int[] FiyatOdaları = { 1, 2 };
+
+        /// <summary>F6 → silahı kuşan → yükseltme / sunak → her odada saat = tavan, odayı temizle.
+        /// Sonuç: oda başı net saat ve süre; deneme olmadıysa NaN.</summary>
+        IEnumerator FiyatDenemesi(int silah, SilahYükseltme? y, Altar.Kind? sunak, System.Action<float, float> sonuç)
+        {
+            Bas(Key.F6); yield return Bekle(0.6f);
+            _pc = null; _kam = null;
+            Kuşan(silah); yield return Bekle(0.3f);
+            if (y.HasValue) SilahSunağı.Al(y.Value, -1);
+            if (sunak.HasValue && Saat != null) Saat.Yükselt(sunak.Value);
+            float net = 0f, süre = 0f;
+            foreach (int oda in FiyatOdaları)
+            {
+                // Aynı zar her denemede (hızlandırılmış zamanda kare de sabit): A/B farkı yalnızca yükseltmeden gelsin.
+                UnityEngine.Random.InitState(1009 * oda);
+                yield return OdayaAtla(oda);
+                var c = Saat;
+                if (c == null || Oyuncu == null || Oyuncu.Weapon != Weapon.All[silah]) { sonuç(float.NaN, 0f); yield break; }
+                c.Revive(_t.harvestSoftCap);
+                float s0 = c.Seconds, g0 = c.TotalGranted, r0 = c.RunTime, t0 = Şimdi;
+                while (Oda != null && !Oda.Cleared && !c.Dead && Şimdi - t0 < 240f)
+                { DövüşAdımı(Mod.Dövüş); yield return null; }
+                Dur();
+                if (Oda == null || !Oda.Cleared || c.Dead) { sonuç(float.NaN, 0f); yield break; }
+                net += c.Seconds - s0 - (c.TotalGranted - g0);
+                süre += c.RunTime - r0;
+            }
+            sonuç(net / FiyatOdaları.Length, süre / FiyatOdaları.Length);
+        }
+
+        IEnumerator FiyatÖlçümü(params int[] silahlar)
+        {
+            _bekçiDk = 180f;
+            _tahvilTut = true;
+            float saat = _t.harvestSoftCap;
+            float net = 0f, süre = 0f;
+            System.Action<float, float> al = (n, s) => { net = n; süre = s; };
+            string Geri(float değer, float fiyat, float gürültü) =>
+                float.IsNaN(değer) ? "deneme olmadı" : değer <= gürültü ? "ölçülemedi (gürültü içinde)" : $"{fiyat / değer:0.0} oda";
+            var enderlik = new Dictionary<Enderlik, List<(float değer, float fiyat)>>();
+            float koniTaban = float.NaN, koniGürültü = 0f;
+
+            foreach (int w in silahlar)
+            {
+                if (_bitti) yield break;
+                var liste = SilahSunağı.Yükseltmeleri(w);
+                string ad = Weapon.All[w].Name;
+                Sahne($"FİYAT {ad}", "yükseltmesiz (1)");
+                yield return FiyatDenemesi(w, null, null, al);
+                float b1 = net, bs1 = süre;
+                var ölçüm = new List<(SilahYükseltme y, float net, float süre)>();
+                foreach (var y in liste)
+                {
+                    if (_bitti) yield break;
+                    Sahne($"FİYAT {ad}", SilahSunağı.Ad[(int)y]);
+                    yield return FiyatDenemesi(w, y, null, al);
+                    ölçüm.Add((y, net, süre));
+                    Debug.Log($"[FİYAT] {ad} · {SilahSunağı.Ad[(int)y]} · net {net:+0.0;−0.0} sn/oda · {süre:0} sn");
+                }
+                Sahne($"FİYAT {ad}", "yükseltmesiz (2)");
+                yield return FiyatDenemesi(w, null, null, al);
+                float taban = (b1 + net) / 2f, gürültü = Mathf.Abs(b1 - net) / 2f;
+                Debug.Log($"[FİYAT] {ad} · yükseltmesiz {b1:+0.0;−0.0} / {net:+0.0;−0.0} sn/oda · {bs1:0} / {süre:0} sn");
+                if (w == Kadro.KONİ) { koniTaban = taban; koniGürültü = gürültü; }
+
+                var sb = new StringBuilder($"yükseltmesiz {taban:+0.0;−0.0} sn/oda (±{gürültü:0.0}), {(bs1 + süre) / 2f:0} sn");
+                foreach (var (y, n, s) in ölçüm)
+                {
+                    var e = SilahSunağı.Ender[(int)y];
+                    float fiyat = Clock.SilahFiyatı(_t, saat, e), değer = n - taban;
+                    if (!float.IsNaN(değer))
+                    {
+                        if (!enderlik.TryGetValue(e, out var l)) enderlik[e] = l = new List<(float, float)>();
+                        l.Add((değer, fiyat));
+                    }
+                    sb.Append($"<br>[{SilahSunağı.EnderlikAdı[(int)e]}] {SilahSunağı.Ad[(int)y]}: {değer:+0.0;−0.0} sn/oda · {s:0} sn · " +
+                              $"fiyat {fiyat:0} → geri ödeme {Geri(değer, fiyat, gürültü)}");
+                }
+                Kaydet("F", $"{ad} (saat {saat:0})", null, sb.ToString());
+            }
+
+            // Rakip: aynı odalarda KONİ + ilk sunak alımı
+            if (!float.IsNaN(koniTaban) && !_bitti)
+            {
+                var sb = new StringBuilder();
+                foreach (var k in new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash })
+                {
+                    Sahne("FİYAT rakip", k.ToString());
+                    yield return FiyatDenemesi(Kadro.KONİ, null, k, al);
+                    float fiyat = Clock.Fiyat(_t, 0, saat), değer = net - koniTaban;
+                    Debug.Log($"[FİYAT] rakip {k} · net {net:+0.0;−0.0} sn/oda · {süre:0} sn");
+                    sb.Append($"{k}: {değer:+0.0;−0.0} sn/oda · fiyat {fiyat:0} → geri ödeme {Geri(değer, fiyat, koniGürültü)}<br>");
+                }
+                Kaydet("F", "Rakip: ilk HASAT / HASAR / DASH sunağı (KONİ'yle)", null, sb.ToString());
+            }
+
+            var özet = new StringBuilder();
+            foreach (Enderlik e in System.Enum.GetValues(typeof(Enderlik)))
+            {
+                if (!enderlik.TryGetValue(e, out var l) || l.Count == 0) continue;
+                float d = 0f, f = 0f;
+                foreach (var (dd, ff) in l) { d += dd; f += ff; }
+                d /= l.Count; f /= l.Count;
+                özet.Append($"{SilahSunağı.EnderlikAdı[(int)e]} ({l.Count}): ortalama {d:+0.0;−0.0} sn/oda · fiyat {f:0} → " +
+                            $"{(d > 0f ? $"{f / d:0.0} oda" : "ödemiyor")}<br>");
+            }
+            Kaydet("F", "Enderlik başına (ortalama değer, fiyat, geri ödeme)", null, özet.ToString());
+        }
+
         IEnumerator MiniTeşhis()
         {
             Sahne("MİNİ TEŞHİS", "M: ilk mini boss · 10 sn'de bir nabız");
@@ -1295,8 +1427,8 @@ namespace TekCan
             // ⚠️ DURUP bekliyor: saat girişten en az 1 sn uzaklaşmalı, yoksa açılışta okunan
             // değerin "giriş" mi "kapanıştaki canlı saat" mi olduğu ayırt edilemez (inceleme:
             // önceki koşuda 93.2'ye karşı 93.3'tü).
-            float t0 = Time.realtimeSinceStartup;
-            while (Saat != null && giriş - Saat.Seconds < 1.5f && Time.realtimeSinceStartup - t0 < 10f)
+            float t0 = Şimdi;
+            while (Saat != null && giriş - Saat.Seconds < 1.5f && Şimdi - t0 < 10f)
             { Dur(); Gözler(Ben); yield return null; }
             float kapanış = Saat != null ? Saat.Seconds : -1f;
             SS("k1_kapatmadan_once");
@@ -1480,8 +1612,8 @@ namespace TekCan
             float defter0 = SaveFile.BossLedger(boss.Boss);
             int ölüm0 = SaveFile.Current.deaths;
             SS("nemesis_once");
-            float t0 = Time.realtimeSinceStartup;
-            while (SaveFile.Current.deaths == ölüm0 && Time.realtimeSinceStartup - t0 < 120f)
+            float t0 = Şimdi;
+            while (SaveFile.Current.deaths == ölüm0 && Şimdi - t0 < 120f)
             {
                 DövüşAdımı(Mod.Ölümüne, boss);
                 yield return null;
@@ -1572,8 +1704,8 @@ namespace TekCan
             Sahne("8/9 FİNAL", "faz 3'e kadar dövüşüyorum");
             _final = boss; _uykuGörüldü = false; _uykuBaşı = -1f; _finalSaldırılar.Clear();
             _tehdit = 0; _vuruldu = 0;
-            float t0 = Time.realtimeSinceStartup;
-            while (boss != null && !(boss.Phase >= 3 && !boss.Dormant) && Time.realtimeSinceStartup - t0 < 300f)
+            float t0 = Şimdi;
+            while (boss != null && !(boss.Phase >= 3 && !boss.Dormant) && Şimdi - t0 < 300f)
             {
                 if (Saat != null && Saat.Dead) { Kaydet("—", "bot öldü", false, _sahne); yield return Bitir(); yield break; }
                 DövüşAdımı(Mod.Dövüş, Boss());
@@ -1623,6 +1755,8 @@ namespace TekCan
         // diye var ama her biri "saat burada bitiyordu" diye yazılıyor.
 
         bool _tamKoşu, _yalnızBölge1, _tekAraBölge;
+        /// <summary>Fiyat ölçümü: TAHVİL'i tık tık değil basılı tutarak oyna (yükseltmelerinin çoğu olgunlukla ilgili).</summary>
+        bool _tahvilTut;
         readonly List<string> _takviyeYeri = new List<string>();
 
         IEnumerator TamKoşu()
@@ -1631,7 +1765,7 @@ namespace TekCan
             var bölgeSüresi = new float[8];
             var bossSüresi = new List<string>();
             var satırlar = new StringBuilder();
-            float t0 = Time.realtimeSinceStartup;
+            float t0 = Şimdi;
             int güvenlik = 0;
             var miniSüresi = new List<string>();
             var dövüşOdası = new List<float>();
@@ -1647,14 +1781,14 @@ namespace TekCan
                 string tür = rm.IsBossRoom ? "BOSS" : rm.IsMiniBossRoom ? "MİNİ" : rm.IsAltarRoom ? "SUNAK" : "oda";
                 string araBölge = $"B{bölge + 1}.{rm.SubRegion + 1}";
                 Sahne($"TAM KOŞU B{bölge + 1}·O{oda}", tür);
-                float giriş = Saat.Seconds, ta = Time.realtimeSinceStartup;
+                float giriş = Saat.Seconds, ta = Şimdi;
                 int takviye0 = _takviye;
 
                 if (rm.IsBossRoom)
                 {
                     string ad = BossAdı(Boss());
                     yield return BossuÖldür(1200f, kazanınca: rm.IsLastRegion);
-                    bossSüresi.Add($"{ad} {(Time.realtimeSinceStartup - ta) / 60f:0.0} dk");
+                    bossSüresi.Add($"{ad} {(Şimdi - ta) / 60f:0.0} dk");
                     // Boss'un çağırdıkları kalabiliyor: oda temizlenmeden kapı açılmıyor.
                     if (!Saat.Won) yield return OdayıGeç(120f);
                 }
@@ -1667,11 +1801,11 @@ namespace TekCan
                 {
                     string ad = BossAdı(Boss());
                     yield return OdayıGeç(900f);
-                    miniSüresi.Add($"{ad} {(Time.realtimeSinceStartup - ta) / 60f:0.0} dk");
+                    miniSüresi.Add($"{ad} {(Şimdi - ta) / 60f:0.0} dk");
                 }
                 else yield return OdayıGeç(600f);
 
-                float süre = Time.realtimeSinceStartup - ta;
+                float süre = Şimdi - ta;
                 if (tür == "oda") dövüşOdası.Add(süre);
                 araBölgeSüresi.TryGetValue(araBölge, out float ab);
                 araBölgeSüresi[araBölge] = ab + süre;
@@ -1682,7 +1816,7 @@ namespace TekCan
                 if (Oda != null && Oda.RegionIndex == bölge && Oda.Room == oda && !Saat.Won)
                 { Kaydet("TK", "oda geçilemedi", false, $"B{bölge + 1}·O{oda} {tür}"); break; }
             }
-            float toplam = (Time.realtimeSinceStartup - t0) / 60f;
+            float toplam = (Şimdi - t0) / 60f;
             var bölgeler = new List<string>();
             for (int i = 0; i < bölgeSüresi.Length; i++) if (bölgeSüresi[i] > 0f) bölgeler.Add($"B{i + 1} {bölgeSüresi[i] / 60f:0.0}");
             bool tamam = Saat != null && (Saat.Won || (_yalnızBölge1 && Oda != null && Oda.RegionIndex > 0)
@@ -1775,8 +1909,8 @@ namespace TekCan
         {
             int n = 0;
             _yeniSaldırı = e => { if (e != boss || e.CurrentAttack == null) return; n++; her(e); };
-            float t0 = Time.realtimeSinceStartup;
-            while (boss != null && n < adet && Time.realtimeSinceStartup - t0 < sınır && (yeter == null || !yeter()))
+            float t0 = Şimdi;
+            while (boss != null && n < adet && Şimdi - t0 < sınır && (yeter == null || !yeter()))
             {
                 if (Saat != null && Saat.Dead) { Kaydet("—", "bot öldü", false, _sahne); _yeniSaldırı = null; yield return Bitir(); yield break; }
                 DövüşAdımı(mod, boss);
@@ -1834,9 +1968,9 @@ namespace TekCan
                 ısrar.Add((e.CurrentAttack.Tür, e.IsrarÇarpanı, Time.time - t0));
                 if (e.IsrarÇarpanı >= 4.99f && hud5 == "" && Oda != null) hud5 = Oda.Prompt();
             };
-            float g0 = Time.realtimeSinceStartup;
+            float g0 = Şimdi;
             int beşte = 0;
-            while (boss != null && Time.realtimeSinceStartup - g0 < 150f && n < 20 && beşte < 3)
+            while (boss != null && Şimdi - g0 < 150f && n < 20 && beşte < 3)
             {
                 if (Saat.Dead) { Kaydet("—", "bot öldü (ısrar)", false, _sahne); _yeniSaldırı = null; yield return Bitir(); yield break; }
                 DövüşAdımı(Mod.DibeGir, boss);
@@ -1931,8 +2065,8 @@ namespace TekCan
             var boss = Boss();
             if (boss == null || boss.Boss.PhaseCount < 3) { Kaydet("P4", "MURABAHACI", false, $"bulunamadı ({BossAdı(boss)})"); yield break; }
             Sahne("P4 MURABAHACI", "madde 6: faz 3'e kadar dövüşüyorum — yeşil noktalara koşuyorum");
-            float t0 = Time.realtimeSinceStartup;
-            while (boss != null && !(boss.Phase >= 3 && !boss.Dormant) && Time.realtimeSinceStartup - t0 < 300f)
+            float t0 = Şimdi;
+            while (boss != null && !(boss.Phase >= 3 && !boss.Dormant) && Şimdi - t0 < 300f)
             {
                 if (Saat != null && Saat.Dead) { Kaydet("—", "bot öldü", false, _sahne); yield return Bitir(); yield break; }
                 DövüşAdımı(Mod.Dövüş, Boss());
@@ -2039,6 +2173,10 @@ namespace TekCan
             sb.AppendLine($"# Otopilot raporu — {System.DateTime.Now:yyyy-MM-dd HH:mm}");
             sb.AppendLine();
             sb.AppendLine(hata == 0 ? "**SONUÇ: ✅ geçti**" : $"**SONUÇ: ❌ {hata} kontrol başarısız**");
+            sb.AppendLine();
+            float gerçek = (Time.realtimeSinceStartup - _başlangıç) / 60f, oyun = (Time.time - _oyunBaşı) / 60f;
+            sb.AppendLine($"Süre: oyun {oyun:0.0} dk · gerçek {gerçek:0.0} dk" +
+                          (Time.captureDeltaTime > 0f ? $" (hızlandırılmış ×{oyun / Mathf.Max(0.01f, gerçek):0})" : " (gerçek hız)"));
             sb.AppendLine();
             sb.AppendLine("| # | Ne | | Ölçüm |");
             sb.AppendLine("|---|---|---|---|");
@@ -2149,7 +2287,9 @@ namespace TekCan
                     {
                         Dal("vur");
                         Dur();
-                        if (!pc.Attacking && Time.time - _sonVuruş > 0.15f) { _sol = true; _sonVuruş = Time.time; }
+                        if (_tahvilTut && pc.Weapon.Saldırı == Biçim.Tahvil)
+                        { if (pc.VadeKademesi < 3) _sol = true; }                   // oyuncu gibi: 3. kademeye kadar basılı tut, bırak
+                        else if (!pc.Attacking && Time.time - _sonVuruş > 0.15f) { _sol = true; _sonVuruş = Time.time; }
                         if (pc.SpecialCooldownLeft <= 0f && d < menzil * 0.8f) _sağ = true;
                     }
                     break;
@@ -2291,11 +2431,11 @@ namespace TekCan
                 }
             }
 
-            if (_final != null && _final.Dormant && _uykuBaşı < 0f) _uykuBaşı = Time.realtimeSinceStartup;
+            if (_final != null && _final.Dormant && _uykuBaşı < 0f) _uykuBaşı = Şimdi;
             // ⚠️ Parlama sönsün diye 0.6 sn sonra: faz 3'e geçiş HEP bir vuruşun içinde,
             // o vuruşun 0.2 sn'lik beyaz parlaması ilk karede hâlâ yanıyor. İlk koşuda
             // ilk karede ölçüp "beyaz" dedim — ölçüm hatası.
-            if (_final != null && _final.Dormant && !_uykuGörüldü && Time.realtimeSinceStartup - _uykuBaşı > 0.6f)
+            if (_final != null && _final.Dormant && !_uykuGörüldü && Şimdi - _uykuBaşı > 0.6f)
             {
                 _uykuGörüldü = true;
                 var r = _final.GetComponentInChildren<Renderer>();
@@ -2435,21 +2575,21 @@ namespace TekCan
 
         IEnumerator Bekle(float sn)
         {
-            float bitiş = Time.realtimeSinceStartup + sn;
-            while (Time.realtimeSinceStartup < bitiş) { Gözler(Ben); yield return null; }
+            float bitiş = Şimdi + sn;
+            while (Şimdi < bitiş) { Gözler(Ben); yield return null; }
         }
 
         IEnumerator Dövüş(float sn)
         {
-            float bitiş = Time.realtimeSinceStartup + sn;
-            while (Time.realtimeSinceStartup < bitiş) { DövüşAdımı(Mod.Dövüş); yield return null; }
+            float bitiş = Şimdi + sn;
+            while (Şimdi < bitiş) { DövüşAdımı(Mod.Dövüş); yield return null; }
             Dur();
         }
 
         IEnumerator Git(Vector3 hedef, float yakın, float sınır)
         {
-            float t0 = Time.realtimeSinceStartup;
-            while (Düz(hedef - Ben).magnitude > yakın && Time.realtimeSinceStartup - t0 < sınır)
+            float t0 = Şimdi;
+            while (Düz(hedef - Ben).magnitude > yakın && Şimdi - t0 < sınır)
             {
                 Yürü(hedef - Ben);
                 yield return null;
@@ -2462,8 +2602,8 @@ namespace TekCan
         {
             var rm = Oda;
             if (rm == null) yield break;
-            float t0 = Time.realtimeSinceStartup;
-            while (Oda != null && !Oda.Cleared && Time.realtimeSinceStartup - t0 < sınır)
+            float t0 = Şimdi;
+            while (Oda != null && !Oda.Cleared && Şimdi - t0 < sınır)
             {
                 DövüşAdımı(Mod.Dövüş);
                 yield return null;
@@ -2477,9 +2617,9 @@ namespace TekCan
         {
             if (Oda == null) yield break;
             int oda = Oda.Room, bölge = Oda.RegionIndex;
-            float t0 = Time.realtimeSinceStartup;
+            float t0 = Şimdi;
             while (Oda != null && Oda.Room == oda && Oda.RegionIndex == bölge
-                   && Time.realtimeSinceStartup - t0 < sınır)
+                   && Şimdi - t0 < sınır)
             {
                 if (Saat != null && Saat.Seconds < 20f && Time.time - _sonTakviye > 2f)
                 { Bas(Key.F5); _sonTakviye = Time.time; _takviye++; }
@@ -2508,8 +2648,8 @@ namespace TekCan
                 if (e.CurrentAttack.ArenaOranı <= 0f && mesafe > e.CurrentStrikeRadius + e.CurrentAttack.Lunge + 0.3f)
                     _menzilDışı.Add($"{e.CurrentAttack.Name} ({mesafe:0.0} > {e.CurrentStrikeRadius + e.CurrentAttack.Lunge:0.0})");
             };
-            float t0 = Time.realtimeSinceStartup;
-            while (boss != null && liste.Count < adet && Time.realtimeSinceStartup - t0 < sınır)
+            float t0 = Şimdi;
+            while (boss != null && liste.Count < adet && Şimdi - t0 < sınır)
             {
                 DövüşAdımı(mod, boss);
                 _ne = $"görülen: {string.Join(", ", liste)}";
@@ -2523,8 +2663,8 @@ namespace TekCan
         {
             var boss = Boss();
             if (boss != null && !_bossGörüldü.Contains(boss)) { _bossGörüldü.Add(boss); _bossİlkHavuz = boss.TimeLeft; }
-            float t0 = Time.realtimeSinceStartup;
-            while (Time.realtimeSinceStartup - t0 < sınır)
+            float t0 = Şimdi;
+            while (Şimdi - t0 < sınır)
             {
                 if (kazanınca ? (Saat != null && Saat.Won) : Boss() == null) break;
                 if (Saat != null && Saat.Dead) { Kaydet("—", "bot öldü (eşya kalmadı)", false, _sahne); yield return Bitir(); yield break; }

@@ -74,11 +74,19 @@ hangi değerin doğru olduğu Enes'in kararı.)
 ilerletiyor; otopilot oyunun kendi karelerinde, Unity'nin SANAL klavye/faresiyle oynuyor
 (işletim sistemi tuşları Play'e geçmiyor, sanal cihaz geçiyor). Enes'in kaydına dokunmaz.
 - İzle: `Tek Can → Otopilot (izle)` — gerçek hızda, ekranda yazılı, ekran görüntülü
+- ⏩ **Hızlandırılmış zaman** (Enes 2026-10-18: "testler çok uzun sürüyor"): izlenmeyen koşuda her kare sabit 1/60 sn
+  (`Time.captureDeltaTime`) — oyun bilgisayarın yetiştiği hızda, ölçülen **~×30** (68 oyun dk = 2.3 gerçek dk). Aşağıdaki
+  dakikalar GERÇEK HIZDA ölçüldü; şimdi ~30'da biri. `HitStop` hızlandırılmış modda donmayı KAREYLE sayıyor (gerçek
+  saatle sayınca hızlanma ×6'da kalıyordu — her isabet gerçek 0.05–0.1 sn yiyordu). Botun bütün beklemeleri ve süre sınırları OYUN saatiyle
+  (`Şimdi` = `Time.time`) — yeni senaryoda `Time.realtimeSinceStartup` yazma (yalnızca bekçi ve nabız teşhisleri).
+  ⚠️ Eski ölçümlerle karıştırma: eskiden bot oyunu ~3600 kare/sn görüyordu (insanüstü tepki), şimdi oyuncu gibi 60 —
+  sayılar kayıyor, sıralama kalıyor. `-nographics` denendi: aynı hız (darboğaz çizim değil oyun hesabı).
 - Faz 26 playtest'i: `Tek Can → Otopilot — Faz 26 playtest (izle)` ya da batch `…OtopilotMenu.Playtest26` (~15 dk) — todo'daki 7 maddeyi oynayıp ölçer, sonunda saldırı başına vurulma tablosu
 - Faz 29 playtest'i: batch `…OtopilotMenu.Playtest29` (~5 dk) — silah sunağı, İPOTEK YAĞMURU, dash-atak HACİZ İHBARI, ÇİFT TAPU, İCRA, MUAFİYET/SABIR
 - Faz 30 playtest'i: batch `…OtopilotMenu.Playtest30` (~15 dk) — 2 silahla başla, HACİZ sunakta, İPOTEK keşifte, KADRO, gerçek tuşlarla combo, İFLAS boss'tan. ⚠️ 1–3 tuşları artık ENVANTER YUVASI; bot silahı `Kuşan(silah)` ile açıp yuvaya koyuyor.
 - Faz 31 playtest'i: batch `…OtopilotMenu.Playtest31` (~20 dk) — N ile 2. bölge: REHİN sunakta + yakala/fırlat/SİLİP SÜPÜR · 2. boss → ÇEK + SENET HACZİ · 3. bölgede keşifle KARŞILIK + karşılama/KARŞI İCRA. Bot `Diz(...)` ile silahları yuvalara diziyor.
 - Faz 32 playtest'i: batch `…OtopilotMenu.Playtest32` (~35 dk) — N N, 3. boss → TAHVİL (basılı tut, VADE FARKI) · 4. bölgede MÜŞTEREK sunakta (bağ + yayılma) · 4. boss → ARBİTRAJ (görünmez/TERS İŞLEM arkadan, AÇIĞA SATIŞ) · 5. bölgede keşifle KİRA (kule, TAHLİYE, ORTAK GİDER). Bot isabeti olayın kendi sayacından okuyor (`ArkadanVuruş`, `MusterekBag.Yayılma`, `KiraKulesi.Atış`).
+- Fiyat ölçümü (Faz 33): batch `…OtopilotMenu.FiyatOlcum` (KONİ…REHİN + rakip sunaklar) · `…FiyatOlcum33b` (ÇEK…KİRA), hızlandırılmış ~2.5 dk — her yükseltme aynı iki odada VAR / YOK, saat her odada doyma tavanından; değer sn/oda, geri ödeme = fiyat ÷ değer (oda). Gürültüyü görmek için yükseltmesiz deneme bloğun başında ve sonunda; her odada zar sabit (`Random.InitState`) — çoğu silahta aynı deneme aynı sonucu veriyor. Bot dash-atak yapmıyor, "dip"e inmiyor, arkaya geçmiyor — o yükseltmeler ölçülemiyor.
 - Boss teşhisi: batch `…OtopilotMenu.SimsarTeshis` (~30 dk) — P32'nin yolunda KEFİL (kontrol) + SİMSAR, 10 sn'de bir `[BOSS-NABIZ]`: havuz, inen hasar, savurma, darbe, F5 ve botun hangi dalda olduğu (vur / yaklaş / bekle / kaç·<saldırı> / işaret). "Boss ölmüyor" dendiğinde önce buna bak.
 - Tam koşu ölçümü (Faz 27): `Tek Can → Otopilot — tam koşu ölçümü (izle)` ya da batch `…OtopilotMenu.TamKosu` — bütün bölgeler atlamadan; oda/bölge/boss süreleri, sunak alımları, saatin bittiği yerler (F5 takviyesi)
 - Ekonomi ayarı (Faz 28): batch `…OtopilotMenu.AraBolge1Olcum` (~10 dk, 1. ara bölge: 7 oda + mini + sunak) · `…Bolge1Olcum` (~55 dk, 1. bölge) · `…MiniTeshis` (M ile ilk mini, 10 sn'de bir `[NABIZ]`: oyun zamanı / saat akışı) · `…MiniTesti` (5 bölge × 5 mini boss, beklenen güçle; süre / saat kaybı / darbe, ~1–1.5 saat)

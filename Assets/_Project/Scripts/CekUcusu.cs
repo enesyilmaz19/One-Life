@@ -22,6 +22,14 @@ namespace TekCan
         bool _bitti;
         readonly HashSet<Enemy> _vurulan = new HashSet<Enemy>();
 
+        // Faz 33b — fırlatan ÇEK'in yükseltmeleri, fırlatma anında yazılıyor (`PlayerController.ÇekFırlat`).
+        /// <summary>TAHSİLAT: dönüşte vurduğu her düşman için saate bu kadar (doymaya tabi).</summary>
+        public float Tahsilat { get; set; }
+        /// <summary>YÖNELİM: sekince yansımak yerine en yakın düşmana döner.</summary>
+        public bool Yönelim { get; set; }
+        /// <summary>PROTESTO: dönüşte vurduklarını sahibinin dibine çeker; yakalanınca çevresine bir kez iner.</summary>
+        public bool Protesto { get; set; }
+
         public bool Dönüyor { get; private set; }
         public int Sekti { get; private set; }
         public int İsabet { get; private set; }
@@ -93,6 +101,8 @@ namespace TekCan
                     {
                         _sekme--; Sekti++;
                         _yön = Vector3.Reflect(_yön, n); _yön.y = 0f; _yön.Normalize();
+                        if (Yönelim && EnYakın(p) is Enemy hedef)            // YÖNELİM
+                        { _yön = hedef.transform.position - p; _yön.y = 0f; _yön.Normalize(); }
                         _vurulan.Clear();
                     }
                     else _kalan = 0f;
@@ -103,7 +113,7 @@ namespace TekCan
             {
                 Vector3 d = _sahibi.transform.position - p; d.y = 0f;
                 float adım = _hız * dt;
-                if (d.magnitude <= adım + 0.5f) { Bitir(); return; }   // sahibi yakaladı
+                if (d.magnitude <= adım + 0.5f) { if (Protesto) Yakalandı(); Bitir(); return; }   // sahibi yakaladı
                 p += d.normalized * adım;
             }
             transform.position = p;
@@ -124,11 +134,50 @@ namespace TekCan
             {
                 _vurulan.Add(e);
                 Vector3 yer = e.transform.position;                 // ÖNCE: vuruş öldürüp yok edebilir
-                e.Push(Dönüyor ? -_yön : _yön, 2f);
+                if (Dönüyor && Protesto)                            // PROTESTO: sahibinin dibine (1.5 birim) — itme kuvvet/11 birim gidiyor
+                {
+                    Vector3 sahibe = _sahibi.transform.position - yer; sahibe.y = 0f;
+                    e.Push(sahibe, Mathf.Max(0f, sahibe.magnitude - 1.5f) * 11f);
+                }
+                else e.Push(Dönüyor ? -_yön : _yön, 2f);
                 e.TakeDamage(_hasar * (Dönüyor ? _dönüşÇarpanı : 1f), _hasat);
+                İsabet++;
+                if (Dönüyor && Tahsilat > 0f && Clock.Instance != null) Clock.Instance.Add(Tahsilat * Clock.Instance.HasatDoyması);
+                _sahibi.Çekİsabeti(yer);
+            }
+        }
+
+        static Enemy EnYakın(Vector3 p)
+        {
+            Enemy en = null; float enYakın = float.MaxValue;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || e.Dormant) continue;
+                Vector3 d = e.transform.position - p; d.y = 0f;
+                if (d.magnitude < enYakın) { enYakın = d.magnitude; en = e; }
+            }
+            return en;
+        }
+
+        /// <summary>PROTESTO: çek sahibine dönünce çevresine (2.5 birim) dönüş hasarıyla bir kez iner.</summary>
+        void Yakalandı()
+        {
+            Vector3 o = _sahibi.transform.position;
+            _aday.Clear();
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || e.Dormant) continue;
+                Vector3 d = e.transform.position - o; d.y = 0f;
+                if (d.magnitude - e.Radius <= 2.5f) _aday.Add(e);
+            }
+            foreach (var e in _aday)
+            {
+                Vector3 yer = e.transform.position;
+                e.TakeDamage(_hasar * _dönüşÇarpanı, _hasat);
                 İsabet++;
                 _sahibi.Çekİsabeti(yer);
             }
+            Arc.Spawn(o, Quaternion.identity, 2.5f, 360f, new Color(0.6f, 0.85f, 0.95f, 0.7f), 0.3f, scaleFrom: 0.4f, scaleTo: 1f);
         }
 
         void Bitir()

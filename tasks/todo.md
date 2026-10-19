@@ -14,6 +14,8 @@
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 | 11 | ⚖️ **SİMSAR süresi — denge kararı** (teşhis 2026-10-18, `…OtopilotMenu.SimsarTeshis`) | Beklenen güçte bot SİMSAR'ı **990–1130 sn** oyun zamanında kesiyor (KEFİL 340 sn). Havuz kuralı suçlu değil: faz 2 havuzu yalnızca azalıyor, vuruş başı hasar aynı. Süreyi uzatan işaretler: bot zamanın yalnızca %25–44'ünde vurabiliyor (işaret kaçışı faz 1'de %23, faz 2'de %36–48). Faz 2 hasat vermediği için bota **~2400 sn saate** mal oldu (9–10 F5); 4. bölgede doyma tavanı ~615 sn. 4. boss ~16–19 dk sürsün mü, faz 2'nin saat bedeli bu mu kalsın? | Karar yaz |
 | 12 | 🤖 **Bot düzeltmesi onayı** | İşaretten çıkarken boss'u menzilde tutan nokta: SİMSAR %11 kısa (faz 1 %20), ama faz 2'de %22 fazla darbe. Ölçüm aracının davranışını değiştirdiği için uygulanmadı; patch `Logs/Otopilot/2026-10-18_17-49/simsar-isaret-cikisi.patch`. **Enes (2026-10-18): şimdilik uygulama, önce #11** | #11'den sonra "uygula" / "uygulama" |
+| 13 | 🎮 *(isteğe bağlı)* **Faz 33 testi** | **F6**, **M** → sunak odası: solda kuşandığın silahın 3 yükseltmesi, renkli (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), bazen sağda ŞANS sunağı · **B** → boss: iç halka 3 yaygın/nadir, dış halka epik/efsanevi · 33b silahını kuşan (ör. ÇEK), dış halkada artık 2 yükseltme | Gördüklerini yaz: renkler okunuyor mu, efsanevi "vay" dedirtiyor mu |
+| 14 | ⚖️ **Yükseltme gücü — denge kararı** (bot fiyat ölçümü, Faz 33 bölümünde tablo) | Fiyatlar ödenebilir, **güç sıralaması tutmuyor**: ucuz yaygınlar 1–5 odada kendini ödüyor, bazı epik/efsanevi (YORGUNLUK, ZİNCİR TAPU) 30+ odada. Seçenek **A**: zayıf nadir/epik/efsanevileri güçlendir, aşırı güçlü yaygınları (DAR ÖLÜ BÖLGE, SERMAYE, İHTAR) bir üst enderliğe taşı — fiyatlar aynı (önerim) · **B**: enderlik fiyatlarını yaklaştır (ör. ×0.6 / 0.9 / 1.2 / 1.5) · **C**: insan testine kadar dokunma | A / B / C yaz |
 
 ---
 
@@ -226,7 +228,7 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 
 ---
 
-## 🧩 FAZ 33 — Silah başına 8 yükseltme + combo AÇAN yükseltmeler — **33a BİTTİ, Enes'in testini bekliyor** (2026-10-18)
+## 🧩 FAZ 33 — Silah başına 8 yükseltme + combo AÇAN yükseltmeler — **33a commit'li (6343c60) · 33b BİTTİ, Enes'in testini bekliyor** (2026-10-18)
 
 **✅ Enes'in cevapları (2026-10-18):**
 1. **ENDERLİK** — 4 tip: **YAYGIN · NADİR · EPİK · EFSANEVİ**. Mini boss'tan **1** yükseltme (yaygın ya da nadir). Ana boss'tan **1 yaygın/nadir + 1 epik/efsanevi**. Ayrıca **şansa bağlı**, enderlik bakılmaksızın sunaklarda da satılabilsin. ("bundan kaynaklı biraz daha güçlendirme eklenebilir")
@@ -238,7 +240,7 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 - Silah başına 8 = **3 yaygın · 2 nadir · 2 epik (biri combo açan, 33c) · 1 efsanevi**. Mevcut 36 yükseltme de bu dağılıma yerleştirildi (aşağıdaki tablo).
 - Satış: sunak odasında (mini boss sonrası) 3 YAYGIN/NADİR sunak, **1 alım**. Boss odasında 3 YAYGIN/NADİR + 3 EPİK/EFSANEVİ, **her sıradan 1 alım**. **ŞANS SUNAĞI:** sunak odalarında %30 ihtimalle bir sunak daha — herhangi bir enderlik, fiyat ×1.5, 1 alım.
 - "Rastgele 3" ODA ve SİLAH başına sabit: silah değiştirip yeni zar atılamaz (istismar kapısı).
-- Fiyat enderlikle artıyor (yaygın ×1 · nadir ×1.5 · epik ×2.5 · efsanevi ×4 — kadran `Tuning`'de). Yasa: saniyeyle ödenir.
+- Fiyat enderlikle artıyor: taban = saatin %15'i (en az 24 sn) × **yaygın 0.6 · nadir 1 · epik 1.5 · efsanevi 2.2** (dört kadran `Tuning`'de; ilk taslaktaki ×1/×1.5/×2.5/×4 uygulamada yumuşatıldı). Yasa: saniyeyle ödenir.
 - Yeni yükseltmeler sıranın SONUNA eklenir: eski 36'nın numarası değişmez, kayıtlar bozulmaz.
 
 **33a adımları (2026-10-18)**
@@ -248,7 +250,50 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 - [x] Kapılar: `Faz33SelfCheck` **35 kontrol** · **39 bozmanın hepsi kırmızı** (5 koşu; çift korunan iki kontrol — teklif önbelleği + tohum — ayrı koşularda; öz-incelemeden: şans fiyatı ×1.5 ve her mini boss'un sunağı ayrı sayılıyor) · tüm kapılar ✅. Faz 29 kapısı yeni sunak kuralına (3 + 3, her sıradan 1), Faz 31/32'nin "36 yükseltme" sayısı tablo tutarlılığına çevrildi; Faz 11 için enderlik fiyatı dizi değil dört kadran.
 - [x] Bot playtest'i (`Playtest33`) **2/2**: mini boss sunağında KONİ'nin 3 yaygın/nadir yükseltmesi (+ şans sunağı çıktı), [E] ile 1 alım, ikincisi kapalı · boss'ta 3 + 3, alınan HALKA bir daha teklif edilmedi, her sıradan 1 alım, sonra hepsi kapalı.
 - Eski `Playtest29` botunun "boss'ta 3 sunak" beklentisi 3 + 3'e çevrildi (alım adımı yeni kuralda da geçiyor: her sıradan 1).
-- ⚠️ Geçici boşluk: 33a'nın 6 silahında şimdilik 2 epik/efsanevi var (8.'si combo açan, 33c) → boss'un üst sırasının 3. sunağı "alınacak yükseltme kalmadı" diyor. 33b'nin 6 silahında (ÇEK, KARŞILIK, TAHVİL, MÜŞTEREK, ARBİTRAJ, KİRA) bugün HİÇ epik/efsanevi yok: o silah kuşanılıyken üst sıra boş — silah değiştirince doluyor. 33b ve 33c bunu kapatıyor.
+- ⚠️ Geçici boşluk: her silahta şimdilik 2 epik/efsanevi var (8.'si combo açan, 33c) → boss'un üst sırasının 3. sunağı "alınacak yükseltme kalmadı" diyor. 33b'den önce 33b silahlarında üst sıra tamamen boştu — artık 2 dolu. 33c 3.'yü dolduruyor.
+
+**🤖 Fiyat ölçümü — bot (Enes 2026-10-18: *"fiyat uygunluğunu bot üzerinden deneyelim"*)**
+- Yöntem (`…OtopilotMenu.FiyatOlcum` / `…FiyatOlcum33b`, hızlandırılmış ~2.5 dk her biri): her yükseltme aynı iki dövüş odasında (1. bölge, oda 1–2) VAR ve YOK diye oynandı, saat her odada doyma tavanından (250) başladı, zar her odada sabit. **Değer** = oda başı net saat farkı (hasat + darbe + akış, hepsi saniye). **Geri ödeme** = fiyat ÷ değer, oda. Rapor: `Logs/Otopilot/2026-10-19_00-04/rapor.md` (33a) · `…/2026-10-19_00-00/rapor.md` (33b).
+- Saat 250'de fiyatlar: yaygın 23 · nadir 38 · epik 56 · efsanevi 83 sn (saatin %9 · 15 · 22 · 33'ü); şans sunağında ×1.5. 1. bölgede 35 dövüş odası var → birkaç odada kendini ödeyen yükseltme açık kâr.
+- Gürültü artık çoğu silahta 0 (aynı deneme aynı sonucu veriyor); HACİZ ±14, REHİN ±2, ÇEK ±0.6, KARŞILIK ±1.
+
+  | geri ödeme | ≤ 5 oda | 5–15 oda | ≥ 15 oda | bot ölçemiyor (≈0) |
+  |---|---|---|---|---|
+  | YAYGIN | DAR ÖLÜ BÖLGE 0.2 · İHTAR 0.4 · SERMAYE 2.5 · AĞIR REHİN 3.8 · KISA VADE 1.6 · TAHSİLAT 2.0 · HAREKETLİ 2.3 · HIZLI TAHSİL 2.4 · GENİŞ ARAZİ 2.6 · UCUZ KİRA 2.8 | HIZLI TAPU 9.7 · DİP 14.7 · DÖNÜŞ KESİNTİSİ 11.5 | GENİŞ ARSA 21 | GENİŞ AĞ · KISA SÜPÜRME · HALKA · KISA İCRA · TEMERRÜT · UZUN KOL · BOŞ ARSA · KAPANIŞ · SON KUYRUK · GENİŞ KOL · SIKI TUTUŞ · TEMYİZ · SAĞLAM YAPI … |
+  | NADİR | İSKONTO 1.9 | BİLEŞİK 5.8 · GERİ TEPME 9.4 · FAİZ ORANI 9.6 · ÇEKİM 11 | DERİN TEMEL 17 · CESARET 25 · YÖNELİM 16 · ORTAK HASAT 25 · DEPOZİTO 37 · KALABALIK 110 | SON SÖZ · SERİ · KALKAN · SORGU · RED · ROLLOVER · ÇEKİŞME … |
+  | EPİK | — | SIÇRAMA 6.8 · ÇİFT TAPU 9.9 · DOMİNO 15 · STOPAJ 10.6 | KURTARMA 37 · ÇİFT İŞLEM 68 | YORGUNLUK · UZUN VADE+ · KARŞILIKSIZ+ · BİRİKİM · KİLİT · GENİŞ ORTAKLIK |
+  | EFSANEVİ | GERİ ÇEKİL 2.4 · FAİZSİZ KREDİ 4.2 | YANKI 11 · PROTESTO 9.5 | ZİNCİR TAPU 35 · İFLAS ZİNCİRİ 40 · ÇİFT KULE 55 | TEHDİT · KISMİ ÖDEME · VADE SONU · MÜTESELSİL · KISA POZİSYON |
+  | rakip | — | — | ilk HASAT sunağı 29 | HASAR · DASH sunağı |
+
+- **Sonuç:** fiyatlar ödenebilir; iyi yükseltmeler 1–10 odada kendini ödüyor. **Sorun fiyat değil güç sıralaması:** hızlı ödeyenlerin çoğu YAYGIN, NADİR ve EPİK ortada ya da geride, EFSANEVİ karışık. "Üst enderlik daha güçlü" sözü bugün tutmuyor. → Enes'in masası #14.
+- Bot ne ölçemiyor: dash-atak yapmıyor, saat 250'de "dip" yok, karşılamayı zamanlamıyor, arkaya geçmiyor, bağ kurmayı planlamıyor → KARŞILIK, MÜŞTEREK, ARBİTRAJ ve İFLAS'ın dip yükseltmeleri burada ≈0. Bu, işe yaramadıkları demek değil — kapı (`Faz33SelfCheck`) her birinin etkisini ayrı ölçüyor. HACİZ'in sayıları botun ölü bölgede oynamasından şişkin.
+- Yan bulgu: yükseltmesiz oda kazancı KONİ +17 · FAİZLİ +38 · İFLAS +49 · REHİN +42 · MÜŞTEREK +30 · ARBİTRAJ +21 · ÇEK +11 · KİRA −1 · KARŞILIK −2 · İPOTEK −3 · TAHVİL −22 · HACİZ −58 sn. Silah dengesi ayrı bir konu.
+- İlk ölçüm (gerçek hız, 2026-10-18 22:34, `…/2026-10-18_21-03`) aynı sonucu verdi; sayılar kare hızı farkından ötürü biraz farklı — karşılaştırma yalnızca aynı koşuda.
+
+**33b — ÇEK · KARŞILIK · TAHVİL · MÜŞTEREK · ARBİTRAJ · KİRA'nın 4'er yükseltmesi (2026-10-18)**
+
+Her silaha yaygın · nadir · epik · efsanevi birer tane → her silah 3 yaygın · 2 nadir · 1 epik · 1 efsanevi (8.'si 33c). Plan listesinden üç ad değişti (çakışma): KARŞILIK'ın **YANKI** → **KISMİ ÖDEME** (KONİ'de YANKI var), **SABIR** → **BİRİKİM** (ara bölge sunağı SABIR), KİRA'nın **AİDAT TOPLAMA** → **STOPAJ** (ORTAK GİDER'in "+" hâli AİDAT).
+
+| silah | YAYGIN | NADİR | EPİK | EFSANEVİ |
+|---|---|---|---|---|
+| **ÇEK** | TAHSİLAT — dönüşte vurduğu her düşman için +0.5 sn | YÖNELİM — sekince en yakın düşmana döner | KARŞILIKSIZ+ — üç yerine beş çek | PROTESTO — dönüşte vurduklarını yanına çeker, yakalayınca çevrene (2.5 birim) iner |
+| **KARŞILIK** | TEMYİZ — İTİRAZ ×1.5 uzun | RED — karşıladığın saldırgan 1 sn yeni saldırı başlatamaz | BİRİKİM — biriken tutuldukça büyür, saniyede +%25, en çok ×2 | KISMİ ÖDEME — biriken inince yarısı kalır |
+| **TAHVİL** | HAREKETLİ — basılı tutarken yürüyüş ×0.4 → ×0.8 | ROLLOVER — basılıyken ilk dash olgunluğu bozmaz | KİLİT — 3. kademede beklemek saat akıtmaz | VADE SONU — 3. kademe 360° |
+| **MÜŞTEREK** | ZİNCİRLEME+ — dört yerine altı | ÇEKİŞME — bağlılar birbirine sürüklenir | GENİŞ ORTAKLIK — ikinci vuruş yanındakini de bağlar (üçlü bağ) | MÜTESELSİL — bağlı biri ölünce öbürleri havuzunun %10'unu kaybeder |
+| **ARBİTRAJ** | SESSİZ ADIM — görünmezken yürüyüş ×1.3 | YAYILMA — arkadan vuruşun yarısı yanındakine | ÇİFT İŞLEM — TERS İŞLEM iki kez vurur | KISA POZİSYON — arkadan öldürünce AÇIK POZİSYON hemen hazır |
+| **KİRA** | SAĞLAM YAPI — TAŞINMA kuleyi bir kez +3 sn uzatır | DEPOZİTO — kule süresi dolunca ödediğin kiranın %30'u geri | STOPAJ — kule öldürünce +1 sn | ÇİFT KULE — aynı anda iki kule, TAHLİYE ikisini birden |
+
+- [x] Kod: tablo sıranın sonunda (kayıt uyumu: TAHSİLAT = 60). ÇEK'in yükseltmeleri fırlatma anında çeke yazılıyor (`CekUcusu`); bağın yükseltmeleri kuruluşta (`BağKur` — iki kuruluş yolu tek yerden); kuleninkiler kurulurken. ARBİTRAJ'ın YAYILMA / KISA POZİSYON'u `StrikeCone`'un sonunda: savurma, dash-atak, TERS İŞLEM ve AÇIĞA SATIŞ hepsi oradan geçiyor. RED düşmanda `Sustur` (saldırı başlatmama — TEHDİT ile aynı kapı).
+- [x] İstismar/kenar: KISMİ ÖDEME 1 sn'nin altını siliyor (yoksa biriken hiç sıfırlanmaz, "biriken yoksa zayıf vuruş" kuralı sessizce kalkardı). BİRİKİM ilk karşılamadan sayıyor. MÜTESELSİL'de boss en çok ölenin havuzu kadar kaybediyor (çağrılmışlarla boss'u yüzde yüzde eritmek olmasın) ve boşalmış üye kayıptan ATLANIYOR — vurulan üye bağın yayılmasıyla önce öbürünü öldürüyor, o da geri dönüp vurulanı vurursa düşman iki kez ölüyordu (bozma C bunu gösterdi: kapı çöktü). Ölen üye bağdan anında çıkıyor. DEPOZİTO yalnız süre dolunca ve yalnız saatten ödenen kiradan. ÇEKİŞME itme değil sürükleme (vuruşun itmesini ezmesin).
+- [x] Kapılar: `Faz33SelfCheck` **59 kontrol** (33a 35 + 33b 24) · **34 bozmanın hepsi kırmızı** (4 koşu: her kontrole bir; ikinci kurallar ayrı; MÜTESELSİL'in çift ölüm koruması ayrı; ÇEKİŞME boss muafiyeti ayrı) · tüm kapılar ✅. Kapı kurgusundaki bir sızıntı bulundu: sunak odası testi saati dondurup bırakıyordu, sonraki "saat akıyor mu" testleri yalan kırmızıydı — `YeniKoşu` donmayı sıfırlıyor.
+- [x] Bot: `…OtopilotMenu.FiyatOlcum33b` (bot TAHVİL'i 3. kademeye kadar basılı tutuyor) — yeni yükseltmeler gerçek odada da işliyor: TAHSİLAT +11.4 · HAREKETLİ +9.8 · PROTESTO +8.7 · STOPAJ +5.3 · YÖNELİM +2.4 · ÇİFT KULE +1.5 sn/oda (odayı 26 → 16 sn'ye indiriyor, iki kira yiyor). KARŞILIK / MÜŞTEREK / ARBİTRAJ'ınkiler bot için ≈0 (yukarıdaki sınır). Tablo yukarıda.
+- [x] ÇEKİŞME boss'u (mini dahil) sürüklemiyor — saldırı alanları boss'un yerine çiziliyor (öz-incelemeden; kapı + bozma D).
+
+**⏩ Bot hızlandırma (Enes 2026-10-18: *"her bir test için botu sil baştan … çok uzun sürüyor, kısaltacak bir çözüm"*)**
+- İzlenmeyen koşuda her kare sabit 1/60 sn oyun zamanı (`Time.captureDeltaTime`); botun 57 beklemesi/süre sınırı gerçek saatten OYUN saatine (`Şimdi`); bekçi gerçek saatte. İzleme modu gerçek hızda.
+- Asıl darboğaz hit-stop'tu: donma gerçek saatle sayılıyordu, hızlandırınca her isabet gerçek 0.05–0.1 sn yiyordu. `HitStop` artık hızlandırılmış modda kareyle sayıyor; vuruş yayı (`Arc`) ve vurulma parlaması da aynı adımla (`HitStop.Adım`, tek yer). Gerçek oyunda değişen bir şey yok.
+- Sonuç: 33b fiyat ölçümü **~100 dk → 2.3 dk (×30)**; 33a ölçümü 2.5 dk. Fiyat denemesinde zar her odada sabit → çoğu silahta aynı deneme aynı sonucu veriyor (gürültü 0).
+- ⚠️ Eskiden bot oyunu ~3600 kare/sn görüyordu (insanüstü tepki), şimdi oyuncu gibi 60 — eski raporlarla sayı karşılaştırma. `-nographics` denendi, hız aynı (darboğaz çizim değildi).
 
 > Enes (2026-10-17): *"her bir silahın en az 8 geliştirmesi olacak. Bazı geliştirmeler de normalde combo olmayan
 > silahlar ile combo yapılabilmesini sağlayacak."* Bugün 12 silah × 3 = 36 yükseltme var. Öneri: silah başına

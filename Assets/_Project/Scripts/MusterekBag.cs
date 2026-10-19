@@ -19,6 +19,10 @@ namespace TekCan
         public bool Bitti { get; private set; }
         /// <summary>Kaç kez bir üyeye yayıldı — otopilot raporu.</summary>
         public int Yayılma { get; private set; }
+        /// <summary>ÇEKİŞME (Faz 33b): üyeler bağın ortasına bu hızla (birim/sn) sürüklenir; 0 = yok.</summary>
+        public float Çekişme { get; set; }
+        /// <summary>MÜTESELSİL (Faz 33b): bir üye ölünce öbürleri havuzunun %10'unu kaybeder.</summary>
+        public bool Müteselsil { get; set; }
         bool _dağıtıyor;
         LineRenderer _çizgi;
 
@@ -55,6 +59,36 @@ namespace TekCan
             _dağıtıyor = false;
         }
 
+        /// <summary>
+        /// Bir üye öldü (`Enemy.Kill`): bağdan HEMEN çık — ölü bir daha vurulup ikinci kez ödemesin.
+        /// MÜTESELSİL'de öbürleri havuzunun %10'unu kaybeder (boss: en çok ölenin havuzu kadar — yoksa
+        /// boss'a bağlanan çağrılmışlar boss'u yüzde yüzde eritirdi). Kayıp bir daha YAYILMAZ.
+        /// ⚠️ BOŞALMIŞ üye atlanıyor: %10'u zaten 0, ama ona vurmak onu öldürürdü — o da şu an vurulmakta
+        /// olan üye olabilir (bağın yayılması onu önce öldürüyor) ve ikinci kez ölüp ikinci kez öderdi.
+        /// </summary>
+        public void Öldü(Enemy ölen, float ölenHavuzu)
+        {
+            if (Bitti) return;
+            var diğer = new List<Enemy>(Üyeler);
+            diğer.Remove(ölen);
+            Üyeler.Remove(ölen);
+            if (ölen != null && ölen.Bağ == this) ölen.Bağ = null;
+            if (Müteselsil)
+            {
+                bool önce = _dağıtıyor;
+                _dağıtıyor = true;
+                foreach (var e in diğer)
+                {
+                    if (e == null || e.Bağ != this || e.Hollow || !Enemy.All.Contains(e)) continue;
+                    float kayıp = e.TimeLeft * 0.1f;
+                    if (e.IsBoss) kayıp = Mathf.Min(kayıp, ölenHavuzu);
+                    e.TakeDamage(kayıp, HasatPayı);
+                }
+                _dağıtıyor = önce;
+            }
+            if (Üyeler.Count < 2) Bitir();
+        }
+
         public void Çıkar(Enemy e)
         {
             Üyeler.Remove(e);
@@ -72,6 +106,17 @@ namespace TekCan
             Kalan -= dt;
             Üyeler.RemoveAll(e => e == null || !Enemy.All.Contains(e));
             if (Kalan <= 0f || Üyeler.Count < 2) { Bitir(); return; }
+            if (Çekişme > 0f)                                         // ÇEKİŞME: ortaya sürüklen (itme değil — vuruşun itmesini ezmesin)
+            {
+                Vector3 o = Orta;
+                foreach (var e in Üyeler)
+                {
+                    if (e.IsBoss) continue;                           // boss (mini dahil) kaymaz: saldırı alanları onun yerine çiziliyor
+                    Vector3 d = o - e.transform.position; d.y = 0f;   // tuzak 2
+                    float boy = d.magnitude - 1.2f;
+                    if (boy > 0f) e.transform.position += d.normalized * Mathf.Min(Çekişme * dt, boy);
+                }
+            }
             Çiz();
         }
 

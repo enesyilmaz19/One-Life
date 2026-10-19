@@ -101,7 +101,7 @@ namespace TekCan
 
         // unscaled: hit-stop sırasında da sönsün, yoksa donan karede takılı kalır.
         // Zamanlayıcı gösteren yaylar hariç (`scaled`) — onlar gösterdikleri şeyle donar.
-        void LateUpdate() => Step(_scaled ? Time.deltaTime : Time.unscaledDeltaTime);
+        void LateUpdate() => Step(_scaled ? Time.deltaTime : HitStop.Adım);
 
         /// <summary>
         /// ⚠️ dt DIŞARIDAN alınıyor — `Enemy.ApplyAura` ile aynı gerekçe. Editör modunda

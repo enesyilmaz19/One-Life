@@ -133,7 +133,14 @@ namespace TekCan
         İhtar, SonSöz, UzunVadeArtı, GeriÇekil,        // HACİZ
         BoşArsa, DerinTemel, Çekim, ZincirTapu,        // İPOTEK
         SonKuyruk, Cesaret, Kurtarma, İflasZinciri,    // İFLAS
-        SıkıTutuş, Sorgu, Domino, Tehdit               // REHİN
+        SıkıTutuş, Sorgu, Domino, Tehdit,              // REHİN
+        // Faz 33b
+        Tahsilat, Yönelim, KarşılıksızArtı, Protesto,          // ÇEK
+        Temyiz, Red, Birikim, KısmiÖdeme,                      // KARŞILIK
+        Hareketli, Rollover, Kilit, VadeSonu,                  // TAHVİL
+        ZincirlemeArtı, Çekişme, GenişOrtaklık, Müteselsil,    // MÜŞTEREK
+        SessizAdım, Yayılma, Çiftİşlem, KısaPozisyon,          // ARBİTRAJ
+        SağlamYapı, Depozito, Stopaj, ÇiftKule                 // KİRA
     }
 
     /// <summary>Faz 33 — yükseltmenin enderliği (Enes 2026-10-18). Silah başına hedef: 3 yaygın · 2 nadir · 2 epik · 1 efsanevi.</summary>
@@ -166,6 +173,12 @@ namespace TekCan
             "BOŞ ARSA", "DERİN TEMEL", "ÇEKİM", "ZİNCİR TAPU",
             "SON KUYRUK", "CESARET", "KURTARMA", "İFLAS ZİNCİRİ",
             "SIKI TUTUŞ", "SORGU", "DOMİNO", "TEHDİT",
+            "TAHSİLAT", "YÖNELİM", "KARŞILIKSIZ+", "PROTESTO",
+            "TEMYİZ", "RED", "BİRİKİM", "KISMİ ÖDEME",
+            "HAREKETLİ", "ROLLOVER", "KİLİT", "VADE SONU",
+            "ZİNCİRLEME+", "ÇEKİŞME", "GENİŞ ORTAKLIK", "MÜTESELSİL",
+            "SESSİZ ADIM", "YAYILMA", "ÇİFT İŞLEM", "KISA POZİSYON",
+            "SAĞLAM YAPI", "DEPOZİTO", "STOPAJ", "ÇİFT KULE",
         };
 
         public static readonly string[] NeYapar =
@@ -188,6 +201,12 @@ namespace TekCan
             "işaret boşa patlarsa İPOTEK'in sağ tık beklemesi −2 sn", "işaretin merkezinde hasar ×1.5", "patlamadan önce içindekileri merkeze çeker", "patlama vurduklarından birinin yerine küçük ikinci işaret bırakır",
             "saat 30'un altındayken dash beklemesi yarı", "dipteyken alınan darbe −%20", "dipteyken öldürünce +3 sn", "TASFİYE öldürürse beklemesi sıfırlanır",
             "kalkan rehineyi yarı yıpratır", "tutarken rehinenin havuzu akar, sana hasat olur", "fırlatılan rehine çarptığından bir kez daha seker", "tutarken önündekiler saldırı başlatmaz",
+            "dönüşte vurduğu her düşman için +0.5 sn", "sekince en yakın düşmana döner", "KARŞILIKSIZ üç yerine beş çek atar", "dönüşte vurduklarını yanına çeker, yakalayınca çevrene iner",
+            "İTİRAZ ×1.5 uzun", "karşıladığın saldırgan 1 sn yeni saldırı başlatamaz", "biriken tutuldukça büyür: saniyede +%25, en çok ×2", "biriken inince yarısı kalır",
+            "basılı tutarken yürüyüş ×0.4 → ×0.8", "basılıyken ilk dash olgunluğu bozmaz", "3. kademede beklemek saat akıtmaz", "3. kademe çevrendeki herkese (360°)",
+            "ZİNCİRLEME dört yerine altı düşman", "bağlılar birbirine sürüklenir", "ikinci vuruş yanındakini de bağlar (üçlü bağ)", "bağlı biri ölünce öbürleri havuzunun %10'unu kaybeder",
+            "görünmezken yürüyüş ×1.3", "arkadan vuruşun yarısı yanındakine iner", "TERS İŞLEM iki kez vurur", "arkadan öldürünce AÇIK POZİSYON hemen hazır",
+            "TAŞINMA kuleyi bir kez +3 sn uzatır", "kule süresi dolunca ödediğin kiranın %30'u geri", "kule öldürünce +1 sn", "aynı anda iki kule; TAHLİYE ikisini birden",
         };
 
         // Enderlik — sıra `SilahYükseltme` ile aynı (Y yaygın · N nadir · E epik · F efsanevi).
@@ -197,6 +216,7 @@ namespace TekCan
             Y, Y, N,   N, Y, Y,   Y, N, Y,   E, Y, Y,   Y, N, Y,   Y, Y, N,      // KONİ … REHİN
             N, Y, Y,   Y, Y, N,   Y, Y, N,   Y, Y, N,   N, Y, Y,   Y, Y, N,      // ÇEK … KİRA
             N, F, Y, E,   Y, N, E, F,   Y, N, E, F,   Y, N, N, F,   Y, N, E, F,   Y, N, E, F,   // Faz 33a
+            Y, N, E, F,   Y, N, E, F,   Y, N, E, F,   Y, N, E, F,   Y, N, E, F,   Y, N, E, F,   // Faz 33b
         };
 
         public static readonly string[] EnderlikAdı = { "YAYGIN", "NADİR", "EPİK", "EFSANEVİ" };
@@ -211,6 +231,9 @@ namespace TekCan
             Kadro.KONİ, Kadro.KONİ, Kadro.KONİ, Kadro.KONİ,     Kadro.FAİZLİ, Kadro.FAİZLİ, Kadro.FAİZLİ, Kadro.FAİZLİ,
             Kadro.HACİZ, Kadro.HACİZ, Kadro.HACİZ, Kadro.HACİZ, Kadro.İPOTEK, Kadro.İPOTEK, Kadro.İPOTEK, Kadro.İPOTEK,
             Kadro.İFLAS, Kadro.İFLAS, Kadro.İFLAS, Kadro.İFLAS, Kadro.REHİN, Kadro.REHİN, Kadro.REHİN, Kadro.REHİN,
+            Kadro.ÇEK, Kadro.ÇEK, Kadro.ÇEK, Kadro.ÇEK,         Kadro.KARŞILIK, Kadro.KARŞILIK, Kadro.KARŞILIK, Kadro.KARŞILIK,
+            Kadro.TAHVİL, Kadro.TAHVİL, Kadro.TAHVİL, Kadro.TAHVİL, Kadro.MÜŞTEREK, Kadro.MÜŞTEREK, Kadro.MÜŞTEREK, Kadro.MÜŞTEREK,
+            Kadro.ARBİTRAJ, Kadro.ARBİTRAJ, Kadro.ARBİTRAJ, Kadro.ARBİTRAJ, Kadro.KİRA, Kadro.KİRA, Kadro.KİRA, Kadro.KİRA,
         };
 
         public static int Silahı(SilahYükseltme y) => (int)y < İlkSıra ? (int)y / SilahBaşına : EkSilah[(int)y - İlkSıra];

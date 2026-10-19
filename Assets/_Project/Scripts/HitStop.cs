@@ -7,7 +7,17 @@ namespace TekCan
     public class HitStop : MonoBehaviour
     {
         static HitStop _runner;
-        static float _until;
+        static float _until, _saat;
+
+        /// <summary>
+        /// Zaman ölçeğinden bağımsız kare adımı — hit-stop'ta da ilerleyen her şey bunu kullanır (donma, yay,
+        /// vurulma parlaması). ⚠️ Hızlandırılmış zamanda (otopilot, `Time.captureDeltaTime`) kare başı SABİT:
+        /// `unscaledDeltaTime` orada GERÇEK saat; donan kare sayısı bilgisayarın o anki hızına bağlı olur, aynı
+        /// deneme iki kez farklı sonuç verir ve hızlanma ×6'da kalırdı (2026-10-18).
+        /// </summary>
+        public static float Adım => Time.captureDeltaTime > 0f ? Time.captureDeltaTime : Time.unscaledDeltaTime;
+
+        void Update() => _saat += Adım;
 
         public static void Init(HitStop runner) => _runner = runner;
 
@@ -16,6 +26,7 @@ namespace TekCan
         {
             _runner = null;
             _until = 0f;
+            _saat = 0f;
         }
 
         public static void Freeze(float seconds)
@@ -23,7 +34,7 @@ namespace TekCan
             if (_runner == null || seconds <= 0f) return;
 
             // Üst üste binen isabetlerde en uzun olanı kazanır, dondurma zincirlenmez.
-            float end = Time.unscaledTime + seconds;
+            float end = _saat + seconds;
             if (end <= _until) return;
             _until = end;
 
@@ -34,7 +45,7 @@ namespace TekCan
         IEnumerator Run()
         {
             Time.timeScale = 0f;
-            while (Time.unscaledTime < _until) yield return null;
+            while (_saat < _until) yield return null;
             Time.timeScale = 1f;
         }
     }
