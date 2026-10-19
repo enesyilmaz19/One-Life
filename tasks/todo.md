@@ -14,7 +14,7 @@
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 | 11 | ⚖️ **SİMSAR süresi — denge kararı** (teşhis 2026-10-18, `…OtopilotMenu.SimsarTeshis`) | Beklenen güçte bot SİMSAR'ı **990–1130 sn** oyun zamanında kesiyor (KEFİL 340 sn). Havuz kuralı suçlu değil: faz 2 havuzu yalnızca azalıyor, vuruş başı hasar aynı. Süreyi uzatan işaretler: bot zamanın yalnızca %25–44'ünde vurabiliyor (işaret kaçışı faz 1'de %23, faz 2'de %36–48). Faz 2 hasat vermediği için bota **~2400 sn saate** mal oldu (9–10 F5); 4. bölgede doyma tavanı ~615 sn. 4. boss ~16–19 dk sürsün mü, faz 2'nin saat bedeli bu mu kalsın? | Karar yaz |
 | 12 | 🤖 **Bot düzeltmesi onayı** | İşaretten çıkarken boss'u menzilde tutan nokta: SİMSAR %11 kısa (faz 1 %20), ama faz 2'de %22 fazla darbe. Ölçüm aracının davranışını değiştirdiği için uygulanmadı; patch `Logs/Otopilot/2026-10-18_17-49/simsar-isaret-cikisi.patch`. **Enes (2026-10-18): şimdilik uygulama, önce #11** | #11'den sonra "uygula" / "uygulama" |
-| 13 | 🎮 **Faz 33 testi** | **F6**, **M** → sunak odası: solda kuşandığın silahın 3 yükseltmesi, renkli (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), bazen sağda ŞANS sunağı · **B** → boss: iç halka 3 yaygın/nadir, dış halka 3 epik/efsanevi — dış halkada combo açan yükseltme (adı combo'nun adı, ör. KONİ'de SÜRÜ). Al → "COMBO AÇILDI" → dene: KONİ'yle vur, hemen MÜŞTEREK'e geç, vur = herkes tek bağa | Gördüklerini yaz: renkler okunuyor mu, efsanevi "vay" dedirtiyor mu, yeni combo'lar hissediliyor mu, "+"sız olmaları sorun mu |
+| 13 | 🎮 **Faz 33 testi** | **F6**, **M** → sunak odası: solda kuşandığın silahın 3 yükseltmesi, renkli (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), bazen sağda ŞANS sunağı · **B** → boss: iç halka 3 yaygın/nadir, dış halka 3 epik/efsanevi — dış halkada combo açan yükseltme (adı combo'nun adı, ör. KONİ'de SÜRÜ). Al → "COMBO AÇILDI" → dene: KONİ'yle vur, hemen MÜŞTEREK'e geç, vur = herkes tek bağa | Gördüklerini yaz: renkler okunuyor mu, efsanevi "vay" dedirtiyor mu, yeni combo'lar hissediliyor mu · combo'ların "+"sı boss'un combo sunağında (eskilerin "+"sı alındıktan sonra) |
 
 ---
 
@@ -228,7 +228,7 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 
 ---
 
-## 🧩 FAZ 33 — Silah başına 8 yükseltme + combo AÇAN yükseltmeler — **33a (6343c60) + 33b (4c9f704) commit'li · A güç ayarı + 33c BİTTİ, commit'siz, Enes'in testini bekliyor** (2026-10-19)
+## 🧩 FAZ 33 — Silah başına 8 yükseltme + combo AÇAN yükseltmeler — **33a (6343c60) · 33b (4c9f704) · A + 33c (efc0b6e) commit'li · 33c "+" hâlleri BİTTİ, commit'siz, Enes'in testini bekliyor** (2026-10-19)
 
 **✅ Enes'in cevapları (2026-10-18):**
 1. **ENDERLİK** — 4 tip: **YAYGIN · NADİR · EPİK · EFSANEVİ**. Mini boss'tan **1** yükseltme (yaygın ya da nadir). Ana boss'tan **1 yaygın/nadir + 1 epik/efsanevi**. Ayrıca **şansa bağlı**, enderlik bakılmaksızın sunaklarda da satılabilsin. ("bundan kaynaklı biraz daha güçlendirme eklenebilir")
@@ -289,7 +289,24 @@ Her silaha bir EPİK açan (adı açtığı combo'nun adı) → her silah artık
 | SPEKÜLASYON | ARBİTRAJ (arkadan) → TAHVİL | basılı tutma 2. kademe dolu başlar |
 | KİRA GELİRİ | kule kur → FAİZLİ | o kule durdukça FAİZLİ'nin savurma bedelini kule öder (savurma başı kulenin ömründen 1 sn) |
 
-- ⚠️ **Benim kararım (Enes beğenmezse değişir):** yeni 12 combo'nun **"+" hâli yok** — açanın kendisi epik bir alım, combo'lar eskilerden sert (Enes: "üst enderliğin combo'su da güçlü"). Combo sunağı onları satmıyor. İstenirse 12 "+" sonraki faz.
+- ✅ **"+" hâlleri** (Enes 2026-10-19: *"evet"*) — kural aynı: "+" sayı büyütmüyor, yeni bir ETKİ ekliyor. Combo sunağı eskilerin "+"sı alındıktan sonra açılmış 33c combo'sununkini satıyor.
+
+  | combo | "+" | yeni etki |
+  |---|---|---|
+  | SÜRÜ | AĞIL | bağlananlar bağın ortasına çekilir |
+  | TAKİP | PUSU | sırtı dönükken yeni saldırı da başlatamaz |
+  | ÖNCELİK | İHTİYATİ HACİZ | HACİZ'in sağ tık beklemesi sıfırlanır |
+  | TEMİNAT | İPOTEKLİ KULE | kule kurulurken işaret hemen patlar (×1.5) |
+  | KONKORDATO | ERTELEME | İFLAS'ın sağ tık (TASFİYE) beklemesi sıfırlanır |
+  | KEFALET | AVAL | HACİZ vuruşu yanındaki düşmana da seker |
+  | CİRO HATTI | VADESİZ | ÇEK o an eline döner — yeniden atabilirsin |
+  | MUKABELE | TEDBİR | çekin vurduğu düşman 1 sn yeni saldırı başlatamaz |
+  | TEMETTÜ | KÂR PAYI | o vuruşun hasadı ×2 |
+  | KONSORSİYUM | YAPILANDIRMA | bağın süresi baştan başlar |
+  | SPEKÜLASYON | VADELİ İŞLEM | o basılı tutmada saat iki kat akmaz |
+  | KİRA GELİRİ | PEŞİN KİRA | savurmalar kulenin ömründen de yemiyor |
+
+  Kapı: `Faz33SelfCheck` **85 kontrol** (her "+" açık ve kapalı) · 12 bozmanın 12'si kırmızı (Faz 33 toplamı **80**) · tüm kapılar ✅. Bot `Playtest33c` "+"lar açıkken de **12/12**, sıfır hata.
 - [x] Kod: combo tanımında `Açan` (yükseltme), `Combo.Kullanılır` açansız kapalı. Koni vuruşuyla bitenler var olan bitiriş yolunda (`Bitirenler`); öbürleri kendi anında: ÖNCELİK REHİN'in yakalamasında, TEMİNAT kule kurulurken, CİRO HATTI ipotek konurken, MUKABELE çek atılırken, SPEKÜLASYON basılı tutma başlarken. Kule kurmak artık bir combo adımı. Zincir son adımın hedefini taşıyor (ÖNCELİK). KONSORSİYUM bağın yayılmasını yalnız o vuruş boyunca tam yapıyor (`MusterekBag.TamPay`).
 - [x] Kapılar: `Faz33SelfCheck` **73 kontrol** (her combo açansız ve açanla, etkisi sayıyla) · 33c'nin **18 bozması kırmızı** (toplam 68) · Faz 31/32'nin "her combo'nun + hâli var" kontrolü "açanlılar hariç" oldu · tüm kapılar ✅. Bozma iki gevşek testi yakaladı (TEMETTÜ'nün açısı, combo sunağının "+"sızları satmaması) → keskinleşti.
 - [x] Bot (`…OtopilotMenu.Playtest33c`, hızlandırılmış ~1 dk): **12/12 combo gerçek tuşlarla, hepsi ilk denemede.** İlk iki koşuda ÖNCELİK ve KEFALET olmadı — combo değil bot: sabit beklemeyle silahı erken değiştirip HACİZ'in ağır vuruşunu kesiyordu; HACİZ'i ölü bölgenin sınırına (3.2) atıyordu; fırlatılan rehineye menzil dışından nişan alıyordu. Bot artık adım zincire yazılınca geçiyor (`PlayerController.AdımSayısı`) ve HACİZ'i uzaktakine atıyor.

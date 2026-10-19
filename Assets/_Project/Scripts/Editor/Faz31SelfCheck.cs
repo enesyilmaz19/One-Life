@@ -526,8 +526,8 @@ namespace TekCan.EditorTools
                             && SilahSunağı.Ad.Length == SilahSunağı.Toplam
                             && SilahSunağı.NeYapar.Length == SilahSunağı.Toplam
                             && System.Enum.GetValues(typeof(SilahYükseltme)).Length == SilahSunağı.Toplam, SilahSunağı.Ad.Length);
-            failed += Check(ref total, $"her combo'nun \"+\" hâli var — açan yükseltmeyle açılan Faz 33c combo'ları hariç, onlarda yok ({Combo.Sayı} combo)",
-                            Combo.Tümü.All(c => c.Açan.HasValue != !string.IsNullOrEmpty(c.ArtıAd)) && System.Enum.GetValues(typeof(ComboTür)).Length == Combo.Sayı, Combo.Sayı);
+            failed += Check(ref total, $"her combo'nun \"+\" hâli var ({Combo.Sayı} combo)",
+                            Combo.Tümü.All(c => !string.IsNullOrEmpty(c.ArtıAd)) && System.Enum.GetValues(typeof(ComboTür)).Length == Combo.Sayı, Combo.Sayı);
             return failed;
         }
 

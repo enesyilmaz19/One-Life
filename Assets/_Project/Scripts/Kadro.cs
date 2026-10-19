@@ -215,7 +215,7 @@ namespace TekCan
     /// <summary>Faz 30 — COMBO türleri. Sıra `Combo.Tümü` ile aynı.</summary>
     public enum ComboTür { HacizKesinleşti, Toplu, Temerrüt, HacizKararı, KarşıİCRA, SenetHaczi, SilipSüpür,
                            AçığaSatış, VadeFarkı, OrtakGider,
-                           // Faz 33c — combo açan yükseltmeyle (EPİK) açılır, "+" hâli yok
+                           // Faz 33c — combo açan yükseltmeyle (EPİK) açılır
                            Sürü, Takip, Öncelik, Teminat, Konkordato, Kefalet, CiroHattı, Mukabele, Temettü,
                            Konsorsiyum, Spekülasyon, KiraGeliri }
 
@@ -271,31 +271,44 @@ namespace TekCan
             new Tanım { Ad = "ORTAK GİDER", Sıra = () => new[] { Kadro.MÜŞTEREK, Kadro.KİRA },
                         NeYapar = "MÜŞTEREK'le bağla → KİRA: kulenin kirasını bağlı düşmanlar öder",
                         ArtıAd = "AİDAT", ArtıNeYapar = "kule önce bağlılara ateş eder, ×1.5" },
-            // Faz 33c — açan yükseltme EPİK; "üst enderliğin combo'su da güçlü" (Enes): eski combo'lardan sert, "+" yok
+            // Faz 33c — açan yükseltme EPİK; "üst enderliğin combo'su da güçlü" (Enes): eski combo'lardan sert. "+" hâlleri
+            // Enes'in "evet"iyle (2026-10-19) — kural aynı: "+" sayı büyütmüyor, yeni bir etki ekliyor
             new Tanım { Ad = "SÜRÜ", Sıra = () => new[] { Kadro.KONİ, Kadro.MÜŞTEREK }, Açan = SilahYükseltme.Sürü,
-                        NeYapar = "KONİ'yle vur → MÜŞTEREK: KONİ'nin vurduğu herkes (en çok 4) tek bağa" },
+                        NeYapar = "KONİ'yle vur → MÜŞTEREK: KONİ'nin vurduğu herkes (en çok 4) tek bağa",
+                        ArtıAd = "AĞIL", ArtıNeYapar = "bağlananlar bağın ortasına çekilir" },
             new Tanım { Ad = "TAKİP", Sıra = () => new[] { Kadro.FAİZLİ, Kadro.ARBİTRAJ }, Açan = SilahYükseltme.Takip,
-                        NeYapar = "FAİZLİ'yle vur → ARBİTRAJ: vuruş arkadan sayılır, hedef 2 sn sırtı dönük kalır" },
+                        NeYapar = "FAİZLİ'yle vur → ARBİTRAJ: vuruş arkadan sayılır, hedef 2 sn sırtı dönük kalır",
+                        ArtıAd = "PUSU", ArtıNeYapar = "sırtı dönükken yeni saldırı da başlatamaz" },
             new Tanım { Ad = "ÖNCELİK", Sıra = () => new[] { Kadro.HACİZ, Kadro.REHİN }, Açan = SilahYükseltme.Öncelik,
-                        NeYapar = "HACİZ'le vur → REHİN: HACİZ'in vurduğunu nerede olursa olsun çekip yakalar" },
+                        NeYapar = "HACİZ'le vur → REHİN: HACİZ'in vurduğunu nerede olursa olsun çekip yakalar",
+                        ArtıAd = "İHTİYATİ HACİZ", ArtıNeYapar = "HACİZ'in sağ tık beklemesi sıfırlanır" },
             new Tanım { Ad = "TEMİNAT", Sıra = () => new[] { Kadro.İPOTEK, Kadro.KİRA }, Açan = SilahYükseltme.Teminat,
-                        NeYapar = "İPOTEK koy → KİRA: kule işaretin yerine kurulur, ilk 4 sn kira yok" },
+                        NeYapar = "İPOTEK koy → KİRA: kule işaretin yerine kurulur, ilk 4 sn kira yok",
+                        ArtıAd = "İPOTEKLİ KULE", ArtıNeYapar = "kule kurulurken işaret hemen patlar (×1.5)" },
             new Tanım { Ad = "KONKORDATO", Sıra = () => new[] { Kadro.İFLAS, Kadro.KARŞILIK }, Açan = SilahYükseltme.Konkordato,
-                        NeYapar = "İFLAS'la vur → KARŞILIK: İFLAS vuruşunun yarısı birikene yazılır" },
+                        NeYapar = "İFLAS'la vur → KARŞILIK: İFLAS vuruşunun yarısı birikene yazılır",
+                        ArtıAd = "ERTELEME", ArtıNeYapar = "İFLAS'ın sağ tık (TASFİYE) beklemesi sıfırlanır" },
             new Tanım { Ad = "KEFALET", Sıra = () => new[] { Kadro.REHİN, Kadro.HACİZ }, Açan = SilahYükseltme.Kefalet,
-                        NeYapar = "REHİN'le vur (fırlat · takas · sürükle) → HACİZ: ölü bölge yok, ×2" },
+                        NeYapar = "REHİN'le vur (fırlat · takas · sürükle) → HACİZ: ölü bölge yok, ×2",
+                        ArtıAd = "AVAL", ArtıNeYapar = "HACİZ vuruşu yanındaki düşmana da seker" },
             new Tanım { Ad = "CİRO HATTI", Sıra = () => new[] { Kadro.ÇEK, Kadro.İPOTEK }, Açan = SilahYükseltme.CiroHattı,
-                        NeYapar = "ÇEK isabet etti → İPOTEK: çekin yolu boyunca üç küçük işaret daha" },
+                        NeYapar = "ÇEK isabet etti → İPOTEK: çekin yolu boyunca üç küçük işaret daha",
+                        ArtıAd = "VADESİZ", ArtıNeYapar = "ÇEK o an eline döner — yeniden atabilirsin" },
             new Tanım { Ad = "MUKABELE", Sıra = () => new[] { Kadro.KARŞILIK, Kadro.ÇEK }, Açan = SilahYükseltme.Mukabele,
-                        NeYapar = "KARŞILIK'la vur → ÇEK: son biriken çeke biner, her isabette o kadar ek hasar" },
+                        NeYapar = "KARŞILIK'la vur → ÇEK: son biriken çeke biner, her isabette o kadar ek hasar",
+                        ArtıAd = "TEDBİR", ArtıNeYapar = "çekin vurduğu düşman 1 sn yeni saldırı başlatamaz" },
             new Tanım { Ad = "TEMETTÜ", Sıra = () => new[] { Kadro.TAHVİL, Kadro.KONİ }, Açan = SilahYükseltme.Temettü,
-                        NeYapar = "TAHVİL'le vur → KONİ: TAHVİL'in kademesi başına +30° ve +%25 hasar" },
+                        NeYapar = "TAHVİL'le vur → KONİ: TAHVİL'in kademesi başına +30° ve +%25 hasar",
+                        ArtıAd = "KÂR PAYI", ArtıNeYapar = "o vuruşun hasadı ×2" },
             new Tanım { Ad = "KONSORSİYUM", Sıra = () => new[] { Kadro.MÜŞTEREK, Kadro.İFLAS }, Açan = SilahYükseltme.Konsorsiyum,
-                        NeYapar = "MÜŞTEREK'le vur → İFLAS: bağlıya inen hasar öbürlerine tam (%100) yayılır" },
+                        NeYapar = "MÜŞTEREK'le vur → İFLAS: bağlıya inen hasar öbürlerine tam (%100) yayılır",
+                        ArtıAd = "YAPILANDIRMA", ArtıNeYapar = "bağın süresi baştan başlar" },
             new Tanım { Ad = "SPEKÜLASYON", Sıra = () => new[] { Kadro.ARBİTRAJ, Kadro.TAHVİL }, Açan = SilahYükseltme.Spekülasyon,
-                        NeYapar = "ARBİTRAJ'la ARKADAN vur → TAHVİL: basılı tutma 2. kademe dolu başlar" },
+                        NeYapar = "ARBİTRAJ'la ARKADAN vur → TAHVİL: basılı tutma 2. kademe dolu başlar",
+                        ArtıAd = "VADELİ İŞLEM", ArtıNeYapar = "o basılı tutmada saat iki kat akmaz" },
             new Tanım { Ad = "KİRA GELİRİ", Sıra = () => new[] { Kadro.KİRA, Kadro.FAİZLİ }, Açan = SilahYükseltme.KiraGeliri,
-                        NeYapar = "kule kur → FAİZLİ'yle vur: o kule durdukça FAİZLİ'nin savurma bedelini kule öder (savurma başı kulenin ömründen 1 sn)" },
+                        NeYapar = "kule kur → FAİZLİ'yle vur: o kule durdukça FAİZLİ'nin savurma bedelini kule öder (savurma başı kulenin ömründen 1 sn)",
+                        ArtıAd = "PEŞİN KİRA", ArtıNeYapar = "savurmalar kulenin ömründen de yemiyor" },
         };
 
         public static int Sayı => Tümü.Length;
@@ -346,7 +359,7 @@ namespace TekCan
         public static ComboTür? Satılık(int bölge)
         {
             for (int i = 0; i < Sayı; i++)
-                if (Kullanılır((ComboTür)i, bölge) && !Artı((ComboTür)i) && Bu((ComboTür)i).ArtıAd != null) return (ComboTür)i;   // 33c'ninkilerin "+" hâli yok
+                if (Kullanılır((ComboTür)i, bölge) && !Artı((ComboTür)i)) return (ComboTür)i;
             return null;
         }
 

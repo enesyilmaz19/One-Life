@@ -29,6 +29,8 @@ namespace TekCan
         public bool Yönelim { get; set; }
         /// <summary>PROTESTO: dönüşte vurduklarını sahibinin dibine çeker; yakalanınca çevresine bir kez iner.</summary>
         public bool Protesto { get; set; }
+        /// <summary>MUKABELE + TEDBİR (Faz 33c): vurduğu düşman 1 sn yeni saldırı başlatamaz.</summary>
+        public bool Susturur { get; set; }
         /// <summary>KARŞILIKSIZ+: havadayken sahibini silahsız bırakmaz (`Sahibinin` saymıyor).</summary>
         public bool Serbest { get; set; }
 
@@ -142,6 +144,7 @@ namespace TekCan
                     e.Push(sahibe, Mathf.Max(0f, sahibe.magnitude - 1.5f) * 11f);
                 }
                 else e.Push(Dönüyor ? -_yön : _yön, 2f);
+                if (Susturur) e.Sustur(1f);                         // TEDBİR — vuruştan ÖNCE (öldürebilir)
                 e.TakeDamage(_hasar * (Dönüyor ? _dönüşÇarpanı : 1f), _hasat);
                 İsabet++;
                 if (Dönüyor && Tahsilat > 0f && Clock.Instance != null) Clock.Instance.Add(Tahsilat * Clock.Instance.HasatDoyması);

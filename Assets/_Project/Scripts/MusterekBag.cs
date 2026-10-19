@@ -91,6 +91,9 @@ namespace TekCan
             if (Üyeler.Count < 2) Bitir();
         }
 
+        /// <summary>KONSORSİYUM + YAPILANDIRMA (Faz 33c): bağın süresi baştan.</summary>
+        public void Tazele(float süre) => Kalan = Mathf.Max(Kalan, süre);
+
         public void Çıkar(Enemy e)
         {
             Üyeler.Remove(e);

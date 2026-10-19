@@ -356,7 +356,8 @@ kadar 4; sonra her bölgede +2 (biri boss'tan, öbürü sunakta satın ya da ke�
 **Combo:** A ile İSABET → 0.8 sn içinde B'ye geç ve vur (bazıları 3'lü). Iska sayılmıyor, aynı combo 4 sn
 tekrar etmiyor. İlk 10 combo baştan açık ve boss sonrası alınan bir "+" hâli var. Faz 33c'nin 12 combo'su
 (her silahtan bir: SÜRÜ, TAKİP, ÖNCELİK, TEMİNAT, KONKORDATO, KEFALET, CİRO HATTI, MUKABELE, TEMETTÜ,
-KONSORSİYUM, SPEKÜLASYON, KİRA GELİRİ) EPİK bir "açan" yükseltmeyle açılıyor, daha sert ve "+"sız.
+KONSORSİYUM, SPEKÜLASYON, KİRA GELİRİ) EPİK bir "açan" yükseltmeyle açılıyor ve daha sert; onların da "+"
+hâli var (AĞIL, PUSU, İHTİYATİ HACİZ …) — "+" yeni bir etki ekliyor, sayı büyütmüyor.
 
 ### YÜKSELTMELER — ENDERLİK (Faz 33, 2026-10-18)
 

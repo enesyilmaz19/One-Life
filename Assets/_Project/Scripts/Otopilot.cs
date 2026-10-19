@@ -1367,7 +1367,8 @@ namespace TekCan
         IEnumerator P33c()
         {
             _bekçiDk = 30f;
-            foreach (var t in Combo.Tümü) if (t.Açan.HasValue) SilahSunağı.Al(t.Açan.Value, -1);
+            for (int i = 0; i < Combo.Sayı; i++)                                 // açanlar + "+" hâlleri: "+" yolları da gerçek oyunda koşsun
+                if (Combo.Bu((ComboTür)i).Açan is SilahYükseltme açan) { SilahSunağı.Al(açan, -1); Combo.ArtıAl((ComboTür)i, 0); }
             var satırlar = new List<string>();
             int tamam = 0, toplam = 0;
             for (int i = 0; i < Combo.Sayı && !_bitti; i++)
@@ -1417,7 +1418,7 @@ namespace TekCan
                 satırlar.Add($"{(oldu ? "✅" : "❌")} {tanım.Ad} ({deneme})");
                 Debug.Log($"[P33c] {tanım.Ad}: {(oldu ? "oldu" : "OLMADI")} · {deneme} deneme");
             }
-            Kaydet("33c", "12 yeni combo gerçek tuşlarla: A ile adım → 2 → B ile bitir (açanlar verilmiş)", tamam == toplam,
+            Kaydet("33c", "12 yeni combo gerçek tuşlarla: A ile adım → 2 → B ile bitir (açanlar ve \"+\" hâlleri verilmiş)", tamam == toplam,
                    $"{tamam}/{toplam} · {string.Join(" · ", satırlar)}");
         }
 

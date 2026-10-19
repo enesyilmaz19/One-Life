@@ -242,6 +242,7 @@ namespace TekCan
                     Vector3 el = RehinYeri; el.y = h.transform.position.y;
                     h.transform.position = el;
                     Tut(h);
+                    if (Combo.Artı(ComboTür.Öncelik)) _specialCd[Kadro.HACİZ] = 0f;     // İHTİYATİ HACİZ
                     ComboTetikle(ComboTür.Öncelik);
                     return;
                 }
@@ -462,7 +463,7 @@ namespace TekCan
         KiraKulesi _kule, _eskiKule;
         Vector3 _dashBaşı;
         // Faz 33b
-        bool _rolloverKullanıldı, _arkadanÖldürdü;
+        bool _rolloverKullanıldı, _arkadanÖldürdü, _bedelsizVade;
         float _arkaHasar, _birikenAn;
 
         /// <summary>TAHVİL: basılı tutuluyorsa olgunluk kademesi (0–3), değilse −1. HUD ve otopilot.</summary>
@@ -506,7 +507,7 @@ namespace TekCan
             int önce = Kademe(_vade);
             _vade += dt;
             var saat = Clock.Instance;
-            bool kilit = önce >= 3 && Y(SilahYükseltme.Kilit);                      // KİLİT (Faz 33b): 3. kademede bedelsiz
+            bool kilit = önce >= 3 && Y(SilahYükseltme.Kilit) || _bedelsizVade;     // KİLİT (Faz 33b): 3. kademede bedelsiz · VADELİ İŞLEM
             if (saat != null && !saat.Frozen && !kilit) saat.Spend(saat.AkışHızı * dt * (Y(SilahYükseltme.İskonto) ? 0.5f : 1f));
             int sonra = Kademe(_vade);
             if (sonra > önce)                                       // kademe atladı: görünsün
@@ -593,7 +594,14 @@ namespace TekCan
                 if (e != null && Enemy.All.Contains(e) && !üyeler.Contains(e) && üyeler.Count < 4) üyeler.Add(e);
             if (_sonVurulan != null && Enemy.All.Contains(_sonVurulan) && !üyeler.Contains(_sonVurulan)) üyeler.Add(_sonVurulan);
             if (üyeler.Count >= 2) _sonBağ = BağKur(üyeler);
-            else Bağla(_sonVurulan);
+            else { Bağla(_sonVurulan); return; }
+            if (!Combo.Artı(ComboTür.Sürü)) return;                              // AĞIL: bağın ortasına çek (itme ~ kuvvet/11 birim)
+            Vector3 o = _sonBağ.Orta;
+            foreach (var e in üyeler)
+            {
+                Vector3 d = o - e.transform.position; d.y = 0f;
+                if (d.magnitude > 0.8f) e.Push(d, (d.magnitude - 0.8f) * 11f);
+            }
         }
 
         /// <summary>GENİŞ ORTAKLIK: e'nin 4 birim yakınındaki, listede olmayan en yakın düşman.</summary>
@@ -768,7 +776,11 @@ namespace TekCan
             if (ortak) ComboTetikle(ComboTür.OrtakGider);
             bool teminat = !ortak && ComboHazır(ComboTür.Teminat);                 // TEMİNAT (Faz 33c): işaretin yerine, ilk 4 sn kirasız
             Vector3 yer = teminat ? AdımYeri(1) : Nişan(Weapon.Range(_t));
-            if (teminat) ComboTetikle(ComboTür.Teminat);
+            if (teminat)
+            {
+                if (Combo.Artı(ComboTür.Teminat) && GroundMark.İçindekiİpotek(yer) is GroundMark işaret) işaret.HemenPatlat(1.5f);   // İPOTEKLİ KULE
+                ComboTetikle(ComboTür.Teminat);
+            }
             if (Kule != null) _eskiKule = _kule;                                   // ÇİFT KULE (Faz 33b): eskisi kalıyor
             _kule = KiraKulesi.Kur(_t, yer, KuleSüresi, KuleKirası, KuleMenzili,
                                    WeaponDamage() * _t.kiraShotMul, Weapon.HarvestMultiplier,
@@ -1435,9 +1447,11 @@ namespace TekCan
                 _vadeAçık = true;
                 _vade = 0f;
                 _rolloverKullanıldı = false;
+                _bedelsizVade = false;
                 if (ComboHazır(ComboTür.Spekülasyon) && _comboAn - _sonArkadanAn <= _t.comboWindow)   // SPEKÜLASYON (Faz 33c)
                 {
                     _vade = KademeSüresi * 2f;                                    // 2. kademe dolu
+                    _bedelsizVade = Combo.Artı(ComboTür.Spekülasyon);             // VADELİ İŞLEM
                     ComboTetikle(ComboTür.Spekülasyon);
                 }
                 Vector3 nişan = AimDirection(input);
@@ -1448,7 +1462,7 @@ namespace TekCan
             if (_weaponIndex == Kadro.FAİZLİ && KiraGeliriKulesi is KiraKulesi kg && Clock.Instance != null)   // KİRA GELİRİ (Faz 33c)
             {
                 Clock.Instance.Add(_t.faizliSwingCost);
-                kg.Kısalt(1f);
+                if (!Combo.Artı(ComboTür.KiraGeliri)) kg.Kısalt(1f);                    // PEŞİN KİRA: ömürden de yemiyor
             }
             if (Y(SilahYükseltme.Sermaye) && Clock.Instance != null && Clock.Instance.HasatDoyması < 0.999f)
                 Clock.Instance.Add(_t.faizliSwingCost * 0.5f);                                   // SERMAYE (Faz 33)
@@ -1541,7 +1555,7 @@ namespace TekCan
             if (Weapon.Saldırı == Biçim.Çek)
             {
                 bool mukabele = ComboHazır(ComboTür.Mukabele);                    // MUKABELE (Faz 33c): son biriken çeke biner
-                ÇekFırlat(transform.forward, 1f, mukabele ? _sonBirikenHasarı : 0f);
+                ÇekFırlat(transform.forward, 1f, mukabele ? _sonBirikenHasarı : 0f).Susturur = mukabele && Combo.Artı(ComboTür.Mukabele);   // TEDBİR
                 if (mukabele) ComboTetikle(ComboTür.Mukabele);
                 Weapon.OnStrike(Clock.Instance, _t, 0, 0);
                 return;
@@ -1569,7 +1583,7 @@ namespace TekCan
                 _biriken += _sonHasar[Kadro.İFLAS] * 0.5f / _t.karsilikDamagePerSecond;
             }
             _zorlaArka = bitiren == ComboTür.AçığaSatış || bitiren == ComboTür.Takip;                  // TAKİP (33c): arkadan
-            float hasat = Weapon.HarvestMultiplier * (bitiren == ComboTür.Temerrüt && artı ? 2f : 1f);
+            float hasat = Weapon.HarvestMultiplier * ((bitiren == ComboTür.Temerrüt || bitiren == ComboTür.Temettü) && artı ? 2f : 1f);   // TEMERRÜT FAİZİ · KÂR PAYI
             float açı = bitiren == ComboTür.SilipSüpür && artı ? 360f : SavurmaAçısı;          // TOZ DUMAN
             if (bitiren == ComboTür.Temettü) açı = Mathf.Min(360f, açı + 30f * _sonKademe);
             if (açı >= 360f) Arc.Spawn(transform.position, transform.rotation, SavurmaMenzili, 360f, Weapon.Tint, _t.swingArcLife * 1.4f);
@@ -1584,7 +1598,11 @@ namespace TekCan
                        minRange: bitiren == ComboTür.Kefalet ? 0f : ÖlüBölge, itmeTaban: bitiren == ComboTür.SilipSüpür ? 8f : 0f);
             _zorlaArka = false;
             MusterekBag.TamPay = false;
-            if (bitiren == ComboTür.Takip && hits > 0 && _sonVurulan != null) _sonVurulan.SırtDön(2f);
+            if (bitiren == ComboTür.Takip && hits > 0 && _sonVurulan != null)
+            {
+                _sonVurulan.SırtDön(2f);
+                if (artı) _sonVurulan.Sustur(2f);                                                     // PUSU
+            }
             if (bitiren == ComboTür.KiraGeliri && hits > 0) _kiraGeliri = Kule != null ? Kule : EskiKule;
             if (karşılık && hits > 0) BirikeniHarca();
             if (Weapon.Saldırı == Biçim.Müşterek && hits > 0)
@@ -1610,6 +1628,10 @@ namespace TekCan
                 if (artı && bitiren == ComboTür.SenetHaczi) Sıçrat(hasar, hasat, _sonVurulan);  // SENET ZİNCİRİ
                 if (artı && bitiren == ComboTür.VadeFarkı && Clock.Instance != null)          // KUPON
                     Clock.Instance.Add(_t.faizliSwingCost);
+                if (artı && bitiren == ComboTür.Konkordato) _specialCd[Kadro.İFLAS] = 0f;     // ERTELEME
+                if (artı && bitiren == ComboTür.Kefalet) Sıçrat(hasar, hasat, _sonVurulan);   // AVAL
+                if (artı && bitiren == ComboTür.Konsorsiyum && _sonVurulan != null && _sonVurulan.Bağ != null)
+                    _sonVurulan.Bağ.Tazele(BağSüresi);                                          // YAPILANDIRMA
             }
             else İsabetSonrası(hits);
 
@@ -1665,6 +1687,7 @@ namespace TekCan
             else if (ComboHazır(ComboTür.CiroHattı))                                 // CİRO HATTI (Faz 33c)
             {
                 hat = AdımYeri(1);
+                if (Combo.Artı(ComboTür.CiroHattı)) CekUcusu.Yakala(this);          // VADESİZ: çek eline döner
                 ComboTetikle(ComboTür.CiroHattı);
             }
             var işaret = PlaceGroundMark(Weapon.Range(_t), yarıçap, gecikme, hasar, Weapon.HarvestMultiplier, yer);
