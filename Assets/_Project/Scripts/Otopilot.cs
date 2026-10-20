@@ -312,6 +312,8 @@ namespace TekCan
                 ? new[] { Kurulum(), P33(), Bitir() }
                 : senaryo == "simsar"
                 ? new[] { Kurulum(), SimsarTeşhis(), Bitir() }
+                : senaryo == "bosstest"
+                ? new[] { Kurulum(), BossTesti(), Bitir() }
                 : senaryo == "fiyat"
                 ? new[] { Kurulum(), FiyatÖlçümü(Kadro.KONİ, Kadro.FAİZLİ, Kadro.HACİZ, Kadro.İPOTEK, Kadro.İFLAS, Kadro.REHİN), Bitir() }
                 : senaryo == "fiyat33b"
@@ -707,6 +709,8 @@ namespace TekCan
         /// </summary>
         bool ComboOldu(PlayerController pc, int önce) => pc != null && Oyuncu == pc && pc.ComboSayısı > önce;
 
+        static int ArtıSayısı() { int n = 0; for (int i = 0; i < Combo.Sayı; i++) if (Combo.Artı((ComboTür)i)) n++; return n; }
+
         IEnumerator P31()
         {
             _bekçiDk = 55f;
@@ -908,6 +912,53 @@ namespace TekCan
             if (_bitti) yield break;
             Kaydet("S-2", "4. boss öldü", Boss() == null, BossAdı(Boss()));
             StopCoroutine(nabız);
+        }
+
+        /// <summary>
+        /// Enes (2026-10-20): "bossların uzun sürmesi okeydir ama her bir boss öncekinden daha uzun sürmeli."
+        /// 5 ana boss, her biri yeni koşuda (F6 → N × bölge → B), `BossuKes`'in beklenen gücüyle. Ölçülen: dövüş
+        /// süresi (oyun zamanı), faz 2'nin başladığı an, havuz, darbe, F5.
+        /// </summary>
+        IEnumerator BossTesti()
+        {
+            var satırlar = new List<string>();
+            float önceki = 0f; bool sıralı = true;
+            for (int b = 0; b < BossKind.All.Length && !_bitti; b++)
+            {
+                Bas(Key.F6); yield return Bekle(0.6f);
+                _pc = null; _kam = null;
+                for (int n = 0; n < b; n++) { Bas(Key.N); yield return Bekle(1.2f); }
+                yield return BossuKes(0f);                         // sınır 0 = yalnızca kurulum, dövüşü burada sayıyoruz
+                var c = Saat; var boss = Boss();
+                if (c == null || boss == null) { satırlar.Add($"B{b + 1}: boss odası açılmadı"); sıralı = false; continue; }
+                string ad = BossAdı(boss);
+                // Saat = bölgenin doyma tavanı (MiniTesti gibi). ⚠️ F5'in 300 sn'si ve 35 sn eşiği 5. bölgede tek
+                // vuruştan az (~100–200 sn): bot MURABAHACI'da 4 dk'da üç kez öldü, süre ölçülemedi (ilk koşu).
+                float giriş = _t.harvestSoftCap * Mathf.Pow(_t.harvestSoftCapGrowth, b);
+                c.Revive(giriş);
+                float havuz = boss.TimeLeft, d0 = c.TotalHitCost, t0 = Şimdi, faz2 = -1f;
+                int f0 = _takviye;
+                while (Şimdi - t0 < 3600f && !_bitti && Saat == c && !c.Dead && Oda != null && Oda.IsBossRoom)   // ölüp kontrol noktasına dönmek "öldürdü" sayılmasın
+                {
+                    var bb = Boss();
+                    if (bb == null) break;
+                    if (c.Seconds < giriş * 0.4f) { c.Revive(giriş); _takviye++; }
+                    if (faz2 < 0f && bb.Phase >= 2) faz2 = Şimdi - t0;
+                    DövüşAdımı(Mod.Dövüş, bb);
+                    yield return null;
+                }
+                Dur();
+                float süre = Şimdi - t0;
+                bool öldü = Boss() == null && Saat == c && !c.Dead && Oda != null && Oda.IsBossRoom;
+                bool kısa = b > 0 && süre <= önceki;
+                if (!öldü || kısa) sıralı = false;
+                önceki = süre;
+                satırlar.Add($"B{b + 1} {ad}: {süre / 60f:0.0} dk" + (faz2 >= 0f ? $" · faz 2 {faz2 / 60f:0.0}. dk'da" : "") +
+                             $" · havuz {havuz:0} · darbe −{c.TotalHitCost - d0:0} · F5 {_takviye - f0}" +
+                             (öldü ? "" : " · ❌ ÖLMEDİ") + (kısa ? " · ⚠️ öncekinden kısa" : ""));
+                Debug.Log($"[BOSS TESTİ] {satırlar[satırlar.Count - 1]}");
+            }
+            Kaydet("BT", "Her ana boss öncekinden uzun sürüyor (beklenen güç)", sıralı, string.Join("<br>", satırlar));
         }
 
         /// <summary>10 sn OYUN zamanında bir: havuz, inen hasar (karelik düşüşlerin toplamı), botun dalları.</summary>
@@ -1232,18 +1283,33 @@ namespace TekCan
             int ö2 = SilahSunağı.AlınanSayısı;
             Altar altta = null, üstte = null;
             foreach (var a in alt) if (altta == null && !a.SoldOut) altta = a;
-            foreach (var a in üst) if (üstte == null && !a.SoldOut) üstte = a;
+            // Enes'in testi (masa #13): dış halkadaki combo AÇANI al. Kuşanılan KONİ'nin 3 epik/efsanevisi = dış halka, SÜRÜ hep orada.
+            foreach (var a in üst)
+                if (!a.SoldOut && (üstte == null || a.Yükseltme() is SilahYükseltme ay && Combo.Açtığı(ay) != null)) üstte = a;
             var üstY = üstte != null ? üstte.Yükseltme() : null;
+            int artı0 = ArtıSayısı();
             yield return AltaraAl(altta);
             yield return AltaraAl(üstte);
             bool ikisi = SilahSunağı.AlınanSayısı == ö2 + 2;
+            int artıFarkı = ArtıSayısı() - artı0;                            // dış halkanın 270°'si combo sunağının üstündeydi (2026-10-20)
             bool üstEnder = üstY.HasValue && SilahSunağı.Ender[(int)üstY.Value] >= Enderlik.Epik && SilahSunağı.Var(üstY.Value);
             bool hepsiKapalı = true;
             foreach (var a in alt) if (!a.SoldOut) hepsiKapalı = false;
             foreach (var a in üst) if (!a.SoldOut) hepsiKapalı = false;
             Kaydet("33-2", "Boss sunağı: 3 yaygın/nadir + 3 epik/efsanevi, her sıradan [E] ile 1 alım",
-                   alt.Count == 3 && üst.Count == 3 && ikisi && üstEnder && hepsiKapalı,
-                   $"{önceEtiket} · alınan {SilahSunağı.AlınanSayısı - ö2}");
+                   alt.Count == 3 && üst.Count == 3 && ikisi && üstEnder && hepsiKapalı && artıFarkı == 0,
+                   $"{önceEtiket} · alınan {SilahSunağı.AlınanSayısı - ö2}" + (artıFarkı != 0 ? $" · ⚠️ aynı basışlarla {artıFarkı} combo \"+\"sı da alındı" : ""));
+
+            var açılan = üstY.HasValue ? Combo.Açtığı(üstY.Value) : null;
+            Sahne("P33 3/3 AÇILAN COMBO", açılan != null ? $"\"COMBO AÇILDI: {açılan.Ad}\" → gerçek tuşlarla dene" : "dış halkada açan yok");
+            bool duyuruldu = açılan != null && Combo.SonCombo != null && Combo.SonCombo.Contains("COMBO AÇILDI: " + açılan.Ad);
+            string duyuru = Combo.SonCombo;
+            bool oldu = false; int deneme = 0;
+            for (int i = 0; i < Combo.Sayı && açılan != null; i++)
+                if (Combo.Bu((ComboTür)i) == açılan) yield return ComboDene((ComboTür)i, (o, d) => { oldu = o; deneme = d; });
+            Kaydet("33-3", "Dış halkadan alınan açan combo'yu açıyor: \"COMBO AÇILDI\" yazıyor, combo gerçek tuşlarla oluyor",
+                   duyuruldu && oldu,
+                   açılan == null ? "dış halkada açan yok" : $"{açılan.Ad} · duyuru \"{duyuru}\" · {(oldu ? "oldu" : "OLMADI")} ({deneme} deneme)");
         }
 
         // ── FAZ 33 FİYAT ÖLÇÜMÜ — Enes (2026-10-18): "fiyat uygunluğunu bot üzerinden deneyelim" ──
@@ -1376,50 +1442,59 @@ namespace TekCan
                 var c = (ComboTür)i; var tanım = Combo.Bu(c);
                 if (!tanım.Açan.HasValue) continue;
                 toplam++;
-                int A = tanım.Sıra()[0], B = tanım.Sıra()[1];
-                Sahne($"P33c {tanım.Ad}", $"{Weapon.All[A].Name} → {Weapon.All[B].Name}");
+                Sahne($"P33c {tanım.Ad}", $"{Weapon.All[tanım.Sıra()[0]].Name} → {Weapon.All[tanım.Sıra()[1]].Name}");
                 bool oldu = false; int deneme = 0;
-                while (deneme < 6 && !oldu && !_bitti)
-                {
-                    deneme++;
-                    yield return OdayaAtla(1);
-                    Diz(A, B);
-                    Bas(Key.Digit1); yield return Bekle(0.3f);
-                    var pc = Oyuncu;
-                    var d = EnYakınBaşka(null);
-                    if (pc == null || d == null) continue;
-                    int c0 = pc.ComboSayısı;
-                    if (A == Kadro.HACİZ)                                          // ölü bölge 3.2: oyuncu gibi UZAKTAKİNE at
-                    {
-                        Enemy uzak = null; float iyi = float.MaxValue;
-                        foreach (var e in Enemy.All)
-                        {
-                            if (e == null || e.Dormant) continue;
-                            float y = Düz(e.transform.position - Ben).magnitude - e.Radius;
-                            if (y > 4f && y < 7f && Mathf.Abs(y - 5.5f) < iyi) { iyi = Mathf.Abs(y - 5.5f); uzak = e; }
-                        }
-                        if (uzak != null) d = uzak;
-                        else { yield return TekKareDash(Ben - d.transform.position); }   // yoksa açıl
-                    }
-                    else yield return Git(d.transform.position, 1.1f + d.Radius, 3f);
-                    int a0 = pc.AdımSayısı;
-                    float mesafeA = d != null ? Düz(d.transform.position - Ben).magnitude - d.Radius : -1f;
-                    yield return ComboAdımı(A, d, true, c);
-                    int a1 = pc.AdımSayısı;
-                    Bas(Key.Digit2); yield return null;
-                    var bitir = c == ComboTür.Konsorsiyum || c == ComboTür.Öncelik ? d : EnYakınBaşka(null);   // bitiriş: bağlıya / en yakına
-                    yield return ComboAdımı(B, bitir != null ? bitir : d, false, c);
-                    yield return Bekle(0.4f);
-                    oldu = ComboOldu(pc, c0);
-                    if (!oldu) Debug.Log($"[P33c] {tanım.Ad} deneme {deneme}: A adımı {(a1 > a0 ? "yazıldı" : "YAZILMADI")} (yüzey {mesafeA:0.0}) · " +
-                                         $"silah {(Oyuncu != null ? Oyuncu.Weapon.Name : "—")} · rehine {(Oyuncu != null && Oyuncu.Rehine != null ? (Oyuncu.Rehine == d ? "hedef" : "başka") : "yok")} · hedef {(d != null ? "canlı" : "öldü")}");
-                }
+                yield return ComboDene(c, (o, d) => { oldu = o; deneme = d; });
                 if (oldu) tamam++;
                 satırlar.Add($"{(oldu ? "✅" : "❌")} {tanım.Ad} ({deneme})");
                 Debug.Log($"[P33c] {tanım.Ad}: {(oldu ? "oldu" : "OLMADI")} · {deneme} deneme");
             }
             Kaydet("33c", "12 yeni combo gerçek tuşlarla: A ile adım → 2 → B ile bitir (açanlar ve \"+\" hâlleri verilmiş)", tamam == toplam,
                    $"{tamam}/{toplam} · {string.Join(" · ", satırlar)}");
+        }
+
+        /// <summary>Bir combo'yu gerçek tuşlarla dene (en çok 6 kez): A ile adım → 2 → B ile bitir.</summary>
+        IEnumerator ComboDene(ComboTür c, System.Action<bool, int> sonuç)
+        {
+            var tanım = Combo.Bu(c);
+            int A = tanım.Sıra()[0], B = tanım.Sıra()[1];
+            bool oldu = false; int deneme = 0;
+            while (deneme < 6 && !oldu && !_bitti)
+            {
+                deneme++;
+                yield return OdayaAtla(1);
+                Diz(A, B);
+                Bas(Key.Digit1); yield return Bekle(0.3f);
+                var pc = Oyuncu;
+                var d = EnYakınBaşka(null);
+                if (pc == null || d == null) continue;
+                int c0 = pc.ComboSayısı;
+                if (A == Kadro.HACİZ)                                          // ölü bölge 3.2: oyuncu gibi UZAKTAKİNE at
+                {
+                    Enemy uzak = null; float iyi = float.MaxValue;
+                    foreach (var e in Enemy.All)
+                    {
+                        if (e == null || e.Dormant) continue;
+                        float y = Düz(e.transform.position - Ben).magnitude - e.Radius;
+                        if (y > 4f && y < 7f && Mathf.Abs(y - 5.5f) < iyi) { iyi = Mathf.Abs(y - 5.5f); uzak = e; }
+                    }
+                    if (uzak != null) d = uzak;
+                    else { yield return TekKareDash(Ben - d.transform.position); }   // yoksa açıl
+                }
+                else yield return Git(d.transform.position, 1.1f + d.Radius, 3f);
+                int a0 = pc.AdımSayısı;
+                float mesafeA = d != null ? Düz(d.transform.position - Ben).magnitude - d.Radius : -1f;
+                yield return ComboAdımı(A, d, true, c);
+                int a1 = pc.AdımSayısı;
+                Bas(Key.Digit2); yield return null;
+                var bitir = c == ComboTür.Konsorsiyum || c == ComboTür.Öncelik ? d : EnYakınBaşka(null);   // bitiriş: bağlıya / en yakına
+                yield return ComboAdımı(B, bitir != null ? bitir : d, false, c);
+                yield return Bekle(0.4f);
+                oldu = ComboOldu(pc, c0);
+                if (!oldu) Debug.Log($"[P33c] {tanım.Ad} deneme {deneme}: A adımı {(a1 > a0 ? "yazıldı" : "YAZILMADI")} (yüzey {mesafeA:0.0}) · " +
+                                     $"silah {(Oyuncu != null ? Oyuncu.Weapon.Name : "—")} · rehine {(Oyuncu != null && Oyuncu.Rehine != null ? (Oyuncu.Rehine == d ? "hedef" : "başka") : "yok")} · hedef {(d != null ? "canlı" : "öldü")}");
+            }
+            sonuç(oldu, deneme);
         }
 
         /// <summary>Bir silahın combo adımı, oyuncunun yaptığı gibi: TAHVİL basılı tut-bırak, REHİN yakala-fırlat,
@@ -2364,9 +2439,9 @@ namespace TekCan
             bool kaçan = mod == Mod.Dövüş || mod == Mod.ÇokUzak || mod == Mod.DibindeKaçar;
             _kaçıyor = kaçan;
             if (kaçan && Kaç(ben)) { Dal("kaç·" + _kaçNeden); return; }
-            if (kaçan && İşarettenKaç(ben)) { Dal("işaret"); return; }
-
             if (hedef == null || hedef.Dormant) hedef = EnYakın();
+            if (kaçan && İşarettenKaç(ben, mod == Mod.Dövüş ? hedef : null)) { Dal("işaret"); return; }   // uzak durma modlarında menzile çekme
+
             if (hedef == null) { Dur(); return; }
             Vector3 to = Düz(hedef.transform.position - ben);
             float d = to.magnitude;
@@ -2376,7 +2451,7 @@ namespace TekCan
             {
                 case Mod.Dövüş:
                     float menzil = pc.Weapon.Range(_t) * 0.8f + hedef.Radius;
-                    if (d > menzil) { if (AlanaGirer(ben, to)) { Dur(); Dal("bekle"); } else { Yürü(to); Dal("yaklaş"); } }
+                    if (d > menzil) { if (AlanaGirer(ben, to) || İşareteGirer(ben, to)) { Dur(); Dal("bekle"); } else { Yürü(to); Dal("yaklaş"); } }
                     else
                     {
                         Dal("vur");
@@ -2637,20 +2712,68 @@ namespace TekCan
             return false;
         }
 
-        bool İşarettenKaç(Vector3 ben)
+        bool İşarettenKaç(Vector3 ben, Enemy hedef)
         {
             foreach (var g in FindObjectsByType<GroundMark>(FindObjectsSortMode.None))
             {
                 if (g == null || !g.OyuncuyaVurur || g.Fired) continue;
                 Vector3 to = Düz(ben - g.transform.position);
-                if (to.magnitude > g.Yarıçap + 0.6f) continue;
+                float dış = g.Yarıçap + 0.6f;
+                if (to.magnitude > dış) continue;
+                // ⚠️ Çıkış noktası HEDEFİ MENZİLDE tutsun. İşaret DURDUĞUN yere düşüyor, bot hep tam
+                // ortasındaydı: düz dışarı (`to` ≈ 0 → +X) kaçıp menzilden çıkıyor, işaretin patlamasını
+                // bekleyip geri yürüyordu — SİMSAR faz 2'de zamanın %36'sı işaret, %17'si yaklaş, yalnızca
+                // %25'i vuruş (teşhis 2026-10-18). `hedef` null ise eskisi gibi düz dışarı.
+                Vector3 çık = ben + (to.sqrMagnitude > 0.01f ? to.normalized : Vector3.right) * (dış - to.magnitude);
+                if (hedef != null) MenzildeÇıkış(ben, hedef, ref çık);
                 // ⚠️ Yalnızca patlamaya YETİŞEMEYECEKSEN kaç. Bot işaretin içine girer girmez
                 // kaçıyordu: SİMSAR faz 2'de 1.1 sn'de bir işaret düşüyor, bot hiç vuramadı,
                 // 20 dk'da öldüremedi (tam koşu ölçümü). İnsan vurur, patlamadan önce çıkar.
-                float çıkış = (g.Yarıçap + 0.6f - to.magnitude) / _t.moveSpeed + İnsanTepkisi;
+                float çıkış = Düz(çık - ben).magnitude / _t.moveSpeed + İnsanTepkisi;
                 if (g.Kalan > çıkış + 0.2f) continue;
-                Yürü(to.sqrMagnitude > 0.01f ? to : Vector3.right);
+                Yürü(çık - ben);
                 return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Hedefin çevresinde, menzil içinde, kurulu hiçbir işaretin (payıyla) içinde olmayan en yakın nokta —
+        /// 15°'lik adımlarla iki yana (`GüvenliYön` deseni). Yoksa `çık` olduğu gibi kalır.
+        /// </summary>
+        void MenzildeÇıkış(Vector3 ben, Enemy hedef, ref Vector3 çık)
+        {
+            Vector3 h = hedef.transform.position; h.y = ben.y;
+            Vector3 kol = Düz(ben - h);
+            if (kol.sqrMagnitude < 0.01f) kol = Vector3.right;
+            float r = Mathf.Clamp(kol.magnitude, hedef.Radius + 0.5f, Oyuncu.Weapon.Range(_t) * 0.7f + hedef.Radius);
+            kol = kol.normalized * r;
+            var işaretler = FindObjectsByType<GroundMark>(FindObjectsSortMode.None);
+            for (int i = 1; i <= 24; i++)
+            {
+                var aday = h + Quaternion.Euler(0f, ((i + 1) / 2) * 15f * (i % 2 == 0 ? 1f : -1f), 0f) * kol;
+                if (Düz(aday).magnitude > _t.arenaRadius * 0.9f) continue;
+                bool temiz = true;
+                foreach (var g in işaretler)
+                    if (g != null && g.OyuncuyaVurur && !g.Fired && Düz(aday - g.transform.position).magnitude <= g.Yarıçap + 0.6f)
+                    { temiz = false; break; }
+                if (temiz) { çık = aday; return; }
+            }
+        }
+
+        /// <summary>
+        /// Bir sonraki adım kurulu bir işaretin İÇİNE mi (dışındayken). Girme — hedef zaten sana geliyor;
+        /// bot çıktığı işarete geri yürüyüp yeniden kaçıyordu (teşhis 2026-10-18).
+        /// </summary>
+        static bool İşareteGirer(Vector3 ben, Vector3 yön)
+        {
+            var sonraki = ben + yön.normalized * 0.5f;
+            foreach (var g in FindObjectsByType<GroundMark>(FindObjectsSortMode.None))
+            {
+                if (g == null || !g.OyuncuyaVurur || g.Fired) continue;
+                float r = g.Yarıçap + 0.3f;
+                if (Düz(sonraki - g.transform.position).magnitude < r && Düz(ben - g.transform.position).magnitude >= r)
+                    return true;
             }
             return false;
         }
@@ -2685,10 +2808,27 @@ namespace TekCan
             float t0 = Şimdi;
             while (Düz(hedef - Ben).magnitude > yakın && Şimdi - t0 < sınır)
             {
-                Yürü(hedef - Ben);
+                Yürü(KapıyıDolan(hedef));
                 yield return null;
             }
             Dur();
+        }
+
+        /// <summary>
+        /// Hedefe yön, ama çıkış kapısının üstünden geçmeden: açık kapıya basmak odayı değiştiriyor. Boss'u kapının
+        /// kuzeyinde bitiren bot sunağa yürürken kapıdan geçip 2. bölgeye düştü (P30, 2026-10-20). İnsan kapının yanından dolanır.
+        /// </summary>
+        Vector3 KapıyıDolan(Vector3 hedef)
+        {
+            Vector3 yön = Düz(hedef - Ben);
+            foreach (var g in FindObjectsByType<ExitGate>(FindObjectsSortMode.None))
+            {
+                Vector3 k = Düz(g.transform.position - Ben);
+                if (Düz(hedef - g.transform.position).magnitude < 2.6f || k.magnitude > 2.6f || Vector3.Dot(k, yön) <= 0f) continue;
+                Vector3 yan = Vector3.Cross(Vector3.up, k).normalized;               // kapının teğeti — hedefe yakın yana
+                return Vector3.Dot(yan, yön) >= 0f ? yan : -yan;
+            }
+            return yön;
         }
 
         /// <summary>Odadaki herkesi öldür, açılan kapıdan geç.</summary>

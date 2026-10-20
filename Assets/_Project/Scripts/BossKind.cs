@@ -245,6 +245,12 @@ namespace TekCan
         /// <summary>③④ true: havuz bitince FULLENİR. ①② false: yarıda döner.</summary>
         public virtual bool RefillsOnEmpty => false;
 
+        /// <summary>
+        /// Ana boss havuzunun bu boss'a özel payı, bölge büyümesinin üstüne. Enes (2026-10-20): "her bir boss
+        /// öncekinden daha uzun sürmeli" — ölçen `…OtopilotMenu.BossTesti`.
+        /// </summary>
+        public virtual float HavuzPayı => 1f;
+
         /// <summary>Faz 2 eşiği (havuz oranı). Yalnızca fullenmeyen boss'larda geçerli.</summary>
         public virtual float PhaseTwoAt => 0.5f;
 
@@ -480,6 +486,10 @@ namespace TekCan
             public override string Name => "EKSPER";
             public override string Crime => "zamanın artık hiçbir şey etmiyor";
             public override Color Tint => new Color(0.85f, 0.7f, 0.25f);
+
+            // ⚠️ TAHSİLDAR'la aynı sürüyordu (3.6 dk / 3.8 dk, BossTesti 2026-10-20): bölge havuzu ×1.35 büyüyor
+            // ama beklenen güç ondan hızlı. Hasat faz 1'de %45, faz 2'de yok — büyük havuz ekonomiyi şişirmiyor.
+            public override float HavuzPayı => 1.25f;
 
             // İMZA MEKANİĞİ: yaşadığı sürece ne çalarsan çal az eder; faz 2'de HİÇ etmez.
             public override float PlayerHarvest(int phase) => phase >= 2 ? 0f : 0.45f;

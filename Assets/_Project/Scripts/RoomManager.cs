@@ -157,7 +157,7 @@ namespace TekCan
 
         /// <summary>Bölgenin taban boss havuzu (çarpan) — ana ve mini boss buradan.</summary>
         static float BölgeHavuzu(Tuning t, int bölge) => t.bossPoolMultiplier * Mathf.Pow(t.regionBossGrowth, bölge);
-        public static float AnaBossHavuzu(Tuning t, int bölge) => BölgeHavuzu(t, bölge) * t.mainBossPoolScale;
+        public static float AnaBossHavuzu(Tuning t, int bölge) => BölgeHavuzu(t, bölge) * t.mainBossPoolScale * BossKind.For(bölge).HavuzPayı;
         public static float MiniBossHavuzu(Tuning t, int bölge, int s)
             => BölgeHavuzu(t, bölge) * t.miniBossPoolShare * Mathf.Pow(t.subRegionPoolGrowth, s);
 

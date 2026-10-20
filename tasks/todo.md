@@ -12,9 +12,7 @@
 | 9 | 🎮 **Faz 31 testi** | **F6** yeni koşu, **N** 2. bölge · 3. ara bölgenin sunağında REHİN: sol tık yakala, tekrar sol tık fırlat, hemen **1** KONİ = SİLİP SÜPÜR · sağ tık TAKAS · dash + sol tık SÜRÜKLEME · **B** 2. boss → ÇEK (KADRO sunağından envantere al): fırlat, değince HACİZ'e geç = SENET HACZİ · 3. bölgenin 3. ara bölgesinin 4. odasında köşe → KARŞILIK: düşman vurmadan hemen önce sol tık (karşılar), sonra FAİZLİ = KARŞI İCRA | Gördüklerini yaz: KARŞILIK penceresi (0.23 sn) yetiyor mu, rehine taşıma hissi, çekin dönüşü |
 | 10 | 🎮 **Faz 32 testi** | **F6**, **N N**, **B** 3. boss → TAHVİL: sol tıkı BASILI TUT (VADE 1/2/3 yazar, saat iki kat akar), bırak · hemen **2** FAİZLİ = VADE FARKI · 4. bölgenin 3. sunağında MÜŞTEREK: bir düşmana vur, sonra başkasına → pembe çizgi = bağ; birine ne vurursan öbürü de yer · sağ tık ZİNCİRLEME · bağın üstünden dash = KOPARMA · **B** 4. boss → ARBİTRAJ: arkadan ×2.5, önden ×0.5 · sağ tık görünmezlik · düşmanın içinden dash + sol tık = TERS İŞLEM · 5. bölgenin 3. ara bölgesinin 4. odasında köşe → KİRA: kule kur, sağ tık TAHLİYE (kalan kirayı peşin ödersin) | Gördüklerini yaz: basılı tutmak sıkıcı mı, bağ okunuyor mu, arkaya geçmek zevkli mi, kule kirası adil mi |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
-| 11 | ⚖️ **SİMSAR süresi — denge kararı** (teşhis 2026-10-18, `…OtopilotMenu.SimsarTeshis`) | Beklenen güçte bot SİMSAR'ı **990–1130 sn** oyun zamanında kesiyor (KEFİL 340 sn). Havuz kuralı suçlu değil: faz 2 havuzu yalnızca azalıyor, vuruş başı hasar aynı. Süreyi uzatan işaretler: bot zamanın yalnızca %25–44'ünde vurabiliyor (işaret kaçışı faz 1'de %23, faz 2'de %36–48). Faz 2 hasat vermediği için bota **~2400 sn saate** mal oldu (9–10 F5); 4. bölgede doyma tavanı ~615 sn. 4. boss ~16–19 dk sürsün mü, faz 2'nin saat bedeli bu mu kalsın? | Karar yaz |
-| 12 | 🤖 **Bot düzeltmesi onayı** | İşaretten çıkarken boss'u menzilde tutan nokta: SİMSAR %11 kısa (faz 1 %20), ama faz 2'de %22 fazla darbe. Ölçüm aracının davranışını değiştirdiği için uygulanmadı; patch `Logs/Otopilot/2026-10-18_17-49/simsar-isaret-cikisi.patch`. **Enes (2026-10-18): şimdilik uygulama, önce #11** | #11'den sonra "uygula" / "uygulama" |
-| 13 | 🎮 **Faz 33 testi** | **F6**, **M** → sunak odası: solda kuşandığın silahın 3 yükseltmesi, renkli (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), bazen sağda ŞANS sunağı · **B** → boss: iç halka 3 yaygın/nadir, dış halka 3 epik/efsanevi — dış halkada combo açan yükseltme (adı combo'nun adı, ör. KONİ'de SÜRÜ). Al → "COMBO AÇILDI" → dene: KONİ'yle vur, hemen MÜŞTEREK'e geç, vur = herkes tek bağa | Gördüklerini yaz: renkler okunuyor mu, efsanevi "vay" dedirtiyor mu, yeni combo'lar hissediliyor mu · combo'ların "+"sı boss'un combo sunağında (eskilerin "+"sı alındıktan sonra) |
+| 13 | 🎮 *(isteğe bağlı)* **Faz 33 his testi** | Bot oynadı (P33 3/3, P33c 12/12 — aşağıda "BOSS SÜRELERİ" bölümü). Sana kalan yalnızca göz: **F6**, **M** → sunak renkleri okunuyor mu (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), **B** → efsanevi "vay" dedirtiyor mu | Gördüklerini yaz |
 
 ---
 
@@ -26,6 +24,8 @@
 - **SİMSAR faz 2 = havuz bitince** (2026-10-03) — KEFİL ve MURABAHACI gibi fullenip dönüyor.
 - **FAİZLİ İCRA eşiği = evet** (2026-10-03) — eşiğin üstündeyken İCRA öldürünce zaman vermez. Faz 20 ile yapılacak.
 - **Yükseltme gücü = A** (2026-10-19) — zayıf nadir/epik/efsanevileri güçlendir, aşırı güçlü yaygınları üst enderliğe taşı, fiyatlar aynı. Uygulandı (Faz 33 bölümü, "A — güç ayarı").
+- **Boss süreleri** (2026-10-20) — *"bossların uzun sürmesi okeydir ama her bir boss öncekinden daha uzun sürmeli"*. Bot ölçtü, EKSPER'in havuzu ×1.25 (aşağıda "BOSS SÜRELERİ").
+- **Bot düzeltmesi (işaretten menzilde çık) = uygula** (2026-10-20). Uygulandı.
 
 ---
 
@@ -225,6 +225,35 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 - [x] Uyuyan boss'un süre etiketi donuyordu → uykuda da güncelleniyor
 - [x] Otopilot K1 payı → "kapanıştan değil girişten yakın mı"
 - [x] Otopilot üst yazısı → sol üst
+
+---
+
+## ⏱️ BOSS SÜRELERİ + Faz 33 bot testi — **BİTTİ, commit'siz** (2026-10-20)
+
+Enes: *"testi bot ile yap"* · *"her bir boss öncekinden daha uzun sürmeli"* · *"bot düzeltmesini yap önce"*.
+
+- ✅ **Bot düzeltmesi** (#12) uygulandı: SİMSAR'ın işaretinden çıkarken boss'u menzilde tutan nokta.
+- ✅ **`…OtopilotMenu.BossTesti`** (yeni, ~2.5 dk): 5 ana boss, her biri yeni koşuda, beklenen güçle, saat bölgenin doyma tavanında. Oyun zamanında:
+
+  | boss | önce | sonra |
+  |---|---|---|
+  | 1 TAHSİLDAR | 3.8 dk | 3.8 dk |
+  | 2 EKSPER | 3.6 dk ⚠️ öncekinden kısa | **4.5 dk** (havuz ×1.25) |
+  | 3 KEFİL | 5.3 dk | 5.7 dk |
+  | 4 SİMSAR | 15.4 dk | 15.4 dk |
+  | 5 MURABAHACI | 40 dk'da bitmedi (sınır) | **39.9 dk** (sınır 60 dk) |
+
+  MURABAHACI ölmez değil: üç fazın her biri havuzu baştan dolduruyor (7972 sn), faz 2'de havuz geri sarıyor — faz 1 7.3. dk, faz 2 21.5. dk, faz 3 ~40. dk'da bitiyor.
+  İlk koşuda bot MURABAHACI'da 4 dk'da üç kez öldü: F5'in 300 sn'si 5. bölgede bir-iki vuruş (vuruş ~100–200 sn). Ölçüm kurulumu düzeltildi (saat = bölgenin doyma tavanı, MiniTesti gibi), oyun değil.
+- 🐞 **Bulunan hata — tek E iki alım:** her sunak E'yi kendisi dinliyordu. Faz 33'ün dış halkasının 270°'deki sunağı combo "+" sunağının **0.4 birim** yanına düştü; bot bir basışta SÜRÜ'yü ve TEMERRÜT+'yı birden aldı. Sunak odasında da mini sunaklar 2.4 birim arayla — ortada üçü birden menzildeydi. HUD ilk sunağı gösteriyordu, en yakını değil.
+  **Düzeltme:** menzilde yalnızca EN YAKIN sunak (`Altar.EnYakını`) — yazan = alınan; combo sunağı 0.45R → 0.75R. Kapı: Faz 33 "tek E = tek alım" (sunak odası + boss odası), iki bozmanın ikisi kırmızı. Eski P30-6 bu hatanın SAYESİNDE yeşildi (combo sunağına basınca yanındaki dış halka sunağı da alınıyordu).
+- 🤖 **Bot yolu:** boss'u kapının kuzeyinde bitiren bot sunağa yürürken açık çıkış kapısının üstünden geçip 2. bölgeye düşüyordu (P30-6 ara sıra kırmızı). `Git` artık kapıyı dolanıyor; botu kapının kuzeyine koyup denendi: düzeltmeyle ✅, düzeltmesiz ❌.
+- ✅ **Faz 33 testi botla** (#13): P33'e 3. sahne — boss'un dış halkasından combo AÇANI al → "COMBO AÇILDI" → combo gerçek tuşlarla. **P33 3/3 · P33c 12/12.**
+- **Son tur:** tüm kapılar ✅ (Faz 33: 87 kontrol) · P29 8/8 · P30 6/6 · P31 ✅ · P33 3/3 · P33c 12/12 · BossTesti ✅.
+  ⚠️ **P32 6/8 — iki kırmızı ESKİ** (2026-10-18 raporlarında da kırmızı): 32-5 SİMSAR P32'nin yolunda 30 dk'da ölmüyor
+  (oysa `SimsarTeshis`'in aynı yolunda 15.3 dk'da, `BossTesti`'nde 15.4 dk'da ölüyor → P32'nin önceki adımlarından kalan
+  bir bot durumu) · 32-7 bot keşif odasını temizleyince sonraki iki odaya geçti, köşeyi kaçırdı (muhtemelen son düşmanı
+  çıkış kapısının üstünde öldürdü — kapı altında açılınca hemen geçiriyor). Ayrı iş.
 
 ---
 

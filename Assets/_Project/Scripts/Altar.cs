@@ -86,12 +86,29 @@ namespace TekCan
 
             Vector3 to = _player.position - transform.position;
             to.y = 0f;
-            PlayerInRange = to.magnitude <= _t.altarUseRange;
+            // ⚠️ Menzildeki EN YAKIN sunak: tek E = tek alım, HUD'da yazan = alınan. Her sunak E'yi kendisi dinliyor;
+            // Faz 33'ün dış halkası combo "+" sunağının 0.4 birim yanına düştü, bir basış ikisini aldı (bot P33, 2026-10-20).
+            PlayerInRange = to.magnitude <= _t.altarUseRange && EnYakını(to.sqrMagnitude);
             if (Type == Kind.Weapon && Silah() != _boyananSilah) Paint();   // silah değişince sunak da değişir
 
             transform.Rotate(Vector3.up, 40f * Time.deltaTime, Space.World);
 
             if (PlayerInRange && !SoldOut && UsePressed()) Buy();
+        }
+
+        bool EnYakını(float benim)
+        {
+            bool önümde = true;                                   // eşitlikte All'da önce gelen kazansın
+            foreach (var a in All)
+            {
+                if (a == this) { önümde = false; continue; }
+                if (a == null) continue;
+                Vector3 o = _player.position - a.transform.position;
+                o.y = 0f;
+                float onun = o.sqrMagnitude;
+                if (onun < benim || (onun == benim && önümde)) return false;
+            }
+            return true;
         }
 
         static bool UsePressed()

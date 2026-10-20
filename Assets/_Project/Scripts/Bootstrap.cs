@@ -356,8 +356,9 @@ namespace TekCan
         }
 
         /// <summary>Combo'nun "+" hâli (Faz 30) — silah sunağının önünde.</summary>
+        /// ⚠️ 0.45R'deydi: Faz 33'ün dış halkasının 270°'deki sunağı (0.42R) üstüne düştü — iki sunak 0.4 birim arayla.
         public static void SpawnComboAltar(Tuning t, Transform player, Transform parent, ComboTür c)
-            => SpawnAltar(t, new Vector3(0f, ArenaCenter.y, -t.arenaRadius * 0.45f), player, Altar.Kind.ComboPlus, parent, (int)c);
+            => SpawnAltar(t, new Vector3(0f, ArenaCenter.y, -t.arenaRadius * 0.75f), player, Altar.Kind.ComboPlus, parent, (int)c);
 
         /// <summary>KEŞİF (Faz 30): arenanın kenarında soluk parlayan köşe.</summary>
         public static GizliSilah SpawnGizliSilah(Tuning t, Transform player, Transform parent, int silah)

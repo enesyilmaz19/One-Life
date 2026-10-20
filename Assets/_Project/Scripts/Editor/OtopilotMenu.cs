@@ -65,6 +65,10 @@ namespace TekCan.EditorTools
         /// <summary>Teşhis (2026-10-18): P32'nin yolunda 3. boss (kontrol) ve SİMSAR, 10 sn'de bir `[BOSS-NABIZ]`. ≤ 50 dk.</summary>
         public static void SimsarTeshis() => Başlat(izle: false, senaryo: "simsar");
 
+        /// <summary>Enes (2026-10-20): "her bir boss öncekinden daha uzun sürmeli" — 5 ana boss, her biri yeni
+        /// koşuda beklenen güçle; süre, faz 2 anı, darbe. Hızlandırılmış birkaç dk.</summary>
+        public static void BossTesti() => Başlat(izle: false, senaryo: "bosstest");
+
         /// <summary>Faz 33 fiyat ölçümü (Enes 2026-10-18): her yükseltme aynı iki odada var/yok, saat = doyma
         /// tavanı → değer (sn/oda) ve geri ödeme (oda); rakip: ilk hasat/hasar/dash sunağı. Hızlandırılmış ~2.5 dk.</summary>
         public static void FiyatOlcum() => Başlat(izle: false, senaryo: "fiyat");

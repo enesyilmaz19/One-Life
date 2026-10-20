@@ -127,6 +127,30 @@ namespace TekCan.EditorTools
         static System.Collections.Generic.List<Altar> Sunaklar(SunakGrubu g) =>
             Altar.All.Where(a => a != null && a.Type == Altar.Kind.Weapon && a.Grup == g).ToList();
 
+        /// <summary>
+        /// Tek E = tek alım (2026-10-20): sunaklar E'yi kendileri dinliyor. Dış halkanın 270°'si combo "+" sunağının
+        /// 0.4 birim yanına düştü, bot bir basışta ikisini aldı. Her sunak çiftinin ortasında menzilde TEK sunak
+        /// olmalı, hiçbir iki sunak üst üste (2 birimden yakın) olmamalı.
+        /// </summary>
+        static int TekAlım(ref int total, string oda)
+        {
+            var hepsi = Altar.All.Where(a => a != null).ToList();
+            var güncelle = typeof(Altar).GetMethod("Update", Gizli);
+            int enKötü = 0; float enYakın = float.MaxValue; string çift = "";
+            for (int i = 0; i < hepsi.Count; i++)
+                for (int j = i + 1; j < hepsi.Count; j++)
+                {
+                    Vector3 a = hepsi[i].transform.position, b = hepsi[j].transform.position;
+                    float d = new Vector2(a.x - b.x, a.z - b.z).magnitude;
+                    if (d < enYakın) { enYakın = d; çift = $"{hepsi[i].Type}·{hepsi[j].Type}"; }
+                    _pGo.transform.position = new Vector3((a.x + b.x) * 0.5f, Bootstrap.ArenaCenter.y, (a.z + b.z) * 0.5f);
+                    foreach (var s in hepsi) güncelle.Invoke(s, null);
+                    enKötü = Mathf.Max(enKötü, hepsi.Count(s => s.PlayerInRange));
+                }
+            return Check(ref total, $"⚠️⚠️ {oda}: tek E = tek alım — iki sunağın ortasında menzilde en çok {enKötü} sunak; en yakın iki sunak {enYakın:0.0} birim ({çift}, ≥ 2)",
+                         hepsi.Count >= 2 && enKötü <= 1 && enYakın >= 2f, enKötü);
+        }
+
         /// <summary>Aynı kurguyu yükseltmesiz ve yükseltmeli koşturur.</summary>
         static (float önce, float sonra) İkiKez(SilahYükseltme y, System.Func<float> ölç, float saat = 300f)
         {
@@ -204,6 +228,8 @@ namespace TekCan.EditorTools
             oda.Init(_t, _pGo.transform, null, startRoom: RoomManager.SunakOdası(_t, 0), startRegion: 0);
             Ortaya();
             W(Kadro.KONİ);
+            failed += TekAlım(ref total, "sunak odası");
+            Ortaya();
             var m = Sunaklar(SunakGrubu.Mini); var ş = Sunaklar(SunakGrubu.Şans);
             var konide = m[0].Yükseltme();
             W(Kadro.FAİZLİ); var faizlide = m[0].Yükseltme();
@@ -249,6 +275,9 @@ namespace TekCan.EditorTools
             bool üstEnder = Sunaklar(SunakGrubu.BossÜst).All(a => !a.Yükseltme().HasValue || SilahSunağı.Ender[(int)a.Yükseltme().Value] >= Enderlik.Epik);
             failed += Check(ref total, $"⚠️ boss odası: {alt} yaygın/nadir + {üst} epik/efsanevi sunak (üst sıra yalnız epik/efsanevi: {(üstEnder ? "evet" : "HAYIR")})",
                             alt == 3 && üst == 3 && üstEnder, alt + üst);
+            if (!Altar.All.Any(a => a != null && a.Type == Altar.Kind.ComboPlus))      // satılık "+" yoksa da yerini dene
+                Bootstrap.SpawnComboAltar(_t, _pGo.transform, bossGo.transform, (ComboTür)0);
+            failed += TekAlım(ref total, "boss odası");
             Object.DestroyImmediate(bossGo); RoomManager.Reset();
 
             // Fiyat: enderlikle, alım sayısıyla değil; şans ×1.5

@@ -242,6 +242,11 @@ Doğruydu: TAHSİLDAR **tam** aura emiyordu (beşinin en yükseği) ve bedel
 Oyuncunun doğrudan hissettiği iki kadran — **emme** ve **ortalama bedel** —
 artık sırayla artmak zorunda ve kapı bunu ölçüyor.
 
+**Süre de sırayla uzar** (Enes, 2026-10-20): *"bossların uzun sürmesi okeydir ama her bir boss öncekinden
+daha uzun sürmeli."* Ölçen bot `BossTesti` (beklenen güç, saat bölgenin doyma tavanında): TAHSİLDAR 3.8 ·
+EKSPER 4.5 · KEFİL 5.7 · SİMSAR 15.4 · MURABAHACI 39.9 dk (oyun zamanı). EKSPER TAHSİLDAR'la aynı
+sürüyordu; boss başına havuz payı (`BossKind.HavuzPayı`) onun havuzunu ×1.25 yaptı.
+
 ### Boss: yere vuruş ✅ (2026-08-24)
 
 Enes: *"boss baya kolay, dümdüz durup saldırarak kesiyorum."*

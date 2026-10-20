@@ -626,3 +626,13 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   kapı ikisini de yeşil gösteriyordu, haklıydı. **Kural:** bot "an"ı olayın kendi sayacından beklesin
   (`AdımSayısı`, çekin `İsabet`'i), hedefi silahın sorusuna göre seçsin; bot kırmızısında önce denemeye
   ölçüm koy (adım yazıldı mı, mesafe), sonra koda bak.
+- **Ortak tuşu dinleyen her nesne çakışabilir — tek tuş tek nesne (2026-10-20):** her sunak E'yi kendisi
+  dinliyordu; Faz 33'ün yeni dış halkası combo sunağının 0.4 birim yanına düştü, bir basış iki alım yaptı. Kapı
+  "6 sunak var mı" diye sordu, yeşildi; "bir basışta kaç şey alınır" diye soran yoktu. Daha kötüsü: eski bir bot
+  kontrolü (P30-6) bu hata SAYESİNDE yeşildi. **Kural:** paylaşılan tuşta yalnızca en yakın/odaktaki nesne
+  tepki verir, HUD da onu gösterir; yerleşim ekleyen her faz "tuşa basınca kaç şey oldu" kapısı ister. Bot
+  alım kontrolü, alınması GEREKMEYEN sayaçların da değişmediğini sorar.
+- **Ölçüm kurulumu bölgeyle ölçeklenmeli (2026-10-20):** boss süresi testinde F5'in sabit 300 sn'si 5. bölgede
+  bir-iki vuruştu; bot ölçerken öldü, "MURABAHACI 4 dk" gibi saçma bir sayı çıktı. MiniTesti bunu zaten
+  biliyordu (saat = bölgenin doyma tavanı). **Kural:** sabit bir test sayısı (dolum, eşik, süre sınırı) bir
+  bölgede çalıştı diye hepsinde çalışmaz — bot ölçümü önce "bot öldü mü / sınıra mı takıldı" diye kendini denetlesin.
