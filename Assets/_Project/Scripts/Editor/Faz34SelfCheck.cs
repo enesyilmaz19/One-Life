@@ -73,8 +73,6 @@ namespace TekCan.EditorTools
                         .Select(m => m.Name).ToList();
             failed += Check(ref total, $"⚠️ her adamın en az bir YAKIN ve bir UZAK saldırısı var{(eksik.Count > 0 ? " — eksik: " + string.Join(", ", eksik) : "")}",
                             eksik.Count == 0, eksik.Count);
-            var geçici = MiniBossKind.For(2, 0, S);                             // Faz 35'ten beri 2. bölge de özgün
-            failed += Check(ref total, $"öbür bölgeler geçici dilimde kalıyor ({geçici.Name})", geçici.Özgün == null && geçici.Name.Contains("·"), 0);
             return failed;
         }
 
@@ -88,8 +86,9 @@ namespace TekCan.EditorTools
             var (r1, c1, p1, haciz) = Kur(t, M(0));
             float s0 = c1.Seconds; haciz.ApplyAura(1f);
             float emdi = s0 - c1.Seconds, tam = BossKind.For(0).AuraDrain(t, 1);
-            failed += Check(ref total, $"⚠️ HACİZCİ yanındayken emer: 1 sn'de {emdi:0.00} sn = TAHSİLDAR faz 1 aurası {tam:0.00} × 1.6 · ailenin en çok emeni",
-                            emdi > 0f && Mathf.Abs(emdi - tam * 1.6f) < 0.001f && Enumerable.Range(1, S - 1).All(i => M(i).AuraDrain(t, 1) < emdi), emdi);
+            failed += Check(ref total, $"⚠️ HACİZCİ yanındayken emer: 1 sn'de {emdi:0.00} sn = TAHSİLDAR faz 1 aurası {tam:0.00} × 1.6 (ailenin ×1.2'sinden güçlü) · sonrakiler ara bölge başına ×{t.subRegionPoolGrowth:0.00} büyüyor",
+                            emdi > 0f && Mathf.Abs(emdi - tam * 1.6f) < 0.001f
+                            && Enumerable.Range(1, S - 1).All(i => MiniBossKind.Adamlar[0][i].Aura <= 0f || Mathf.Abs(M(i).AuraDrain(t, 1) - tam * MiniBossKind.Adamlar[0][i].Aura * Mathf.Pow(t.subRegionPoolGrowth, i)) < 0.001f), emdi);
             Temizle(r1);
 
             // SENETÇİ: İNEN isabeti havuzunu %4 doldurur; ıskalayınca dolmaz
@@ -142,8 +141,8 @@ namespace TekCan.EditorTools
 
             // SAĞ KOL: yarım aura + yarıda öfke ×1.25 — patronun provası
             var sağ = M(S - 1);
-            failed += Check(ref total, $"SAĞ KOL ikisinden biraz: aura {sağ.AuraDrain(t, 1):0.00} (ailenin ×1.2'si) · öfke ×{sağ.ÖfkeHızı:0.00}",
-                            Mathf.Abs(sağ.AuraDrain(t, 1) - BossKind.For(0).AuraDrain(t, 1) * 1.2f) < 0.001f && Mathf.Abs(sağ.ÖfkeHızı - 1.25f) < 0.001f, sağ.ÖfkeHızı);
+            failed += Check(ref total, $"SAĞ KOL ikisinden biraz: aura {sağ.AuraDrain(t, 1):0.00} (ailenin ×1.2'si, 5. ara bölgede büyümüş) · öfke ×{sağ.ÖfkeHızı:0.00}",
+                            Mathf.Abs(sağ.AuraDrain(t, 1) - BossKind.For(0).AuraDrain(t, 1) * 1.2f * Mathf.Pow(t.subRegionPoolGrowth, S - 1)) < 0.001f && Mathf.Abs(sağ.ÖfkeHızı - 1.25f) < 0.001f, sağ.ÖfkeHızı);
             return failed;
         }
 

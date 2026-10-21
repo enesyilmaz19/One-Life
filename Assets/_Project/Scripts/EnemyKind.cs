@@ -91,6 +91,18 @@ namespace TekCan
         public virtual int TaksitSayısı => 0;
         public virtual float TaksitPayı => 0f;
 
+        // ── Faz 36 kancaları ─────────────────────────────────────────────────
+
+        /// <summary>&gt;0 ise bu menzilde oyuncuya yapışır — SÜLÜK. Yapışıkken saniyede `YapışıkEmme` emer; dash `KopmaSüresi` koparır.</summary>
+        public virtual float YapışmaMenzili => 0f;
+        public virtual float YapışıkEmme => 0f;
+        public virtual float KopmaSüresi => 0f;
+
+        /// <summary>&gt;0 ise yaşadıkça hasadı artar (saniyede bu kadar, en çok `FaizTavanı`) — MEVDUAT.</summary>
+        public virtual float FaizHızı => 0f;
+        public virtual float FaizTavanı => 1f;
+        public float Faiz(float yaş) => FaizHızı > 0f ? Mathf.Min(FaizTavanı, 1f + FaizHızı * yaş) : 1f;
+
         public static readonly EnemyKind Basic = new BasicKind();
         public static readonly EnemyKind Leak = new LeakKind();
         public static readonly EnemyKind Vault = new VaultKind();
@@ -104,6 +116,8 @@ namespace TekCan
         public static readonly EnemyKind Installment = new InstallmentKind();
         /// <summary>TAKSİT'in doğurduğu küçük taksit — odalar bunu seçmez (`All`'da değil), bölünmez.</summary>
         public static readonly EnemyKind InstallmentPart = new InstallmentPartKind();
+        public static readonly EnemyKind Leech = new LeechKind();
+        public static readonly EnemyKind Deposit = new DepositKind();
 
         /// <summary>
         /// Oda kompozisyonu bu listeden seçiyor. ⚠️ SIRA = AÇILIŞ SIRASI:
@@ -111,9 +125,10 @@ namespace TekCan
         /// yani buraya eklenen yeni tür GEÇ bölgelere düşer. Öğretim sırası budur.
         /// ⚠️ Faz 34: KALKANLI ve MÜFLİS 1. bölgenin (SIZINTI'dan sonra) — bölge tavanları da 2 arttı.
         /// ⚠️ Faz 35: VADELİ ve TAKSİT 2. bölgenin (KASA'dan sonra) — tavanlar 4 · 7 · 8 · 10 · 11.
+        /// ⚠️ Faz 36: SÜLÜK ve MEVDUAT 3. bölgenin (KAÇAK'tan sonra) — tavanlar 4 · 7 · 10 · 12 · 13.
         /// </summary>
         public static readonly EnemyKind[] All =
-            { Basic, Leak, Shield, Bankrupt, Vault, Term, Installment, Runner, Insurer, Bailiff, Lapse };
+            { Basic, Leak, Shield, Bankrupt, Vault, Term, Installment, Runner, Leech, Deposit, Insurer, Bailiff, Lapse };
     }
 
     /// <summary>Temel düşman — dengenin sıfır noktası, diğerleri buna göre okunuyor.</summary>
@@ -276,6 +291,37 @@ namespace TekCan
         public override Color FullColor => new Color(0.85f, 0.55f, 0.7f);
         public override int TaksitSayısı => 2;
         public override float TaksitPayı => 0.35f;
+    }
+
+    /// <summary>
+    /// SÜLÜK — değince yapışır, peşinden gelir ve saniyede 1 sn emer; yapışıkken saldırmaz.
+    ///
+    /// Değiştirdiği karar: DASH. Dash bugüne kadar yalnızca kaçmaktı; burada bir harcama: dash'le silkelen (2 sn
+    /// yapışamaz) ya da dash'ini sakla, yapışıkken vurup sök. Hızlı ve zayıf — yakalaması değil, ondan kurtulması iş.
+    /// </summary>
+    public sealed class LeechKind : EnemyKind
+    {
+        public override string Name => "SÜLÜK";
+        public override Color FullColor => new Color(0.5f, 0.15f, 0.25f);
+        public override float YapışmaMenzili => 1f;
+        public override float YapışıkEmme => 1f;
+        public override float KopmaSüresi => 2f;
+        public override float PoolMultiplier => 0.7f;
+        public override float SpeedMultiplier => 1.25f;
+    }
+
+    /// <summary>
+    /// MEVDUAT — yaşadıkça hasadı artar: saniyede +%10, en çok ×2.5 (altın rengine döner).
+    ///
+    /// Değiştirdiği karar: BEKLEMEK. ZAMANAŞIMI'nın tersi: o beklemeyi cezalandırıyor, bu ödüllendiriyor — ama
+    /// beklerken sana vuruyor. KITLIK'ta (hasat az) sabrın getirisi; açgözlülüğün bedeli darbe.
+    /// </summary>
+    public sealed class DepositKind : EnemyKind
+    {
+        public override string Name => "MEVDUAT";
+        public override Color FullColor => new Color(0.55f, 0.6f, 0.35f);
+        public override float FaizHızı => 0.1f;
+        public override float FaizTavanı => 2.5f;
     }
 
     /// <summary>TAKSİT'in küçük taksiti — hızlı, bölünmez.</summary>

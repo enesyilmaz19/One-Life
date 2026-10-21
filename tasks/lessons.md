@@ -673,3 +673,7 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
 - **"Son durum" alanı ilk değerle yalan söyler (Faz 35):** VADELİ'nin `_vadeAçıktı = true` başlangıcı, kapalı doğan düşmanda ilk büyük
   adımda değişimi kaçırdı. Oyunda her kare küçük adım attığı için görünmedi; kapının tek 3 sn'lik adımı yakaladı. **Kural:** durum
   değişimini adımdan önce/sonra karşılaştırarak bul, ilk değeri tahmin edilen bir alan tutma.
+- **İki şey farklı hızla büyüyorsa dengesi kayar (Faz 36):** mini'nin hasadı havuzuyla (ara bölge başına ×1.12), aurası zamanla
+  büyüyordu; dövüşler hep ~2 dk sürdüğü için her bölgenin son adamları bota saat kazandırdı. Tek tek yamamak (ŞAHİT'e aura) üç bölgede
+  üç yama olurdu; kökü — aura da havuzla büyüsün — bir satır. **Kural:** bir kazanç ve bir bedel farklı ölçeklerden (havuz ↔ süre)
+  türüyorsa ikisini aynı büyümeye bağla, sonra bütün sırayı ölç (yalnız kırmızı olanı değil).

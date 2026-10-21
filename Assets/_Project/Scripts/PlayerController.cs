@@ -845,6 +845,8 @@ namespace TekCan
         public int SwingsSpawned { get; private set; }
 
         public bool Dashing => _dashTimer > 0f;
+        /// <summary>Dash'e kalan bekleme — otopilot SÜLÜK'ten silkelenmeden önce bakıyor (Faz 36).</summary>
+        public float DashCooldownLeft => Mathf.Max(0f, _dashCd);
         public bool Attacking => _attackTimer > 0f;
         public bool Invulnerable => _iFrames > 0f;
 
@@ -1310,6 +1312,9 @@ namespace TekCan
         /// <summary>ARBİTRAJ · SESSİZ ADIM (Faz 33b): görünmezken ×1.3 · KOLCU'nun kelepçesi (Faz 34): ×0.6.</summary>
         public float YürüyüşÇarpanı => (Görünmez && Y(SilahYükseltme.SessizAdım) ? 1.3f : 1f) * (Kelepçeli ? 0.6f : 1f);
 
+        /// <summary>ŞAHİT (Faz 36): ödenen dash bedeli — otopilot imzanın dövüşte işlediğini buradan sayıyor.</summary>
+        public float ÖdenenDashBedeli { get; private set; }
+
         float _kelepçeBitiş = -1f;
         /// <summary>KOLCU (Faz 34): isabeti yürüyüşü kısa süre yavaşlatır. Dash serbest — çıkış yolu o.</summary>
         public void Kelepçele(float süre) => _kelepçeBitiş = Mathf.Max(_kelepçeBitiş, Time.time + süre);
@@ -1334,6 +1339,8 @@ namespace TekCan
             _dashCd = (Clock.Instance != null ? Clock.Instance.DashCooldown : _t.dashCooldown)
                     * (Y(SilahYükseltme.SonKuyruk) && Clock.Instance != null && Clock.Instance.Seconds < 30f ? 0.5f : 1f);   // SON KUYRUK
             _iFrames = _t.iFrameDuration;
+            float şahit = BossKind.ActiveDashCost();                         // ŞAHİT (Faz 36): dash'ini görür
+            if (şahit > 0f && Clock.Instance != null) { Clock.Instance.Spend(şahit); ÖdenenDashBedeli += şahit; }
             Sfx.Dash();
             _attackTimer = 0f;              // dash saldırıyı keser
             _dashBaşı = transform.position;                                        // KOPARMA, TERS İŞLEM

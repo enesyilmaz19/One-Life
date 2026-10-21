@@ -15,6 +15,7 @@
 | 13 | 🎮 *(isteğe bağlı)* **Faz 33 his testi** | Bot oynadı (P33 3/3, P33c 12/12 — aşağıda "BOSS SÜRELERİ" bölümü). Sana kalan yalnızca göz: **F6**, **M** → sunak renkleri okunuyor mu (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), **B** → efsanevi "vay" dedirtiyor mu | Gördüklerini yaz |
 | 15 | 🎮 *(isteğe bağlı)* **Faz 34 his testi** | Bot oynadı (P34 ✅, 1. bölge 44.6 dk — aşağıda FAZ 34). Sana kalan his: **F6** → 3. odadan KALKANLI (önden vurunca az eder, arkasına dolan) · 4. odadan MÜFLİS (öldüğü yerde 1 sn sonra patlar) · 6.–7. oda KISKAÇ / ÇİFT SIRA · **M** ile TAHSİLDAR'ın 5 adamı: HACİZCİ, SENETÇİ, KABADAYI, KOLCU, SAĞ KOL — adları ve imzaları ekranda | Gördüklerini yaz: imzalar hissediliyor mu, KALKANLI'nın arkasına geçmek zevkli mi, MÜFLİS patlaması okunuyor mu |
 | 17 | 🎮 *(isteğe bağlı)* **Faz 35 his testi** | Bot oynadı (P35 ✅ — aşağıda FAZ 35). **F6**, **N** (2. bölge) → 4. odadan VADELİ (koyu = kapalı, vurma; açılınca vur) · 5. odadan TAKSİT (ölünce iki küçük taksit) · KORİDOR, OK · **M** ile EKSPER'in 5 adamı: MUHAMMİN, MUHASİP, DEFTERDAR, BİLİRKİŞİ, BAŞ EKSPER | Gördüklerini yaz: VADELİ'nin açılışı okunuyor mu, taksitler can sıkıyor mu, imzalar hissediliyor mu |
+| 18 | 🎮 *(isteğe bağlı)* **Faz 36 his testi** | Bot oynadı (P36 ✅ — aşağıda FAZ 36). **F6**, **N N** (3. bölge) → 4. odadan SÜLÜK (değince yapışır, emer — dash'le silkelen ya da vur) · 5. odadan MEVDUAT (bekledikçe altına döner, daha çok verir) · İÇ İÇE, SÜTUN · **M** ile KEFİL'in 5 adamı: KEFALETÇİ, GARANTÖR, ORTAK BORÇLU, ŞAHİT, BAŞ KEFİL | Gördüklerini yaz: SÜLÜK sinir bozucu mu eğlenceli mi, MEVDUAT'ı beklemeye değiyor mu, teminat (vuruşun yutulması) okunuyor mu |
 
 ---
 
@@ -230,6 +231,42 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 - [x] Uyuyan boss'un süre etiketi donuyordu → uykuda da güncelleniyor
 - [x] Otopilot K1 payı → "kapanıştan değil girişten yakın mı"
 - [x] Otopilot üst yazısı → sol üst
+
+---
+
+## 🤝 FAZ 36 — Bölge 3 (KITLIK) içeriği: KEFİL'in adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'siz, Enes'in testini bekliyor** (2026-10-21)
+
+Enes: *"commitle ve sıradaki faza geç"*. Faz 34–35'in deseni ve kuralları (tek faz, çağırma yok, saldırılar KEFİL'den, yakın + uzak,
+sonuncuda harita, süreler yakın, **bot hiçbir mini'den saat kazanarak çıkmaz**). KABADAYI dersi: imza botun oynayışında da işlemeli
+(dibinde duran oyuncuya) — "uzaklaşınca çeker" gibi bir imza seçilmedi. Benim kararlarım, adlar çalışma adı.
+
+**36a — KEFİL'in 5 adamı** — KEFİL: *borcu garantiye aldı* · imza şekilleri SİMİT (içi güvenli: yaklaş) + ÇEKİM. Ailenin huyu: KEFİL'in faz 1 aurası.
+
+| ara bölge | adam | imza | saldırılar (KEFİL'den) | ders |
+|---|---|---|---|---|
+| 1 | KEFALETÇİ | kefalet: havuzu %30'un altına inince aldığı hasar ×0.5 | KEFALET · TEMİNAT · SENET | simit: yaklaş · bitirmek sabır ister |
+| 2 | GARANTÖR | teminat: 12 sn'de bir 3 vuruşu hasarsız yutar | ORTAK HESAP · İCAZET · ZİNCİRLEME SORUMLULUK | çekim · önce teminatı kır |
+| 3 | ORTAK BORÇLU | dibindeyken (3 birim) iki kat emer | REHİN · KEFALET · SENET | simit seni içeri çağırır, o seni orada emer: gir, vur, çık |
+| 4 | ŞAHİT | dash'ini görür: her dash 1.5 sn | TEMİNAT+ · İCAZET+ · SENET+ | simitten dash'le değil yürüyerek gir |
+| 5 | BAŞ KEFİL | kefalet + teminat (15 sn'de 2) | MÜTESELSİL · REHİN+ · ZİNCİRLEME SORUMLULUK+ · TOPLU TEMİNAT | patronun provası |
+
+**36b — 2 yeni düşman türü** (KAÇAK'tan sonra; tavanlar 4 · 7 · 10 · 12 · 13)
+- **SÜLÜK**: değince yapışır, peşinden gelir ve saniyede 1 sn emer (yapışıkken saldırmaz) — **dash'le silkelen ya da vurup sök** (dash'in soru olduğu ilk tür).
+- **MEVDUAT**: yaşadıkça hasadı artar (saniyede +%10, en çok ×2.5) — **bekle mi, topla mı**: KITLIK'ta (hasat az) sabrın getirisi; ZAMANAŞIMI'nın tersi.
+
+**36c — 2 yeni diziliş:** **İÇ İÇE** (iç halka + dış halka) · **SÜTUN** (yol boyu tek sıra — teker teker gelirler).
+
+**Adımlar**
+- [x] A. Adamlar (`MiniBossKind.Adamlar[2]`) + kancalar (`Kefalet`, `TeminatAralığı/Sayısı`, `YakınAura`, `DashBedeli` → `BossKind.ActiveDashCost`)
+- [x] B. SÜLÜK (`Enemy.YapışkanAdım`, dash silkeler) · MEVDUAT (`EnemyKind.Faiz`, altına döner) · tavanlar 4/7/10/12/13 · bot yapışınca dash'le silkeleniyor
+- [x] C. İÇ İÇE · SÜTUN
+- [x] D. `Faz36SelfCheck` **12 kontrol**, 17 bozmanın 17'si kırmızı · Faz 13'e yapışır/faiz · "sonrası geçici" kontrolü yalnızca en son kapıda
+- [x] E. Bot `Playtest36` ✅ — 5 adam: 2.0 · 2.2 · 1.9 · 2.1 · 3.4 dk, saat −14 · −28 · −124 · −5 · −234 · 3. bölgenin dövüş odaları: SÜLÜK 24 (5 kez yapıştı, 5 kez silkelendi), MEVDUAT 19 (en olgun ×1.92), İÇ İÇE ve SÜTUN geliyor
+
+**Botun bulduğu (düzeldi):** ŞAHİT bota saat kazandırıyordu (+40). Kök: mini havuzu ara bölge başına ×1.12 büyüyor, hasat havuzla
+büyüyor, aura zamanla — dövüşler hep ~2 dk, yani her bölgenin son adamları kâra geçiyordu (KOLCU −5, GARANTÖR −12, ŞAHİT +40).
+Özgün adamın aurası artık havuzu gibi büyüyor (`subRegionPoolGrowth`^ara bölge) — üç bölgenin 15 adamının 15'i bota mal oluyor,
+"ilerledikçe zorlaşır" kendiliğinden.
 
 ---
 

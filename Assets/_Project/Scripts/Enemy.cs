@@ -216,6 +216,54 @@ namespace TekCan
                          * (Fleeing ? _t.runnerFleeSpeedMultiplier : 1f)
                          * (_yavaşKalan > 0f ? _yavaşÇarpan : 1f);                 // HACİZ · İHTAR (Faz 33)
         float _dövüşSüresi;
+        int _teminat; float _teminatSayacı;
+        static readonly Color TeminatRengi = new Color(0.45f, 0.75f, 0.85f, 0.7f);
+        /// <summary>GARANTÖR (Faz 36): kalan teminat ve yutulan vuruş — otopilot ve kapı buradan sayıyor.</summary>
+        public int Teminat => _teminat;
+        public int TeminatYuttu { get; private set; }
+        /// <summary>KEFALETÇİ (Faz 36): havuzu %30'un altında, hasarı kısıyor.</summary>
+        public bool Kefalette => Boss != null && Boss.Kefalet < 1f && _startingPool > 0f && TimeLeft <= _startingPool * 0.3f;
+        /// <summary>ORTAK BORÇLU (Faz 36): oyuncu 3 birim içinde, aura katlanıyor.</summary>
+        public bool YakınAurada => Boss != null && Boss.YakınAura != 1f && _player != null && FlatDistanceToPlayer() <= 3f;
+
+        // SÜLÜK (Faz 36)
+        bool _yapışık; float _kopukKalan; Vector3 _yapışmaFarkı;
+        public bool Yapışık => _yapışık;
+        public int Yapıştı { get; private set; }
+        public int Silkelendi { get; private set; }
+        /// <summary>Yaşadığı süre — MEVDUAT'ın faizi bundan (otopilot da okuyor).</summary>
+        public float Yaş => _aliveTime;
+
+        /// <summary>
+        /// SÜLÜK (Faz 36): değince yapışır, peşinden gelir, saniyede `YapışıkEmme` emer ve saldırmaz. Oyuncunun dash'i
+        /// (dokunulmazlığı) silkeler: kopar, `KopmaSüresi` boyunca yeniden yapışmaz. Dönen: yapışık mı (durum makinesi atlanır).
+        /// </summary>
+        bool YapışkanAdım(float dt)
+        {
+            if (Kind.YapışmaMenzili <= 0f || _player == null || Hollow) return false;
+            _kopukKalan -= dt;
+            var pc = _player.GetComponent<PlayerController>();
+            if (_yapışık)
+            {
+                if (pc != null && pc.Invulnerable)
+                {
+                    _yapışık = false; _kopukKalan = Kind.KopmaSüresi; Silkelendi++;
+                    Push(transform.position - _player.position, 8f);
+                    Paint();
+                    return false;
+                }
+                transform.position = new Vector3(_player.position.x, transform.position.y, _player.position.z) + _yapışmaFarkı;
+                var c = Clock.Instance;
+                if (c != null) c.Spend(Kind.YapışıkEmme * dt);
+                return true;
+            }
+            if (_kopukKalan > 0f || FlatDistanceToPlayer() > Kind.YapışmaMenzili) return false;
+            _yapışık = true; Yapıştı++;
+            Vector3 d = transform.position - _player.position; d.y = 0f;
+            _yapışmaFarkı = (d.sqrMagnitude > 0.01f ? d.normalized : Vector3.back) * 0.7f;
+            Paint();
+            return true;
+        }
         /// <summary>MUHASİP (Faz 35): oyuncunun vuruşunun kaybettiği değer — her 10 sn'de `Amortisman`, en çok %50.</summary>
         public float DeğerKaybı => Boss != null && Boss.Amortisman > 0f ? Mathf.Min(0.5f, Boss.Amortisman * Mathf.Floor(_dövüşSüresi / 10f)) : 0f;
 
@@ -511,6 +559,7 @@ namespace TekCan
             // ⚠️ Savrulma DURUMDAN BAĞIMSIZ: hazırlıktayken de vurulunca savrulmalı,
             // yoksa "ağır darbe" yalnızca kovalarken görünür ve tesadüfi hissedilir.
             TickPush(dt);
+            if (YapışkanAdım(dt)) return;                                  // SÜLÜK yapışıkken saldırmaz, peşinden gelir
 
             switch (_state)
             {
@@ -1157,6 +1206,16 @@ namespace TekCan
             // sessizce anlamsızlaşırdı.
             if (Dormant) return;
 
+            // TEMİNAT (GARANTÖR, Faz 36): teminat varken vuruş hasarsız yutulur — önce teminatı kır.
+            if (_teminat > 0)
+            {
+                _teminat--; TeminatYuttu++;
+                _flashTimer = _t.hitFlashDuration;
+                Arc.Spawn(transform.position, Quaternion.identity, Radius * 1.8f, 360f, TeminatRengi, 0.18f, scaleFrom: 0.8f, scaleTo: 1.15f);
+                Paint();
+                return;
+            }
+
             // MÜŞTEREK (Faz 32): bağlıysa öbürlerine de — her kaynaktan; yayılan bir daha yayılmaz.
             if (Bağ != null) Bağ.Dağıt(this, damage, harvestMult);
 
@@ -1177,6 +1236,7 @@ namespace TekCan
             // yerinden sayılır); kaynak gerekirse TakeDamage'e kaynak noktası eklenir.
             if (Kind.ÖndenHasar < 1f && _player != null && Önünde(_player.position)) damage *= Kind.ÖndenHasar;
             damage *= 1f - DeğerKaybı;                                     // MUHASİP (Faz 35): dövüş uzadıkça vuruşun değer kaybeder
+            if (Kefalette) damage *= Boss.Kefalet;                         // KEFALETÇİ (Faz 36): son çeyrekte kendini garantiler
             if (!VadeAçık) damage *= Kind.KapalıHasar;                     // VADELİ (Faz 35): vadesi gelmeden ödemez
             float drained = Mathf.Min(damage, TimeLeft);
             TimeLeft -= drained;
@@ -1198,6 +1258,7 @@ namespace TekCan
                              * Region.Harvest                      // KITLIK bölgesi kuralı
                              * BossKind.ActiveHarvestMultiplier()  // EKSPER'in suçu
                              * (clock.HasatKilitli ? 0f : 1f)      // DEFTERDAR: deftere yazıldın (Faz 35)
+                             * Kind.Faiz(_aliveTime)               // MEVDUAT: yaşadıkça değerlenir (Faz 36)
                              * InsuredHarvest()                    // SİGORTA koruması
                              * (IsBoss ? _t.bossHarvestMultiplier : 1f)
                              * clock.HasatDoyması;                 // DOYMA: saat büyüdükçe hasat azalır
@@ -1258,7 +1319,7 @@ namespace TekCan
             // çağıranların geçtiği YERE konur, çağıranlardan birine değil.
             if (Dormant || Hollow || _t == null) return;
 
-            float aura = AuraOranı;
+            float aura = AuraOranı * (YakınAurada ? Boss.YakınAura : 1f);     // ORTAK BORÇLU (Faz 36): dibindeyken iki kat
             if (aura <= 0f) return;
 
             Clock.Instance?.Spend(aura * dt);
@@ -1336,6 +1397,17 @@ namespace TekCan
 
             _dövüşSüresi += dt;                                            // MUHASİP'in amortismanı bundan
 
+            if (Boss.TeminatAralığı > 0f)                                  // GARANTÖR (Faz 36): teminatını yeniler
+            {
+                _teminatSayacı -= dt;
+                if (_teminatSayacı <= 0f)
+                {
+                    _teminatSayacı = Boss.TeminatAralığı;
+                    _teminat = Boss.TeminatSayısı;
+                    Arc.Spawn(transform.position, Quaternion.identity, Radius * 2.2f, 360f, TeminatRengi, 0.5f, scaleFrom: 0.5f, scaleTo: 1.2f);
+                }
+            }
+
             // MURABAHACI faz 2: vurmadığın her saniye havuzu doluyor. Ondan HIZLI
             // olmak zorundasın. Krediyi doldurmak hasat vermiyor, dövüşü uzatıyor.
             float regen = Boss.RegenPerSecond(_t, Phase);
@@ -1375,6 +1447,7 @@ namespace TekCan
             bool vadeÖnce = VadeAçık;
             _aliveTime += dt;
             if (VadeAçık != vadeÖnce) Paint();                             // VADELİ açılıp kapanınca görünsün
+            if (Kind.FaizHızı > 0f && Mathf.FloorToInt(_aliveTime) != Mathf.FloorToInt(_aliveTime - dt)) Paint();   // MEVDUAT olgunlaşıyor
 
             // MÜBAŞİR: uzaktan tebligat — durduğun YERE bırakıyor, yaklaşmıyor.
             // Bu güne kadar bütün düşmanlar yakın dövüştü, yani "uzak dur" bedava
@@ -1813,6 +1886,9 @@ namespace TekCan
             else if (Dormant) c = Color.Lerp(KindColor, new Color(0.25f, 0.25f, 0.3f), 0.72f);
             else if (Fleeing) c = Color.Lerp(KindColor, Color.white, 0.45f);        // kaçıyor: soluyor
             else if (!VadeAçık) c = Color.Lerp(KindColor, new Color(0.18f, 0.18f, 0.22f), 0.65f);   // VADELİ kapalı: koyu, vurma
+            else if (_yapışık) c = Color.Lerp(KindColor, new Color(1f, 0.2f, 0.2f), 0.4f);          // SÜLÜK yapıştı
+            else if (Kind.FaizHızı > 0f)                                                            // MEVDUAT: olgunlaştıkça altın
+                c = Color.Lerp(KindColor, new Color(1f, 0.85f, 0.2f), (Kind.Faiz(_aliveTime) - 1f) / Mathf.Max(0.01f, Kind.FaizTavanı - 1f));
             else c = KindColor;                                                     // tür + rütbe rengi
 
             _renderer.material.color = c;

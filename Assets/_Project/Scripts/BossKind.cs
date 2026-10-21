@@ -273,6 +273,24 @@ namespace TekCan
         public virtual float HasatKilidi => 0f;
         /// <summary>DEĞER BİÇER: isabetin bedeli oyuncunun saatinin bu oranı — normal bedelden az değil (BİLİRKİŞİ).</summary>
         public virtual float YüzdeBedel => 0f;
+        /// <summary>KEFALET: havuzu %30'un altına inince aldığı hasar × bu (KEFALETÇİ) — 1 = yok.</summary>
+        public virtual float Kefalet => 1f;
+        /// <summary>TEMİNAT: her `TeminatAralığı` saniyede `TeminatSayısı` vuruşu hasarsız yutar (GARANTÖR) — 0 = yok.</summary>
+        public virtual float TeminatAralığı => 0f;
+        public virtual int TeminatSayısı => 0;
+        /// <summary>ORTAK BORÇ: oyuncu 3 birim içindeyken aurası × bu (ORTAK BORÇLU) — 1 = yok.</summary>
+        public virtual float YakınAura => 1f;
+        /// <summary>ŞAHİT: yaşadığı sürece oyuncunun her dash'i bu kadar saniyeye mal olur.</summary>
+        public virtual float DashBedeli => 0f;
+
+        /// <summary>Sahnedeki yaşayan boss'ların dash bedeli toplamı (ŞAHİT) — `ActiveHarvestMultiplier` deseni, bayrak yok.</summary>
+        public static float ActiveDashCost()
+        {
+            float b = 0f;
+            foreach (var e in Enemy.All)
+                if (e != null && e.Boss != null && !e.Hollow && !e.Dormant) b += e.Boss.DashBedeli;
+            return b;
+        }
 
         /// <summary>
         /// OYUNCUNUN hasadına etkisi — EKSPER'in suçu bu. Yaşadığı sürece işliyor.
@@ -1111,7 +1129,7 @@ namespace TekCan
     /// saldırısını da gösteriyor). Mini boss'lar ana boss'un saldırılarını TEK TEK öğretiyor, ana
     /// boss hepsini birden yapıyor. Tek faz, çağırma yok, aura ve işaret yarı hızda.
     ///
-    /// ⚠️ 1–2. bölge ÖZGÜN (Faz 34–35, `Adamlar`: TAHSİLDAR'ın, EKSPER'in adamları); öbür bölgeler hâlâ GEÇİCİ: unvanlar ve dilimler,
+    /// ⚠️ 1–3. bölge ÖZGÜN (Faz 34–36, `Adamlar`: TAHSİLDAR'ın, EKSPER'in, KEFİL'in adamları); öbür bölgeler hâlâ GEÇİCİ: unvanlar ve dilimler,
     /// bölge bölge doldurulacak (todo "YAPI").
     /// ⚠️ `BossKind.All`'da DEĞİL — boss listesinden dönen kapılar (tekel, kapsama, taşınma) onu
     /// görmesin. Nemesis defteri de ayrı: ana boss'un defteri değil, toparlanma defteri.
@@ -1131,7 +1149,8 @@ namespace TekCan
             public string[] Saldırı;
             /// <summary>Ana boss'un faz 1 aurasının katı (geçici dilimde 0.5).</summary>
             public float Aura;
-            public float ZorlaAlır, Kelepçe, Amortisman, HasatKilidi, YüzdeBedel, Öfke = 1f;
+            public float ZorlaAlır, Kelepçe, Amortisman, HasatKilidi, YüzdeBedel, TeminatAralığı, DashBedeli, Öfke = 1f, Kefalet = 1f, YakınAura = 1f;
+            public int TeminatSayısı;
             /// <summary>Oyuncunun hasadına çarpan yaşadığı sürece (EKSPER'in suçu) — 1 = kesmez.</summary>
             public float Hasat = 1f;
         }
@@ -1163,6 +1182,14 @@ namespace TekCan
                 new Adam { Ad = "DEFTERDAR", Suç = "isabeti deftere yazar — 3 sn hasat yok", Saldırı = new[] { "SAYIM", "AMORTİSMAN", "ÇİFT EKSPERTİZ" }, Aura = 1f, Hasat = 0.6f, HasatKilidi = 3f },
                 new Adam { Ad = "BİLİRKİŞİ", Suç = "değer biçer — isabeti saatinin %6'sı", Saldırı = new[] { "İBRA", "SAYIM+", "REZERV" }, Aura = 1f, Hasat = 0.6f, YüzdeBedel = 0.06f },
                 new Adam { Ad = "BAŞ EKSPER", Suç = "patronun provası", Saldırı = new[] { "AMORTİSMAN+", "KESİNTİ+", "TAM EKSPERTİZ", "TAM DEĞERLEME" }, Aura = 1f, Hasat = 0.45f },   // amortismanla 4.6 dk (yarım hızda 4.2), öbürleri ~2 — MUHASİP'in imzası olarak kaldı
+            },
+            new[]   // ③ KEFİL — borcu garantiye aldı · imzaları SİMİT (yaklaş) + ÇEKİM (Faz 36). Ailenin huyu: KEFİL'in faz 1 aurası.
+            {
+                new Adam { Ad = "KEFALETÇİ", Suç = "kendini garantiler — son çeyrekte direnir", Saldırı = new[] { "KEFALET", "TEMİNAT", "SENET" }, Aura = 1f, Kefalet = 0.5f },
+                new Adam { Ad = "GARANTÖR", Suç = "teminat koyar — önce onu kır", Saldırı = new[] { "ORTAK HESAP", "İCAZET", "ZİNCİRLEME SORUMLULUK" }, Aura = 1f, TeminatAralığı = 12f, TeminatSayısı = 3 },
+                new Adam { Ad = "ORTAK BORÇLU", Suç = "dibindeyken iki kat emer — gir, vur, çık", Saldırı = new[] { "REHİN", "KEFALET", "SENET" }, Aura = 1f, YakınAura = 2f },
+                new Adam { Ad = "ŞAHİT", Suç = "dash'ini görür — her dash 1.5 sn", Saldırı = new[] { "TEMİNAT+", "İCAZET+", "SENET+" }, Aura = 1f, DashBedeli = 1.5f },
+                new Adam { Ad = "BAŞ KEFİL", Suç = "patronun provası", Saldırı = new[] { "MÜTESELSİL", "REHİN+", "ZİNCİRLEME SORUMLULUK+", "TOPLU TEMİNAT" }, Aura = 1f, Kefalet = 0.5f, TeminatAralığı = 15f, TeminatSayısı = 2 },
             },
         };
 
@@ -1227,13 +1254,21 @@ namespace TekCan
         public override Color Tint => Color.Lerp(Ana.Tint, new Color(0.6f, 0.6f, 0.6f), 0.35f);
         public override int PhaseCount => 1;
         public override BossAttack[] Attacks(int phase) => _dilim;
-        public override float AuraDrain(Tuning t, int phase) => Ana.AuraDrain(t, 1) * (Özgün != null ? Özgün.Aura : 0.5f);
+        // ⚠️ Özgün adamın aurası havuzu gibi ara bölge başına büyür (`subRegionPoolGrowth`): hasat havuzla büyüyor, aura zamanla,
+        // dövüşler hep ~2 dk — sabit aurayla her bölgenin son adamları bota saat kazandırıyordu (KOLCU −5 · GARANTÖR −12 · ŞAHİT +40).
+        public override float AuraDrain(Tuning t, int phase)
+            => Ana.AuraDrain(t, 1) * (Özgün != null ? Özgün.Aura * Mathf.Pow(t.subRegionPoolGrowth, AraBölge) : 0.5f);
         public override float ZorlaAlır => Özgün != null ? Özgün.ZorlaAlır : 0f;
         public override float ÖfkeHızı => Özgün != null ? Özgün.Öfke : 1f;
         public override float Kelepçe => Özgün != null ? Özgün.Kelepçe : 0f;
         public override float Amortisman => Özgün != null ? Özgün.Amortisman : 0f;
         public override float HasatKilidi => Özgün != null ? Özgün.HasatKilidi : 0f;
         public override float YüzdeBedel => Özgün != null ? Özgün.YüzdeBedel : 0f;
+        public override float Kefalet => Özgün != null ? Özgün.Kefalet : 1f;
+        public override float TeminatAralığı => Özgün != null ? Özgün.TeminatAralığı : 0f;
+        public override int TeminatSayısı => Özgün != null ? Özgün.TeminatSayısı : 0;
+        public override float YakınAura => Özgün != null ? Özgün.YakınAura : 1f;
+        public override float DashBedeli => Özgün != null ? Özgün.DashBedeli : 0f;
         public override float SpeedMultiplier(int phase) => Ana.SpeedMultiplier(1);
         public override float PlayerHarvest(int phase) => Özgün != null ? Özgün.Hasat : Mathf.Lerp(1f, Ana.PlayerHarvest(1), 0.5f);
         public override float GroundMarkInterval(int phase)

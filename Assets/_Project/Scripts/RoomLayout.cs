@@ -153,6 +153,32 @@ namespace TekCan
             }
         }
 
+        sealed class NestedLayout : RoomLayout
+        {
+            public override string Name => "İÇ İÇE";
+            public override Vector3 Position(Tuning t, int i, int n)
+            {
+                // İç halka + dış halka (Faz 36): dışı yarıp içe dalarsan iki yandan sarılırsın; HALKA'nın tek çemberi tek yarıktı.
+                int iç = Mathf.Max(1, n / 3);
+                bool içte = i < iç;
+                int j = içte ? i : i - iç, m = içte ? iç : Mathf.Max(1, n - iç);
+                float a = (360f / m) * j * Mathf.Deg2Rad + (içte ? 0f : Mathf.PI / m);
+                float r = içte ? 0.18f : 0.5f;
+                return At(t, Mathf.Cos(a) * r, Mathf.Sin(a) * r + 0.12f);
+            }
+        }
+
+        sealed class ColumnLayout : RoomLayout
+        {
+            public override string Name => "SÜTUN";
+            public override Vector3 Position(Tuning t, int i, int n)
+            {
+                // Yol boyu tek sıra (Faz 36): teker teker gelirler — koni bir tanesini alır, sıra seni yorar.
+                float z = n <= 1 ? 0.2f : Mathf.Lerp(-0.15f, 0.6f, i / (float)(n - 1));
+                return At(t, i % 2 == 0 ? 0.06f : -0.06f, z);
+            }
+        }
+
         public static readonly RoomLayout Ring = new RingLayout();
         public static readonly RoomLayout Wall = new WallLayout();
         public static readonly RoomLayout Cluster = new ClusterLayout();
@@ -163,8 +189,10 @@ namespace TekCan
         public static readonly RoomLayout DoubleRow = new DoubleRowLayout();
         public static readonly RoomLayout Corridor = new CorridorLayout();
         public static readonly RoomLayout Arrow = new ArrowLayout();
+        public static readonly RoomLayout Nested = new NestedLayout();
+        public static readonly RoomLayout Column = new ColumnLayout();
 
-        public static readonly RoomLayout[] All = { Ring, Wall, Cluster, Flank, Scatter, Pincer, DoubleRow, Corridor, Arrow };
+        public static readonly RoomLayout[] All = { Ring, Wall, Cluster, Flank, Scatter, Pincer, DoubleRow, Corridor, Arrow, Nested, Column };
 
         /// <summary>Oda numarasından yerleşim — deterministik, ama arka arkaya tekrar etmiyor.</summary>
         public static RoomLayout For(int roomIndex) => All[Mathf.Abs(roomIndex) % All.Length];

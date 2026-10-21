@@ -66,8 +66,6 @@ namespace TekCan.EditorTools
             var son = MiniBossKind.For(1, S - 1, S);
             failed += Check(ref total, $"son adam ({son.Name}) EKSPER'in harita saldırısını öğretiyor",
                             son.Attacks(1).Any(a => a.Tür == SaldırıTürü.Harita), 0);
-            var geçici = MiniBossKind.For(2, 0, S);
-            failed += Check(ref total, $"3. bölgeden sonrası geçici dilimde ({geçici.Name})", geçici.Özgün == null && geçici.Name.Contains("·"), 0);
             return failed;
         }
 
@@ -204,7 +202,7 @@ namespace TekCan.EditorTools
             failed += Check(ref total, $"⚠️ 2. bölgede {b2.Count} tür ({string.Join(", ", b2.Select(k => k.Name))}) — VADELİ ve TAKSİT 2. bölgede var, 1. bölgede yok; tavanlar {string.Join("/", Region.All.Select(r => r.UnlockedKinds))}",
                             b2.Contains(EnemyKind.Term) && b2.Contains(EnemyKind.Installment) && !b1.Contains(EnemyKind.Term) && !b1.Contains(EnemyKind.Installment)
                             && !b2.Contains(EnemyKind.InstallmentPart) && System.Array.IndexOf(EnemyKind.All, EnemyKind.InstallmentPart) < 0
-                            && Region.All.Select(r => r.UnlockedKinds).SequenceEqual(new[] { 4, 7, 8, 10, 11 }), b2.Count);
+                            && Region.At(1).UnlockedKinds == 7, b2.Count);
             return failed;
         }
 
