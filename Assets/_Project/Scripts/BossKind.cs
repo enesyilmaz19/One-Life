@@ -267,6 +267,12 @@ namespace TekCan
         public virtual float ÖfkeHızı => 1f;
         /// <summary>KELEPÇE: isabeti oyuncunun yürüyüşünü bu kadar saniye yavaşlatır (KOLCU). Dash serbest.</summary>
         public virtual float Kelepçe => 0f;
+        /// <summary>AMORTİSMAN: dövüş sürdükçe oyuncunun vuruşu her 10 sn'de bu oran kadar değer kaybeder, en çok %50 (MUHASİP).</summary>
+        public virtual float Amortisman => 0f;
+        /// <summary>DEFTERE YAZAR: isabeti oyuncunun hasadını bu kadar saniye sıfırlar (DEFTERDAR).</summary>
+        public virtual float HasatKilidi => 0f;
+        /// <summary>DEĞER BİÇER: isabetin bedeli oyuncunun saatinin bu oranı — normal bedelden az değil (BİLİRKİŞİ).</summary>
+        public virtual float YüzdeBedel => 0f;
 
         /// <summary>
         /// OYUNCUNUN hasadına etkisi — EKSPER'in suçu bu. Yaşadığı sürece işliyor.
@@ -1105,7 +1111,7 @@ namespace TekCan
     /// saldırısını da gösteriyor). Mini boss'lar ana boss'un saldırılarını TEK TEK öğretiyor, ana
     /// boss hepsini birden yapıyor. Tek faz, çağırma yok, aura ve işaret yarı hızda.
     ///
-    /// ⚠️ 1. bölge ÖZGÜN (Faz 34, `Adamlar`: TAHSİLDAR'ın adamları); öbür bölgeler hâlâ GEÇİCİ: unvanlar ve dilimler,
+    /// ⚠️ 1–2. bölge ÖZGÜN (Faz 34–35, `Adamlar`: TAHSİLDAR'ın, EKSPER'in adamları); öbür bölgeler hâlâ GEÇİCİ: unvanlar ve dilimler,
     /// bölge bölge doldurulacak (todo "YAPI").
     /// ⚠️ `BossKind.All`'da DEĞİL — boss listesinden dönen kapılar (tekel, kapsama, taşınma) onu
     /// görmesin. Nemesis defteri de ayrı: ana boss'un defteri değil, toparlanma defteri.
@@ -1125,7 +1131,9 @@ namespace TekCan
             public string[] Saldırı;
             /// <summary>Ana boss'un faz 1 aurasının katı (geçici dilimde 0.5).</summary>
             public float Aura;
-            public float ZorlaAlır, Kelepçe, Öfke = 1f;
+            public float ZorlaAlır, Kelepçe, Amortisman, HasatKilidi, YüzdeBedel, Öfke = 1f;
+            /// <summary>Oyuncunun hasadına çarpan yaşadığı sürece (EKSPER'in suçu) — 1 = kesmez.</summary>
+            public float Hasat = 1f;
         }
 
         // ⚠️ SIRA = ÖĞRETİM SIRASI: her adam ana boss'un bir parçasını öğretiyor, ana boss hepsini birden yapıyor.
@@ -1137,11 +1145,24 @@ namespace TekCan
         {
             new[]   // ① TAHSİLDAR — zorla alan: yanındayken emer, sonra kovalar
             {
-                new Adam { Ad = "HACİZCİ", Suç = "yanındayken emer", Saldırı = new[] { "HACİZ", "TAHSİL", "İHBARNAME" }, Aura = 1f },
-                new Adam { Ad = "SENETÇİ", Suç = "her isabeti cebine — havuzu dolar", Saldırı = new[] { "HACİZ", "İHBARNAME", "KUŞATMA" }, ZorlaAlır = 0.02f },   // %4'te sarmal: vurulan uzatır, uzayan vurulur — 1. bölge ölçümünde 5.9 dk, saat iki kez bitti
-                new Adam { Ad = "KABADAYI", Suç = "yarıda öfkelenir", Saldırı = new[] { "ZORLA ALIM", "YAKA PAÇA", "HACİZ" }, Aura = 0.5f, Öfke = 1.4f },
-                new Adam { Ad = "KOLCU", Suç = "isabeti kelepçeler — dash'le çık", Saldırı = new[] { "EL KOYMA", "TAHSİL+", "İHBARNAME+" }, Aura = 0.5f, Kelepçe = 1.2f },
-                new Adam { Ad = "SAĞ KOL", Suç = "patronun provası", Saldırı = new[] { "KUŞATMA+", "EL KOYMA", "KELEPÇE", "TAM TAHSİL" }, Aura = 0.5f, Öfke = 1.25f },
+                // ⚠️ Ailenin ortak huyu: TAHSİLDAR'ın aurası ×1.2 (HACİZCİ'nin imzası ×1.6; SENETÇİ'nin bedeli isabetten, aurasız). Yarım aurayla bot, saat doyma tavanında
+                // giren oyuncu gibi, KABADAYI · KOLCU · SAĞ KOL'dan saat KAZANIYORDU (+22 · +38 · +36, bot P34) — "zorlasınlar"ın tersi.
+                new Adam { Ad = "HACİZCİ", Suç = "yanındayken emer", Saldırı = new[] { "HACİZ", "TAHSİL", "İHBARNAME" }, Aura = 1.6f },
+                new Adam { Ad = "SENETÇİ", Suç = "her isabeti cebine — havuzu dolar", Saldırı = new[] { "HACİZ", "İHBARNAME", "KUŞATMA" }, ZorlaAlır = 0.02f },   // aurasız: bedeli isabetten (aurayla 1. bölgede saat bitti)   // %4'te sarmal: vurulan uzatır, uzayan vurulur — 1. bölge ölçümünde 5.9 dk, saat iki kez bitti
+                new Adam { Ad = "KABADAYI", Suç = "yarıda öfkelenir", Saldırı = new[] { "ZORLA ALIM", "YAKA PAÇA", "HACİZ" }, Aura = 1.2f, Öfke = 1.4f },
+                new Adam { Ad = "KOLCU", Suç = "isabeti kelepçeler — dash'le çık", Saldırı = new[] { "EL KOYMA", "TAHSİL+", "İHBARNAME+" }, Aura = 1.2f, Kelepçe = 1.2f },
+                new Adam { Ad = "SAĞ KOL", Suç = "patronun provası", Saldırı = new[] { "KUŞATMA+", "EL KOYMA", "KELEPÇE", "TAM TAHSİL" }, Aura = 1.2f, Öfke = 1.25f },
+            },
+            new[]   // ② EKSPER — değeri o biçer: hasadını kısar, sonra sıfırlar · imzaları SAĞANAK + AYNA (Faz 35)
+            {
+                // ⚠️ Ailenin ortak huyu: EKSPER'in faz 1 aurası tam (TAHSİLDAR'ınkinden güçlü) ve yanında zaman az eder (×0.6).
+                // Yarım aura + kesintisiz üçü bota saat KAZANDIRIYORDU (+22 · +78 · +97; ×0.75 kesintiyle +42 · +57, bot P35):
+                // bot EKSPER'in konisinden, ışınından, aynasından hiç vurulmuyor, hasat auradan büyüktü — "zorlasınlar"ın tersi.
+                new Adam { Ad = "MUHAMMİN", Suç = "hasadını kısar — bu dövüş seni beslemez", Saldırı = new[] { "KESİNTİ", "SAYIM", "DEĞER BİÇME" }, Aura = 1f, Hasat = 0.45f },
+                new Adam { Ad = "MUHASİP", Suç = "vuruşun değer kaybeder — oyalanma", Saldırı = new[] { "AMORTİSMAN", "KESİNTİ", "ÇİFTE KAYIT" }, Aura = 1f, Hasat = 0.6f, Amortisman = 0.1f },
+                new Adam { Ad = "DEFTERDAR", Suç = "isabeti deftere yazar — 3 sn hasat yok", Saldırı = new[] { "SAYIM", "AMORTİSMAN", "ÇİFT EKSPERTİZ" }, Aura = 1f, Hasat = 0.6f, HasatKilidi = 3f },
+                new Adam { Ad = "BİLİRKİŞİ", Suç = "değer biçer — isabeti saatinin %6'sı", Saldırı = new[] { "İBRA", "SAYIM+", "REZERV" }, Aura = 1f, Hasat = 0.6f, YüzdeBedel = 0.06f },
+                new Adam { Ad = "BAŞ EKSPER", Suç = "patronun provası", Saldırı = new[] { "AMORTİSMAN+", "KESİNTİ+", "TAM EKSPERTİZ", "TAM DEĞERLEME" }, Aura = 1f, Hasat = 0.45f },   // amortismanla 4.6 dk (yarım hızda 4.2), öbürleri ~2 — MUHASİP'in imzası olarak kaldı
             },
         };
 
@@ -1210,8 +1231,11 @@ namespace TekCan
         public override float ZorlaAlır => Özgün != null ? Özgün.ZorlaAlır : 0f;
         public override float ÖfkeHızı => Özgün != null ? Özgün.Öfke : 1f;
         public override float Kelepçe => Özgün != null ? Özgün.Kelepçe : 0f;
+        public override float Amortisman => Özgün != null ? Özgün.Amortisman : 0f;
+        public override float HasatKilidi => Özgün != null ? Özgün.HasatKilidi : 0f;
+        public override float YüzdeBedel => Özgün != null ? Özgün.YüzdeBedel : 0f;
         public override float SpeedMultiplier(int phase) => Ana.SpeedMultiplier(1);
-        public override float PlayerHarvest(int phase) => Mathf.Lerp(1f, Ana.PlayerHarvest(1), 0.5f);
+        public override float PlayerHarvest(int phase) => Özgün != null ? Özgün.Hasat : Mathf.Lerp(1f, Ana.PlayerHarvest(1), 0.5f);
         public override float GroundMarkInterval(int phase)
         {
             float a = Ana.GroundMarkInterval(1);

@@ -51,6 +51,11 @@ namespace TekCan
         // çalışma anında değiştirilirse editörde kalıcı olur ve bir sonraki koşu
         // önceki koşunun yükseltmeleriyle başlar. Sunaklar burayı değiştirir.
         public float HarvestRate { get; private set; }
+
+        float _hasatKilitBitiş = -1f;
+        /// <summary>DEFTERDAR (Faz 35): isabeti hasadı kısa süre sıfırlar.</summary>
+        public void HasatKilitle(float süre) => _hasatKilitBitiş = Mathf.Max(_hasatKilitBitiş, Time.time + süre);
+        public bool HasatKilitli => Time.time < _hasatKilitBitiş;
         public float AttackDamage { get; private set; }
         public float DashCooldown { get; private set; }
 

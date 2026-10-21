@@ -14,6 +14,7 @@
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 | 13 | 🎮 *(isteğe bağlı)* **Faz 33 his testi** | Bot oynadı (P33 3/3, P33c 12/12 — aşağıda "BOSS SÜRELERİ" bölümü). Sana kalan yalnızca göz: **F6**, **M** → sunak renkleri okunuyor mu (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), **B** → efsanevi "vay" dedirtiyor mu | Gördüklerini yaz |
 | 15 | 🎮 *(isteğe bağlı)* **Faz 34 his testi** | Bot oynadı (P34 ✅, 1. bölge 44.6 dk — aşağıda FAZ 34). Sana kalan his: **F6** → 3. odadan KALKANLI (önden vurunca az eder, arkasına dolan) · 4. odadan MÜFLİS (öldüğü yerde 1 sn sonra patlar) · 6.–7. oda KISKAÇ / ÇİFT SIRA · **M** ile TAHSİLDAR'ın 5 adamı: HACİZCİ, SENETÇİ, KABADAYI, KOLCU, SAĞ KOL — adları ve imzaları ekranda | Gördüklerini yaz: imzalar hissediliyor mu, KALKANLI'nın arkasına geçmek zevkli mi, MÜFLİS patlaması okunuyor mu |
+| 17 | 🎮 *(isteğe bağlı)* **Faz 35 his testi** | Bot oynadı (P35 ✅ — aşağıda FAZ 35). **F6**, **N** (2. bölge) → 4. odadan VADELİ (koyu = kapalı, vurma; açılınca vur) · 5. odadan TAKSİT (ölünce iki küçük taksit) · KORİDOR, OK · **M** ile EKSPER'in 5 adamı: MUHAMMİN, MUHASİP, DEFTERDAR, BİLİRKİŞİ, BAŞ EKSPER | Gördüklerini yaz: VADELİ'nin açılışı okunuyor mu, taksitler can sıkıyor mu, imzalar hissediliyor mu |
 
 ---
 
@@ -232,6 +233,51 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 
 ---
 
+## 📜 FAZ 35 — Bölge 2 (DARALMA) içeriği: EKSPER'in adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'siz, Enes'in testini bekliyor** (2026-10-21)
+
+Enes: *"commitle ve sıradaki faza geç"*. Faz 34'ün deseni; mini boss kuralları: tek faz, çağırma yok, saldırılar ana boss'tan,
+her adamda en az bir yakın + bir uzak (sonuncuda harita), **dibinde bedava durulan adam yok** (Enes 2026-10-21: *"zorlasınlar"*),
+süreler yakın, sıra kuralı yok. Benim kararlarım, adlar çalışma adı.
+
+**35a — EKSPER'in 5 adamı** — EKSPER: *değeri o biçer* (hasadını kısar, faz 2'de sıfırlar) · imza şekilleri SAĞANAK + AYNA.
+Ailenin ortak huyu: EKSPER'in faz 1 aurası tam ve yanında zaman az eder (hasat ×0.6) — aşağıda neden.
+
+| ara bölge | adam | imza | saldırılar (EKSPER'den) | ders |
+|---|---|---|---|---|
+| 1 | MUHAMMİN | hasadını kısar (EKSPER faz 1'in tamamı: ×0.45) | KESİNTİ · SAYIM · DEĞER BİÇME | bu dövüş seni beslemez · sağanak |
+| 2 | MUHASİP | amortisman: vuruşun her 10 sn'de %10 değer kaybeder (en çok %50) | AMORTİSMAN · KESİNTİ · ÇİFTE KAYIT | ayna: yana kaç, geri değil · oyalanma |
+| 3 | DEFTERDAR | deftere yazar: isabeti hasadını 3 sn sıfırlar | SAYIM · AMORTİSMAN · ÇİFT EKSPERTİZ | sağanak: bir kez kaçmak yetmez |
+| 4 | BİLİRKİŞİ | değer biçer: isabeti saatinin %6'sı (normal bedelden az değil) | İBRA · SAYIM+ · REZERV | zenginken dikkat · dibine girene geniş kesik |
+| 5 | BAŞ EKSPER | hasat ×0.45 + EKSPER'in tam aurası | AMORTİSMAN+ · KESİNTİ+ · TAM EKSPERTİZ · TAM DEĞERLEME | patronun provası |
+
+**35b — 2 yeni düşman türü** (KASA'dan sonra; tavanlar 4 · 7 · 8 · 10 · 11)
+- **VADELİ**: 4 sn'de bir 1.5 sn açılır; kapalıyken hasar ×0.1 — **ne zaman** vuracağın (KALKANLI "nereden" soruyordu).
+- **TAKSİT**: ölünce 2 küçük taksit doğar (havuzunun %35'i, onlar bölünmez) — **topla**: tek savuruşta hepsine.
+
+**35c — 2 yeni diziliş:** **KORİDOR** (iki sıra, aradan geçersin) · **OK** (ucu girişe bakan V — KISKAÇ'ın tersi).
+
+**Adımlar**
+- [x] A. Adamlar (`MiniBossKind.Adamlar[1]`) + kancalar (`Amortisman`, `HasatKilidi` → `Clock.HasatKilitle`, `YüzdeBedel`; mini `PlayerHarvest` = `Adam.Hasat`)
+- [x] B. VADELİ (`Enemy.VadeAçık`, kapalıyken koyu) · TAKSİT (`InstallmentPart`, `All`'da değil) · tavanlar 4/7/8/10/11
+- [x] C. KORİDOR · OK
+- [x] D. `Faz35SelfCheck` **12 kontrol**, 16 bozmanın 16'sı kırmızı · Faz 13 "farklı soru"ya vade/taksit · Faz 34'ün tavan ve geçici dilim kontrolleri
+- [x] E. Bot `Playtest35` ✅ — 5 adam: 1.8 · 2.9 · 2.0 · 2.1 · 2.5 dk, saat −61 · −105 · −28 · −14 · −64 · 2. bölgenin 2–7. ve 10. odası: VADELİ 30, TAKSİT 24 → 48 parça, KORİDOR ve OK geliyor
+
+**Botun ve bozmaların bulduğu (düzeldi):**
+- 🐞 **Dizilişler dövüşte görünmüyordu.** Diziliş oda numarasıyla dönüyordu; diziliş sayısı blok boyuna (9) eşitlenince her diziliş bloğun
+  hep aynı yerine düştü — her bölgede ikisi yalnızca mini boss / sunak odasına (1. bölgede KORİDOR ve OK, 2.'de HALKA ve OK). Bot'un
+  "OK odası 167 sn" dediği mini boss odasıydı; kapı da mini/sunak odalarını sayıp "geliyor" diyordu. Artık dövüş odaları arasında
+  dönüyor (`RoomManager.Diziliş`, oyun ve kapılar aynı fonksiyon); kapı: her bölgede 9'un 9'u dövüşte (eski formülle 5 bölgenin
+  hepsinde 2 eksik → kırmızı).
+- **EKSPER'in adamları bota saat kazandırıyordu** (yarım aura, kesintisiz: +22 · +78 · +97): bot EKSPER'in konisinden, ışınından,
+  aynasından hiç vurulmuyor. Ailenin huyu: tam aura + hasat ×0.6. Bot testi artık "bot hiçbir mini'den saat kazanarak çıkmasın" diyor.
+- **BAŞ EKSPER 4.6 dk** (amortismanla; yarım hızda 4.2): amortisman MUHASİP'te kaldı → 2.5 dk.
+- 🐞 **VADELİ'nin rengi** tek büyük adımda (0 → 3 sn) yenilenmiyordu: "son durum" alanı açık başlıyordu, düşman kapalı doğuyor
+  (oyunda her kare adım attığı için görünmüyordu). Alan kalktı, adımdan önce/sonra karşılaştırılıyor. Bozma H yakaladı — önce renk
+  kontrolünü vurulma parlaması örtüyordu, sonra kontrol "koyu = beklenen koyu" diye kesinleşti.
+
+---
+
 ## 🏚️ FAZ 34 — Bölge 1 (EŞİK) içeriği: TAHSİLDAR'ın adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'siz, Enes'in testini bekliyor** (2026-10-20)
 
 Enes: *"sıradaki faza geç, bittikten sonra testi bota yaptır"*. YAPI'nın 5. maddesi: *"içerik: 25 mini boss, yeni düşman
@@ -281,6 +327,10 @@ kaydırılmış — iki kez yarman gerek).
   KABADAYI'nın 46 konisinin 46'sından, KOLCU'nun bütün saldırılarından kaçtı (hamleler uzaktan, dibine yalnız koni geliyor).
 - KABADAYI ve KOLCU'ya yarım aura (geçici dilimdeki her mini'de vardı; TAHSİLDAR'ın adamları da emer) → −36 · −44. Kapı: "dibinde
   bedava durulan adam yok" (bozunca "bedava: KABADAYI" kırmızı).
+- **Faz 35'te sıkılaştı:** bot testi artık "hiçbir mini bota saat kazandırmasın" diyor, saat doyma tavanında girerken (en çok hasat).
+  Yarım aurayla KABADAYI · KOLCU · SAĞ KOL orada +22 · +38 · +36 kazandırıyordu → ailenin aurası ×1.2, HACİZCİ ×1.6, SENETÇİ aurasız
+  (aurayla 1. bölge ölçümünde saat bitti; bedeli isabetten). P34: −89 · −297 · −24 · −5 · −20 · 1. bölge 44.6 dk, F5 yok, bölge
+  koşusunda mini maliyetleri −119 · −345 · −83 · −90 · −128.
 - ❌ Denendi, geri alındı: KABADAYI'ya **itme** ("iter, üstüne atlar"). Sayaç gösterdi: 46 savuruşta **0 kez** itti — bot her savuruşta
   menzilden çıkıyor, itme ancak menzilde kalana işliyordu; sözünü tutmayan imza kalmadı.
 - Süreler 2.0 · 2.9 · 2.0 · 2.2 · 2.7 dk — yakın, sıra yok. P34'te artık her mini'nin saldırı sayımı var.

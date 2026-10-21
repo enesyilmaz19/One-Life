@@ -459,8 +459,15 @@ vurmalı.
 | **KALKANLI** (Enes'in fikri) | önden gelen hasar ×0.2 (hasat da), yavaş döner (100°/sn); hazırlığın başında dönmez | **konum.** Arkasına geç. ZIRHLI'dan farkı: zırh her yönden, kalkan yalnız önden |
 | **MÜFLİS** | öldüğü yerde 1 sn sonra borcu patlar (2.4): oyuncuya darbe, içindeki düşmanlara hasar | **nerede öldüreceğin.** Kalabalıkta öldür, sonra çekil |
 
-Açılış sırası: TEMEL · SIZINTI · KALKANLI · MÜFLİS · KASA · KAÇAK · SİGORTA · MÜBAŞİR · ZAMANAŞIMI;
-bölge tavanları 4 · 5 · 6 · 8 · 9.
+**Faz 35 (2026-10-21) — 2. bölgeye iki tür:** "ne zaman" ve "topla".
+
+| tür | mekanik | değiştirdiği karar |
+|---|---|---|
+| **VADELİ** | 4 sn'de bir 1.5 sn açılır; kapalıyken vuruş ×0.1 (hasat da), rengi koyulaşır | **zamanlama.** Kapalıyken başkasına dön — DARALMA'da beklemek de bedelli |
+| **TAKSİT** | ölünce 2 küçük taksit doğar (havuzunun %35'i, onlar bölünmez) | **toplamak.** Dağınık kesersen borç çoğalır; tek savuruşta hepsine |
+
+Açılış sırası: TEMEL · SIZINTI · KALKANLI · MÜFLİS · KASA · VADELİ · TAKSİT · KAÇAK · SİGORTA · MÜBAŞİR · ZAMANAŞIMI;
+bölge tavanları 4 · 7 · 8 · 10 · 11.
 
 **Mini boss'lar — bölgenin boss'unun adamları (Faz 34, önce 1. bölge).** Faz 28 kuralı yerinde: tek faz,
 çağırma yok, saldırılar ana boss'un — *"mini boss'lar ana boss'un saldırılarını tek tek öğretiyor, ana boss
@@ -468,13 +475,23 @@ hepsini birden yapıyor."* Özgün olan **ad, imza, ders**:
 
 | TAHSİLDAR'ın adamı | imza | öğrettiği |
 |---|---|---|
-| HACİZCİ | yanındayken emer (TAHSİLDAR faz 1 aurasının tamamı) | HACİZ · TAHSİL · İHBARNAME — vur, çekil |
+| HACİZCİ | yanındayken emer (TAHSİLDAR faz 1 aurasının ×1.6'sı — ailenin en çok emeni) | HACİZ · TAHSİL · İHBARNAME — vur, çekil |
 | SENETÇİ | zorla alır: her isabeti havuzunu %2 doldurur | HACİZ · İHBARNAME · KUŞATMA — darbe yeme |
 | KABADAYI | yarıda öfkelenir: hız ×1.4 | ZORLA ALIM · YAKA PAÇA · HACİZ — yana kaç; faz dönüşünün provası |
 | KOLCU | kelepçe: isabeti yürüyüşü 1.2 sn ×0.6 yapar, dash serbest | EL KOYMA · TAHSİL+ · İHBARNAME+ — ilk darbeyi yeme |
 | SAĞ KOL | yarım aura + yarıda öfke ×1.25 | KUŞATMA+ · EL KOYMA · KELEPÇE · TAM TAHSİL — patronun provası |
 
-Her adamın en az bir yakın ve bir uzak saldırısı var (sonuncunun bir de harita): üç sıra kuralı mesafeye göre
+| EKSPER'in adamı (Faz 35) | imza | öğrettiği |
+|---|---|---|
+| MUHAMMİN | hasadını kısar (EKSPER faz 1'in tamamı ×0.45) | KESİNTİ · SAYIM · DEĞER BİÇME — bu dövüş beslemez, sağanak |
+| MUHASİP | amortisman: vuruşun her 10 sn %10 değer kaybeder (en çok %50) | AMORTİSMAN · KESİNTİ · ÇİFTE KAYIT — ayna, oyalanma |
+| DEFTERDAR | deftere yazar: isabeti hasadını 3 sn sıfırlar | SAYIM · AMORTİSMAN · ÇİFT EKSPERTİZ — sağanak |
+| BİLİRKİŞİ | değer biçer: isabeti saatinin %6'sı (normal bedelden az değil) | İBRA · SAYIM+ · REZERV — zenginken dikkat |
+| BAŞ EKSPER | hasat ×0.45 + EKSPER'in tam aurası | AMORTİSMAN+ · KESİNTİ+ · TAM EKSPERTİZ · TAM DEĞERLEME — patronun provası |
+
+Kural (Enes 2026-10-21): süreler yakın, sıra yok, ama **dibinde bedava durulan adam yok** — bot (her şeyden kaçan oyuncu)
+hiçbir mini'den saat kazanarak çıkmıyor, saat doyma tavanında girse bile. Ailelerin ortak huyu: TAHSİLDAR'ın adamları onun aurasının
+×1.2'siyle emer (SENETÇİ aurasız — bedeli isabetten), EKSPER'in adamları onun tam aurasıyla emer ve hasadı ×0.6 keser. Her adamın en az bir yakın ve bir uzak saldırısı var (sonuncunun bir de harita): üç sıra kuralı mesafeye göre
 seçtiği için yakını olmayan adam dibindekine hiç vuramıyordu (bot P34). Öbür bölgeler geçici dilimde
 (ÇIRAK/KÂTİP… · boss adı) — sırayla doldurulacak.
 

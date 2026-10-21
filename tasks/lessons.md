@@ -666,3 +666,10 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   birim). Bot sayacı ekleyince gerçek: 46 savuruşta 0 itme — bot hep menzilden çıkıyor. Sayaç olmasa sözü belgeye yazacaktım.
   Önce yanlış sayaç da yalan söyledi ("saldırı değişince say" aynı saldırının tekrarını saymıyordu: 46 HACİZ "1" göründü).
   **Kural:** bir imzanın dövüşteki vaadini olayın kendi sayacıyla (kaç kez itti, kaç saldırı başladı) ölç; tutmuyorsa geri al.
+- **İki döngü aynı boyda olunca hizalanır (Faz 35):** diziliş oda numarasıyla dönüyordu (`oda % N`); N, bloğun boyuna (9: 7 dövüş + mini
+  + sunak) eşit olunca her diziliş hep aynı yere düştü, ikisi hiç dövüş odasına gelmedi. 5 ve 7 dizilişte görünmüyordu (9'la aralarında
+  asal). Kapı "bölgenin odalarında geliyor mu" diye bakıyordu — mini ve sunak odalarını da sayarak. **Kural:** bir şeyi sırayla dağıtırken
+  yalnızca kullanıldığı yerleri say (dövüş odaları), oda numarasını değil; kapı da aynı fonksiyona sorsun ve "kullanılan yerde" ölçsün.
+- **"Son durum" alanı ilk değerle yalan söyler (Faz 35):** VADELİ'nin `_vadeAçıktı = true` başlangıcı, kapalı doğan düşmanda ilk büyük
+  adımda değişimi kaçırdı. Oyunda her kare küçük adım attığı için görünmedi; kapının tek 3 sn'lik adımı yakaladı. **Kural:** durum
+  değişimini adımdan önce/sonra karşılaştırarak bul, ilk değeri tahmin edilen bir alan tutma.

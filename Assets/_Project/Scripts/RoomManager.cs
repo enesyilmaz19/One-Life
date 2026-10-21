@@ -151,6 +151,14 @@ namespace TekCan
         /// <summary>Ara bölgedeki kaçıncı oda (1'den) — dövüş odalarının büyümesi buna göre.</summary>
         public static int AraOda(Tuning t, int oda) => (Mathf.Max(1, oda) - 1) % t.BlokBoyu + 1;
 
+        /// <summary>
+        /// Odanın dizilişi — DÖVÜŞ ODALARI arasında döner. ⚠️ Oda numarasıyla dönüyordu: diziliş sayısı blok boyuna (9)
+        /// eşitlenince (Faz 35) her diziliş hep bloğun aynı yerine düştü, ikisi yalnızca mini boss / sunak odasına — dövüşte
+        /// hiç görünmüyordu (bot P35'in "OK odası" mini boss odasıydı). Oyun ve kapılar bu tek fonksiyona soruyor.
+        /// </summary>
+        public static RoomLayout Diziliş(Tuning t, int bölge, int oda)
+            => RoomLayout.For(AraBölge(t, oda) * t.DövüşOdası + Mathf.Min(AraOda(t, oda), t.DövüşOdası) - 1 + bölge);
+
         /// <summary>`s`. ara bölgenin mini boss odası ve ardındaki sunak (kontrol noktası) odası.</summary>
         public static int MiniBossOdası(Tuning t, int s) => s * t.BlokBoyu + t.DövüşOdası + 1;
         public static int SunakOdası(Tuning t, int s) => (s + 1) * t.BlokBoyu;
@@ -421,7 +429,7 @@ namespace TekCan
             // iken oda 5 (= HALKA) Faz 19'da düşmansız sunak odası oldu ve HALKA
             // oyundan tamamen çıktı — tanımlı ama erişilemez (ders 11, denetim 2026-09-23).
             // Kaydırınca beşi de bölgeler boyunca geliyor, ardışık odalar yine farklı.
-            Layout = RoomLayout.For(Room - 1 + RegionIndex);
+            Layout = Diziliş(_t, RegionIndex, Room);
 
             _roomRoot = new GameObject($"Room_{Room}");
             // ⚠️ Ebeveyn yoksa KENDİMİZE bağlan. Oyunda `Systems` altındayız ve

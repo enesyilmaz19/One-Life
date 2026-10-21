@@ -80,6 +80,17 @@ namespace TekCan
         /// <summary>Patlamanın içindeki düşmanlara hasarı, MÜFLİS'in başlangıç havuzuna oran.</summary>
         public virtual float PatlamaHasarı => 0f;
 
+        // ── Faz 35 kancaları ─────────────────────────────────────────────────
+
+        /// <summary>&gt;0 ise bu kadar saniyede bir açılır — VADELİ. Kapalıyken hasar × `KapalıHasar`.</summary>
+        public virtual float VadeAralığı => 0f;
+        public virtual float VadeAçıklığı => 0f;
+        public virtual float KapalıHasar => 1f;
+
+        /// <summary>&gt;0 ise ölünce bu kadar küçük taksit doğar — TAKSİT. Her biri başlangıç havuzunun `TaksitPayı`.</summary>
+        public virtual int TaksitSayısı => 0;
+        public virtual float TaksitPayı => 0f;
+
         public static readonly EnemyKind Basic = new BasicKind();
         public static readonly EnemyKind Leak = new LeakKind();
         public static readonly EnemyKind Vault = new VaultKind();
@@ -89,15 +100,20 @@ namespace TekCan
         public static readonly EnemyKind Lapse = new LapseKind();
         public static readonly EnemyKind Shield = new ShieldKind();
         public static readonly EnemyKind Bankrupt = new BankruptKind();
+        public static readonly EnemyKind Term = new TermKind();
+        public static readonly EnemyKind Installment = new InstallmentKind();
+        /// <summary>TAKSİT'in doğurduğu küçük taksit — odalar bunu seçmez (`All`'da değil), bölünmez.</summary>
+        public static readonly EnemyKind InstallmentPart = new InstallmentPartKind();
 
         /// <summary>
         /// Oda kompozisyonu bu listeden seçiyor. ⚠️ SIRA = AÇILIŞ SIRASI:
         /// `RoomManager.PickKind` bölgeye göre baştan kaç tür açık olduğunu belirliyor,
         /// yani buraya eklenen yeni tür GEÇ bölgelere düşer. Öğretim sırası budur.
         /// ⚠️ Faz 34: KALKANLI ve MÜFLİS 1. bölgenin (SIZINTI'dan sonra) — bölge tavanları da 2 arttı.
+        /// ⚠️ Faz 35: VADELİ ve TAKSİT 2. bölgenin (KASA'dan sonra) — tavanlar 4 · 7 · 8 · 10 · 11.
         /// </summary>
         public static readonly EnemyKind[] All =
-            { Basic, Leak, Shield, Bankrupt, Vault, Runner, Insurer, Bailiff, Lapse };
+            { Basic, Leak, Shield, Bankrupt, Vault, Term, Installment, Runner, Insurer, Bailiff, Lapse };
     }
 
     /// <summary>Temel düşman — dengenin sıfır noktası, diğerleri buna göre okunuyor.</summary>
@@ -231,6 +247,43 @@ namespace TekCan
         public override float PatlamaYarıçapı => 2.4f;
         public override float PatlamaBedeli => 1.2f;
         public override float PatlamaHasarı => 0.6f;
+    }
+
+    /// <summary>
+    /// VADELİ — 4 sn'de bir 1.5 sn açılır; kapalıyken vuruşun onda biri eder (rengi koyulaşır).
+    ///
+    /// Değiştirdiği karar: ZAMANLAMA. KALKANLI "nereden" diye sordururken bu "ne zaman" diye sordurur:
+    /// kapalıyken başkasına dön, vadesi gelince ona. DARALMA'da (oyalanmak pahalı) beklemek de bedelli.
+    /// </summary>
+    public sealed class TermKind : EnemyKind
+    {
+        public override string Name => "VADELİ";
+        public override Color FullColor => new Color(0.45f, 0.8f, 0.85f);
+        public override float VadeAralığı => 4f;
+        public override float VadeAçıklığı => 1.5f;
+        public override float KapalıHasar => 0.1f;
+    }
+
+    /// <summary>
+    /// TAKSİT — ölünce iki küçük taksit doğar (havuzunun %35'i; onlar bölünmez).
+    ///
+    /// Değiştirdiği karar: TOPLAMAK. Tek hedefli silahla kesersen borç çoğalır; ikisini birden
+    /// alan bir savuruş için yerini seç. Toplam havuz %170 — dağınık kesmek pahalı.
+    /// </summary>
+    public sealed class InstallmentKind : EnemyKind
+    {
+        public override string Name => "TAKSİT";
+        public override Color FullColor => new Color(0.85f, 0.55f, 0.7f);
+        public override int TaksitSayısı => 2;
+        public override float TaksitPayı => 0.35f;
+    }
+
+    /// <summary>TAKSİT'in küçük taksiti — hızlı, bölünmez.</summary>
+    public sealed class InstallmentPartKind : EnemyKind
+    {
+        public override string Name => "TAKSİT PARÇASI";
+        public override Color FullColor => new Color(0.95f, 0.72f, 0.85f);
+        public override float SpeedMultiplier => 1.2f;
     }
 
     /// <summary>

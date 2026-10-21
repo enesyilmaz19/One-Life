@@ -215,6 +215,13 @@ namespace TekCan
                          * Mathf.Min(Growth, 1.5f)                             // ZAMANAŞIMI (hafif)
                          * (Fleeing ? _t.runnerFleeSpeedMultiplier : 1f)
                          * (_yavaşKalan > 0f ? _yavaşÇarpan : 1f);                 // HACİZ · İHTAR (Faz 33)
+        float _dövüşSüresi;
+        /// <summary>MUHASİP (Faz 35): oyuncunun vuruşunun kaybettiği değer — her 10 sn'de `Amortisman`, en çok %50.</summary>
+        public float DeğerKaybı => Boss != null && Boss.Amortisman > 0f ? Mathf.Min(0.5f, Boss.Amortisman * Mathf.Floor(_dövüşSüresi / 10f)) : 0f;
+
+        /// <summary>VADELİ (Faz 35): her `VadeAralığı`nın son `VadeAçıklığı` saniyesi açık; öbür türlerde hep açık.</summary>
+        public bool VadeAçık => Kind.VadeAralığı <= 0f || _aliveTime % Kind.VadeAralığı >= Kind.VadeAralığı - Kind.VadeAçıklığı;
+
         /// <summary>KABADAYI (Faz 34): havuzu yarıya indi, öfkeli.</summary>
         public bool Öfkeli => Boss != null && Boss.ÖfkeHızı != 1f && _startingPool > 0f && TimeLeft <= _startingPool * 0.5f;
 
@@ -937,6 +944,8 @@ namespace TekCan
             if (PlayerInStrikeCone())
             {
                 float cost = HitCost * (_attack?.CostMul ?? 1f) * _ısrar;    // ISRAR
+                if (Boss != null && Boss.YüzdeBedel > 0f && Clock.Instance != null)            // BİLİRKİŞİ (Faz 35): değer biçer
+                    cost = Mathf.Max(cost, Clock.Instance.Seconds * Boss.YüzdeBedel);
                 // ⚠️ NEMESİS: boss'un senden aldığı saniye SAYILIYOR — ve gerçekten
                 // İNEN bedel sayılıyor. Dash i-frame'i vuruşu yutabiliyor; "vurdum,
                 // demek ki aldı" varsayımı boss'a hak etmediği alacak yazardı.
@@ -950,6 +959,7 @@ namespace TekCan
                 {
                     if (Boss.ZorlaAlır > 0f) TimeLeft = Mathf.Min(_startingPool, TimeLeft + _startingPool * Boss.ZorlaAlır);   // SENETÇİ
                     if (Boss.Kelepçe > 0f && pc != null) pc.Kelepçele(Boss.Kelepçe);                                        // KOLCU
+                    if (Boss.HasatKilidi > 0f && Clock.Instance != null) Clock.Instance.HasatKilitle(Boss.HasatKilidi);    // DEFTERDAR
                 }
             }
 
@@ -1166,6 +1176,8 @@ namespace TekCan
             // ponytail: "önde" OYUNCUNUN yerine göre, hasarın kaynağına değil (kule, ipotek, çek de oyuncunun
             // yerinden sayılır); kaynak gerekirse TakeDamage'e kaynak noktası eklenir.
             if (Kind.ÖndenHasar < 1f && _player != null && Önünde(_player.position)) damage *= Kind.ÖndenHasar;
+            damage *= 1f - DeğerKaybı;                                     // MUHASİP (Faz 35): dövüş uzadıkça vuruşun değer kaybeder
+            if (!VadeAçık) damage *= Kind.KapalıHasar;                     // VADELİ (Faz 35): vadesi gelmeden ödemez
             float drained = Mathf.Min(damage, TimeLeft);
             TimeLeft -= drained;
 
@@ -1185,6 +1197,7 @@ namespace TekCan
                              * Kind.HarvestMultiplier
                              * Region.Harvest                      // KITLIK bölgesi kuralı
                              * BossKind.ActiveHarvestMultiplier()  // EKSPER'in suçu
+                             * (clock.HasatKilitli ? 0f : 1f)      // DEFTERDAR: deftere yazıldın (Faz 35)
                              * InsuredHarvest()                    // SİGORTA koruması
                              * (IsBoss ? _t.bossHarvestMultiplier : 1f)
                              * clock.HasatDoyması;                 // DOYMA: saat büyüdükçe hasat azalır
@@ -1321,6 +1334,8 @@ namespace TekCan
                 }
             }
 
+            _dövüşSüresi += dt;                                            // MUHASİP'in amortismanı bundan
+
             // MURABAHACI faz 2: vurmadığın her saniye havuzu doluyor. Ondan HIZLI
             // olmak zorundasın. Krediyi doldurmak hasat vermiyor, dövüşü uzatıyor.
             float regen = Boss.RegenPerSecond(_t, Phase);
@@ -1357,7 +1372,9 @@ namespace TekCan
             if (Hollow || _t == null) return;
 
             // ZAMANAŞIMI: yaşadığı süre onu besliyor (bkz. `Growth`).
+            bool vadeÖnce = VadeAçık;
             _aliveTime += dt;
+            if (VadeAçık != vadeÖnce) Paint();                             // VADELİ açılıp kapanınca görünsün
 
             // MÜBAŞİR: uzaktan tebligat — durduğun YERE bırakıyor, yaklaşmıyor.
             // Bu güne kadar bütün düşmanlar yakın dövüştü, yani "uzak dur" bedava
@@ -1746,6 +1763,18 @@ namespace TekCan
                 if (m != null) m.DüşmanHasarı = _startingPool * Kind.PatlamaHasarı;
             }
 
+            // TAKSİT (Faz 35): borç taksitlere bölünüyor — ölünce küçükleri doğar (onlar bölünmez).
+            if (Kind.TaksitSayısı > 0 && _player != null)
+                for (int i = 0; i < Kind.TaksitSayısı; i++)
+                {
+                    float açı = (360f / Kind.TaksitSayısı) * i * Mathf.Deg2Rad + 0.6f;
+                    var yer = ArenayaSığdır(transform.position + new Vector3(Mathf.Cos(açı), 0f, Mathf.Sin(açı)) * (Radius + 0.9f));
+                    yer.y = Bootstrap.ArenaCenter.y;
+                    Bootstrap.SpawnEnemyAt(_t, yer, _player, Kamera,
+                                           poolMultiplier: _startingPool * Kind.TaksitPayı / Mathf.Max(0.01f, _t.enemyTimePool),
+                                           boss: false, kind: EnemyKind.InstallmentPart, parent: transform.parent);
+                }
+
             float before = Clock.Instance != null ? Clock.Instance.Seconds : 0f;
             Kind.OnKilled(Clock.Instance, _t, _startingPool);   // KASA bütün ödemesini burada yapar
             float paid = (Clock.Instance != null ? Clock.Instance.Seconds : 0f) - before;
@@ -1783,6 +1812,7 @@ namespace TekCan
             // ama şu an senin işin değil".
             else if (Dormant) c = Color.Lerp(KindColor, new Color(0.25f, 0.25f, 0.3f), 0.72f);
             else if (Fleeing) c = Color.Lerp(KindColor, Color.white, 0.45f);        // kaçıyor: soluyor
+            else if (!VadeAçık) c = Color.Lerp(KindColor, new Color(0.18f, 0.18f, 0.22f), 0.65f);   // VADELİ kapalı: koyu, vurma
             else c = KindColor;                                                     // tür + rütbe rengi
 
             _renderer.material.color = c;

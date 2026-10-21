@@ -73,7 +73,7 @@ namespace TekCan.EditorTools
                         .Select(m => m.Name).ToList();
             failed += Check(ref total, $"⚠️ her adamın en az bir YAKIN ve bir UZAK saldırısı var{(eksik.Count > 0 ? " — eksik: " + string.Join(", ", eksik) : "")}",
                             eksik.Count == 0, eksik.Count);
-            var geçici = MiniBossKind.For(1, 0, S);
+            var geçici = MiniBossKind.For(2, 0, S);                             // Faz 35'ten beri 2. bölge de özgün
             failed += Check(ref total, $"öbür bölgeler geçici dilimde kalıyor ({geçici.Name})", geçici.Özgün == null && geçici.Name.Contains("·"), 0);
             return failed;
         }
@@ -84,12 +84,12 @@ namespace TekCan.EditorTools
             int failed = 0, S = Mathf.Max(1, t.subRegionsPerRegion);
             BossKind M(int s) => MiniBossKind.For(0, s, S);
 
-            // HACİZCİ: yanındayken emer — TAHSİLDAR faz 1'in aurasının TAMAMI (geçici dilim yarısıydı)
+            // HACİZCİ: yanındayken emer — TAHSİLDAR faz 1 aurasının ×1.6'sı; ailenin geri kalanı ×1.2 (geçici dilim yarısıydı)
             var (r1, c1, p1, haciz) = Kur(t, M(0));
             float s0 = c1.Seconds; haciz.ApplyAura(1f);
             float emdi = s0 - c1.Seconds, tam = BossKind.For(0).AuraDrain(t, 1);
-            failed += Check(ref total, $"⚠️ HACİZCİ yanındayken emer: 1 sn'de {emdi:0.00} sn = TAHSİLDAR faz 1 aurası {tam:0.00} (geçici dilim yarısı)",
-                            emdi > 0f && Mathf.Abs(emdi - tam) < 0.001f, emdi);
+            failed += Check(ref total, $"⚠️ HACİZCİ yanındayken emer: 1 sn'de {emdi:0.00} sn = TAHSİLDAR faz 1 aurası {tam:0.00} × 1.6 · ailenin en çok emeni",
+                            emdi > 0f && Mathf.Abs(emdi - tam * 1.6f) < 0.001f && Enumerable.Range(1, S - 1).All(i => M(i).AuraDrain(t, 1) < emdi), emdi);
             Temizle(r1);
 
             // SENETÇİ: İNEN isabeti havuzunu %4 doldurur; ıskalayınca dolmaz
@@ -142,8 +142,8 @@ namespace TekCan.EditorTools
 
             // SAĞ KOL: yarım aura + yarıda öfke ×1.25 — patronun provası
             var sağ = M(S - 1);
-            failed += Check(ref total, $"SAĞ KOL ikisinden biraz: aura {sağ.AuraDrain(t, 1):0.00} (TAHSİLDAR'ın yarısı) · öfke ×{sağ.ÖfkeHızı:0.00}",
-                            Mathf.Abs(sağ.AuraDrain(t, 1) - BossKind.For(0).AuraDrain(t, 1) * 0.5f) < 0.001f && Mathf.Abs(sağ.ÖfkeHızı - 1.25f) < 0.001f, sağ.ÖfkeHızı);
+            failed += Check(ref total, $"SAĞ KOL ikisinden biraz: aura {sağ.AuraDrain(t, 1):0.00} (ailenin ×1.2'si) · öfke ×{sağ.ÖfkeHızı:0.00}",
+                            Mathf.Abs(sağ.AuraDrain(t, 1) - BossKind.For(0).AuraDrain(t, 1) * 1.2f) < 0.001f && Mathf.Abs(sağ.ÖfkeHızı - 1.25f) < 0.001f, sağ.ÖfkeHızı);
             return failed;
         }
 
@@ -238,8 +238,7 @@ namespace TekCan.EditorTools
                 }
             Temizle(root);
             failed += Check(ref total, $"⚠️ 1. bölgede {çıkan.Count} tür doğuyor ({string.Join(", ", çıkan.Select(k => k.Name))}) — KALKANLI {ilkKalkan}. odada, MÜFLİS {ilkMüflis}. odada; tavanlar {string.Join("/", Region.All.Select(r => r.UnlockedKinds))}",
-                            çıkan.Count == 4 && ilkKalkan > 0 && ilkMüflis > 0
-                            && Region.All.Select(r => r.UnlockedKinds).SequenceEqual(new[] { 4, 5, 6, 8, 9 })
+                            çıkan.Count == 4 && ilkKalkan > 0 && ilkMüflis > 0 && Region.At(0).UnlockedKinds == 4
                             && EnemyKind.All[2] == EnemyKind.Shield && EnemyKind.All[3] == EnemyKind.Bankrupt, çıkan.Count);
             return failed;
         }
@@ -256,7 +255,8 @@ namespace TekCan.EditorTools
             float enYakınX = arkaSıra.Min(a => önSıra.Min(b => Mathf.Abs(a.x - b.x)));
             bool iki = önSıra.All(p => Mathf.Abs(p.z - önSıra[0].z) < 0.01f) && arkaSıra.All(p => Mathf.Abs(p.z - arkaSıra[0].z) < 0.01f)
                     && arkaSıra[0].z - önSıra[0].z > 4f && enYakınX > 0.5f;
-            var bölge1 = Enumerable.Range(1, t.RoomsInRegion).Select(o => RoomLayout.For(o - 1)).ToList();
+            var bölge1 = Enumerable.Range(1, t.RoomsInRegion).Where(o => RoomManager.Tür(t, o) == RoomManager.OdaTürü.Dövüş)
+                                   .Select(o => RoomManager.Diziliş(t, 0, o)).ToList();             // yalnız dövüş odaları
             failed += Check(ref total, $"⚠️ KISKAÇ ağzı girişe açık ({(ağız ? "evet" : "HAYIR")}) · ÇİFT SIRA iki hat, arka hat boşluklara kayık (en yakın x farkı {enYakınX:0.0}) · 1. bölgede ikisi de geliyor",
                             ağız && iki && bölge1.Contains(RoomLayout.Pincer) && bölge1.Contains(RoomLayout.DoubleRow), enYakınX);
             return failed;
