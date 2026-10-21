@@ -662,3 +662,7 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
 - **Kendini besleyen ceza sarmal yapar (Faz 34):** "her isabeti havuzunu doldurur" vurulanı uzatıyor, uzayan dövüş daha çok
   vurduruyor — SENETÇİ %4'te 2. mini olarak bölgenin en zoru oldu (5.9 dk, saat iki kez bitti). Kapı etkiyi ölçtü; sarmalı
   ancak bütün bölgeyi oynayan bot gördü. **Kural:** hatayı cezalandırıp dövüşü uzatan her imzayı bölge ölçümünden geçir.
+- **İmzanın sözünü dövüşte SAY, sonra yaz (Faz 34):** KABADAYI'ya "iter, üstüne atlar" diye itme ekledim, kapı da etkiyi ölçtü (0.5 → 3.5
+  birim). Bot sayacı ekleyince gerçek: 46 savuruşta 0 itme — bot hep menzilden çıkıyor. Sayaç olmasa sözü belgeye yazacaktım.
+  Önce yanlış sayaç da yalan söyledi ("saldırı değişince say" aynı saldırının tekrarını saymıyordu: 46 HACİZ "1" göründü).
+  **Kural:** bir imzanın dövüşteki vaadini olayın kendi sayacıyla (kaç kez itti, kaç saldırı başladı) ölç; tutmuyorsa geri al.

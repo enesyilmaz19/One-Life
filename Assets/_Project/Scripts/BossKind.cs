@@ -1139,8 +1139,8 @@ namespace TekCan
             {
                 new Adam { Ad = "HACİZCİ", Suç = "yanındayken emer", Saldırı = new[] { "HACİZ", "TAHSİL", "İHBARNAME" }, Aura = 1f },
                 new Adam { Ad = "SENETÇİ", Suç = "her isabeti cebine — havuzu dolar", Saldırı = new[] { "HACİZ", "İHBARNAME", "KUŞATMA" }, ZorlaAlır = 0.02f },   // %4'te sarmal: vurulan uzatır, uzayan vurulur — 1. bölge ölçümünde 5.9 dk, saat iki kez bitti
-                new Adam { Ad = "KABADAYI", Suç = "yarıda öfkelenir", Saldırı = new[] { "ZORLA ALIM", "YAKA PAÇA", "HACİZ" }, Öfke = 1.4f },
-                new Adam { Ad = "KOLCU", Suç = "isabeti kelepçeler — dash'le çık", Saldırı = new[] { "EL KOYMA", "TAHSİL+", "İHBARNAME+" }, Kelepçe = 1.2f },
+                new Adam { Ad = "KABADAYI", Suç = "yarıda öfkelenir", Saldırı = new[] { "ZORLA ALIM", "YAKA PAÇA", "HACİZ" }, Aura = 0.5f, Öfke = 1.4f },
+                new Adam { Ad = "KOLCU", Suç = "isabeti kelepçeler — dash'le çık", Saldırı = new[] { "EL KOYMA", "TAHSİL+", "İHBARNAME+" }, Aura = 0.5f, Kelepçe = 1.2f },
                 new Adam { Ad = "SAĞ KOL", Suç = "patronun provası", Saldırı = new[] { "KUŞATMA+", "EL KOYMA", "KELEPÇE", "TAM TAHSİL" }, Aura = 0.5f, Öfke = 1.25f },
             },
         };

@@ -12,10 +12,8 @@
 | 9 | 🎮 **Faz 31 testi** | **F6** yeni koşu, **N** 2. bölge · 3. ara bölgenin sunağında REHİN: sol tık yakala, tekrar sol tık fırlat, hemen **1** KONİ = SİLİP SÜPÜR · sağ tık TAKAS · dash + sol tık SÜRÜKLEME · **B** 2. boss → ÇEK (KADRO sunağından envantere al): fırlat, değince HACİZ'e geç = SENET HACZİ · 3. bölgenin 3. ara bölgesinin 4. odasında köşe → KARŞILIK: düşman vurmadan hemen önce sol tık (karşılar), sonra FAİZLİ = KARŞI İCRA | Gördüklerini yaz: KARŞILIK penceresi (0.23 sn) yetiyor mu, rehine taşıma hissi, çekin dönüşü |
 | 10 | 🎮 **Faz 32 testi** | **F6**, **N N**, **B** 3. boss → TAHVİL: sol tıkı BASILI TUT (VADE 1/2/3 yazar, saat iki kat akar), bırak · hemen **2** FAİZLİ = VADE FARKI · 4. bölgenin 3. sunağında MÜŞTEREK: bir düşmana vur, sonra başkasına → pembe çizgi = bağ; birine ne vurursan öbürü de yer · sağ tık ZİNCİRLEME · bağın üstünden dash = KOPARMA · **B** 4. boss → ARBİTRAJ: arkadan ×2.5, önden ×0.5 · sağ tık görünmezlik · düşmanın içinden dash + sol tık = TERS İŞLEM · 5. bölgenin 3. ara bölgesinin 4. odasında köşe → KİRA: kule kur, sağ tık TAHLİYE (kalan kirayı peşin ödersin) | Gördüklerini yaz: basılı tutmak sıkıcı mı, bağ okunuyor mu, arkaya geçmek zevkli mi, kule kirası adil mi |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
-| 14 | 🎮 **Kapı testi** (karar verildi: evet) | Bir odada son düşmanı **kapının üstünde durarak** öldür → kapı açılır ama seni geçirmemeli. Diskten çık, yeniden bas → geçmeli. Normal yol (dışarıdan yürüyüp girmek) eskisi gibi. Kafa karıştırıyor mu — kapı açık ama geçirmiyor? | Gördüklerini yaz |
 | 13 | 🎮 *(isteğe bağlı)* **Faz 33 his testi** | Bot oynadı (P33 3/3, P33c 12/12 — aşağıda "BOSS SÜRELERİ" bölümü). Sana kalan yalnızca göz: **F6**, **M** → sunak renkleri okunuyor mu (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), **B** → efsanevi "vay" dedirtiyor mu | Gördüklerini yaz |
 | 15 | 🎮 *(isteğe bağlı)* **Faz 34 his testi** | Bot oynadı (P34 ✅, 1. bölge 44.6 dk — aşağıda FAZ 34). Sana kalan his: **F6** → 3. odadan KALKANLI (önden vurunca az eder, arkasına dolan) · 4. odadan MÜFLİS (öldüğü yerde 1 sn sonra patlar) · 6.–7. oda KISKAÇ / ÇİFT SIRA · **M** ile TAHSİLDAR'ın 5 adamı: HACİZCİ, SENETÇİ, KABADAYI, KOLCU, SAĞ KOL — adları ve imzaları ekranda | Gördüklerini yaz: imzalar hissediliyor mu, KALKANLI'nın arkasına geçmek zevkli mi, MÜFLİS patlaması okunuyor mu |
-| 16 | ⚖️ **Mini boss süreleri** | 1. bölgede (bot, beklenen güç): HACİZCİ 2.0 · SENETÇİ 2.9 · KABADAYI 2.0 · KOLCU 2.1 · SAĞ KOL 2.7 dk · TAHSİLDAR 3.8 dk. Ana boss'lar için "her biri öncekinden uzun" dedin; **mini boss'lar için de bölge içinde böyle olsun mu?** (Olursa boss başına havuz payı gibi mini başına pay.) | Karar yaz |
 
 ---
 
@@ -29,6 +27,9 @@
 - **Yükseltme gücü = A** (2026-10-19) — zayıf nadir/epik/efsanevileri güçlendir, aşırı güçlü yaygınları üst enderliğe taşı, fiyatlar aynı. Uygulandı (Faz 33 bölümü, "A — güç ayarı").
 - **Boss süreleri** (2026-10-20) — *"bossların uzun sürmesi okeydir ama her bir boss öncekinden daha uzun sürmeli"*. Bot ölçtü, EKSPER'in havuzu ×1.25 (aşağıda "BOSS SÜRELERİ").
 - **Bot düzeltmesi (işaretten menzilde çık) = uygula** (2026-10-20). Uygulandı.
+- **Mini boss süreleri** (2026-10-21) — *"yakın ama rastgele olsun, sonraki öncekinden uzun sürecek diye bir kaide yok. Ama zorlasınlar
+  yine de"*. Sıra kuralı yok; dibinde bedava durulan adam olmasın (aşağıda FAZ 34 → "Enes'in kararından sonra").
+- **#14 kapı testi** (2026-10-21) — *"14'ün testini sen yap"*: bot `…OtopilotMenu.KapiTesti` ✅ (aşağıda).
 
 ---
 
@@ -274,6 +275,18 @@ kaydırılmış — iki kez yarman gerek).
   uzak (kapı sayıyor): HACİZCİ'ye İHBARNAME, SAĞ KOL = KUŞATMA+ · EL KOYMA · KELEPÇE · TAM TAHSİL → 2.7 dk, harita geliyor.
 - **SENETÇİ sarmalı:** %4'te vurulmak dövüşü uzatıyor, uzayan dövüş daha çok vuruluyor — 1. bölge ölçümünde 5.9 dk, saat iki
   kez bitti (2. mini bölgenin en zoru oldu). %2'ye indi → 2.9 dk, F5 yok.
+
+**Enes'in kararından sonra (2026-10-21):** *"süresi yakın ama rastgele … ama zorlasınlar yine de"*.
+- Botun mini boss başına saat kaybı: HACİZCİ −79 · SENETÇİ −346 · **KABADAYI −2 · KOLCU −6** · SAĞ KOL −62. İkisi bedavaydı: bot
+  KABADAYI'nın 46 konisinin 46'sından, KOLCU'nun bütün saldırılarından kaçtı (hamleler uzaktan, dibine yalnız koni geliyor).
+- KABADAYI ve KOLCU'ya yarım aura (geçici dilimdeki her mini'de vardı; TAHSİLDAR'ın adamları da emer) → −36 · −44. Kapı: "dibinde
+  bedava durulan adam yok" (bozunca "bedava: KABADAYI" kırmızı).
+- ❌ Denendi, geri alındı: KABADAYI'ya **itme** ("iter, üstüne atlar"). Sayaç gösterdi: 46 savuruşta **0 kez** itti — bot her savuruşta
+  menzilden çıkıyor, itme ancak menzilde kalana işliyordu; sözünü tutmayan imza kalmadı.
+- Süreler 2.0 · 2.9 · 2.0 · 2.2 · 2.7 dk — yakın, sıra yok. P34'te artık her mini'nin saldırı sayımı var.
+
+**#14 kapı testi (bot, gerçek oyun):** `…OtopilotMenu.KapiTesti` — son düşman kapının üstünde gerçek vuruşla öldü → kapı açıldı,
+1.5 sn sonra oda aynı ✅ · diskten çık, yeniden bas → sonraki odaya geçti ✅. Kural bozulunca (`_önceÇık = false`) K-1 ❌ ("GEÇİRDİ").
 
 **Bilinen:** bot TAHSİLDAR'ın KUŞATMA'sından iyi kaçamıyor (P30'da %61–65 isabet, Faz 34'ten önce de) — SENETÇİ'nin darbesinin
 çoğu ondan. Botun dibinde kaçış hesabı büyük halkada kısa kalıyor olabilir; ayrı iş.

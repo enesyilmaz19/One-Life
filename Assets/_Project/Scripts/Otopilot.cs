@@ -322,6 +322,8 @@ namespace TekCan
                 ? new[] { Kurulum(), P33c(), Bitir() }
                 : senaryo == "p34"
                 ? new[] { Kurulum(), P34(), Bitir() }
+                : senaryo == "kapi"
+                ? new[] { Kurulum(), KapıTesti(), Bitir() }
                 : SessionState.GetInt(AdımAnahtar, 0) == 0
                 ? new[] { Kurulum(), GirdiKanıtı(), K1Hazırla() }          // K1: Play'den çıkıp giriyor
                 : new[] { K1Doğrula(), Bölge1(), Sunak(), Tahsildar(), Haciz(), Simsar(), Final(), Bitir() };
@@ -1425,6 +1427,65 @@ namespace TekCan
             Kaydet("F", "Enderlik başına (ortalama değer, fiyat, geri ödeme)", null, özet.ToString());
         }
 
+        // ── MASA #14 — KAPI TESTİ (Enes 2026-10-21: "14'ün testini sen yap") ──
+        /// <summary>
+        /// Gerçek oyunda: son düşmanı KAPININ ÜSTÜNDE durarak, gerçek bir vuruşla öldür → kapı açılır ama geçirmez.
+        /// Diskten çık, yeniden bas → geçer (bu, dışarıdan yürüyüp girmenin de kendisi).
+        /// </summary>
+        IEnumerator KapıTesti()
+        {
+            _bekçiDk = 10f;
+            Sahne("KAPI 1/2", "son düşman kapının üstünde ölüyor → kapı açılmalı ama geçirmemeli");
+            yield return OdayaAtla(2);
+            var oda = Oda; var kapı = FindFirstObjectByType<ExitGate>();
+            if (oda == null || kapı == null) { Kaydet("K-1", "kapı testi kurulamadı", false, "oda ya da kapı yok"); yield break; }
+            int no = oda.Room;
+            int Canlı() { int n = 0; foreach (var e in Enemy.All) if (e != null && !e.Dormant) n++; return n; }
+            float t0 = Şimdi;
+            while (Şimdi - t0 < 60f && !(oda.RemainingWaves == 0 && Canlı() == 1))   // dalgaları birer birer düşür, biri kalsın
+            {
+                foreach (var e in Enemy.All)
+                    if (e != null && !e.Dormant) { e.TakeDamage(e.TimeLeft); e.TakeDamage(1f); break; }
+                yield return null;
+            }
+            Enemy son = null;
+            foreach (var e in Enemy.All) if (e != null && !e.Dormant) son = e;
+            if (son == null) { Kaydet("K-1", "kapı testi kurulamadı", false, "son düşman yok"); yield break; }
+            Vector3 k = kapı.transform.position;
+            Dur();
+            Oyuncu.transform.position = new Vector3(k.x, Ben.y, k.z);                     // diskin ortası
+            son.transform.position = new Vector3(k.x, son.transform.position.y, k.z - 1.2f);
+            son.TakeDamage(Mathf.Max(0f, son.TimeLeft - 0.1f));                           // tek gerçek vuruşla ölsün
+            yield return null;
+            t0 = Şimdi;
+            while (son != null && Şimdi - t0 < 10f)                                      // yerinden kıpırdamadan vur (DövüşAdımı'nın ritmi)
+            {
+                NişanAl(son.transform.position);
+                if (Oyuncu != null && !Oyuncu.Attacking && Time.time - _sonVuruş > 0.15f) { _sol = true; _sonVuruş = Time.time; }
+                yield return null;
+            }
+            bool öldü = son == null;
+            float öldüğündeMesafe = Düz(Ben - k).magnitude;
+            yield return Bekle(1.5f);
+            bool geçmedi = Oda != null && Oda.Room == no;
+            Kaydet("K-1", "Son düşman KAPININ ÜSTÜNDE gerçek vuruşla öldü: kapı açıldı, GEÇİRMEDİ",
+                   öldü && kapı != null && kapı.IsOpen && öldüğündeMesafe <= 1.6f && geçmedi,
+                   $"son düşman {(öldü ? "öldü" : "ÖLMEDİ")} · oda temiz {(Oda != null && Oda.Cleared)} · dalga {(Oda != null ? Oda.RemainingWaves : -1)} · canlı {Canlı()} · öldüğünde kapıya {öldüğündeMesafe:0.00} birim (disk 1.6) · kapı {(kapı != null && kapı.IsOpen ? "açık" : "KAPALI")} · 1.5 sn sonra oda {(Oda != null ? Oda.Room : -1)} ({(geçmedi ? "aynı" : "GEÇİRDİ")})");
+
+            Sahne("KAPI 2/2", "diskten çık, yeniden bas → geçmeli");
+            t0 = Şimdi;
+            while (Şimdi - t0 < 0.8f) { Yürü(Vector3.back); yield return null; }
+            Dur();
+            float dışarıda = Düz(Ben - k).magnitude;
+            bool çıkınca = Oda != null && Oda.Room == no;
+            t0 = Şimdi;
+            while (Oda != null && Oda.Room == no && Şimdi - t0 < 3f) { Yürü(k - Ben); yield return null; }
+            Dur();
+            Kaydet("K-2", "Diskten çıkıp yeniden basınca GEÇTİ (dışarıdan yürüyüp girmek)",
+                   dışarıda > 1.6f && çıkınca && Oda != null && Oda.Room == no + 1,
+                   $"çıkınca kapıya {dışarıda:0.00} birim, oda {(çıkınca ? "aynı" : "değişti")} · basınca oda {no} → {(Oda != null ? Oda.Room : -1)}");
+        }
+
         // ── FAZ 34 PLAYTEST — 1. bölge içeriği (Enes 2026-10-20: "bittikten sonra testi bota yaptır") ──
         /// <summary>
         /// TAHSİLDAR'ın 5 adamı M ile, beklenen güçle ve saat doyma tavanında (MiniTesti gibi): adı ekranda mı, imzası
@@ -1452,6 +1513,13 @@ namespace TekCan
                 bool ekranda = Oda.Prompt().Contains(tanım.Ad);
                 float t0 = Şimdi, d0 = c.TotalHitCost, son = boss.TimeLeft, aura = 0f;
                 int dolma = 0; bool öfke = false, kelepçe = false, harita = false;
+                var saldırılar = new Dictionary<string, int>();
+                _yeniSaldırı = e =>
+                {
+                    if (e == null || !e.IsBoss || e.CurrentAttack == null) return;
+                    var a = e.CurrentAttack;
+                    saldırılar[a.Name] = (saldırılar.TryGetValue(a.Name, out var sn) ? sn : 0) + 1;
+                };
                 while (Şimdi - t0 < 900f && !_bitti && Saat == c && !c.Dead && Oda != null && Oda.IsMiniBossRoom && !Oda.Cleared)
                 {
                     var bb = Boss();
@@ -1469,6 +1537,7 @@ namespace TekCan
                     yield return null;
                 }
                 Dur();
+                _yeniSaldırı = null;
                 float darbe = c.TotalHitCost - d0;
                 bool öldü = Oda != null && Oda.IsMiniBossRoom && Oda.Cleared && Saat == c;
                 // İmza: isabet gerektirenler (SENETÇİ, KOLCU) yalnızca bot vurulduysa görülebilir — vurulmadıysa sayılmaz
@@ -1478,6 +1547,9 @@ namespace TekCan
                 else if (tanım.Öfke != 1f) { imzaOk = öfke && (tanım.Aura <= 0f || aura > 0f); imza = (öfke ? "öfkelendi" : "ÖFKELENMEDİ") + (tanım.Aura > 0f ? $" · aura {aura:0.00}/sn" : ""); }
                 else { imzaOk = aura > 0f; imza = $"aura {aura:0.00}/sn"; }
                 if (s == S - 1) { imzaOk &= harita; imza += harita ? " · harita saldırısı geldi" : " · HARİTA SALDIRISI GELMEDİ"; }
+                var sYazı = new List<string>();
+                foreach (var (ad, kaç) in saldırılar) sYazı.Add($"{ad} {kaç}");
+                imza += $" · saldırılar: {string.Join(", ", sYazı)}";
                 if (!öldü || !ekranda || !imzaOk) adamlarTamam = false;
                 satırlar.Add($"{(öldü && ekranda && imzaOk ? "✅" : "❌")} {tanım.Ad}: {(Şimdi - t0) / 60f:0.0} dk · {imza} · darbe −{darbe:0}" +
                              (ekranda ? "" : " · ⚠️ ADI EKRANDA DEĞİL") + (öldü ? "" : " · ❌ ÖLMEDİ"));

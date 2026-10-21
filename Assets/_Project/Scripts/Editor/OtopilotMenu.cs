@@ -88,6 +88,9 @@ namespace TekCan.EditorTools
 
         public static void Playtest34() => Başlat(izle: false, senaryo: "p34");
 
+        /// <summary>Masa #14: son düşmanı kapının üstünde öldür → geçirmez; çık, yeniden bas → geçer. ~10 sn.</summary>
+        public static void KapiTesti() => Başlat(izle: false, senaryo: "kapi");
+
         /// <summary>Faz 27 ölçümü: bütün bölgeler atlamadan, bir tam koşu kaç dakika (Enes 2026-10-12).</summary>
         [MenuItem("Tek Can/Otopilot — tam koşu ölçümü (izle)")]
         public static void TamKosuIzle() => Başlat(izle: true, senaryo: "tam");

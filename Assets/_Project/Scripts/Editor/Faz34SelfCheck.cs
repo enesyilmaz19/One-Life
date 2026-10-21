@@ -134,6 +134,12 @@ namespace TekCan.EditorTools
             failed += Check(ref total, $"⚠️ KOLCU kelepçeler: isabetten sonra yürüyüş ×{önce:0.00} → ×{sonra:0.00}; HACİZCİ'ninki kelepçelemez ({(başkasıKelepçeledi ? "KELEPÇELEDİ" : "evet")})",
                             Mathf.Abs(önce - 1f) < 0.001f && Mathf.Abs(sonra - 0.6f) < 0.001f && !başkasıKelepçeledi, sonra);
 
+            // Enes (2026-10-21): "süresi yakın ama rastgele olsun … ama zorlasınlar yine de" — dibinde bedava durulan adam yok:
+            // bot KABADAYI'nın 46 konisinin 46'sından, KOLCU'nunkilerin hepsinden kaçtı, ikisi bota 2–6 sn'ye mal oldu
+            var bedava = Enumerable.Range(0, S).Select(M).Where(m => m.AuraDrain(t, 1) <= 0f && m.ZorlaAlır <= 0f).Select(m => m.Name).ToList();
+            failed += Check(ref total, $"⚠️ dibinde bedava durulan adam yok: her biri emiyor ya da isabeti havuzunu dolduruyor{(bedava.Count > 0 ? " — bedava: " + string.Join(", ", bedava) : "")}",
+                            bedava.Count == 0, bedava.Count);
+
             // SAĞ KOL: yarım aura + yarıda öfke ×1.25 — patronun provası
             var sağ = M(S - 1);
             failed += Check(ref total, $"SAĞ KOL ikisinden biraz: aura {sağ.AuraDrain(t, 1):0.00} (TAHSİLDAR'ın yarısı) · öfke ×{sağ.ÖfkeHızı:0.00}",
