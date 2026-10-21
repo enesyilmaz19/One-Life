@@ -82,6 +82,12 @@ namespace TekCan.EditorTools
 
         public static void Playtest33c() => Başlat(izle: false, senaryo: "p33c");
 
+        /// <summary>Faz 34 playtest'i: TAHSİLDAR'ın 5 adamı (M, beklenen güç) + 1. bölgenin 2–7. odaları (yeni türler, dizilişler).</summary>
+        [MenuItem("Tek Can/Otopilot — Faz 34 playtest (izle)")]
+        public static void Playtest34Izle() => Başlat(izle: true, senaryo: "p34");
+
+        public static void Playtest34() => Başlat(izle: false, senaryo: "p34");
+
         /// <summary>Faz 27 ölçümü: bütün bölgeler atlamadan, bir tam koşu kaç dakika (Enes 2026-10-12).</summary>
         [MenuItem("Tek Can/Otopilot — tam koşu ölçümü (izle)")]
         public static void TamKosuIzle() => Başlat(izle: true, senaryo: "tam");

@@ -1307,8 +1307,13 @@ namespace TekCan
         /// vuruş ~0.1 sn sonra iniyor. Arada hareket tuşu oyuncuyu çevirirse yay bir yere,
         /// isabet başka yere gider — savurmaya bakıp ıskalarsın.
         /// </summary>
-        /// <summary>ARBİTRAJ · SESSİZ ADIM (Faz 33b): görünmezken ×1.3.</summary>
-        float YürüyüşÇarpanı => Görünmez && Y(SilahYükseltme.SessizAdım) ? 1.3f : 1f;
+        /// <summary>ARBİTRAJ · SESSİZ ADIM (Faz 33b): görünmezken ×1.3 · KOLCU'nun kelepçesi (Faz 34): ×0.6.</summary>
+        public float YürüyüşÇarpanı => (Görünmez && Y(SilahYükseltme.SessizAdım) ? 1.3f : 1f) * (Kelepçeli ? 0.6f : 1f);
+
+        float _kelepçeBitiş = -1f;
+        /// <summary>KOLCU (Faz 34): isabeti yürüyüşü kısa süre yavaşlatır. Dash serbest — çıkış yolu o.</summary>
+        public void Kelepçele(float süre) => _kelepçeBitiş = Mathf.Max(_kelepçeBitiş, Time.time + süre);
+        public bool Kelepçeli => Time.time < _kelepçeBitiş;
 
         void Move(Vector3 dir, float damping, bool rotate = true)
         {

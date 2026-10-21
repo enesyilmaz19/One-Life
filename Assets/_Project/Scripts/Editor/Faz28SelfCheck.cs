@@ -160,7 +160,7 @@ namespace TekCan.EditorTools
             failed += Check(ref total, $"⚠️⚠️ defter eşiği ({eşik:0} sn) aşınca MİNİ BOSS GERİ GELİYOR: {ölüm}. ölümde kontrol noktası oda {SaveFile.Current.checkpointRoom}'e kaydı",
                             SaveFile.Current.checkpointRoom == 1 && ölüm == beklenenÖlüm, ölüm);
             failed += Check(ref total, $"geri gelme EKRANDA ('{RevivalSystem.SonGeriGelen}')",
-                            RevivalSystem.SonGeriGelen != null && RevivalSystem.SonGeriGelen.Contains("ÇIRAK"), 0);
+                            RevivalSystem.SonGeriGelen != null && RevivalSystem.SonGeriGelen.Contains(MiniBossKind.For(0, 0, Mathf.Max(1, t.subRegionsPerRegion)).Name), 0);   // Faz 34: 1. mini HACİZCİ
 
             // Geri gelen mini boss büyümüş (nemesis)
             Canlandır(t, clock, 100f);

@@ -209,13 +209,17 @@ namespace TekCan
         float MoveSpeed => (Hollow ? _t.enemyHollowSpeed : _t.enemyFullSpeed)
                          * (IsBoss ? _t.bossSpeedMultiplier : 1f)
                          * (Boss != null ? Boss.SpeedMultiplier(Phase) : 1f)   // TAHSİLDAR faz 2
+                         * (Öfkeli ? Boss.ÖfkeHızı : 1f)                       // KABADAYI (Faz 34)
                          * Kind.SpeedMultiplier
                          * Rank.SpeedMultiplier                                // ZIRHLI / İRİ ağır
                          * Mathf.Min(Growth, 1.5f)                             // ZAMANAŞIMI (hafif)
                          * (Fleeing ? _t.runnerFleeSpeedMultiplier : 1f)
                          * (_yavaşKalan > 0f ? _yavaşÇarpan : 1f);                 // HACİZ · İHTAR (Faz 33)
-        float HitCost => (Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost)
-                       * Region.HitCost                            // AĞIRLIK bölgesi kuralı
+        /// <summary>KABADAYI (Faz 34): havuzu yarıya indi, öfkeli.</summary>
+        public bool Öfkeli => Boss != null && Boss.ÖfkeHızı != 1f && _startingPool > 0f && TimeLeft <= _startingPool * 0.5f;
+
+        float HitCost => (Hollow ? _t.enemyHollowHitCost : _t.enemyFullHitCost) * BedelÇarpanı;
+        float BedelÇarpanı => Region.HitCost                       // AĞIRLIK bölgesi kuralı
                        * Growth                                    // ZAMANAŞIMI
                        * Rank.HitCostMultiplier(_t)                // İRİ: daha çok hasar
                        * (IsBoss ? _t.bossHitCostMultiplier : 1f)
@@ -510,7 +514,7 @@ namespace TekCan
                     break;
 
                 case State.Windup:
-                    if (HazırlıktaTakip) FacePlayer();
+                    if (HazırlıktaTakip) FacePlayer(dt);
                     if (_stateTimer <= 0f) EnterStrike();
                     break;
 
@@ -938,7 +942,15 @@ namespace TekCan
                 // demek ki aldı" varsayımı boss'a hak etmediği alacak yazardı.
                 // ⚠️ Hesaba `TakeHit` yazıyor, saat düşmeden ÖNCE: öldüren vuruş ölüm
                 // sırasının İÇİNDE diske yazılıyor, sonradan eklenen hiç sayılmıyordu.
-                _player.GetComponent<PlayerController>()?.TakeHit(cost, transform.position, this);
+                var pc = _player.GetComponent<PlayerController>();
+                float alınan0 = StolenFromPlayer;
+                if (pc != null) pc.TakeHit(cost, transform.position, this);
+                // Mini boss imzaları (Faz 34) yalnızca İNEN isabette — dash'le yutulan sayılmaz.
+                if (Boss != null && StolenFromPlayer > alınan0)
+                {
+                    if (Boss.ZorlaAlır > 0f) TimeLeft = Mathf.Min(_startingPool, TimeLeft + _startingPool * Boss.ZorlaAlır);   // SENETÇİ
+                    if (Boss.Kelepçe > 0f && pc != null) pc.Kelepçele(Boss.Kelepçe);                                        // KOLCU
+                }
             }
 
             // ÇEKİM: hasardan SONRA. Önce çekseydik oyuncuyu tehlikeye sürükleyip
@@ -1063,10 +1075,25 @@ namespace TekCan
 
         float FlatDistanceToPlayer() => FlatToPlayer().magnitude;
 
-        void FacePlayer()
+        /// <summary>
+        /// Oyuncuya dön. KALKANLI (Faz 34) yavaş döner — `dt` kadar; dt'siz çağrı (hazırlık başı) onu çevirmez,
+        /// yoksa arkasına geçmek hiçbir şey kazandırmazdı: saldırının yönü bakışından kilitleniyor.
+        /// </summary>
+        void FacePlayer(float dt = 0f)
         {
             Vector3 to = FlatToPlayer();
-            if (to.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(to.normalized);
+            if (to.sqrMagnitude <= 0.0001f) return;
+            var yön = Quaternion.LookRotation(to.normalized);
+            float hız = Kind.DönüşHızı;
+            transform.rotation = hız > 0f ? Quaternion.RotateTowards(transform.rotation, yön, hız * dt) : yön;
+        }
+
+        /// <summary>KALKANLI (Faz 34): oyuncu kalkanın önünde mi — bakışın ±70°'si.</summary>
+        public bool Önünde(Vector3 nokta)
+        {
+            Vector3 to = nokta - transform.position; to.y = 0f;
+            Vector3 ön = transform.forward; ön.y = 0f;
+            return to.sqrMagnitude > 0.0001f && Vector3.Angle(ön, to) <= 70f;
         }
 
         void ChaseMove(float dt)
@@ -1096,13 +1123,13 @@ namespace TekCan
                     transform.position = ArenayaSığdır(transform.position - (to / dist) * MoveSpeed * dt);
                 else if (dist > tercih * 1.15f)
                     transform.position += (to / dist) * MoveSpeed * dt;
-                FacePlayer();
+                FacePlayer(dt);
                 return;
             }
 
             if (dist > AttackRange * 0.9f)
                 transform.position += (to / dist) * MoveSpeed * dt;
-            FacePlayer();
+            FacePlayer(dt);
         }
 
         /// <summary>
@@ -1135,6 +1162,10 @@ namespace TekCan
             // hasarla orantılı olduğu için vuruş başına kazanç da aynı oranda düşüyor.
             // TOPLAM ödeme havuz kadar kalıyor, sadece daha çok vuruş istiyor.
             damage *= Rank.DamageTaken(_t);
+            // KALKANLI (Faz 34): önündeysen kalkan tutar — hasat inen hasarla orantılı, o da kısılır.
+            // ponytail: "önde" OYUNCUNUN yerine göre, hasarın kaynağına değil (kule, ipotek, çek de oyuncunun
+            // yerinden sayılır); kaynak gerekirse TakeDamage'e kaynak noktası eklenir.
+            if (Kind.ÖndenHasar < 1f && _player != null && Önünde(_player.position)) damage *= Kind.ÖndenHasar;
             float drained = Mathf.Min(damage, TimeLeft);
             TimeLeft -= drained;
 
@@ -1707,6 +1738,14 @@ namespace TekCan
             // ⚠️ Ödemeyi TÜRE SORMUYORUZ, saati ölçüyoruz. KASA toplu öder, TEMEL hiç
             // ödemez, ileride başka tür başka türlü ödeyebilir — ölçüm hepsinde çalışır,
             // `EnemyKind`'a tek satır eklemeden. (Silah/tür deseninin bozulmaması için.)
+            // MÜFLİS (Faz 34): borcu öldüğü yerde patlıyor — oyuncuya darbe, içindeki düşmanlara hasar.
+            if (Kind.PatlamaYarıçapı > 0f && _player != null)
+            {
+                var m = GroundMark.Spawn(_t, transform.position, _player, Kind.PatlamaYarıçapı, Kind.PatlamaGecikmesi,
+                                         _t.enemyFullHitCost * BedelÇarpanı * Kind.PatlamaBedeli, transform.parent);
+                if (m != null) m.DüşmanHasarı = _startingPool * Kind.PatlamaHasarı;
+            }
+
             float before = Clock.Instance != null ? Clock.Instance.Seconds : 0f;
             Kind.OnKilled(Clock.Instance, _t, _startingPool);   // KASA bütün ödemesini burada yapar
             float paid = (Clock.Instance != null ? Clock.Instance.Seconds : 0f) - before;

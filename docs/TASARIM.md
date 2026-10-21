@@ -452,6 +452,32 @@ vurmalı.
 | **KASA** | vurarak **hiçbir şey** ödemez; bütün havuzunu öldüğünde tek seferde öder (×1.8). Kalın, yavaş | **taahhüt.** Yarım bırakırsan harcadığın zaman tamamen boşa gider |
 | **KAÇAK** | havuzu %45'in altına inince kaçar; arena kenarına varırsa kaybolur ve zamanını götürür | **kovalamak mı, bırakmak mı.** Kovalamak seni kalabalıktan ayırır ve saat işlemeye devam eder |
 
+**Faz 34 (2026-10-20) — 1. bölgeye iki tür:** ikisi de "hangisi" değil **"nereden / nerede"** diye soruyor.
+
+| tür | mekanik | değiştirdiği karar |
+|---|---|---|
+| **KALKANLI** (Enes'in fikri) | önden gelen hasar ×0.2 (hasat da), yavaş döner (100°/sn); hazırlığın başında dönmez | **konum.** Arkasına geç. ZIRHLI'dan farkı: zırh her yönden, kalkan yalnız önden |
+| **MÜFLİS** | öldüğü yerde 1 sn sonra borcu patlar (2.4): oyuncuya darbe, içindeki düşmanlara hasar | **nerede öldüreceğin.** Kalabalıkta öldür, sonra çekil |
+
+Açılış sırası: TEMEL · SIZINTI · KALKANLI · MÜFLİS · KASA · KAÇAK · SİGORTA · MÜBAŞİR · ZAMANAŞIMI;
+bölge tavanları 4 · 5 · 6 · 8 · 9.
+
+**Mini boss'lar — bölgenin boss'unun adamları (Faz 34, önce 1. bölge).** Faz 28 kuralı yerinde: tek faz,
+çağırma yok, saldırılar ana boss'un — *"mini boss'lar ana boss'un saldırılarını tek tek öğretiyor, ana boss
+hepsini birden yapıyor."* Özgün olan **ad, imza, ders**:
+
+| TAHSİLDAR'ın adamı | imza | öğrettiği |
+|---|---|---|
+| HACİZCİ | yanındayken emer (TAHSİLDAR faz 1 aurasının tamamı) | HACİZ · TAHSİL · İHBARNAME — vur, çekil |
+| SENETÇİ | zorla alır: her isabeti havuzunu %2 doldurur | HACİZ · İHBARNAME · KUŞATMA — darbe yeme |
+| KABADAYI | yarıda öfkelenir: hız ×1.4 | ZORLA ALIM · YAKA PAÇA · HACİZ — yana kaç; faz dönüşünün provası |
+| KOLCU | kelepçe: isabeti yürüyüşü 1.2 sn ×0.6 yapar, dash serbest | EL KOYMA · TAHSİL+ · İHBARNAME+ — ilk darbeyi yeme |
+| SAĞ KOL | yarım aura + yarıda öfke ×1.25 | KUŞATMA+ · EL KOYMA · KELEPÇE · TAM TAHSİL — patronun provası |
+
+Her adamın en az bir yakın ve bir uzak saldırısı var (sonuncunun bir de harita): üç sıra kuralı mesafeye göre
+seçtiği için yakını olmayan adam dibindekine hiç vuramıyordu (bot P34). Öbür bölgeler geçici dilimde
+(ÇIRAK/KÂTİP… · boss adı) — sırayla doldurulacak.
+
 **Kademeli açılış:** ilk dalga yalnızca TEMEL, sonra her dalgada bir yeni soru ekleniyor.
 Hepsini birden atmak öğretmez, boğar.
 

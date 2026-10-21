@@ -652,3 +652,13 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   silindi. **Kural:** bot kırmızısı "insan da bunu yaşar mı?" sorusundan geçsin; evetse bot yaması geçici, karar
   sahibine önerilir. Kural değişince kapıdan yürüyen bot kodu (`KapıdanÇık`) yeni kurala uymalı — yoksa bot kapının
   ortasında takılır.
+- **Alt küme, seçicinin şartlarını taşımalı (Faz 34):** mini boss'a ana boss'un saldırılarından elle dizi seçtim; SAĞ KOL'un
+  üçü de uzak/harita çıktı. Üç sıra kuralı mesafeye göre seçtiği için dibinde duran oyuncuya hiç vuramadı — kapı "saldırılar
+  ana boss'tan mı" diye sordu, yeşildi; bot gördü. **Kural:** bir sistemin girdisini elle kürate ediyorsan, seçicinin ön
+  şartlarını (her sırada en az bir aday) kapıya yaz.
+- **"Olmadığında olmuyor" testi koda girmeli (Faz 34):** SENETÇİ "yalnızca inen isabette" doluyor; kapı ıskayı denedi — ıska
+  o satıra hiç gelmiyordu (koni dışı). Bozma (O) yeşil kaldı. Asıl kol dash'in yuttuğu isabetti (koni tutuyor, saniye inmiyor).
+  **Kural:** bir koşulun "değil" kolunu, koşula KADAR gelen bir durumla test et; yoksa bozma yakalanmaz.
+- **Kendini besleyen ceza sarmal yapar (Faz 34):** "her isabeti havuzunu doldurur" vurulanı uzatıyor, uzayan dövüş daha çok
+  vurduruyor — SENETÇİ %4'te 2. mini olarak bölgenin en zoru oldu (5.9 dk, saat iki kez bitti). Kapı etkiyi ölçtü; sarmalı
+  ancak bütün bölgeyi oynayan bot gördü. **Kural:** hatayı cezalandırıp dövüşü uzatan her imzayı bölge ölçümünden geçir.

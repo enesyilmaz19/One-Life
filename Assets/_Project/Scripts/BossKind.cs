@@ -260,6 +260,14 @@ namespace TekCan
         /// <summary>Hız çarpanı — TAHSİLDAR faz 2'de kovalıyor.</summary>
         public virtual float SpeedMultiplier(int phase) => 1f;
 
+        // ── MİNİ BOSS İMZALARI (Faz 34) — faz değil, tek fazlı adamın kendi kuralı ──
+        /// <summary>ZORLA ALIR: her isabeti havuzunu başlangıcının bu oranı kadar doldurur (SENETÇİ).</summary>
+        public virtual float ZorlaAlır => 0f;
+        /// <summary>ÖFKE: havuz yarıya inince hız × bu (KABADAYI) — TAHSİLDAR'ın faz dönüşünün provası.</summary>
+        public virtual float ÖfkeHızı => 1f;
+        /// <summary>KELEPÇE: isabeti oyuncunun yürüyüşünü bu kadar saniye yavaşlatır (KOLCU). Dash serbest.</summary>
+        public virtual float Kelepçe => 0f;
+
         /// <summary>
         /// OYUNCUNUN hasadına etkisi — EKSPER'in suçu bu. Yaşadığı sürece işliyor.
         /// </summary>
@@ -1097,7 +1105,8 @@ namespace TekCan
     /// saldırısını da gösteriyor). Mini boss'lar ana boss'un saldırılarını TEK TEK öğretiyor, ana
     /// boss hepsini birden yapıyor. Tek faz, çağırma yok, aura ve işaret yarı hızda.
     ///
-    /// ⚠️ GEÇİCİ İÇERİK: unvanlar ve dilimler. 25 özgün mini boss Faz 30+ (todo "YAPI").
+    /// ⚠️ 1. bölge ÖZGÜN (Faz 34, `Adamlar`: TAHSİLDAR'ın adamları); öbür bölgeler hâlâ GEÇİCİ: unvanlar ve dilimler,
+    /// bölge bölge doldurulacak (todo "YAPI").
     /// ⚠️ `BossKind.All`'da DEĞİL — boss listesinden dönen kapılar (tekel, kapsama, taşınma) onu
     /// görmesin. Nemesis defteri de ayrı: ana boss'un defteri değil, toparlanma defteri.
     /// </summary>
@@ -1105,9 +1114,42 @@ namespace TekCan
     {
         static readonly string[] Unvanlar = { "ÇIRAK", "KÂTİP", "MEMUR", "VEKİL", "KÂHYA" };
 
+        /// <summary>
+        /// ÖZGÜN mini boss (Faz 34): adı, imzası, ana boss'tan öğrettiği saldırılar. Faz 28 kuralı yerinde:
+        /// tek faz, çağırma yok, saldırılar ana boss'un — özgün olan imza ve ders.
+        /// </summary>
+        public sealed class Adam
+        {
+            public string Ad, Suç;
+            /// <summary>Ana boss'un saldırı adları (faz 1 ya da 2) — sırası öğretim sırası.</summary>
+            public string[] Saldırı;
+            /// <summary>Ana boss'un faz 1 aurasının katı (geçici dilimde 0.5).</summary>
+            public float Aura;
+            public float ZorlaAlır, Kelepçe, Öfke = 1f;
+        }
+
+        // ⚠️ SIRA = ÖĞRETİM SIRASI: her adam ana boss'un bir parçasını öğretiyor, ana boss hepsini birden yapıyor.
+        // ⚠️ Her adamın en az bir YAKIN ve bir UZAK saldırısı olmalı (sonuncunun bir de HARİTA'sı): üç sıra kuralı (Faz 26)
+        // mesafeye göre seçiyor; yakını olmayan SAĞ KOL dibinde duran bota hiç vuramadı, 1.6 dk'da harita saldırısı
+        // gelmeden öldü — uzağı olmayan HACİZCİ'de de uzak durmak bedavaydı (bot P34, 2026-10-20).
+        // ponytail: yalnızca 1. bölge (Faz 34); öbür bölgeler geçici dilimde — Faz 35+ bölge bölge doldurulacak.
+        public static readonly Adam[][] Adamlar =
+        {
+            new[]   // ① TAHSİLDAR — zorla alan: yanındayken emer, sonra kovalar
+            {
+                new Adam { Ad = "HACİZCİ", Suç = "yanındayken emer", Saldırı = new[] { "HACİZ", "TAHSİL", "İHBARNAME" }, Aura = 1f },
+                new Adam { Ad = "SENETÇİ", Suç = "her isabeti cebine — havuzu dolar", Saldırı = new[] { "HACİZ", "İHBARNAME", "KUŞATMA" }, ZorlaAlır = 0.02f },   // %4'te sarmal: vurulan uzatır, uzayan vurulur — 1. bölge ölçümünde 5.9 dk, saat iki kez bitti
+                new Adam { Ad = "KABADAYI", Suç = "yarıda öfkelenir", Saldırı = new[] { "ZORLA ALIM", "YAKA PAÇA", "HACİZ" }, Öfke = 1.4f },
+                new Adam { Ad = "KOLCU", Suç = "isabeti kelepçeler — dash'le çık", Saldırı = new[] { "EL KOYMA", "TAHSİL+", "İHBARNAME+" }, Kelepçe = 1.2f },
+                new Adam { Ad = "SAĞ KOL", Suç = "patronun provası", Saldırı = new[] { "KUŞATMA+", "EL KOYMA", "KELEPÇE", "TAM TAHSİL" }, Aura = 0.5f, Öfke = 1.25f },
+            },
+        };
+
         public BossKind Ana { get; }
         /// <summary>Kaçıncı ara bölgenin mini boss'u (0'dan).</summary>
         public int AraBölge { get; }
+        /// <summary>Özgün adamı (Faz 34) — yoksa geçici dilim.</summary>
+        public Adam Özgün { get; }
         readonly BossAttack[] _dilim;
 
         MiniBossKind(BossKind ana, int araBölge, int toplam)
@@ -1115,6 +1157,20 @@ namespace TekCan
             bool son = araBölge >= toplam - 1;
             Ana = ana;
             AraBölge = araBölge;
+            if (ana.Index < Adamlar.Length && araBölge < Adamlar[ana.Index].Length && toplam == Adamlar[ana.Index].Length)
+            {
+                Özgün = Adamlar[ana.Index][araBölge];
+                var hepsi = new System.Collections.Generic.List<BossAttack>(ana.Attacks(1));   // ⚠️ her çağrı YENİ nesneler
+                hepsi.AddRange(ana.Attacks(2));
+                var seçilen = new System.Collections.Generic.List<BossAttack>();
+                foreach (var ad in Özgün.Saldırı)
+                {
+                    var a = hepsi.Find(x => x.Name == ad);
+                    if (a != null) seçilen.Add(a);                                     // eksik ad: kapı sayıyor (Faz34SelfCheck)
+                }
+                _dilim = seçilen.ToArray();
+                return;
+            }
             // İlk üç mini faz 1'den, son ikisi FAZ 2'den öğretiyor — ilerledikçe zorlaşıyor ve faz 1'in
             // dağarcığı küçük boss'larda (TAHSİLDAR, EKSPER) 4. mini 1.'yi tekrarlıyordu (kapı yakaladı).
             int ilk = System.Math.Min(3, System.Math.Max(1, toplam - 2));
@@ -1145,12 +1201,15 @@ namespace TekCan
         }
 
         public override bool IsMini => true;
-        public override string Name => $"{Unvanlar[AraBölge % Unvanlar.Length]} · {Ana.Name}";
-        public override string Crime => Ana.Crime;
+        public override string Name => Özgün != null ? Özgün.Ad : $"{Unvanlar[AraBölge % Unvanlar.Length]} · {Ana.Name}";
+        public override string Crime => Özgün != null ? Özgün.Suç : Ana.Crime;
         public override Color Tint => Color.Lerp(Ana.Tint, new Color(0.6f, 0.6f, 0.6f), 0.35f);
         public override int PhaseCount => 1;
         public override BossAttack[] Attacks(int phase) => _dilim;
-        public override float AuraDrain(Tuning t, int phase) => Ana.AuraDrain(t, 1) * 0.5f;
+        public override float AuraDrain(Tuning t, int phase) => Ana.AuraDrain(t, 1) * (Özgün != null ? Özgün.Aura : 0.5f);
+        public override float ZorlaAlır => Özgün != null ? Özgün.ZorlaAlır : 0f;
+        public override float ÖfkeHızı => Özgün != null ? Özgün.Öfke : 1f;
+        public override float Kelepçe => Özgün != null ? Özgün.Kelepçe : 0f;
         public override float SpeedMultiplier(int phase) => Ana.SpeedMultiplier(1);
         public override float PlayerHarvest(int phase) => Mathf.Lerp(1f, Ana.PlayerHarvest(1), 0.5f);
         public override float GroundMarkInterval(int phase)

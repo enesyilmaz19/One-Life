@@ -145,6 +145,9 @@ namespace TekCan
 
         public bool Fired => _fired;
 
+        /// <summary>MÜFLİS (Faz 34): oyuncuya vuran işaret patlayınca içindeki düşmanlara da bu kadar hasar.</summary>
+        public float DüşmanHasarı { get; set; }
+
         // ── COMBO kancaları (Faz 30) ──
         /// <summary>TAHLİYE (HACİZ KARARI+): patlama içindekileri dışa iter.</summary>
         public float İtme { get; set; }
@@ -202,6 +205,7 @@ namespace TekCan
             Sfx.Slam();
 
             if (_hitsEnemies) { VurDüşmanlara(); Patladı?.Invoke(this); return; }
+            if (DüşmanHasarı > 0f) { _enemyDamage = DüşmanHasarı; _harvestMult = 1f; VurDüşmanlara(); }   // MÜFLİS (Faz 34)
 
             if (_player == null) return;
 

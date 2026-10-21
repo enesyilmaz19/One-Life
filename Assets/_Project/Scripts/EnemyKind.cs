@@ -64,6 +64,22 @@ namespace TekCan
         /// </summary>
         public virtual float GrowthPerSecond => 0f;
 
+        // ── Faz 34 kancaları ─────────────────────────────────────────────────
+
+        /// <summary>&lt;1 ise ÖNÜNDEN gelen hasar × bu — KALKANLI. Arkası çıplak.</summary>
+        public virtual float ÖndenHasar => 1f;
+
+        /// <summary>&gt;0 ise oyuncuya bu hızla döner (derece/sn) — KALKANLI. 0 = anında.</summary>
+        public virtual float DönüşHızı => 0f;
+
+        /// <summary>&gt;0 ise öldüğü yerde bu yarıçapta gecikmeli patlar — MÜFLİS.</summary>
+        public virtual float PatlamaYarıçapı => 0f;
+        public virtual float PatlamaGecikmesi => 1f;
+        /// <summary>Patlamanın oyuncuya bedeli, tam darbeye çarpan.</summary>
+        public virtual float PatlamaBedeli => 1f;
+        /// <summary>Patlamanın içindeki düşmanlara hasarı, MÜFLİS'in başlangıç havuzuna oran.</summary>
+        public virtual float PatlamaHasarı => 0f;
+
         public static readonly EnemyKind Basic = new BasicKind();
         public static readonly EnemyKind Leak = new LeakKind();
         public static readonly EnemyKind Vault = new VaultKind();
@@ -71,14 +87,17 @@ namespace TekCan
         public static readonly EnemyKind Insurer = new InsurerKind();
         public static readonly EnemyKind Bailiff = new BailiffKind();
         public static readonly EnemyKind Lapse = new LapseKind();
+        public static readonly EnemyKind Shield = new ShieldKind();
+        public static readonly EnemyKind Bankrupt = new BankruptKind();
 
         /// <summary>
         /// Oda kompozisyonu bu listeden seçiyor. ⚠️ SIRA = AÇILIŞ SIRASI:
         /// `RoomManager.PickKind` bölgeye göre baştan kaç tür açık olduğunu belirliyor,
         /// yani buraya eklenen yeni tür GEÇ bölgelere düşer. Öğretim sırası budur.
+        /// ⚠️ Faz 34: KALKANLI ve MÜFLİS 1. bölgenin (SIZINTI'dan sonra) — bölge tavanları da 2 arttı.
         /// </summary>
         public static readonly EnemyKind[] All =
-            { Basic, Leak, Vault, Runner, Insurer, Bailiff, Lapse };
+            { Basic, Leak, Shield, Bankrupt, Vault, Runner, Insurer, Bailiff, Lapse };
     }
 
     /// <summary>Temel düşman — dengenin sıfır noktası, diğerleri buna göre okunuyor.</summary>
@@ -178,6 +197,40 @@ namespace TekCan
         public override float PreferredRange(Tuning t) => t.bailiffKeepDistance;
         public override float PoolMultiplier => 0.65f;
         public override float SpeedMultiplier => 0.9f;
+    }
+
+    /// <summary>
+    /// KALKANLI — önden gelen hasarı kalkanıyla kısar, yavaş döner (Enes'in fikri, playtest 2026-09-30).
+    ///
+    /// Değiştirdiği karar: KONUM. Bütün türler "hangisi önce" diye sordururken bu "nereden" diye
+    /// sordurur: önünden vurmak beşte bir eder, arkasına geç. ZIRHLI'dan farkı: zırh her yönden kısar,
+    /// kalkan yalnız önden — cevabı olan bir engel. Yavaş dönmesi şart: anında dönseydi arkası hiç olmazdı.
+    /// </summary>
+    public sealed class ShieldKind : EnemyKind
+    {
+        public override string Name => "KALKANLI";
+        public override Color FullColor => new Color(0.6f, 0.68f, 0.78f);
+        public override float ÖndenHasar => 0.2f;
+        public override float DönüşHızı => 100f;
+        public override float SpeedMultiplier => 0.85f;
+    }
+
+    /// <summary>
+    /// MÜFLİS — öldüğü yerde borcu patlar (1 sn sonra): oyuncuya darbe, içindeki düşmanlara hasar.
+    ///
+    /// Değiştirdiği karar: NEREDE ÖLDÜRECEĞİN. Kalabalığın ortasında öldür — patlama öbürlerini de
+    /// vurur — ve sen çekil. Dibinde öldürüp durursan borcunu sen ödersin. Zayıf, ki "ne zaman"
+    /// değil "nerede" sorusu kalsın.
+    /// </summary>
+    public sealed class BankruptKind : EnemyKind
+    {
+        public override string Name => "MÜFLİS";
+        public override Color FullColor => new Color(0.72f, 0.5f, 0.32f);
+        public override float PoolMultiplier => 0.6f;
+        public override float SpeedMultiplier => 1.05f;
+        public override float PatlamaYarıçapı => 2.4f;
+        public override float PatlamaBedeli => 1.2f;
+        public override float PatlamaHasarı => 0.6f;
     }
 
     /// <summary>

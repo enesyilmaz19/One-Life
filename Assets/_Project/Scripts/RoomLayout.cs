@@ -95,13 +95,46 @@ namespace TekCan
             }
         }
 
+        sealed class PincerLayout : RoomLayout
+        {
+            public override string Name => "KISKAÇ";
+            public override Vector3 Position(Tuning t, int i, int n)
+            {
+                // İki kol, ağzı GİRİŞE açık (Faz 34): içine yürürsün, iki yandan kapanır. Kolun ucu girişe
+                // yakın ve dışta, dibi çıkışa doğru ortada — ya bir kolu kırarsın ya ağızdan dalarsın.
+                bool sağ = i % 2 == 0;
+                int sıra = i / 2, perKol = Mathf.Max(1, Mathf.CeilToInt(n / 2f));
+                float k = perKol <= 1 ? 0.5f : sıra / (float)(perKol - 1);
+                return At(t, (sağ ? 1f : -1f) * Mathf.Lerp(0.55f, 0.15f, k), Mathf.Lerp(-0.15f, 0.40f, k));
+            }
+        }
+
+        sealed class DoubleRowLayout : RoomLayout
+        {
+            public override string Name => "ÇİFT SIRA";
+            public override Vector3 Position(Tuning t, int i, int n)
+            {
+                // İki hat (Faz 34): öndeki yolu keser, arkadaki boşluklarına kaydırılmış — birini yarınca
+                // öbürü karşında. DUVAR'ın tek hattı tek kararı soruyordu.
+                int ön = Mathf.CeilToInt(n / 2f);
+                bool arka = i >= ön;
+                int yuva = arka ? 2 * (i - ön) + 1 : 2 * i;              // ön çift yuvada, arka tek: hep iki öndekinin arasında
+                int enBüyük = Mathf.Max(2 * (ön - 1), 2 * (n - ön) - 1);
+                float x = enBüyük <= 0 ? 0f : yuva / (float)enBüyük - 0.5f;
+                return At(t, x, arka ? 0.42f : 0.02f);
+            }
+        }
+
         public static readonly RoomLayout Ring = new RingLayout();
         public static readonly RoomLayout Wall = new WallLayout();
         public static readonly RoomLayout Cluster = new ClusterLayout();
         public static readonly RoomLayout Flank = new FlankLayout();
         public static readonly RoomLayout Scatter = new ScatterLayout();
 
-        public static readonly RoomLayout[] All = { Ring, Wall, Cluster, Flank, Scatter };
+        public static readonly RoomLayout Pincer = new PincerLayout();
+        public static readonly RoomLayout DoubleRow = new DoubleRowLayout();
+
+        public static readonly RoomLayout[] All = { Ring, Wall, Cluster, Flank, Scatter, Pincer, DoubleRow };
 
         /// <summary>Oda numarasından yerleşim — deterministik, ama arka arkaya tekrar etmiyor.</summary>
         public static RoomLayout For(int roomIndex) => All[Mathf.Abs(roomIndex) % All.Length];

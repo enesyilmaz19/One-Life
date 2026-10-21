@@ -14,6 +14,8 @@
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 | 14 | 🎮 **Kapı testi** (karar verildi: evet) | Bir odada son düşmanı **kapının üstünde durarak** öldür → kapı açılır ama seni geçirmemeli. Diskten çık, yeniden bas → geçmeli. Normal yol (dışarıdan yürüyüp girmek) eskisi gibi. Kafa karıştırıyor mu — kapı açık ama geçirmiyor? | Gördüklerini yaz |
 | 13 | 🎮 *(isteğe bağlı)* **Faz 33 his testi** | Bot oynadı (P33 3/3, P33c 12/12 — aşağıda "BOSS SÜRELERİ" bölümü). Sana kalan yalnızca göz: **F6**, **M** → sunak renkleri okunuyor mu (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), **B** → efsanevi "vay" dedirtiyor mu | Gördüklerini yaz |
+| 15 | 🎮 *(isteğe bağlı)* **Faz 34 his testi** | Bot oynadı (P34 ✅, 1. bölge 44.6 dk — aşağıda FAZ 34). Sana kalan his: **F6** → 3. odadan KALKANLI (önden vurunca az eder, arkasına dolan) · 4. odadan MÜFLİS (öldüğü yerde 1 sn sonra patlar) · 6.–7. oda KISKAÇ / ÇİFT SIRA · **M** ile TAHSİLDAR'ın 5 adamı: HACİZCİ, SENETÇİ, KABADAYI, KOLCU, SAĞ KOL — adları ve imzaları ekranda | Gördüklerini yaz: imzalar hissediliyor mu, KALKANLI'nın arkasına geçmek zevkli mi, MÜFLİS patlaması okunuyor mu |
+| 16 | ⚖️ **Mini boss süreleri** | 1. bölgede (bot, beklenen güç): HACİZCİ 2.0 · SENETÇİ 2.9 · KABADAYI 2.0 · KOLCU 2.1 · SAĞ KOL 2.7 dk · TAHSİLDAR 3.8 dk. Ana boss'lar için "her biri öncekinden uzun" dedin; **mini boss'lar için de bölge içinde böyle olsun mu?** (Olursa boss başına havuz payı gibi mini başına pay.) | Karar yaz |
 
 ---
 
@@ -226,6 +228,55 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 - [x] Uyuyan boss'un süre etiketi donuyordu → uykuda da güncelleniyor
 - [x] Otopilot K1 payı → "kapanıştan değil girişten yakın mı"
 - [x] Otopilot üst yazısı → sol üst
+
+---
+
+## 🏚️ FAZ 34 — Bölge 1 (EŞİK) içeriği: TAHSİLDAR'ın adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'siz, Enes'in testini bekliyor** (2026-10-20)
+
+Enes: *"sıradaki faza geç, bittikten sonra testi bota yaptır"*. YAPI'nın 5. maddesi: *"içerik: 25 mini boss, yeni düşman
+türleri, oda dizilişleri, bölge bölge"*. Bu faz 1. bölge; öbür bölgeler sırayla (Faz 35+).
+
+**Benim kararlarım (Enes beğenmezse değişir):**
+- Faz 28 kuralı kalıyor: mini boss **tek faz, çağırma yok**, saldırıları ana boss'tan — *"mini boss'lar ana boss'un
+  saldırılarını tek tek öğretiyor, ana boss hepsini birden yapıyor"*. Özgün olan: adı, imzası (pasif), öğrettiği ders.
+- Adlar çalışma adı (masa #4 adlandırma Enes'te).
+
+**34a — TAHSİLDAR'ın 5 adamı** (1. bölgenin mini boss'ları; ÇIRAK/KÂTİP… geçici dilimi 1. bölgede kalkıyor)
+
+| ara bölge | adam | imza | saldırılar (TAHSİLDAR'dan) | ders |
+|---|---|---|---|---|
+| 1 | HACİZCİ | yanındayken emer (TAHSİLDAR faz 1 aurasının tamamı) | HACİZ · TAHSİL · İHBARNAME | vur, çekil |
+| 2 | SENETÇİ | zorla alır: her isabeti havuzunu %2 doldurur | HACİZ · İHBARNAME · KUŞATMA | darbe yeme — her darbe dövüşü uzatır |
+| 3 | KABADAYI | yarıda öfkelenir: havuz yarıya inince hız ×1.4 | ZORLA ALIM · YAKA PAÇA · HACİZ | yana kaç; TAHSİLDAR'ın faz dönüşünün provası |
+| 4 | KOLCU | kelepçe: isabeti yürüyüşünü 1.2 sn ×0.6 yapar (dash serbest) | EL KOYMA · TAHSİL+ · İHBARNAME+ | ilk darbeyi yeme; yersen dash'le çık |
+| 5 | SAĞ KOL | yarım aura + yarıda öfke ×1.25 | KUŞATMA+ · EL KOYMA · KELEPÇE · TAM TAHSİL | finalin provası: kenara koş |
+
+**34b — 2 yeni düşman türü** (açılış sırası: TEMEL · SIZINTI · **KALKANLI · MÜFLİS** · KASA …; bölge tavanları 4 · 5 · 6 · 8 · 9)
+- **KALKANLI** (Enes'in fikri, playtest 2026-09-30): önden gelen hasar ×0.2 (hasat da), yavaş döner (100°/sn) — **arkasına geç**.
+  ZIRHLI'dan farkı: zırh her yönden, kalkan yalnız önden.
+- **MÜFLİS**: öldüğü yerde 1 sn sonra borcu patlar (yarıçap 2.4): oyuncuya darbe, içindeki düşmanlara hasar —
+  **nerede öldüreceğini seç**: kalabalıkta öldür, sonra çekil.
+
+**34c — 2 yeni oda dizilişi:** **KISKAÇ** (iki kol, ağzı girişe açık — içine yürürsün) · **ÇİFT SIRA** (iki hat, ikincisi
+kaydırılmış — iki kez yarman gerek).
+
+**Adımlar**
+- [x] A. Mini boss tablosu (`MiniBossKind.Adamlar`, 1. bölge) + BossKind kancaları (`ZorlaAlır`, `ÖfkeHızı`, `Kelepçe`) + `PlayerController.Kelepçele`
+- [x] B. KALKANLI (`EnemyKind.ÖndenHasar`, `DönüşHızı`; `Enemy.FacePlayer(dt)`) · MÜFLİS (`PatlamaYarıçapı`…, `GroundMark.DüşmanHasarı`); vuruş bedeli tek çarpanda (`Enemy.BedelÇarpanı`)
+- [x] C. KISKAÇ · ÇİFT SIRA (arka hat tek yuvalarda — hep iki öndekinin arasında)
+- [x] D. `Faz34SelfCheck` **15 kontrol**, 15 bozmanın 15'i kırmızı · Faz 13 "farklı soru" imzasına kalkan/patlar eklendi · Faz 28 geri gelen mini adı · Faz 33 `YürüyüşÇarpanı` artık public · tüm kapılar ✅
+- [x] E. Bot `Playtest34` ✅ — 5 adam (adı ekranda, imzası dövüşte, öldü) · 1. bölgenin 2–7. odası: KALKANLI 59, MÜFLİS 49 doğdu, 49 patlama düşmana 185 isabet, bot KALKANLI'nın arkasına 99 sn dolandı, KISKAÇ ve ÇİFT SIRA geldi
+- [x] F. Bot `Bolge1Olcum`: **1. bölge 44.6 dk**, F5 hiç · dövüş odası ortalama 48 sn (26–69) · ara bölgeler 7.9 · 8.8 · 8.0 · 7.8 · 12.2 dk · mini 2.0 · 2.9 · 2.0 · 2.1 · 2.7 dk · TAHSİLDAR 3.8 dk
+
+**Botun bulduğu iki tasarım hatası (düzeltildi):**
+- **SAĞ KOL'un yakın saldırısı yoktu** (TAM TAHSİL · KELEPÇE · HACİZ+): üç sıra kuralı mesafeye göre seçiyor, dibinde duran bota
+  hiç vuramadı, 1.6 dk'da harita saldırısı gelmeden öldü. HACİZCİ'nin de uzağı yoktu. Artık her adamda en az bir yakın + bir
+  uzak (kapı sayıyor): HACİZCİ'ye İHBARNAME, SAĞ KOL = KUŞATMA+ · EL KOYMA · KELEPÇE · TAM TAHSİL → 2.7 dk, harita geliyor.
+- **SENETÇİ sarmalı:** %4'te vurulmak dövüşü uzatıyor, uzayan dövüş daha çok vuruluyor — 1. bölge ölçümünde 5.9 dk, saat iki
+  kez bitti (2. mini bölgenin en zoru oldu). %2'ye indi → 2.9 dk, F5 yok.
+
+**Bilinen:** bot TAHSİLDAR'ın KUŞATMA'sından iyi kaçamıyor (P30'da %61–65 isabet, Faz 34'ten önce de) — SENETÇİ'nin darbesinin
+çoğu ondan. Botun dibinde kaçış hesabı büyük halkada kısa kalıyor olabilir; ayrı iş.
 
 ---
 

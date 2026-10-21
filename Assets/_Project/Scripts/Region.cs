@@ -44,7 +44,7 @@ namespace TekCan
             public override string Name => "EŞİK";
             public override string RuleText => "";                  // kural yok: önce öğren
             public override Color GroundColor => new Color(0.16f, 0.16f, 0.19f);
-            public override int UnlockedKinds => 2;
+            public override int UnlockedKinds => 4;                 // TEMEL · SIZINTI · KALKANLI · MÜFLİS (Faz 34)
         }
 
         sealed class Pressure : Region
@@ -55,7 +55,7 @@ namespace TekCan
             // Dövüş dışı akış hızlanıyor: durup düşünmek, sunağa bakmak, nefes almak
             // burada daha çok kesiyor. Oyuncuyu ileri itiyor.
             public override float DrainMultiplier => 1.7f;
-            public override int UnlockedKinds => 3;
+            public override int UnlockedKinds => 5;
         }
 
         sealed class Scarcity : Region
@@ -66,7 +66,7 @@ namespace TekCan
             // Her vuruş daha az veriyor: dövüş kazanç değil, masraf olmaya yaklaşıyor.
             // Hangi düşmanı ALMAYA DEĞER sorusu burada keskinleşiyor.
             public override float HarvestMultiplier => 0.65f;
-            public override int UnlockedKinds => 4;
+            public override int UnlockedKinds => 6;
         }
 
         sealed class Weight : Region
@@ -77,7 +77,7 @@ namespace TekCan
             // Darbe yemek çok daha pahalı: kaçınma zorunlu hale geliyor,
             // "yeriz devam ederiz" oynanışı burada çalışmıyor.
             public override float HitCostMultiplier => 1.8f;
-            public override int UnlockedKinds => 6;
+            public override int UnlockedKinds => 8;
         }
 
         sealed class Seep : Region
@@ -90,7 +90,7 @@ namespace TekCan
             // ⚠️ SON bölge SON türü açmalı. Faz 13'te yedinci tür (ZAMANAŞIMI) eklendi
             // ama tavan 6'da kalmıştı — yani eklenen tür oyunda HİÇ DOĞMUYORDU.
             // Öz-denetim artık "her tür en az bir bölgede açılıyor mu" diye soruyor.
-            public override int UnlockedKinds => 7;
+            public override int UnlockedKinds => 9;
         }
 
         public static readonly Region[] All =

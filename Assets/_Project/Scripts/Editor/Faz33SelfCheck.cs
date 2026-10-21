@@ -536,7 +536,7 @@ namespace TekCan.EditorTools
         /// <summary>Düşman, yüzü `bakış`a dönük (ARBİTRAJ'ın konumu düşmanın yüzüne göre: ileri = sırtı sana, geri = yüzü sana).</summary>
         static Enemy Bakan(Vector3 yer, Vector3 bakış) { var e = Düşman(yer); e.transform.rotation = Quaternion.LookRotation(bakış); return e; }
         static void Boşalt(Enemy e) => typeof(Enemy).GetProperty("TimeLeft").GetSetMethod(true).Invoke(e, new object[] { 0f });
-        static float Özellik(string ad) => (float)typeof(PlayerController).GetProperty(ad, Gizli).GetValue(_pc);
+        static float Özellik(string ad) => (float)typeof(PlayerController).GetProperty(ad, Gizli | BindingFlags.Public).GetValue(_pc);   // YürüyüşÇarpanı Faz 34'te public
         static int Uçur(System.Func<bool> dur = null)
         {
             int n = 0;
