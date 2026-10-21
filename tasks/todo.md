@@ -12,6 +12,7 @@
 | 9 | 🎮 **Faz 31 testi** | **F6** yeni koşu, **N** 2. bölge · 3. ara bölgenin sunağında REHİN: sol tık yakala, tekrar sol tık fırlat, hemen **1** KONİ = SİLİP SÜPÜR · sağ tık TAKAS · dash + sol tık SÜRÜKLEME · **B** 2. boss → ÇEK (KADRO sunağından envantere al): fırlat, değince HACİZ'e geç = SENET HACZİ · 3. bölgenin 3. ara bölgesinin 4. odasında köşe → KARŞILIK: düşman vurmadan hemen önce sol tık (karşılar), sonra FAİZLİ = KARŞI İCRA | Gördüklerini yaz: KARŞILIK penceresi (0.23 sn) yetiyor mu, rehine taşıma hissi, çekin dönüşü |
 | 10 | 🎮 **Faz 32 testi** | **F6**, **N N**, **B** 3. boss → TAHVİL: sol tıkı BASILI TUT (VADE 1/2/3 yazar, saat iki kat akar), bırak · hemen **2** FAİZLİ = VADE FARKI · 4. bölgenin 3. sunağında MÜŞTEREK: bir düşmana vur, sonra başkasına → pembe çizgi = bağ; birine ne vurursan öbürü de yer · sağ tık ZİNCİRLEME · bağın üstünden dash = KOPARMA · **B** 4. boss → ARBİTRAJ: arkadan ×2.5, önden ×0.5 · sağ tık görünmezlik · düşmanın içinden dash + sol tık = TERS İŞLEM · 5. bölgenin 3. ara bölgesinin 4. odasında köşe → KİRA: kule kur, sağ tık TAHLİYE (kalan kirayı peşin ödersin) | Gördüklerini yaz: basılı tutmak sıkıcı mı, bağ okunuyor mu, arkaya geçmek zevkli mi, kule kirası adil mi |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
+| 14 | 🎮 **Kapı testi** (karar verildi: evet) | Bir odada son düşmanı **kapının üstünde durarak** öldür → kapı açılır ama seni geçirmemeli. Diskten çık, yeniden bas → geçmeli. Normal yol (dışarıdan yürüyüp girmek) eskisi gibi. Kafa karıştırıyor mu — kapı açık ama geçirmiyor? | Gördüklerini yaz |
 | 13 | 🎮 *(isteğe bağlı)* **Faz 33 his testi** | Bot oynadı (P33 3/3, P33c 12/12 — aşağıda "BOSS SÜRELERİ" bölümü). Sana kalan yalnızca göz: **F6**, **M** → sunak renkleri okunuyor mu (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), **B** → efsanevi "vay" dedirtiyor mu | Gördüklerini yaz |
 
 ---
@@ -250,10 +251,26 @@ Enes: *"testi bot ile yap"* · *"her bir boss öncekinden daha uzun sürmeli"* �
 - 🤖 **Bot yolu:** boss'u kapının kuzeyinde bitiren bot sunağa yürürken açık çıkış kapısının üstünden geçip 2. bölgeye düşüyordu (P30-6 ara sıra kırmızı). `Git` artık kapıyı dolanıyor; botu kapının kuzeyine koyup denendi: düzeltmeyle ✅, düzeltmesiz ❌.
 - ✅ **Faz 33 testi botla** (#13): P33'e 3. sahne — boss'un dış halkasından combo AÇANI al → "COMBO AÇILDI" → combo gerçek tuşlarla. **P33 3/3 · P33c 12/12.**
 - **Son tur:** tüm kapılar ✅ (Faz 33: 87 kontrol) · P29 8/8 · P30 6/6 · P31 ✅ · P33 3/3 · P33c 12/12 · BossTesti ✅.
-  ⚠️ **P32 6/8 — iki kırmızı ESKİ** (2026-10-18 raporlarında da kırmızı): 32-5 SİMSAR P32'nin yolunda 30 dk'da ölmüyor
-  (oysa `SimsarTeshis`'in aynı yolunda 15.3 dk'da, `BossTesti`'nde 15.4 dk'da ölüyor → P32'nin önceki adımlarından kalan
-  bir bot durumu) · 32-7 bot keşif odasını temizleyince sonraki iki odaya geçti, köşeyi kaçırdı (muhtemelen son düşmanı
-  çıkış kapısının üstünde öldürdü — kapı altında açılınca hemen geçiriyor). Ayrı iş.
+  ~~P32 6/8 — iki kırmızı ESKİ~~ → ✅ **P32 8/8** (2026-10-20, iki hata da BOTTA, commit'siz):
+  - **32-5:** SİMSAR P32'de de ölüyordu — **939. sn** (SimsarTeshis ~925). "30 dk'da ölmüyor" yanlış okumaydı: rapor
+    toplamı 25 oyun dk'sı. `BossuÖldür` "boss yok" anında bitiyordu; SİMSAR'ın 2 MÜBAŞİR'i sağdı → oda temiz değil →
+    ARBİTRAJ (oda temizlenince açılıyor) 1 sn sonraki bakışta yoktu. **Düzeltme:** `BossuÖldür` boss düşünce oda da
+    temizlenene kadar dövüşüyor (P29/P30/P31/P32/P33 hepsi oradan geçiyor). Aynı ağaçta önce ❌ sonra ✅.
+  - **32-7:** doğrulandı — bot son düşmanı kapıya **1.51** birimdeyken öldürdü (yarıçap 1.6), kapı açıldığı karede 23.
+    odaya geçirdi. Bir koşuda 1.61'de kaldı ama köşeye yürürken 8 yönlü tuş açısı yüzünden diske girdi.
+    İlk düzeltme botta (kapıya 2.2'den yakın dövüşme; zorlanmış denemede eski döngü ❌, yeni ✅). Enes kapı kuralını
+    onaylayınca kök neden OYUNDA çözüldü (aşağıda), bottaki kaçınma silindi. Kalan: P30/P31/P32'nin üç kopya keşif
+    döngüsü tek yardımcıda (`OdayıTemizle`). ⚠️ Faz 34'ün yeni oda düzeninde (5. bölge oda 22 DAĞINIK) hata
+    kendiliğinden tetiklenmiyor — korumasız koşu da yeşildi.
+  - ✅ **Kapı kuralı değişti (Enes onayladı, 2026-10-20):** kapı açıldığı anda üstündeysen geçirmiyor — önce
+    diskten çık, sonra yeniden bas (`ExitGate.ÖnceÇık`). Eskiden son düşman ölürken kapının üstündeki oyuncu o
+    karede sonraki odadaydı: keşif köşesi, boss odasında sunaklar kaçıyordu. Kapı: Faz 4 öz-denetimine 3 kontrol.
+    Bot: `KapıdanÇık` önce dışarı çıkıyor; `OdayıTemizle`'deki kapıdan kaçınma silindi (kök neden oyunda çözüldü).
+    İki bozma: "açıldığında bayrak kurulmasın" → 2 ❌, "bayrak hiç temizlenmesin" → 1 ❌ (normal yol ikisinde de ✅).
+    **Son tur (Faz 34'ün commit'siz değişiklikleriyle birlikte):** AllChecks ✅ (Faz 4 27/27 … Faz 34 14/14) ·
+    P30 6/6 · P31 6/6 · P32 8/8.
+  - (Önceki tur: AllChecks tam koşmamıştı — Faz 28 ❌ ve Faz 33 çöküşü **Faz 34'ün commit'siz
+    değişikliklerinden** (`YürüyüşÇarpanı` public oldu, kapı gizli özellik arıyor) — o oturuma bildirildi; şimdi düzeldi.)
 
 ---
 

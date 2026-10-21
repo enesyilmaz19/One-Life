@@ -636,3 +636,19 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   bir-iki vuruştu; bot ölçerken öldü, "MURABAHACI 4 dk" gibi saçma bir sayı çıktı. MiniTesti bunu zaten
   biliyordu (saat = bölgenin doyma tavanı). **Kural:** sabit bir test sayısı (dolum, eşik, süre sınırı) bir
   bölgede çalıştı diye hepsinde çalışmaz — bot ölçümü önce "bot öldü mü / sınıra mı takıldı" diye kendini denetlesin.
+- **"Ölmüyor" demeden önce botun NEDEN çıktığını yaz (2026-10-20):** P32-5 iki gün "SİMSAR 30 dk'da ölmüyor, P32'den
+  kalan bir bot durumu yavaşlatıyor" diye taşındı. Raporun toplam süresi 25 oyun dk'sıydı — 1800 sn'lik dövüş oraya
+  sığmaz. Tek satır teşhis (`BossuÖldür` çıkarken: boss var mı, oda temiz mi, kaç düşman) cevabı ilk koşuda verdi:
+  SİMSAR 939. sn'de ölmüş, iki MÜBAŞİR sağ, oda temiz değil, silah oda temizlenince açılıyor. **Kural:** bir döngü
+  "bitti" diye çıkıyorsa çıkış sebebini logla; olay (silah, sunak) oda temizlenince oluyorsa bot da oda temizlenince
+  bitsin, "boss yok" anında değil. Ve rapordaki toplam süreyle iddiayı karşılaştır.
+- **Rastlantısal bot kırmızısını ZORLA, sonra karşılaştır (2026-10-20):** P32-7'nin düzeltmesini doğrularken başka
+  oturumun yeni oda düzeni geldi; düzeltmesiz koşu da yeşil çıktı — bozma hiçbir şey kanıtlamadı. Durumu elle kurmak
+  (bot kapının 1 birim önünde, son düşman yanında, havuzu 0.5) iki kolu aynı koşuda ayırdı: eski ❌, yeni ✅.
+  **Kural:** kırmızı rastlantıya (yerleşim, açı) bağlıysa bozma koşusu yetmez — tetikleyen durumu kur, iki kolu yan yana koş.
+- **Botun takıldığı yer oyuncunun da takıldığı yerse, botu değil oyunu düzelt (2026-10-20):** P32-7'yi önce botta
+  çözdüm (kapıya yaklaşma). Oysa aynı an oyuncuyu da sonraki odaya atıyordu — boss odasında sunaklar dahil — ve
+  kapının kendi yorumu "geçiş yürüyüp girmekle olur" diyordu. Enes onaylayınca kural oyunda düzeldi, bottaki kaçınma
+  silindi. **Kural:** bot kırmızısı "insan da bunu yaşar mı?" sorusundan geçsin; evetse bot yaması geçici, karar
+  sahibine önerilir. Kural değişince kapıdan yürüyen bot kodu (`KapıdanÇık`) yeni kurala uymalı — yoksa bot kapının
+  ortasında takılır.

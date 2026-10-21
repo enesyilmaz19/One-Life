@@ -591,9 +591,7 @@ namespace TekCan
             yield return Bekle(1f);
             Bas(Key.F5); yield return Bekle(0.3f);
             Bas(Key.Digit1); yield return Bekle(0.3f);
-            float t0 = Şimdi;
-            while (Oda != null && !Oda.Cleared && Şimdi - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
-            Dur();
+            yield return OdayıTemizle(300f);
             yield return Bekle(0.6f);
             // Bot dövüşürken köşenin üstünden geçip silahı alabiliyor (köşe kenarda, bot kenarda dolaşıyor):
             // ölçü köşenin kendisi değil, silahın KEŞİFLE açılması.
@@ -617,7 +615,7 @@ namespace TekCan
             yield return Bekle(1f);
             Bas(Key.F5); yield return Bekle(0.3f);
             int c0 = Oyuncu.ComboSayısı, deneme = 0;
-            t0 = Şimdi;
+            float t0 = Şimdi;
             while (Şimdi - t0 < 60f && Oyuncu.ComboSayısı == c0)
             {
                 var d = EnYakın();
@@ -823,9 +821,7 @@ namespace TekCan
             Diz(Kadro.KONİ, Kadro.HACİZ, ÇEK);
             yield return OdayaAtla(2 * _t.BlokBoyu + Kadro.KeşifOdası);
             Bas(Key.Digit1); yield return Bekle(0.3f);
-            t0 = Şimdi;
-            while (Oda != null && !Oda.Cleared && Şimdi - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
-            Dur();
+            yield return OdayıTemizle(300f);
             yield return Bekle(0.6f);
             var köşe = FindFirstObjectByType<GizliSilah>();
             if (köşe != null) yield return Git(köşe.transform.position, 0.6f, 10f);
@@ -892,6 +888,7 @@ namespace TekCan
         /// <summary>
         /// TEŞHİS (2026-10-18): P32 5/8'de SİMSAR beklenen güçle 30 dk'da ölmedi; 3. boss aynı kurulumla öldü.
         /// P32'nin yolu (N N → 3. boss → çık → B → 4. boss), ikisinde de 10 sn'de bir `[BOSS-NABIZ]`.
+        /// ⚠️ Sonuç (2026-10-20): ölüyordu — ikisinde de ~940 sn. P32 MÜBAŞİR'ler sağken bakıyordu (`BossuÖldür`).
         /// </summary>
         IEnumerator SimsarTeşhis()
         {
@@ -1103,7 +1100,7 @@ namespace TekCan
 
             Sahne("P32 5/8 ARBİTRAJ AÇILIŞI", "B → 4. boss");
             bool önceArb = Kadro.Açık(ARBİTRAJ);
-            yield return BossuKes(1800f);                 // SİMSAR'ın 2. fazı havuzu dolduruyor: 15 dk yetmedi
+            yield return BossuKes(1800f);                 // SİMSAR ~940 sn (faz 2 havuzu fullenip dönüyor)
             if (_bitti) yield break;
             yield return Bekle(1f);
             Kaydet("32-5", "4. boss düşünce ARBİTRAJ açıldı", !önceArb && Kadro.Açık(ARBİTRAJ) && Kadro.SonMesaj != null && Kadro.SonMesaj.Contains("ARBİTRAJ"),
@@ -1171,16 +1168,15 @@ namespace TekCan
             Diz(Kadro.KONİ, ARBİTRAJ, Kadro.REHİN);
             yield return OdayaAtla(2 * _t.BlokBoyu + Kadro.KeşifOdası);
             Bas(Key.Digit1); yield return Bekle(0.3f);
-            t0 = Şimdi;
-            while (Oda != null && !Oda.Cleared && Şimdi - t0 < 300f) { DövüşAdımı(Mod.Dövüş); yield return null; }
-            Dur();
+            int keşifOdası = Oda != null ? Oda.Room : -1;
+            yield return OdayıTemizle(300f);
             yield return Bekle(0.6f);
             var köşe = FindFirstObjectByType<GizliSilah>();
             if (köşe != null) yield return Git(köşe.transform.position, 0.6f, 10f);
             yield return Bekle(0.4f);
             bool keşifle = Kadro.SonMesaj != null && Kadro.SonMesaj.Contains("KİRA (keşif)");
             Kaydet("32-7", "KİRA keşifle açıldı", !önceKira && keşifle && Kadro.Açık(KİRA),
-                   $"bölge {(Oda != null ? Oda.RegionIndex + 1 : 0)} · KİRA {(keşifle ? "keşifle açıldı" : "KEŞİFLE AÇILMADI")}");
+                   $"bölge {(Oda != null ? Oda.RegionIndex + 1 : 0)} oda {(Oda != null ? Oda.Room : -1)} (keşif odası {keşifOdası}) · KİRA {(keşifle ? "keşifle açıldı" : "KEŞİFLE AÇILMADI")}");
 
             Sahne("P32 8/8 KİRA", "kule kur → ateş eder · TAHLİYE · MÜŞTEREK → KİRA = ORTAK GİDER");
             yield return KapıdanÇık(20f);
@@ -2834,17 +2830,22 @@ namespace TekCan
         /// <summary>Odadaki herkesi öldür, açılan kapıdan geç.</summary>
         IEnumerator OdayıGeç(float sınır)
         {
-            var rm = Oda;
-            if (rm == null) yield break;
-            float t0 = Şimdi;
-            while (Oda != null && !Oda.Cleared && Şimdi - t0 < sınır)
-            {
-                DövüşAdımı(Mod.Dövüş);
-                yield return null;
-            }
+            if (Oda == null) yield break;
+            yield return OdayıTemizle(sınır);
             if (Oda != null && !Oda.Cleared)
                 Kaydet("—", $"oda {Oda.Room} temizlenemedi", false, $"{sınır:0} sn yetmedi");
             yield return KapıdanÇık(20f);
+        }
+
+        /// <summary>
+        /// Odadaki herkesi öldür, odada kal (keşif köşesi). Kapı açıldığında üstündeysen geçirmiyor (`ExitGate`) —
+        /// eskiden son düşmanı kapıya 1.51'de öldüren bot o karede sonraki odadaydı (P32-7, 2026-10-20).
+        /// </summary>
+        IEnumerator OdayıTemizle(float sınır)
+        {
+            float t0 = Şimdi;
+            while (Oda != null && !Oda.Cleared && Şimdi - t0 < sınır) { DövüşAdımı(Mod.Dövüş); yield return null; }
+            Dur();
         }
 
         IEnumerator KapıdanÇık(float sınır)
@@ -2859,6 +2860,12 @@ namespace TekCan
                 { Bas(Key.F5); _sonTakviye = Time.time; _takviye++; }
                 var kapı = FindFirstObjectByType<ExitGate>();
                 Vector3 hedef = kapı != null ? kapı.transform.position : Bootstrap.Exit(_t);
+                // Kapı açıldığında üstündeydin: önce diskten çık, sonra yeniden bas (yoksa kapının ortasında takılırsın).
+                if (kapı != null && kapı.ÖnceÇık)
+                {
+                    Vector3 dış = Düz(Ben - hedef);
+                    hedef += (dış.sqrMagnitude > 0.01f ? dış.normalized : Vector3.back) * 2.5f;
+                }
                 Yürü(hedef - Ben);
                 yield return null;
             }
@@ -2900,7 +2907,11 @@ namespace TekCan
             float t0 = Şimdi;
             while (Şimdi - t0 < sınır)
             {
-                if (kazanınca ? (Saat != null && Saat.Won) : Boss() == null) break;
+                // ⚠️ Boss düştü ≠ oda temiz. Çağırdıkları (SİMSAR'ın MÜBAŞİR'leri, KEFİL'inkiler) sağken silah
+                // açılmıyor, sunak çıkmıyor, kapı kapalı — hepsi oda TEMİZLENİNCE (`RoomManager`). P32-5 SİMSAR'ı
+                // 939. sn'de öldürüp 1 sn sonra ARBİTRAJ'a baktı, 2 MÜBAŞİR sağdı (2026-10-20; "30 dk'da ölmüyor"
+                // sanılmıştı). Ölüp kontrol noktasına dönmek de bitiş: artık boss odasında değilsin.
+                if (kazanınca ? (Saat != null && Saat.Won) : Boss() == null && (Oda == null || !Oda.IsBossRoom || Oda.Cleared)) break;
                 if (Saat != null && Saat.Dead) { Kaydet("—", "bot öldü (eşya kalmadı)", false, _sahne); yield return Bitir(); yield break; }
                 DövüşAdımı(Mod.Dövüş, Boss());
                 yield return null;

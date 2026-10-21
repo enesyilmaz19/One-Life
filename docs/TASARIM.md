@@ -134,6 +134,14 @@ oyuncu tarafından çağrılmayacak — hikâye/mekân akışına bağlanacak (o
 tetikleyici, ne olacaksa). `WaveManager.StartNextWave()` zaten dışarıdan çağrılabilir;
 tuş bağı kaldırılıp yerine o akış konacak.
 
+### Çıkış kapısı: yürüyüp GİRMEK gerekir ✅ (Enes, 2026-10-20)
+
+Kapı oda temizlenince açılır, ama açıldığı anda üstündeysen seni geçirmez: önce diskten çık,
+sonra yeniden bas. Eskiden son düşmanı kapının dibinde öldüren oyuncu o karede sonraki
+odadaydı — keşif köşesi, boss odasında silah/combo/kadro sunakları kaçıyordu (bot P32'de iki
+kez yaşadı). Kapı zaten "geçiş kendiliğinden olmaz" diye yazılmıştı; bu kuralın eksik hâliydi.
+Kapı: Faz 4 öz-denetimi (üstündeyken açıl → geçmez · çık, yeniden bas → geçer · dışarıdan bas → geçer).
+
 ### Boss
 
 Yalnızca "kalın bir düşman" değil: daha hızlı (×1.25), daha az uyarı verir (hazırlık ×0.85),

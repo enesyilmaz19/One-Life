@@ -10,6 +10,11 @@ namespace TekCan
     /// (sunağa bakmak, düşünmek, nefes almak) doğrudan ömürden kesiliyor.
     /// Otomatik geçiş bu kararı elinden alırdı; oyunun yasası tam olarak
     /// "oyalanmak pahalıdır" diyor.
+    ///
+    /// ⚠️ Açıldığı anda ÜSTÜNDEYSEN geçirmez: önce diskten çık, sonra yeniden bas (Enes, 2026-10-20).
+    /// Eskiden son düşmanı kapının dibinde öldüren oyuncu o karede sonraki odadaydı — keşif köşesi,
+    /// boss odasında silah/combo/kadro sunakları kaçıyordu (bot P32'de iki kez yaşadı). Yukarıdaki
+    /// kuralın kendisi: geçiş yürüyüp GİRMEKLE olur, orada durmakla değil.
     /// </summary>
     public class ExitGate : MonoBehaviour
     {
@@ -19,9 +24,11 @@ namespace TekCan
         Transform _player;
         Renderer _renderer;
         float _enterRadius;
-        bool _open;
+        bool _open, _önceÇık;
 
         public bool IsOpen => _open;
+        /// <summary>Açıldığında üstündeydin, henüz çıkmadın — basman geçirmiyor.</summary>
+        public bool ÖnceÇık => _önceÇık;
 
         public static ExitGate Spawn(Tuning t, Transform parent, Vector3 pos, Transform player)
         {
@@ -47,6 +54,7 @@ namespace TekCan
         {
             if (_open) return;
             _open = true;
+            _önceÇık = Üstünde();
             Paint();
 
             // Açılış görünür olmalı: dövüş bitti, göz düşmanlardaydı, kapı arkada.
@@ -61,10 +69,18 @@ namespace TekCan
             if (!_open || _player == null || RoomManager.Instance == null) return;
             if (Clock.Instance != null && (Clock.Instance.Dead || Clock.Instance.Won)) return;
 
+            bool üstünde = Üstünde();
+            if (_önceÇık) { _önceÇık = üstünde; return; }
+            if (üstünde) RoomManager.Instance.NextRoom();
+        }
+
+        bool Üstünde()
+        {
+            if (_player == null) return false;
             // ⚠️ YATAY mesafe. Bu projede y'nin yatay hesaba karışması üç kez hata üretti.
             var d = _player.position - transform.position;
             d.y = 0f;
-            if (d.magnitude <= _enterRadius) RoomManager.Instance.NextRoom();
+            return d.magnitude <= _enterRadius;
         }
 
         void Paint()

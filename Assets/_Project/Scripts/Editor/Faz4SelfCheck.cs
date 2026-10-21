@@ -189,6 +189,42 @@ namespace TekCan.EditorTools
             }
             else failed += Check(ref total, "boss aura testi için boss doğdu", false, 0);
 
+            // ── ⚠️ KAPI AÇILDIĞINDA ÜSTÜNDEYSEN GEÇİRMİYOR (Enes 2026-10-20) ──
+            //    Son düşmanı kapının dibinde öldüren oyuncu o karede sonraki odadaydı: keşif köşesi,
+            //    boss odasında sunaklar kaçıyordu. ETKİ: oda numarası değişiyor mu, kapının bayrağı değil.
+            var kapıAdımı = typeof(ExitGate).GetMethod("Update",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            KillAll();
+            GoToRoom(wm, 1);
+            var kapı = Object.FindFirstObjectByType<ExitGate>();
+            if (kapı != null)
+            {
+                int oda = wm.Room;
+                Vector3 kp = kapı.transform.position;
+                player.transform.position = kp;                               // son düşman ölürken kapının üstünde
+                KillAll(); Tick(wm);
+                // ⚠️ Geçirirse kapı odayla birlikte yok ediliyor: ölü kapıya adım attırma (ilk bozmada kontrol çöktü).
+                for (int i = 0; i < 3 && wm.Room == oda; i++) kapıAdımı.Invoke(kapı, null);
+                bool kaldı = wm.Room == oda;
+                failed += Check(ref total, "⚠️ kapı açıldığında üstündeysen GEÇİRMİYOR", kaldı && kapı != null && kapı.IsOpen, wm.Room);
+                if (kaldı)
+                {
+                    player.transform.position = kp + Vector3.back * 3f;       // çık
+                    kapıAdımı.Invoke(kapı, null);
+                    player.transform.position = kp;                           // yeniden bas
+                    kapıAdımı.Invoke(kapı, null);
+                }
+                failed += Check(ref total, "çıkıp yeniden basınca GEÇİRİYOR", kaldı && wm.Room == oda + 1, wm.Room);
+
+                GoToRoom(wm, 1);                                              // oyuncu girişte — normal yol
+                kapı = Object.FindFirstObjectByType<ExitGate>();
+                KillAll(); Tick(wm);
+                player.transform.position = kapı.transform.position;
+                kapıAdımı.Invoke(kapı, null);
+                failed += Check(ref total, "dışarıdayken açılan kapıya basınca GEÇİRİYOR", wm.Room == oda + 1, wm.Room);
+            }
+            else failed += Check(ref total, "kapı testi için dövüş odasında kapı var", false, 0);
+
             KillAll();
             Object.DestroyImmediate(player);
             Object.DestroyImmediate(root);
