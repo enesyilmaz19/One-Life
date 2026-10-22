@@ -67,8 +67,6 @@ namespace TekCan.EditorTools
             var son = MiniBossKind.For(2, S - 1, S);
             failed += Check(ref total, $"son adam ({son.Name}) KEFİL'in harita saldırısını öğretiyor",
                             son.Attacks(1).Any(a => a.Tür == SaldırıTürü.Harita), 0);
-            var geçici = MiniBossKind.For(3, 0, S);
-            failed += Check(ref total, $"4. bölgeden sonrası geçici dilimde ({geçici.Name})", geçici.Özgün == null && geçici.Name.Contains("·"), 0);
             return failed;
         }
 
@@ -214,9 +212,9 @@ namespace TekCan.EditorTools
             }
             var b2 = Doğan(1); var b3 = Doğan(2);
             Temizle(root);
-            failed += Check(ref total, $"⚠️ 3. bölgede {b3.Count} tür ({string.Join(", ", b3.Select(k => k.Name))}) — SÜLÜK ve MEVDUAT 3. bölgede var, 2. bölgede yok; tavanlar {string.Join("/", Region.All.Select(x => x.UnlockedKinds))}",
+            failed += Check(ref total, $"⚠️ 3. bölgede {b3.Count} tür ({string.Join(", ", b3.Select(k => k.Name))}) — SÜLÜK ve MEVDUAT 3. bölgede var, 2. bölgede yok; 3. bölgenin tavanı {Region.At(2).UnlockedKinds}",
                             b3.Contains(EnemyKind.Leech) && b3.Contains(EnemyKind.Deposit) && !b2.Contains(EnemyKind.Leech) && !b2.Contains(EnemyKind.Deposit)
-                            && Region.All.Select(x => x.UnlockedKinds).SequenceEqual(new[] { 4, 7, 10, 12, 13 }), b3.Count);
+                            && Region.At(2).UnlockedKinds == 10, b3.Count);
             return failed;
         }
 

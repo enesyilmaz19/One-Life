@@ -13,9 +13,7 @@
 | 10 | 🎮 **Faz 32 testi** | **F6**, **N N**, **B** 3. boss → TAHVİL: sol tıkı BASILI TUT (VADE 1/2/3 yazar, saat iki kat akar), bırak · hemen **2** FAİZLİ = VADE FARKI · 4. bölgenin 3. sunağında MÜŞTEREK: bir düşmana vur, sonra başkasına → pembe çizgi = bağ; birine ne vurursan öbürü de yer · sağ tık ZİNCİRLEME · bağın üstünden dash = KOPARMA · **B** 4. boss → ARBİTRAJ: arkadan ×2.5, önden ×0.5 · sağ tık görünmezlik · düşmanın içinden dash + sol tık = TERS İŞLEM · 5. bölgenin 3. ara bölgesinin 4. odasında köşe → KİRA: kule kur, sağ tık TAHLİYE (kalan kirayı peşin ödersin) | Gördüklerini yaz: basılı tutmak sıkıcı mı, bağ okunuyor mu, arkaya geçmek zevkli mi, kule kirası adil mi |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 | 13 | 🎮 *(isteğe bağlı)* **Faz 33 his testi** | Bot oynadı (P33 3/3, P33c 12/12 — aşağıda "BOSS SÜRELERİ" bölümü). Sana kalan yalnızca göz: **F6**, **M** → sunak renkleri okunuyor mu (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), **B** → efsanevi "vay" dedirtiyor mu | Gördüklerini yaz |
-| 15 | 🎮 *(isteğe bağlı)* **Faz 34 his testi** | Bot oynadı (P34 ✅, 1. bölge 44.6 dk — aşağıda FAZ 34). Sana kalan his: **F6** → 3. odadan KALKANLI (önden vurunca az eder, arkasına dolan) · 4. odadan MÜFLİS (öldüğü yerde 1 sn sonra patlar) · 6.–7. oda KISKAÇ / ÇİFT SIRA · **M** ile TAHSİLDAR'ın 5 adamı: HACİZCİ, SENETÇİ, KABADAYI, KOLCU, SAĞ KOL — adları ve imzaları ekranda | Gördüklerini yaz: imzalar hissediliyor mu, KALKANLI'nın arkasına geçmek zevkli mi, MÜFLİS patlaması okunuyor mu |
-| 17 | 🎮 *(isteğe bağlı)* **Faz 35 his testi** | Bot oynadı (P35 ✅ — aşağıda FAZ 35). **F6**, **N** (2. bölge) → 4. odadan VADELİ (koyu = kapalı, vurma; açılınca vur) · 5. odadan TAKSİT (ölünce iki küçük taksit) · KORİDOR, OK · **M** ile EKSPER'in 5 adamı: MUHAMMİN, MUHASİP, DEFTERDAR, BİLİRKİŞİ, BAŞ EKSPER | Gördüklerini yaz: VADELİ'nin açılışı okunuyor mu, taksitler can sıkıyor mu, imzalar hissediliyor mu |
-| 18 | 🎮 *(isteğe bağlı)* **Faz 36 his testi** | Bot oynadı (P36 ✅ — aşağıda FAZ 36). **F6**, **N N** (3. bölge) → 4. odadan SÜLÜK (değince yapışır, emer — dash'le silkelen ya da vur) · 5. odadan MEVDUAT (bekledikçe altına döner, daha çok verir) · İÇ İÇE, SÜTUN · **M** ile KEFİL'in 5 adamı: KEFALETÇİ, GARANTÖR, ORTAK BORÇLU, ŞAHİT, BAŞ KEFİL | Gördüklerini yaz: SÜLÜK sinir bozucu mu eğlenceli mi, MEVDUAT'ı beklemeye değiyor mu, teminat (vuruşun yutulması) okunuyor mu |
+| 15–19 | 🤖 **Faz 34–37 his testleri → botta** | Enes (2026-10-22): *"testi de bota yaptır, oradan botun zorlanma ölçüsüne göre ilerleyelim şimdilik"*. P34–P37 ✅. Ölçü: mini zorlasın ama botu öldürmesin (saat kaybı < giriş saati) — Faz 38 A0 | — |
 
 ---
 
@@ -234,7 +232,53 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 
 ---
 
-## 🤝 FAZ 36 — Bölge 3 (KITLIK) içeriği: KEFİL'in adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'siz, Enes'in testini bekliyor** (2026-10-21)
+## 🏷️ FAZ 37 — Bölge 4 (AĞIRLIK) içeriği: SİMSAR'ın adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'li** (2026-10-21)
+
+Enes: *"commitle ve sıradaki faza geç"*. Faz 34–36'nın deseni ve kuralları (tek faz, çağırma yok, saldırılar SİMSAR'dan, yakın + uzak,
+sonuncuda harita, süreler yakın ama sırasız, **bot hiçbir mini'den saat kazanarak çıkmaz**, imza dibinde duran oyuncuda da işler).
+Benim kararlarım, adlar çalışma adı.
+
+**37a — SİMSAR'ın 5 adamı** — SİMSAR: *durduğun yeri satıyor* · imza şekilleri AÇIKLIK (arkasına geç) + GERİ SIÇRAMA (kovala).
+Ailenin huyu: SİMSAR'ın faz 1 aurası ve 4 sn'de bir durduğun yere işaret (ana boss'un yarı hızı — zaten vardı).
+
+| ara bölge | adam | imza | saldırılar (SİMSAR'dan) | ders |
+|---|---|---|---|---|
+| 1 | TELLAL | durduğun yeri ilan eder: 1.5 sn'de bir işaret | TELLALLIK · PAZARLIK · AÇIK ARTIRMA | SİMSAR'ın suçu: dur ve vur bitti |
+| 2 | ARACI | araya girer: önünden vuruş ×0.4, yavaş döner (80°/sn) | KOMİSYON · PAZARLIK · KAÇAK MAL | açıklık: arkasına geç |
+| 3 | DELLAL | yerinde durursan (0.5 sn) iki kat emer | DEVİR · TELLALLIK · AÇIK ARTIRMA | vururken de yürü |
+| 4 | SEYYAR | havuzunun her %10'unda 4 birim geri sıçrar | DEVİR+ · HARAÇ · KAÇAK MAL+ | geri sıçrama: kovala |
+| 5 | BAŞ SİMSAR | SEYYAR'ın sıçrayışı (kalkansız — aşağıda) | KOMİSYON+ · DEVİR+ · AÇIK ARTIRMA+ · BÜYÜK İHALE | patronun provası |
+
+**37b — 2 yeni düşman türü** (MEVDUAT'tan sonra; tavanlar 4 · 7 · 10 · 14 · 15)
+- **BLOKE**: 3 birim içindeyken yürüyüşün ×0.55 (dash serbest) — **nerede dövüşeceğin**: AĞIRLIK'ta yavaşlamak kaçamamak demek; onun yanında dövüşme ya da önce onu kes.
+- **CEZAİ ŞART**: yaşadığı sürece her inen darbe sonrakini %40 pahalı yapar (en çok ×2.2), 4 sn darbesiz kalınca sıfırlanır — **hatadan sonra ne yaparsın**: geri çekil, zincir sönsün; ya da önce onu kes, zincir onunla ölür.
+
+**37c — 2 yeni diziliş:** **DÖRT KÖŞE** (dört öbek, ortası boş — ortadan geçersen dört yandan) · **ÇAPRAZ** (X: ortası dolu, dört kol).
+
+**Adımlar**
+- [x] A. Adamlar (`MiniBossKind.Adamlar[3]`) + kancalar (`ÖndenHasar`/`DönüşHızı` boss'ta → `Enemy.ÖndenÇarpanı`, `DuranAura`, `Sıçrayış`, `Adam.İşaret`)
+- [x] B. BLOKE (`Enemy.BlokeÇarpanı` → `YürüyüşÇarpanı`) · CEZAİ ŞART (`Enemy.CezaÇarpanı`/`CezaYaz` → `TakeHit`) · tavanlar 4/7/10/14/15
+- [x] C. DÖRT KÖŞE · ÇAPRAZ
+- [x] D. `Faz37SelfCheck` **12 kontrol**, 18 bozmanın 18'i kırmızı · Faz 13'e bloke/ceza · "sonrası geçici" kontrolü Faz 36'dan buraya
+- [x] E. Bot `Playtest37` ✅ — 5 adam: 3.0 · 3.6 · 3.6 · 3.6 · 3.8 dk, saat −22 · −143 · −856 · −181 · −722 · 4. bölgenin dövüş odaları: BLOKE 24 (botun 62 sn'si yanında, yürüyüş ×0.55), CEZAİ ŞART 20 (zincir ×2.2'ye çıktı), DÖRT KÖŞE (11.) ve ÇAPRAZ (12.) geliyor, 9 odanın 9'u temizlendi
+
+**Botun bulduğu (düzeldi):**
+- ARACI 120°/sn dönüşle 4.5 dk sürdü (öbürleri ~3.3): arkası az kalıyordu → 80°/sn, 3.6 dk.
+- BAŞ SİMSAR, ARACI'nın kalkanıyla 6.4–6.7 dk sürdü. Botun dal dökümü (`[P37-DAL]`, yeni): 83 sn dolanmak, ~70 sn BÜYÜK İHALE.
+  Kalkan kalktı (açıklık dersi zaten KOMİSYON+ ve BÜYÜK İHALE'de) → 3.8 dk.
+- Bot dövüş bitince boss'un sayacını bazen 0 okuyordu (Unity'nin `!=`'i yok edilmiş nesneyi null sayıyor) → `is null`.
+- Eski testlerin toplu koşusunda (P29–P36, Kapı, Boss süreleri, hepsi ✅) P36'da Faz 36'nın ŞAHİT'i bota **+4** kazandırdı (önceki koşuda
+  −5). Faz 37'nin değişikliği değil: ŞAHİT'in imzası dash'e bağlı, dibinde duran dash atmıyor — KABADAYI dersinin tekrarı. Aurası
+  ailenin ×1.15'i (HACİZCİ gibi) → −22, P36 ✅.
+
+**⚠️ Enes'in kararına — 4. bölgede tek boss darbesi pahalı:** DELLAL ve BAŞ SİMSAR'da bot −700…−850 sn kaybetti (saat 615'ten
+giriyor, %40'ta takviye). Kaynak yeni imzalar değil: bot dibinde durduğu için ISRAR ×5'e çıkıyor (Faz 26, Enes'in kuralı), bir de AĞIRLIK
+×1.8 ve ilerleme ×4.3–5.1 → DEVİR'in tek isabeti ~170–210 sn. Bot DEVİR'i (200° koni) 38'de 5 kez yiyor. İnsan mesafe değiştirip ısrarı
+sıfırlar, ama yine de sert. **Enes (2026-10-22): botun zorlanma ölçüsüne göre** → Faz 38 A0: mini botu öldürmesin.
+
+---
+
+## 🤝 FAZ 36 — Bölge 3 (KITLIK) içeriği: KEFİL'in adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'li (c324303)** (2026-10-21)
 
 Enes: *"commitle ve sıradaki faza geç"*. Faz 34–35'in deseni ve kuralları (tek faz, çağırma yok, saldırılar KEFİL'den, yakın + uzak,
 sonuncuda harita, süreler yakın, **bot hiçbir mini'den saat kazanarak çıkmaz**). KABADAYI dersi: imza botun oynayışında da işlemeli
@@ -270,7 +314,7 @@ büyüyor, aura zamanla — dövüşler hep ~2 dk, yani her bölgenin son adamla
 
 ---
 
-## 📜 FAZ 35 — Bölge 2 (DARALMA) içeriği: EKSPER'in adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'siz, Enes'in testini bekliyor** (2026-10-21)
+## 📜 FAZ 35 — Bölge 2 (DARALMA) içeriği: EKSPER'in adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'li (874a2f9)** (2026-10-21)
 
 Enes: *"commitle ve sıradaki faza geç"*. Faz 34'ün deseni; mini boss kuralları: tek faz, çağırma yok, saldırılar ana boss'tan,
 her adamda en az bir yakın + bir uzak (sonuncuda harita), **dibinde bedava durulan adam yok** (Enes 2026-10-21: *"zorlasınlar"*),
@@ -315,7 +359,7 @@ Ailenin ortak huyu: EKSPER'in faz 1 aurası tam ve yanında zaman az eder (hasat
 
 ---
 
-## 🏚️ FAZ 34 — Bölge 1 (EŞİK) içeriği: TAHSİLDAR'ın adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'siz, Enes'in testini bekliyor** (2026-10-20)
+## 🏚️ FAZ 34 — Bölge 1 (EŞİK) içeriği: TAHSİLDAR'ın adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'li (755d8b8)** (2026-10-20)
 
 Enes: *"sıradaki faza geç, bittikten sonra testi bota yaptır"*. YAPI'nın 5. maddesi: *"içerik: 25 mini boss, yeni düşman
 türleri, oda dizilişleri, bölge bölge"*. Bu faz 1. bölge; öbür bölgeler sırayla (Faz 35+).

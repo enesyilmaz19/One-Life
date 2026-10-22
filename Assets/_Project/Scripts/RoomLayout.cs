@@ -179,6 +179,31 @@ namespace TekCan
             }
         }
 
+        sealed class CornersLayout : RoomLayout
+        {
+            public override string Name => "DÖRT KÖŞE";
+            public override Vector3 Position(Tuning t, int i, int n)
+            {
+                // Dört öbek, ortası boş (Faz 37): ortadan geçersen dört yandan kapanırlar — AĞIRLIK'ta pahalı. Bir köşeyi al, kenardan ilerle.
+                int köşe = i % 4, sıra = i / 4;
+                float a = sıra * 2.39996f, r = sıra == 0 ? 0f : 0.08f;          // öbek içinde altın açı
+                return At(t, (köşe % 2 == 0 ? 1f : -1f) * 0.45f + Mathf.Cos(a) * r, (köşe < 2 ? -0.05f : 0.5f) + Mathf.Sin(a) * r);
+            }
+        }
+
+        sealed class CrossLayout : RoomLayout
+        {
+            public override string Name => "ÇAPRAZ";
+            public override Vector3 Position(Tuning t, int i, int n)
+            {
+                // X (Faz 37): ortası dolu, dört kol çaprazlara — kesişime dalarsan dört kol birden gelir; bir kolu silip yandan geçersin.
+                if (i == 0) return At(t, 0f, 0.2f);
+                int kol = (i - 1) % 4, sıra = (i - 1) / 4, perKol = Mathf.Max(1, Mathf.CeilToInt((n - 1) / 4f));
+                float k = 0.5f * (sıra + 1) / perKol;
+                return At(t, (kol % 2 == 0 ? 1f : -1f) * k, 0.2f + (kol < 2 ? 1f : -1f) * k * 0.8f);
+            }
+        }
+
         public static readonly RoomLayout Ring = new RingLayout();
         public static readonly RoomLayout Wall = new WallLayout();
         public static readonly RoomLayout Cluster = new ClusterLayout();
@@ -191,8 +216,10 @@ namespace TekCan
         public static readonly RoomLayout Arrow = new ArrowLayout();
         public static readonly RoomLayout Nested = new NestedLayout();
         public static readonly RoomLayout Column = new ColumnLayout();
+        public static readonly RoomLayout Corners = new CornersLayout();
+        public static readonly RoomLayout Cross = new CrossLayout();
 
-        public static readonly RoomLayout[] All = { Ring, Wall, Cluster, Flank, Scatter, Pincer, DoubleRow, Corridor, Arrow, Nested, Column };
+        public static readonly RoomLayout[] All = { Ring, Wall, Cluster, Flank, Scatter, Pincer, DoubleRow, Corridor, Arrow, Nested, Column, Corners, Cross };
 
         /// <summary>Oda numarasından yerleşim — deterministik, ama arka arkaya tekrar etmiyor.</summary>
         public static RoomLayout For(int roomIndex) => All[Mathf.Abs(roomIndex) % All.Length];

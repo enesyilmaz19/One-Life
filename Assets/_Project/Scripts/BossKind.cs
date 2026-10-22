@@ -282,6 +282,14 @@ namespace TekCan
         public virtual float YakınAura => 1f;
         /// <summary>ŞAHİT: yaşadığı sürece oyuncunun her dash'i bu kadar saniyeye mal olur.</summary>
         public virtual float DashBedeli => 0f;
+        /// <summary>ARACI (Faz 37): önünden (bakışın ±70°'si) gelen hasar × bu — KALKANLI'nın boss hâli. 1 = yok.</summary>
+        public virtual float ÖndenHasar => 1f;
+        /// <summary>ARACI: oyuncuya bu hızla döner (derece/sn), 0 = anında. Önden kalkanlı yavaş dönmeli, yoksa arkası olmaz.</summary>
+        public virtual float DönüşHızı => 0f;
+        /// <summary>DELLAL (Faz 37): oyuncu yerinde durunca (0.5 sn) aurası × bu. 1 = yok.</summary>
+        public virtual float DuranAura => 1f;
+        /// <summary>SEYYAR (Faz 37): havuzunun her %10'unu kaybedince oyuncudan bu kadar birim geri sıçrar. 0 = yok.</summary>
+        public virtual float Sıçrayış => 0f;
 
         /// <summary>Sahnedeki yaşayan boss'ların dash bedeli toplamı (ŞAHİT) — `ActiveHarvestMultiplier` deseni, bayrak yok.</summary>
         public static float ActiveDashCost()
@@ -1129,8 +1137,8 @@ namespace TekCan
     /// saldırısını da gösteriyor). Mini boss'lar ana boss'un saldırılarını TEK TEK öğretiyor, ana
     /// boss hepsini birden yapıyor. Tek faz, çağırma yok, aura ve işaret yarı hızda.
     ///
-    /// ⚠️ 1–3. bölge ÖZGÜN (Faz 34–36, `Adamlar`: TAHSİLDAR'ın, EKSPER'in, KEFİL'in adamları); öbür bölgeler hâlâ GEÇİCİ: unvanlar ve dilimler,
-    /// bölge bölge doldurulacak (todo "YAPI").
+    /// ⚠️ 1–4. bölge ÖZGÜN (Faz 34–37, `Adamlar`: TAHSİLDAR'ın, EKSPER'in, KEFİL'in, SİMSAR'ın adamları); 5. bölge hâlâ GEÇİCİ:
+    /// unvanlar ve dilimler (todo "YAPI").
     /// ⚠️ `BossKind.All`'da DEĞİL — boss listesinden dönen kapılar (tekel, kapsama, taşınma) onu
     /// görmesin. Nemesis defteri de ayrı: ana boss'un defteri değil, toparlanma defteri.
     /// </summary>
@@ -1150,6 +1158,8 @@ namespace TekCan
             /// <summary>Ana boss'un faz 1 aurasının katı (geçici dilimde 0.5).</summary>
             public float Aura;
             public float ZorlaAlır, Kelepçe, Amortisman, HasatKilidi, YüzdeBedel, TeminatAralığı, DashBedeli, Öfke = 1f, Kefalet = 1f, YakınAura = 1f;
+            /// <summary>TELLAL (Faz 37): yer işareti aralığı (sn) — 0 = ana boss'unkinin iki katı.</summary>
+            public float İşaret, Sıçrayış, DönüşHızı, ÖndenHasar = 1f, DuranAura = 1f;
             public int TeminatSayısı;
             /// <summary>Oyuncunun hasadına çarpan yaşadığı sürece (EKSPER'in suçu) — 1 = kesmez.</summary>
             public float Hasat = 1f;
@@ -1159,7 +1169,7 @@ namespace TekCan
         // ⚠️ Her adamın en az bir YAKIN ve bir UZAK saldırısı olmalı (sonuncunun bir de HARİTA'sı): üç sıra kuralı (Faz 26)
         // mesafeye göre seçiyor; yakını olmayan SAĞ KOL dibinde duran bota hiç vuramadı, 1.6 dk'da harita saldırısı
         // gelmeden öldü — uzağı olmayan HACİZCİ'de de uzak durmak bedavaydı (bot P34, 2026-10-20).
-        // ponytail: yalnızca 1. bölge (Faz 34); öbür bölgeler geçici dilimde — Faz 35+ bölge bölge doldurulacak.
+        // ponytail: 1–4. bölge (Faz 34–37); 5. bölge (MURABAHACI) geçici dilimde — sırada.
         public static readonly Adam[][] Adamlar =
         {
             new[]   // ① TAHSİLDAR — zorla alan: yanındayken emer, sonra kovalar
@@ -1188,8 +1198,18 @@ namespace TekCan
                 new Adam { Ad = "KEFALETÇİ", Suç = "kendini garantiler — son çeyrekte direnir", Saldırı = new[] { "KEFALET", "TEMİNAT", "SENET" }, Aura = 1f, Kefalet = 0.5f },
                 new Adam { Ad = "GARANTÖR", Suç = "teminat koyar — önce onu kır", Saldırı = new[] { "ORTAK HESAP", "İCAZET", "ZİNCİRLEME SORUMLULUK" }, Aura = 1f, TeminatAralığı = 12f, TeminatSayısı = 3 },
                 new Adam { Ad = "ORTAK BORÇLU", Suç = "dibindeyken iki kat emer — gir, vur, çık", Saldırı = new[] { "REHİN", "KEFALET", "SENET" }, Aura = 1f, YakınAura = 2f },
-                new Adam { Ad = "ŞAHİT", Suç = "dash'ini görür — her dash 1.5 sn", Saldırı = new[] { "TEMİNAT+", "İCAZET+", "SENET+" }, Aura = 1f, DashBedeli = 1.5f },
+                new Adam { Ad = "ŞAHİT", Suç = "dash'ini görür — her dash 1.5 sn", Saldırı = new[] { "TEMİNAT+", "İCAZET+", "SENET+" }, Aura = 1.15f, DashBedeli = 1.5f },   // ×1.15: dash atmayan dibindekine imzası işlemiyor, ailenin aurasıyla −5…+4 (P36–P37)
                 new Adam { Ad = "BAŞ KEFİL", Suç = "patronun provası", Saldırı = new[] { "MÜTESELSİL", "REHİN+", "ZİNCİRLEME SORUMLULUK+", "TOPLU TEMİNAT" }, Aura = 1f, Kefalet = 0.5f, TeminatAralığı = 15f, TeminatSayısı = 2 },
+            },
+            new[]   // ④ SİMSAR — durduğun yeri satıyor · imzaları AÇIKLIK (arkasına geç) + GERİ SIÇRAMA (kovala) (Faz 37).
+            {       // Ailenin huyu: SİMSAR'ın faz 1 aurası ve 4 sn'de bir durduğun yere işaret (ana boss'un yarı hızı).
+                new Adam { Ad = "TELLAL", Suç = "durduğun yeri ilan eder — 1.5 sn'de bir işaret", Saldırı = new[] { "TELLALLIK", "PAZARLIK", "AÇIK ARTIRMA" }, Aura = 1f, İşaret = 1.5f },
+                new Adam { Ad = "ARACI", Suç = "araya girer — önünden vuruş az eder, arkasına geç", Saldırı = new[] { "KOMİSYON", "PAZARLIK", "KAÇAK MAL" }, Aura = 1f, ÖndenHasar = 0.4f, DönüşHızı = 80f },   // 120°/sn'de 4.5 dk (öbürleri ~3.3): arkası az kalıyordu
+                new Adam { Ad = "DELLAL", Suç = "yerinde durursan iki kat emer — vururken yürü", Saldırı = new[] { "DEVİR", "TELLALLIK", "AÇIK ARTIRMA" }, Aura = 1f, DuranAura = 2f },
+                new Adam { Ad = "SEYYAR", Suç = "vurdukça geri sıçrar — kovala", Saldırı = new[] { "DEVİR+", "HARAÇ", "KAÇAK MAL+" }, Aura = 1f, Sıçrayış = 4f },
+                new Adam { Ad = "BAŞ SİMSAR", Suç = "patronun provası", Saldırı = new[] { "KOMİSYON+", "DEVİR+", "AÇIK ARTIRMA+", "BÜYÜK İHALE" }, Aura = 1f, Sıçrayış = 4f },
+                // ⚠️ BAŞ SİMSAR kalkansız: ARACI'nın kalkanıyla 6.4–6.7 dk sürdü (öbürleri ~3.3), botun 83 sn'si dolanmaya, ~70 sn'si
+                // BÜYÜK İHALE'ye gitti (P37). Açıklık dersi zaten KOMİSYON+ ve BÜYÜK İHALE'de.
             },
         };
 
@@ -1269,10 +1289,15 @@ namespace TekCan
         public override int TeminatSayısı => Özgün != null ? Özgün.TeminatSayısı : 0;
         public override float YakınAura => Özgün != null ? Özgün.YakınAura : 1f;
         public override float DashBedeli => Özgün != null ? Özgün.DashBedeli : 0f;
+        public override float ÖndenHasar => Özgün != null ? Özgün.ÖndenHasar : 1f;
+        public override float DönüşHızı => Özgün != null ? Özgün.DönüşHızı : 0f;
+        public override float DuranAura => Özgün != null ? Özgün.DuranAura : 1f;
+        public override float Sıçrayış => Özgün != null ? Özgün.Sıçrayış : 0f;
         public override float SpeedMultiplier(int phase) => Ana.SpeedMultiplier(1);
         public override float PlayerHarvest(int phase) => Özgün != null ? Özgün.Hasat : Mathf.Lerp(1f, Ana.PlayerHarvest(1), 0.5f);
         public override float GroundMarkInterval(int phase)
         {
+            if (Özgün != null && Özgün.İşaret > 0f) return Özgün.İşaret;                  // TELLAL (Faz 37)
             float a = Ana.GroundMarkInterval(1);
             return a > 0f ? a * 2f : 0f;
         }

@@ -677,3 +677,12 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   büyüyordu; dövüşler hep ~2 dk sürdüğü için her bölgenin son adamları bota saat kazandırdı. Tek tek yamamak (ŞAHİT'e aura) üç bölgede
   üç yama olurdu; kökü — aura da havuzla büyüsün — bir satır. **Kural:** bir kazanç ve bir bedel farklı ölçeklerden (havuz ↔ süre)
   türüyorsa ikisini aynı büyümeye bağla, sonra bütün sırayı ölç (yalnız kırmızı olanı değil).
+- **Süreyi ayarlamadan önce zamanın nereye gittiğini ölç (Faz 37):** BAŞ SİMSAR 6.5 dk sürdü, öbürleri ~3.3. İlk tahminim kalkandı;
+  kalkanı yumuşatmak 6.7 → 6.4 dk etti. Botun dal dökümü (`[P37-DAL]`: vur / dolan / bekle / kaç·<saldırı>) gösterdi: 83 sn kalkanın
+  arkasına dolanmak, ~70 sn BÜYÜK İHALE. Kalkan kalkınca 3.8 dk. **Kural:** süre aykırıysa önce dökümü al, sonra kesilecek parçayı seç.
+- **Yok edilmiş Unity nesnesinden C# sayacı okumak için `is null` (Faz 37):** `boss != null ? boss.Sıçradı : 0` — Unity'nin `!=`'i yok
+  edilmiş boss'u null sayıyor; dövüş bitip boss silinince sayaç bazen 0 okundu (BAŞ SİMSAR "SIÇRAMADI", öbür koşuda "9 kez"). Tuzak 5'in
+  tersi: orada ölü nesneye YAZMAMAK için açık `!= null`, burada C# alanını OKUMAK için `is null`.
+- **İnce pay gürültüde döner (Faz 37):** ŞAHİT Faz 36'da −5 ile geçmişti; aynı kodla bir sonraki koşuda +4. Asıl kusur seçimdeydi —
+  imzası dash'e bağlı, dibindeki dash atmıyor (KABADAYI dersi). **Kural:** "bota kazandırmıyor" kontrolünde −10'dan ince pay geçti
+  sayılmaz; imzanın dibindeki oyuncuya gerçekten ne kadar mal olduğuna bak.

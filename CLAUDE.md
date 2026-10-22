@@ -91,6 +91,7 @@ ilerletiyor; otopilot oyunun kendi karelerinde, Unity'nin SANAL klavye/faresiyle
 - Faz 34 playtest'i: batch `…OtopilotMenu.Playtest34` — TAHSİLDAR'ın 5 adamı M ile (beklenen güç, saat doyma tavanında): adı ekranda, imzası dövüşte görüldü mü (isabet isteyenler yalnız bot vurulduysa), öldü mü, süre · sonra F6 → 1. bölgenin 2–7. odaları: KALKANLI/MÜFLİS doğuyor, MÜFLİS patlıyor, bot KALKANLI'nın arkasına dolanıyor (`Dal("dolan")`), KISKAÇ/ÇİFT SIRA geliyor.
 - Faz 35 playtest'i: batch `…OtopilotMenu.Playtest35` — EKSPER'in 5 adamı (N, M; beklenen güç, saat 2. bölgenin doyma tavanında): adı ekranda, imza (hasat kesintisi, değer kaybı, defter, %6 bedel), öldü mü, saat kaybı, saldırı sayımı · F6 → N → 2. bölgenin 2–8. odaları: VADELİ/TAKSİT doğuyor, her TAKSİT iki parçaya bölünüyor, KORİDOR/OK geliyor. Bot VADELİ kapalıyken açık olana dönüyor (`EnYakın`).
 - Faz 36 playtest'i: batch `…OtopilotMenu.Playtest36` — KEFİL'in 5 adamı (N N, `AdamlarıDöv`: kefalet, teminat, dibinde iki kat aura, dash bedeli) · F6 → N N → 3. bölgenin 2–7., 10., 11. odaları: SÜLÜK yapışıyor ve bot dash'le silkeleniyor (`Dal("silkelen")`), MEVDUAT olgunlaşıyor, İÇ İÇE/SÜTUN geliyor.
+- Faz 37 playtest'i: batch `…OtopilotMenu.Playtest37` — SİMSAR'ın 5 adamı (N N N, `AdamlarıDöv`: işaret sıklığı, kalkanın arkasına dolanma, durana iki kat aura, geri sıçrama; her dövüşün dal dökümü logda `[P37-DAL]`) · F6 → N N N → 4. bölgenin 2–7., 10–12. odaları: BLOKE botu yavaşlatıyor, CEZAİ ŞART zinciri uzuyor, DÖRT KÖŞE/ÇAPRAZ geliyor.
 - Kapı testi (masa #14): batch `…OtopilotMenu.KapiTesti` (~10 sn oyun) — son düşmanı kapının üstünde gerçek vuruşla öldür → geçirmemeli; çık, yeniden bas → geçmeli.
 - Fiyat ölçümü (Faz 33): batch `…OtopilotMenu.FiyatOlcum` (KONİ…REHİN + rakip sunaklar) · `…FiyatOlcum33b` (ÇEK…KİRA), hızlandırılmış ~2.5 dk — her yükseltme aynı iki odada VAR / YOK, saat her odada doyma tavanından; değer sn/oda, geri ödeme = fiyat ÷ değer (oda). Gürültüyü görmek için yükseltmesiz deneme bloğun başında ve sonunda; her odada zar sabit (`Random.InitState`) — çoğu silahta aynı deneme aynı sonucu veriyor. Bot dash-atak yapmıyor, "dip"e inmiyor, arkaya geçmiyor — o yükseltmeler ölçülemiyor.
 - Boss süreleri: batch `…OtopilotMenu.BossTesti` (~2.5 dk) — 5 ana boss, her biri yeni koşuda, beklenen güçle, saat bölgenin doyma tavanında; süre, faz 2 anı, darbe. Kural (Enes 2026-10-20): **her boss öncekinden uzun** — boss/bölge dengesine dokunduktan sonra koş. Boss başına havuz payı `BossKind.HavuzPayı`.
@@ -157,7 +158,9 @@ graphify update Assets/_Project/Scripts
 
 ⚠️ Proje **kökünden** çalıştırma — Unity `Library/` cache'ini (binlerce dosya) tarayıp timeout eder. Her zaman `Assets/_Project/Scripts` ver.
 
-Mimari sorularından önce `graphify-out/GRAPH_REPORT.md` oku; modüller arası "X ile Y nasıl ilişkili" sorularında grep yerine `graphify query` / `path` / `explain` kullan.
+⚠️ Komut PATH'te değil: `"/c/Users/Enesin pc/AppData/Local/Programs/Python/Python312/Scripts/graphify.exe"`. Çıktı `Assets/_Project/Scripts/graphify-out/` (gitignore'da).
+
+Mimari sorularından önce `Assets/_Project/Scripts/graphify-out/GRAPH_REPORT.md` oku; modüller arası "X ile Y nasıl ilişkili" sorularında grep yerine `graphify query` / `path` / `explain` kullan.
 
 ## Unity başsız çalıştırma
 

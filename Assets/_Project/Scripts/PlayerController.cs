@@ -1309,8 +1309,9 @@ namespace TekCan
         /// vuruş ~0.1 sn sonra iniyor. Arada hareket tuşu oyuncuyu çevirirse yay bir yere,
         /// isabet başka yere gider — savurmaya bakıp ıskalarsın.
         /// </summary>
-        /// <summary>ARBİTRAJ · SESSİZ ADIM (Faz 33b): görünmezken ×1.3 · KOLCU'nun kelepçesi (Faz 34): ×0.6.</summary>
-        public float YürüyüşÇarpanı => (Görünmez && Y(SilahYükseltme.SessizAdım) ? 1.3f : 1f) * (Kelepçeli ? 0.6f : 1f);
+        /// <summary>ARBİTRAJ · SESSİZ ADIM (Faz 33b): görünmezken ×1.3 · KOLCU'nun kelepçesi (Faz 34): ×0.6 · BLOKE'nin yanı (Faz 37): ×0.55.</summary>
+        public float YürüyüşÇarpanı => (Görünmez && Y(SilahYükseltme.SessizAdım) ? 1.3f : 1f) * (Kelepçeli ? 0.6f : 1f)
+                                     * Enemy.BlokeÇarpanı(transform.position);
 
         /// <summary>ŞAHİT (Faz 36): ödenen dash bedeli — otopilot imzanın dövüşte işlediğini buradan sayıyor.</summary>
         public float ÖdenenDashBedeli { get; private set; }
@@ -2050,6 +2051,7 @@ namespace TekCan
             // (Projenin kuralı: ÖZELLİK değil ETKİ. Burada da geçerli.)
             // ⚠️ Saat farkıyla ölçülmüyor artık: bu darbe öldürüp diriltirse (ÖLÜM
             // ALDATMA) saat YÜKSELMİŞ olarak dönüyor ve fark EKSİ çıkıyordu.
+            secondsCost *= Enemy.CezaÇarpanı();                                                // CEZAİ ŞART (Faz 37): zincir
             if (Y(SilahYükseltme.Cesaret) && DipOranı() >= 0.5f) secondsCost *= 0.8f;          // CESARET (Faz 33)
             float inen = clock != null
                        ? Mathf.Min(Mathf.Max(0f, secondsCost), Mathf.Max(0f, clock.Seconds))
@@ -2061,6 +2063,7 @@ namespace TekCan
             if (saldıran != null) saldıran.HesabınaYaz(inen);
 
             if (clock != null) clock.Spend(secondsCost, fromHit: true);   // oda hesabında AYRI sayılıyor
+            if (inen > 0f) Enemy.CezaYaz();                                // CEZAİ ŞART (Faz 37): darbe indi, zincir uzar
 
             // Darbe koşuyu yeniden başlattıysa (ÇAĞRI) bu nesne eski koşuya ait:
             // acı sesi ve hit-stop yeni koşunun ilk karesine taşmasın.

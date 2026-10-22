@@ -103,6 +103,20 @@ namespace TekCan
         public virtual float FaizTavanı => 1f;
         public float Faiz(float yaş) => FaizHızı > 0f ? Mathf.Min(FaizTavanı, 1f + FaizHızı * yaş) : 1f;
 
+        // ── Faz 37 kancaları ─────────────────────────────────────────────────
+
+        /// <summary>&gt;0 ise bu yarıçap içinde oyuncunun yürüyüşü × `BlokeYavaşlığı` — BLOKE. Dash serbest.</summary>
+        public virtual float BlokeYarıçapı => 0f;
+        public virtual float BlokeYavaşlığı => 1f;
+
+        /// <summary>
+        /// &gt;0 ise yaşadığı sürece oyuncuya inen her darbe sonrakini bu oran kadar pahalı yapar (en çok `CezaTavanı`);
+        /// `CezaSüresi` darbesiz geçince zincir söner — CEZAİ ŞART.
+        /// </summary>
+        public virtual float CezaArtışı => 0f;
+        public virtual float CezaTavanı => 1f;
+        public virtual float CezaSüresi => 0f;
+
         public static readonly EnemyKind Basic = new BasicKind();
         public static readonly EnemyKind Leak = new LeakKind();
         public static readonly EnemyKind Vault = new VaultKind();
@@ -118,6 +132,8 @@ namespace TekCan
         public static readonly EnemyKind InstallmentPart = new InstallmentPartKind();
         public static readonly EnemyKind Leech = new LeechKind();
         public static readonly EnemyKind Deposit = new DepositKind();
+        public static readonly EnemyKind Frozen = new FrozenKind();
+        public static readonly EnemyKind Penalty = new PenaltyKind();
 
         /// <summary>
         /// Oda kompozisyonu bu listeden seçiyor. ⚠️ SIRA = AÇILIŞ SIRASI:
@@ -126,9 +142,10 @@ namespace TekCan
         /// ⚠️ Faz 34: KALKANLI ve MÜFLİS 1. bölgenin (SIZINTI'dan sonra) — bölge tavanları da 2 arttı.
         /// ⚠️ Faz 35: VADELİ ve TAKSİT 2. bölgenin (KASA'dan sonra) — tavanlar 4 · 7 · 8 · 10 · 11.
         /// ⚠️ Faz 36: SÜLÜK ve MEVDUAT 3. bölgenin (KAÇAK'tan sonra) — tavanlar 4 · 7 · 10 · 12 · 13.
+        /// ⚠️ Faz 37: BLOKE ve CEZAİ ŞART 4. bölgenin (MEVDUAT'tan sonra) — tavanlar 4 · 7 · 10 · 14 · 15.
         /// </summary>
         public static readonly EnemyKind[] All =
-            { Basic, Leak, Shield, Bankrupt, Vault, Term, Installment, Runner, Leech, Deposit, Insurer, Bailiff, Lapse };
+            { Basic, Leak, Shield, Bankrupt, Vault, Term, Installment, Runner, Leech, Deposit, Frozen, Penalty, Insurer, Bailiff, Lapse };
     }
 
     /// <summary>Temel düşman — dengenin sıfır noktası, diğerleri buna göre okunuyor.</summary>
@@ -322,6 +339,40 @@ namespace TekCan
         public override Color FullColor => new Color(0.55f, 0.6f, 0.35f);
         public override float FaizHızı => 0.1f;
         public override float FaizTavanı => 2.5f;
+    }
+
+    /// <summary>
+    /// BLOKE — yanındayken (3 birim) hesabın bloke: yürüyüşün ×0.55. Dash serbest; çevresinde soluk bir halka.
+    ///
+    /// Değiştirdiği karar: NEREDE DÖVÜŞECEĞİN. AĞIRLIK'ta (darbe pahalı) yavaşlamak kaçamamak demek: onun yanında
+    /// dövüşme — önce onu kes, ya da öbürlerini ondan uzağa çek. Kalın ve yavaş, ki "önce onu" ucuz bir cevap olmasın.
+    /// </summary>
+    public sealed class FrozenKind : EnemyKind
+    {
+        public override string Name => "BLOKE";
+        public override Color FullColor => new Color(0.45f, 0.42f, 0.7f);
+        public override float BlokeYarıçapı => 3f;
+        public override float BlokeYavaşlığı => 0.55f;
+        public override float PoolMultiplier => 1.2f;
+        public override float SpeedMultiplier => 0.8f;
+    }
+
+    /// <summary>
+    /// CEZAİ ŞART — yaşadığı sürece sana inen her darbe sonrakini %40 pahalı yapar (en çok ×2.2); 4 sn darbesiz kalırsan
+    /// zincir söner. Zincir uzadıkça kızarır.
+    ///
+    /// Değiştirdiği karar: HATADAN SONRA. AĞIRLIK'ın kuralı (hata affetmiyor) burada katlanıyor: darbe yediysen geri çekil,
+    /// zincir sönsün — ya da önce onu kes, zincir onunla ölür. Kendisi sıradan ve hızlı.
+    /// </summary>
+    public sealed class PenaltyKind : EnemyKind
+    {
+        public override string Name => "CEZAİ ŞART";
+        public override Color FullColor => new Color(0.8f, 0.3f, 0.45f);
+        public override float CezaArtışı => 0.4f;
+        public override float CezaTavanı => 2.2f;
+        public override float CezaSüresi => 4f;
+        public override float PoolMultiplier => 0.75f;
+        public override float SpeedMultiplier => 1.1f;
     }
 
     /// <summary>TAKSİT'in küçük taksiti — hızlı, bölünmez.</summary>

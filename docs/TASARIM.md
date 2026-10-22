@@ -473,8 +473,15 @@ vurmalı.
 | **SÜLÜK** | değince yapışır, peşinden gelir, saniyede 1 sn emer, yapışıkken saldırmaz; dash silkeler (2 sn yapışamaz) | **dash bir harcama.** Silkelen mi, dash'ini saklayıp vurarak mı sökersin |
 | **MEVDUAT** | yaşadıkça hasadı artar (saniyede +%10, en çok ×2.5, altına döner) | **bekle mi topla mı.** ZAMANAŞIMI'nın tersi; beklerken sana vuruyor — KITLIK'ta sabrın getirisi |
 
-Açılış sırası: TEMEL · SIZINTI · KALKANLI · MÜFLİS · KASA · VADELİ · TAKSİT · KAÇAK · SÜLÜK · MEVDUAT · SİGORTA · MÜBAŞİR ·
-ZAMANAŞIMI; bölge tavanları 4 · 7 · 10 · 12 · 13.
+**Faz 37 (2026-10-21) — 4. bölgeye iki tür:** AĞIRLIK'ın kuralı (darbe ×1.8, "hata affetmiyor") üstüne iki soru.
+
+| tür | mekanik | değiştirdiği karar |
+|---|---|---|
+| **BLOKE** | 3 birim içindeyken yürüyüşün ×0.55 (dash serbest), çevresinde soluk halka | **nerede dövüşeceğin.** Yavaşlamak kaçamamak demek: yanında dövüşme, önce onu kes ya da öbürlerini ondan uzağa çek |
+| **CEZAİ ŞART** | yaşadığı sürece inen her darbe sonrakini %40 pahalı yapar (en çok ×2.2); 4 sn darbesiz kalınca söner, zincir uzadıkça kızarır | **hatadan sonra.** Darbe yediysen geri çekil, zincir sönsün — ya da önce onu kes, zincir onunla ölür |
+
+Açılış sırası: TEMEL · SIZINTI · KALKANLI · MÜFLİS · KASA · VADELİ · TAKSİT · KAÇAK · SÜLÜK · MEVDUAT · BLOKE · CEZAİ ŞART ·
+SİGORTA · MÜBAŞİR · ZAMANAŞIMI; bölge tavanları 4 · 7 · 10 · 14 · 15.
 
 **Mini boss'lar — bölgenin boss'unun adamları (Faz 34, önce 1. bölge).** Faz 28 kuralı yerinde: tek faz,
 çağırma yok, saldırılar ana boss'un — *"mini boss'lar ana boss'un saldırılarını tek tek öğretiyor, ana boss
@@ -501,18 +508,27 @@ hepsini birden yapıyor."* Özgün olan **ad, imza, ders**:
 | KEFALETÇİ | kefalet: havuzu %30'un altında aldığı hasar ×0.5 | KEFALET · TEMİNAT · SENET — simit: yaklaş · bitirmek sabır ister |
 | GARANTÖR | teminat: 12 sn'de bir 3 vuruşu hasarsız yutar | ORTAK HESAP · İCAZET · ZİNCİRLEME SORUMLULUK — çekim · önce teminatı kır |
 | ORTAK BORÇLU | dibindeyken (3 birim) iki kat emer | REHİN · KEFALET · SENET — simit içeri çağırır, o orada emer: gir, vur, çık |
-| ŞAHİT | dash'ini görür: her dash 1.5 sn | TEMİNAT+ · İCAZET+ · SENET+ — simite yürüyerek gir |
+| ŞAHİT | dash'ini görür: her dash 1.5 sn · aurası ailenin ×1.15'i (dash atmayana da bedelli — Faz 37'de düzeldi) | TEMİNAT+ · İCAZET+ · SENET+ — simite yürüyerek gir |
 | BAŞ KEFİL | kefalet + teminat (15 sn'de 2) | MÜTESELSİL · REHİN+ · ZİNCİRLEME SORUMLULUK+ · TOPLU TEMİNAT — provası |
+
+| SİMSAR'ın adamı (Faz 37) | imza | öğrettiği |
+|---|---|---|
+| TELLAL | durduğun yeri ilan eder: 1.5 sn'de bir işaret | TELLALLIK · PAZARLIK · AÇIK ARTIRMA — SİMSAR'ın suçu: dur ve vur bitti |
+| ARACI | araya girer: önünden vuruş ×0.4, yavaş döner (80°/sn) | KOMİSYON · PAZARLIK · KAÇAK MAL — açıklık: arkasına geç |
+| DELLAL | yerinde durursan (0.5 sn) iki kat emer | DEVİR · TELLALLIK · AÇIK ARTIRMA — vururken de yürü |
+| SEYYAR | havuzunun her %10'unda 4 birim geri sıçrar | DEVİR+ · HARAÇ · KAÇAK MAL+ — geri sıçrama: kovala |
+| BAŞ SİMSAR | SEYYAR'ın sıçrayışı (kalkansız) | KOMİSYON+ · DEVİR+ · AÇIK ARTIRMA+ · BÜYÜK İHALE — provası |
 
 KABADAYI dersi: imza dibinde duran oyuncuda da işlemeli — "uzaklaşınca çeker" gibi bir imza seçilmedi.
 
 Kural (Enes 2026-10-21): süreler yakın, sıra yok, ama **dibinde bedava durulan adam yok** — bot (her şeyden kaçan oyuncu)
 hiçbir mini'den saat kazanarak çıkmıyor, saat doyma tavanında girse bile. Ailelerin ortak huyu: TAHSİLDAR'ın adamları onun aurasının
 ×1.2'siyle emer (SENETÇİ aurasız — bedeli isabetten), EKSPER'in adamları onun tam aurasıyla emer ve hasadı ×0.6 keser,
-KEFİL'in adamları onun faz 1 aurasıyla emer. Özgün adamın aurası havuzu gibi ara bölge başına ×1.12 büyür
+KEFİL'in adamları onun faz 1 aurasıyla emer, SİMSAR'ın adamları onun faz 1 aurasıyla emer ve 4 sn'de bir durduğun yere işaret
+bırakır (ana boss'un yarı hızı). Özgün adamın aurası havuzu gibi ara bölge başına ×1.12 büyür
 (Faz 36): hasat havuzla büyüdüğü için sabit aurayla her bölgenin son adamları bota saat kazandırıyordu. Her adamın en az bir yakın ve bir uzak saldırısı var (sonuncunun bir de harita): üç sıra kuralı mesafeye göre
-seçtiği için yakını olmayan adam dibindekine hiç vuramıyordu (bot P34). Öbür bölgeler geçici dilimde
-(ÇIRAK/KÂTİP… · boss adı) — sırayla doldurulacak.
+seçtiği için yakını olmayan adam dibindekine hiç vuramıyordu (bot P34). 5. bölge (MURABAHACI) geçici dilimde
+(ÇIRAK/KÂTİP… · boss adı) — sırada.
 
 **Kademeli açılış:** ilk dalga yalnızca TEMEL, sonra her dalgada bir yeni soru ekleniyor.
 Hepsini birden atmak öğretmez, boğar.

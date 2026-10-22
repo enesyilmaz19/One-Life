@@ -100,6 +100,12 @@ namespace TekCan.EditorTools
 
         public static void Playtest36() => Başlat(izle: false, senaryo: "p36");
 
+        /// <summary>Faz 37 playtest'i: SİMSAR'ın 5 adamı (N N N, M) + 4. bölgenin dövüş odaları (BLOKE, CEZAİ ŞART, dizilişler).</summary>
+        [MenuItem("Tek Can/Otopilot — Faz 37 playtest (izle)")]
+        public static void Playtest37Izle() => Başlat(izle: true, senaryo: "p37");
+
+        public static void Playtest37() => Başlat(izle: false, senaryo: "p37");
+
         /// <summary>Masa #14: son düşmanı kapının üstünde öldür → geçirmez; çık, yeniden bas → geçer. ~10 sn.</summary>
         public static void KapiTesti() => Başlat(izle: false, senaryo: "kapi");
 

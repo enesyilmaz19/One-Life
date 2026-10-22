@@ -234,6 +234,50 @@ namespace TekCan
         /// <summary>Yaşadığı süre — MEVDUAT'ın faizi bundan (otopilot da okuyor).</summary>
         public float Yaş => _aliveTime;
 
+        // SİMSAR'ın adamları (Faz 37)
+        float _durağan, _sıçramaBirikimi; Vector3 _oyuncuSon;
+        /// <summary>DELLAL (Faz 37): oyuncu 0.5 sn'dir yerinde (saniyede 1 birimden yavaş) — aura katlanıyor.</summary>
+        public bool Duruyor => Boss != null && Boss.DuranAura != 1f && _durağan >= 0.5f;
+        /// <summary>SEYYAR (Faz 37): kaç kez geri sıçradı — otopilot ve kapı buradan sayıyor.</summary>
+        public int Sıçradı { get; private set; }
+        /// <summary>Önünden gelen hasarın çarpanı — KALKANLI'nın türü, ARACI'nın imzası (Faz 37). Bot da buna bakıp dolanıyor.</summary>
+        public float ÖndenÇarpanı => Kind.ÖndenHasar * (Boss != null ? Boss.ÖndenHasar : 1f);
+
+        // BLOKE · CEZAİ ŞART (Faz 37)
+        int _ceza; float _cezaKalan, _blokeHalka;
+        public int CezaZinciri => _ceza;
+        static readonly Color BlokeRengi = new Color(0.55f, 0.5f, 0.8f, 0.3f);
+
+        /// <summary>BLOKE (Faz 37): oyuncunun yürüyüş çarpanı — yanındaki BLOKE'lerin en ağırı. `BossKind.ActiveDashCost` deseni, bayrak yok.</summary>
+        public static float BlokeÇarpanı(Vector3 oyuncu)
+        {
+            float m = 1f;
+            foreach (var e in All)
+            {
+                if (e == null || e.Hollow || e.Kind.BlokeYarıçapı <= 0f) continue;
+                Vector3 d = e.transform.position - oyuncu; d.y = 0f;
+                if (d.magnitude <= e.Kind.BlokeYarıçapı) m = Mathf.Min(m, e.Kind.BlokeYavaşlığı);
+            }
+            return m;
+        }
+
+        /// <summary>CEZAİ ŞART (Faz 37): oyuncuya inecek darbenin çarpanı — sahnedeki en uzun zincir, tavanlı.</summary>
+        public static float CezaÇarpanı()
+        {
+            float m = 1f;
+            foreach (var e in All)
+                if (e != null && !e.Hollow && e.Kind.CezaArtışı > 0f)
+                    m = Mathf.Max(m, Mathf.Min(e.Kind.CezaTavanı, 1f + e.Kind.CezaArtışı * e._ceza));
+            return m;
+        }
+
+        /// <summary>CEZAİ ŞART (Faz 37): oyuncuya darbe İNDİ — her CEZAİ ŞART'ın zinciri bir halka uzar, süresi tazelenir.</summary>
+        public static void CezaYaz()
+        {
+            foreach (var e in All)
+                if (e != null && !e.Hollow && e.Kind.CezaArtışı > 0f) { e._ceza++; e._cezaKalan = e.Kind.CezaSüresi; e.Paint(); }
+        }
+
         /// <summary>
         /// SÜLÜK (Faz 36): değince yapışır, peşinden gelir, saniyede `YapışıkEmme` emer ve saldırmaz. Oyuncunun dash'i
         /// (dokunulmazlığı) silkeler: kopar, `KopmaSüresi` boyunca yeniden yapışmaz. Dönen: yapışık mı (durum makinesi atlanır).
@@ -1143,7 +1187,7 @@ namespace TekCan
             Vector3 to = FlatToPlayer();
             if (to.sqrMagnitude <= 0.0001f) return;
             var yön = Quaternion.LookRotation(to.normalized);
-            float hız = Kind.DönüşHızı;
+            float hız = Boss != null && Boss.DönüşHızı > 0f ? Boss.DönüşHızı : Kind.DönüşHızı;   // ARACI (Faz 37) da yavaş döner
             transform.rotation = hız > 0f ? Quaternion.RotateTowards(transform.rotation, yön, hız * dt) : yön;
         }
 
@@ -1234,12 +1278,24 @@ namespace TekCan
             // KALKANLI (Faz 34): önündeysen kalkan tutar — hasat inen hasarla orantılı, o da kısılır.
             // ponytail: "önde" OYUNCUNUN yerine göre, hasarın kaynağına değil (kule, ipotek, çek de oyuncunun
             // yerinden sayılır); kaynak gerekirse TakeDamage'e kaynak noktası eklenir.
-            if (Kind.ÖndenHasar < 1f && _player != null && Önünde(_player.position)) damage *= Kind.ÖndenHasar;
+            if (ÖndenÇarpanı < 1f && _player != null && Önünde(_player.position)) damage *= ÖndenÇarpanı;   // ARACI (Faz 37) da
             damage *= 1f - DeğerKaybı;                                     // MUHASİP (Faz 35): dövüş uzadıkça vuruşun değer kaybeder
             if (Kefalette) damage *= Boss.Kefalet;                         // KEFALETÇİ (Faz 36): son çeyrekte kendini garantiler
             if (!VadeAçık) damage *= Kind.KapalıHasar;                     // VADELİ (Faz 35): vadesi gelmeden ödemez
             float drained = Mathf.Min(damage, TimeLeft);
             TimeLeft -= drained;
+
+            // SEYYAR (Faz 37): havuzunun her %10'unu kaybedince oyuncudan geri sıçrar — kovala. Arenaya sığdırılır: köşede yeri yok.
+            if (Boss != null && Boss.Sıçrayış > 0f && _player != null && _startingPool > 0f
+                && (_sıçramaBirikimi += drained) >= _startingPool * 0.1f)
+            {
+                _sıçramaBirikimi -= _startingPool * 0.1f; Sıçradı++;
+                Vector3 kaç = -FlatToPlayer();
+                if (kaç.sqrMagnitude < 0.0001f) kaç = -transform.forward;
+                transform.position = ArenayaSığdır(transform.position + kaç.normalized * Boss.Sıçrayış);
+                Arc.Spawn(transform.position, Quaternion.identity, Radius * 1.6f, 360f,
+                          new Color(Boss.Tint.r, Boss.Tint.g, Boss.Tint.b, 0.6f), 0.25f, scaleFrom: 0.5f, scaleTo: 1.2f);
+            }
 
             var clock = Clock.Instance;
             if (clock != null)
@@ -1319,7 +1375,15 @@ namespace TekCan
             // çağıranların geçtiği YERE konur, çağıranlardan birine değil.
             if (Dormant || Hollow || _t == null) return;
 
-            float aura = AuraOranı * (YakınAurada ? Boss.YakınAura : 1f);     // ORTAK BORÇLU (Faz 36): dibindeyken iki kat
+            // DELLAL (Faz 37): oyuncu saniyede 1 birimden yavaşsa yerinde sayılır; 0.5 sn durursa aura katlanır.
+            if (Boss != null && Boss.DuranAura != 1f && _player != null && dt > 0f)
+            {
+                Vector3 adım = _player.position - _oyuncuSon; adım.y = 0f;
+                _durağan = adım.magnitude < dt ? _durağan + dt : 0f;
+                _oyuncuSon = _player.position;
+            }
+            float aura = AuraOranı * (YakınAurada ? Boss.YakınAura : 1f)       // ORTAK BORÇLU (Faz 36): dibindeyken iki kat
+                                   * (Duruyor ? Boss.DuranAura : 1f);          // DELLAL (Faz 37): yerinde durursan iki kat
             if (aura <= 0f) return;
 
             Clock.Instance?.Spend(aura * dt);
@@ -1448,6 +1512,13 @@ namespace TekCan
             _aliveTime += dt;
             if (VadeAçık != vadeÖnce) Paint();                             // VADELİ açılıp kapanınca görünsün
             if (Kind.FaizHızı > 0f && Mathf.FloorToInt(_aliveTime) != Mathf.FloorToInt(_aliveTime - dt)) Paint();   // MEVDUAT olgunlaşıyor
+            if (_ceza > 0 && (_cezaKalan -= dt) <= 0f) { _ceza = 0; Paint(); }      // CEZAİ ŞART: darbesiz geçti, zincir söndü
+            if (Kind.BlokeYarıçapı > 0f && (_blokeHalka -= dt) <= 0f)              // BLOKE: alanı görünsün
+            {
+                _blokeHalka = 1f;
+                Arc.Spawn(transform.position, Quaternion.identity, Kind.BlokeYarıçapı, 360f, BlokeRengi, 0.7f, transform,
+                          scaleFrom: 0.92f, scaleTo: 1f);
+            }
 
             // MÜBAŞİR: uzaktan tebligat — durduğun YERE bırakıyor, yaklaşmıyor.
             // Bu güne kadar bütün düşmanlar yakın dövüştü, yani "uzak dur" bedava
@@ -1889,6 +1960,7 @@ namespace TekCan
             else if (_yapışık) c = Color.Lerp(KindColor, new Color(1f, 0.2f, 0.2f), 0.4f);          // SÜLÜK yapıştı
             else if (Kind.FaizHızı > 0f)                                                            // MEVDUAT: olgunlaştıkça altın
                 c = Color.Lerp(KindColor, new Color(1f, 0.85f, 0.2f), (Kind.Faiz(_aliveTime) - 1f) / Mathf.Max(0.01f, Kind.FaizTavanı - 1f));
+            else if (_ceza > 0) c = Color.Lerp(KindColor, new Color(1f, 0.1f, 0.1f), Mathf.Min(1f, _ceza / 3f));   // CEZAİ ŞART: zincir kızarır
             else c = KindColor;                                                     // tür + rütbe rengi
 
             _renderer.material.color = c;
