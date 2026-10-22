@@ -330,6 +330,8 @@ namespace TekCan
                 ? new[] { Kurulum(), P36(), Bitir() }
                 : senaryo == "p37"
                 ? new[] { Kurulum(), P37(), Bitir() }
+                : senaryo == "p38"
+                ? new[] { Kurulum(), P38(), Bitir() }
                 : SessionState.GetInt(AdımAnahtar, 0) == 0
                 ? new[] { Kurulum(), GirdiKanıtı(), K1Hazırla() }          // K1: Play'den çıkıp giriyor
                 : new[] { K1Doğrula(), Bölge1(), Sunak(), Tahsildar(), Haciz(), Simsar(), Final(), Bitir() };
@@ -1460,7 +1462,9 @@ namespace TekCan
                 float aura = 0f, hasatEnAz = 1f, değerKaybı = 0f, enBüyükPay = 0f;
                 float dash0 = Oyuncu != null ? Oyuncu.ÖdenenDashBedeli : 0f;
                 int dolma = 0;
-                bool ekranda = Oda.Prompt().Contains(tanım.Ad), öfke = false, kelepçe = false, kilit = false, harita = false, kefalet = false, yakınAura = false, duruyor = false;
+                bool ekranda = Oda.Prompt().Contains(tanım.Ad), öfke = false, kelepçe = false, kilit = false, harita = false, kefalet = false, yakınAura = false, duruyor = false, vadeKapalı = false, muaccel = false;
+                float bileşik = 1f;
+                int takviye0 = _takviye;
                 var işaretler = new HashSet<GroundMark>();
                 _dal.TryGetValue("dolan", out float dolan0);
                 var dal0 = new Dictionary<string, float>(_dal);                   // teşhis: dövüş süresi hangi dala gitti
@@ -1483,6 +1487,9 @@ namespace TekCan
                         kefalet |= bb.Kefalette;
                         yakınAura |= bb.YakınAurada;
                         duruyor |= bb.Duruyor;
+                        vadeKapalı |= !bb.VadeAçık;
+                        muaccel |= bb.Muaccel;
+                        bileşik = Mathf.Max(bileşik, bb.BileşikÇarpanı);
                         if (tanım.İşaret > 0f) foreach (var g in FindObjectsByType<GroundMark>(FindObjectsSortMode.None)) işaretler.Add(g);
                         harita |= bb.CurrentAttack != null && bb.CurrentAttack.Tür == SaldırıTürü.Harita;
                     }
@@ -1503,6 +1510,8 @@ namespace TekCan
                 // ⚠️ C# nesnesinden: `boss != null` Unity'nin eşitliği — yok edilmiş boss'u null sayıp 0 okuyordu (BAŞ SİMSAR "SIÇRAMADI", P37)
                 int yutulan = boss is null ? 0 : boss.TeminatYuttu;
                 int sıçradı = boss is null ? 0 : boss.Sıçradı;
+                float faizleDolan = boss is null ? 0f : boss.FaizleDolan;
+                int takviye = _takviye - takviye0;
                 _dal.TryGetValue("dolan", out float dolan1);
                 float süre = Şimdi - t0;
                 bool öldü = Oda != null && Oda.IsMiniBossRoom && Oda.Cleared && Saat == c, vuruldu = darbe > 0f;
@@ -1523,9 +1532,15 @@ namespace TekCan
                 if (tanım.ÖndenHasar < 1f) İz(dolan1 > dolan0, $"arkasına {dolan1 - dolan0:0} sn dolandı", "HİÇ DOLANMADI");
                 if (tanım.DuranAura != 1f) İz(duruyor, "yerinde durana iki kat emdi", "DURANA İKİ KAT EMMEDİ");
                 if (tanım.Sıçrayış > 0f) İz(sıçradı > 0, $"{sıçradı} kez geri sıçradı", "SIÇRAMADI");
+                if (tanım.Faiz > 0f) İz(faizleDolan > 0f, $"faizle +{faizleDolan:0} sn doldu", "FAİZ İŞLEMEDİ");
+                if (tanım.VadeAralığı > 0f) İz(vadeKapalı, "vadesi kapandı", "VADE KAPANMADI");
+                if (tanım.BileşikFaiz > 0f) İz(bileşik > 1.1f, $"aurası ×{bileşik:0.00}'e bindi", "FAİZ BİNMEDİ");
+                if (tanım.MuaccelAura != 1f) İz(muaccel, "muaccel oldu", "MUACCEL OLMADI");
                 if (tanım.YüzdeBedel > 0f) İz(!vuruldu || enBüyükPay >= tanım.YüzdeBedel * 0.9f, vuruldu ? $"en büyük darbe saatin %{enBüyükPay * 100f:0.0}'i" : "(yüzde bedel) bot hiç vurulmadı", $"DARBE %{enBüyükPay * 100f:0.0}");
                 if (s == S - 1) İz(harita, "harita saldırısı geldi", "HARİTA SALDIRISI GELMEDİ");
                 İz(kayıp > 0f, $"saat {-kayıp:+0;−0}", $"⚠️ SAAT KAZANDIRDI ({-kayıp:+0;−0})");   // Enes "zorlasınlar": bedava geçilmesin
+                // Enes 2026-10-22 "botun zorlanma ölçüsüne göre": zorlasın ama öldürmesin — kayıp giriş saatini geçmesin
+                İz(kayıp < giriş, $"öldürmedi (giriş {giriş:0}{(takviye > 0 ? $", {takviye} takviye" : "")})", $"⚠️ BOTU ÖLDÜRÜRDÜ (−{kayıp:0} > giriş {giriş:0})");
                 var sYazı = new List<string>();
                 foreach (var (ad, kaç) in saldırılar) sYazı.Add($"{ad} {kaç}");
                 if (!öldü || !ekranda || !ok) tamam = false;
@@ -1538,6 +1553,67 @@ namespace TekCan
                 Debug.Log($"[{etiket}-DAL] {tanım.Ad}: " + string.Join(" · ", dallar.FindAll(x => x.Item2 >= 1f).ConvertAll(x => $"{x.Item1} {x.Item2:0} sn")));
             }
             Kaydet(kayıtNo, kayıtAdı, tamam, string.Join("<br>", satırlar));
+        }
+
+        // ── FAZ 38 PLAYTEST — 5. bölge içeriği (Enes 2026-10-22: "commit at ve sonraki faza geç") ──
+        /// <summary>
+        /// MURABAHACI'nın 5 adamı (N×4, sonra M — `AdamlarıDöv`), sonra F6 → N×4 → 5. bölgenin dövüş odaları: MÜHLET ve REFİNANS
+        /// doğuyor mu, MÜHLET'lerin kaçı süresinde kesildi, REFİNANS öbürlerini yeniledi mi, SARMAL ve ZİKZAK geliyor mu, odalar temizleniyor mu.
+        /// </summary>
+        IEnumerator P38()
+        {
+            _bekçiDk = 30f;
+            for (int i = 0; i < 4; i++) { Bas(Key.N); yield return Bekle(1.2f); }
+            yield return AdamlarıDöv(4, "P38", "38-1", "MURABAHACI'nın 5 adamı: adı ekranda, imzası dövüşte, öldü, bota saat kazandırmadı ama öldürmedi (beklenen güç)");
+            if (_bitti) yield break;
+
+            Sahne("P38 2/2 YENİ DÜŞMANLAR", "F6 → N×4 → 5. bölgenin 2–7. ve 10–13. odası: MÜHLET · REFİNANS · SARMAL · ZİKZAK");
+            Bas(Key.F6); yield return Bekle(0.6f);
+            _pc = null; _kam = null;
+            for (int i = 0; i < 4; i++) { Bas(Key.N); yield return Bekle(1.2f); }
+            var türler = new Dictionary<string, int>();
+            var dizilişler = new HashSet<string>();
+            var görülen = new HashSet<Enemy>();
+            var mühletler = new HashSet<Enemy>();
+            var refinanslar = new HashSet<Enemy>();
+            var odalar = new List<string>();
+            bool temiz = true;
+            foreach (int oda in new[] { 2, 3, 4, 5, 6, 7, 10, 11, 12, 13 })        // 8. oda mini boss, 9. sunak · SARMAL 12., ZİKZAK 13.
+            {
+                if (_bitti) break;
+                yield return OdayaAtla(oda);
+                if (Oda == null || RoomManager.Tür(_t, Oda.Room) != RoomManager.OdaTürü.Dövüş) { odalar.Add($"{oda}. oda DÖVÜŞ ODASI DEĞİL"); temiz = false; continue; }
+                string diziliş = Oda.Layout.Name;
+                dizilişler.Add(diziliş);
+                float t0 = Şimdi;
+                while (Oda != null && Oda.Room == oda && !Oda.Cleared && Şimdi - t0 < 300f && !_bitti)
+                {
+                    foreach (var e in Enemy.All)
+                    {
+                        if (e == null || e.Kind == null) continue;
+                        if (görülen.Add(e)) türler[e.Kind.Name] = (türler.TryGetValue(e.Kind.Name, out var n) ? n : 0) + 1;
+                        if (e.Kind == EnemyKind.Grace) mühletler.Add(e);
+                        if (e.Kind == EnemyKind.Refinance) refinanslar.Add(e);
+                    }
+                    if (Saat != null && Saat.Seconds < 60f && Time.time - _sonTakviye > 2f) { Bas(Key.F5); _sonTakviye = Time.time; _takviye++; }
+                    DövüşAdımı(Mod.Dövüş);
+                    yield return null;
+                }
+                Dur();
+                bool bitti = Oda != null && (Oda.Room != oda || Oda.Cleared);
+                temiz &= bitti;
+                odalar.Add($"{oda}. oda {diziliş} {Şimdi - t0:0} sn" + (bitti ? "" : " ⚠️ TEMİZLENMEDİ"));
+            }
+            int kaçan = 0; float yenilenen = 0f, enGeç = 0f;
+            foreach (var e in mühletler) { if (e.MühletDoldu) kaçan++; else enGeç = Mathf.Max(enGeç, e.Yaş); }   // C# alanı: yok edilmiş olsa da okunur
+            foreach (var e in refinanslar) yenilenen += e.Yeniledi;
+            var türYazı = new List<string>();
+            foreach (var (ad, kaç) in türler) türYazı.Add($"{ad} {kaç}");
+            Kaydet("38-2", "5. bölgede MÜHLET ve REFİNANS doğuyor, MÜHLET süresi dolunca gidiyor, REFİNANS öbürlerini yeniliyor, SARMAL ve ZİKZAK geliyor, odalar temizleniyor",
+                   mühletler.Count > 0 && refinanslar.Count > 0 && yenilenen > 0f && temiz
+                   && dizilişler.Contains(RoomLayout.Spiral.Name) && dizilişler.Contains(RoomLayout.Zigzag.Name),
+                   $"{string.Join(" · ", türYazı)} · MÜHLET {mühletler.Count}: {mühletler.Count - kaçan} süresinde kesildi (en geç {enGeç:0} sn'de), {kaçan} kaçtı · REFİNANS {refinanslar.Count}: öbürlerine +{yenilenen:0} sn yeniledi" +
+                   $"<br>{string.Join(" · ", odalar)}");
         }
 
         // ── FAZ 37 PLAYTEST — 4. bölge içeriği (Enes 2026-10-21: "commitle ve sıradaki faza geç") ──

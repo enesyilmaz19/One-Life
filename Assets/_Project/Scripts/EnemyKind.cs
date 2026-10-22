@@ -117,6 +117,16 @@ namespace TekCan
         public virtual float CezaTavanı => 1f;
         public virtual float CezaSüresi => 0f;
 
+        // ── Faz 38 kancaları ─────────────────────────────────────────────────
+
+        /// <summary>&gt;0 ise bu kadar saniye yaşarsa ödemeden gider, bedeli oyuncuya (`MühletBedeli` darbe, dash'le kaçılmaz) — MÜHLET.</summary>
+        public virtual float MühletSüresi => 0f;
+        public virtual float MühletBedeli => 0f;
+
+        /// <summary>&gt;0 ise bu yarıçaptaki öbür düşmanların havuzunu saniyede başlangıçlarının `RefinansHızı` kadar doldurur — REFİNANS.</summary>
+        public virtual float RefinansYarıçapı => 0f;
+        public virtual float RefinansHızı => 0f;
+
         public static readonly EnemyKind Basic = new BasicKind();
         public static readonly EnemyKind Leak = new LeakKind();
         public static readonly EnemyKind Vault = new VaultKind();
@@ -134,6 +144,8 @@ namespace TekCan
         public static readonly EnemyKind Deposit = new DepositKind();
         public static readonly EnemyKind Frozen = new FrozenKind();
         public static readonly EnemyKind Penalty = new PenaltyKind();
+        public static readonly EnemyKind Grace = new GraceKind();
+        public static readonly EnemyKind Refinance = new RefinanceKind();
 
         /// <summary>
         /// Oda kompozisyonu bu listeden seçiyor. ⚠️ SIRA = AÇILIŞ SIRASI:
@@ -143,9 +155,10 @@ namespace TekCan
         /// ⚠️ Faz 35: VADELİ ve TAKSİT 2. bölgenin (KASA'dan sonra) — tavanlar 4 · 7 · 8 · 10 · 11.
         /// ⚠️ Faz 36: SÜLÜK ve MEVDUAT 3. bölgenin (KAÇAK'tan sonra) — tavanlar 4 · 7 · 10 · 12 · 13.
         /// ⚠️ Faz 37: BLOKE ve CEZAİ ŞART 4. bölgenin (MEVDUAT'tan sonra) — tavanlar 4 · 7 · 10 · 14 · 15.
+        /// ⚠️ Faz 38: MÜHLET ve REFİNANS 5. bölgenin (MÜBAŞİR'den sonra, ZAMANAŞIMI hep sonda) — tavanlar 4 · 7 · 10 · 14 · 17.
         /// </summary>
         public static readonly EnemyKind[] All =
-            { Basic, Leak, Shield, Bankrupt, Vault, Term, Installment, Runner, Leech, Deposit, Frozen, Penalty, Insurer, Bailiff, Lapse };
+            { Basic, Leak, Shield, Bankrupt, Vault, Term, Installment, Runner, Leech, Deposit, Frozen, Penalty, Insurer, Bailiff, Grace, Refinance, Lapse };
     }
 
     /// <summary>Temel düşman — dengenin sıfır noktası, diğerleri buna göre okunuyor.</summary>
@@ -373,6 +386,43 @@ namespace TekCan
         public override float CezaSüresi => 4f;
         public override float PoolMultiplier => 0.75f;
         public override float SpeedMultiplier => 1.1f;
+    }
+
+    /// <summary>
+    /// MÜHLET — sana gelmez, 6 birim uzakta durur, vurmaz; 15 sn mühleti var: o sürede peşine düşüp kesmezsen ödemeden gider, bedeli
+    /// sana (3 darbe, dash'le kaçılmaz). Süre azaldıkça soluyor.
+    ///
+    /// Değiştirdiği karar: YARIŞ. SIZINTI'da (sürekli emiliyor) hız zaten şart; bu ona bir saat koyuyor: odaya girince önce kimi
+    /// keseceğin artık "kim tehlikeli" değil "kimin süresi bitiyor" — kalabalığı bırakıp kovalar mısın, bedeli mi ödersin.
+    /// KAÇAK canı azalınca kaçar, bu süresi dolunca.
+    /// ⚠️ Uzak durması şart: üstüne koşan MÜHLET ilk kalabalıkla ölüyordu — 18 sn'de de 12 sn'de de 20'nin 20'si yetişti (P38).
+    /// </summary>
+    public sealed class GraceKind : EnemyKind
+    {
+        public override string Name => "MÜHLET";
+        public override Color FullColor => new Color(0.95f, 0.8f, 0.45f);
+        public override float MühletSüresi => 15f;
+        public override float PreferredRange(Tuning t) => 6f;
+        public override float MühletBedeli => 3f;
+        public override float PoolMultiplier => 0.8f;
+        public override float SpeedMultiplier => 1.05f;
+    }
+
+    /// <summary>
+    /// REFİNANS — yanındakilerin borcunu yeniler: 4 birim içindeki öbür düşmanların havuzu saniyede başlangıcının %4'ü dolar.
+    /// Çevresinde yeşil halka.
+    ///
+    /// Değiştirdiği karar: HEDEF SIRASI — SİGORTA'dan farklı soruyla: o geliri kısar, bu dövüşü UZATIR. SIZINTI'da uzayan her
+    /// saniye emiliyor: önce onu kes, ya da kalabalığı ondan uzağa çek. Kendisi zayıf ve yavaş.
+    /// </summary>
+    public sealed class RefinanceKind : EnemyKind
+    {
+        public override string Name => "REFİNANS";
+        public override Color FullColor => new Color(0.4f, 0.85f, 0.5f);
+        public override float RefinansYarıçapı => 4f;
+        public override float RefinansHızı => 0.04f;
+        public override float PoolMultiplier => 0.7f;
+        public override float SpeedMultiplier => 0.85f;
     }
 
     /// <summary>TAKSİT'in küçük taksiti — hızlı, bölünmez.</summary>

@@ -480,8 +480,15 @@ vurmalı.
 | **BLOKE** | 3 birim içindeyken yürüyüşün ×0.55 (dash serbest), çevresinde soluk halka | **nerede dövüşeceğin.** Yavaşlamak kaçamamak demek: yanında dövüşme, önce onu kes ya da öbürlerini ondan uzağa çek |
 | **CEZAİ ŞART** | yaşadığı sürece inen her darbe sonrakini %40 pahalı yapar (en çok ×2.2); 4 sn darbesiz kalınca söner, zincir uzadıkça kızarır | **hatadan sonra.** Darbe yediysen geri çekil, zincir sönsün — ya da önce onu kes, zincir onunla ölür |
 
+**Faz 38 (2026-10-22) — 5. bölgeye iki tür:** SIZINTI'nın kuralı (sürekli emiliyor, "tek çare hızlı olmak") üstüne iki soru.
+
+| tür | mekanik | değiştirdiği karar |
+|---|---|---|
+| **MÜHLET** | sana gelmez, 6 birim uzakta durur, vurmaz · 15 sn mühlet: kesilmezse ödemeden gider, bedeli 3 darbe (saatten, dash'le kaçılmaz); süre bittikçe solar | **yarış.** Odaya girince önce kimi keseceğin "kim tehlikeli" değil "kimin süresi bitiyor" |
+| **REFİNANS** | 4 birim içindeki öbür düşmanların havuzunu saniyede %4 doldurur (boşalmışı ve boss'u değil), yeşil halka | **hedef sırası** — SİGORTA geliri kısar, bu dövüşü uzatır; SIZINTI'da uzayan her saniye emiliyor |
+
 Açılış sırası: TEMEL · SIZINTI · KALKANLI · MÜFLİS · KASA · VADELİ · TAKSİT · KAÇAK · SÜLÜK · MEVDUAT · BLOKE · CEZAİ ŞART ·
-SİGORTA · MÜBAŞİR · ZAMANAŞIMI; bölge tavanları 4 · 7 · 10 · 14 · 15.
+SİGORTA · MÜBAŞİR · MÜHLET · REFİNANS · ZAMANAŞIMI; bölge tavanları 4 · 7 · 10 · 14 · 17.
 
 **Mini boss'lar — bölgenin boss'unun adamları (Faz 34, önce 1. bölge).** Faz 28 kuralı yerinde: tek faz,
 çağırma yok, saldırılar ana boss'un — *"mini boss'lar ana boss'un saldırılarını tek tek öğretiyor, ana boss
@@ -519,16 +526,29 @@ hepsini birden yapıyor."* Özgün olan **ad, imza, ders**:
 | SEYYAR | havuzunun her %10'unda 4 birim geri sıçrar | DEVİR+ · HARAÇ · KAÇAK MAL+ — geri sıçrama: kovala |
 | BAŞ SİMSAR | SEYYAR'ın sıçrayışı (kalkansız) | KOMİSYON+ · DEVİR+ · AÇIK ARTIRMA+ · BÜYÜK İHALE — provası |
 
+| MURABAHACI'nın adamı (Faz 38) | imza | öğrettiği |
+|---|---|---|
+| TEFECİ | borç işler: 1 sn vurulmazsa havuzu saniyede %0.8 dolar — faizle dolan KREDİ, hasat vermez · aurası ×1.6 | VADE · BİLEŞİK FAİZ · İBRAZ — durma |
+| VADECİ | 4 sn'de bir 1 sn kapanır, kapalıyken vuruş ×0.25 (koyulaşır) · aurası ×1.2 | VADE · FAİZ · PROTESTO — kapanınca bekle |
+| FAİZCİ | aurası dövüşün her 10 sn'sinde %4 binerek büyür | FAİZ · BİLEŞİK FAİZ · İBRAZ+ — hızlı bitir |
+| İCRA MEMURU | havuzu yarıya inince aurası ×1.6 (muaccel) | İCRA+ · FAİZ · MUACCELİYET — son yarıyı hızlı bitir |
+| BAŞ TEFECİ | FAİZCİ'nin bileşik faizi, yarı hızda (%2) | İCRA+ · FAİZ · PROTESTO+ · İHTARNAME — provası |
+
+Mini'lerde İCRA yok: 200° konisi + TEMERRÜT dibindeki bota 91'de 27 kez değdi, iki adam botu öldürüyordu (Faz 38, P38).
+
 KABADAYI dersi: imza dibinde duran oyuncuda da işlemeli — "uzaklaşınca çeker" gibi bir imza seçilmedi.
 
 Kural (Enes 2026-10-21): süreler yakın, sıra yok, ama **dibinde bedava durulan adam yok** — bot (her şeyden kaçan oyuncu)
 hiçbir mini'den saat kazanarak çıkmıyor, saat doyma tavanında girse bile. Ailelerin ortak huyu: TAHSİLDAR'ın adamları onun aurasının
 ×1.2'siyle emer (SENETÇİ aurasız — bedeli isabetten), EKSPER'in adamları onun tam aurasıyla emer ve hasadı ×0.6 keser,
 KEFİL'in adamları onun faz 1 aurasıyla emer, SİMSAR'ın adamları onun faz 1 aurasıyla emer ve 4 sn'de bir durduğun yere işaret
-bırakır (ana boss'un yarı hızı). Özgün adamın aurası havuzu gibi ara bölge başına ×1.12 büyür
+bırakır (ana boss'un yarı hızı), MURABAHACI'nın adamları onun faz 1 aurasıyla emer (SIZINTI'nın emişi üstüne). Özgün adamın aurası havuzu gibi ara bölge başına ×1.12 büyür
 (Faz 36): hasat havuzla büyüdüğü için sabit aurayla her bölgenin son adamları bota saat kazandırıyordu. Her adamın en az bir yakın ve bir uzak saldırısı var (sonuncunun bir de harita): üç sıra kuralı mesafeye göre
-seçtiği için yakını olmayan adam dibindekine hiç vuramıyordu (bot P34). 5. bölge (MURABAHACI) geçici dilimde
-(ÇIRAK/KÂTİP… · boss adı) — sırada.
+seçtiği için yakını olmayan adam dibindekine hiç vuramıyordu (bot P34). Beş bölgenin 25 mini'si özgün (Faz 34–38).
+
+**Zorlansın, ölmesin (Enes 2026-10-22: "botun zorlanma ölçüsüne göre ilerleyelim"):** bot hiçbir mini'den saat kazanmıyor VE
+hiçbirinde giriş saatinden fazla kaybetmiyor. Mini'nin ısrar tavanı ×2.5 (`miniBossStreakCap`; ana boss'unki ×5): dibinde duran
+bot 4. bölgede ×5 ısrarla DELLAL'dan −856, BAŞ SİMSAR'dan −722 kaybediyordu (giriş 615).
 
 **Kademeli açılış:** ilk dalga yalnızca TEMEL, sonra her dalgada bir yeni soru ekleniyor.
 Hepsini birden atmak öğretmez, boğar.

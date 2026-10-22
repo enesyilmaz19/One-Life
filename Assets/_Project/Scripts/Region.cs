@@ -90,7 +90,7 @@ namespace TekCan
             // ⚠️ SON bölge SON türü açmalı. Faz 13'te yedinci tür (ZAMANAŞIMI) eklendi
             // ama tavan 6'da kalmıştı — yani eklenen tür oyunda HİÇ DOĞMUYORDU.
             // Öz-denetim artık "her tür en az bir bölgede açılıyor mu" diye soruyor.
-            public override int UnlockedKinds => 15;
+            public override int UnlockedKinds => 17;                // + MÜHLET · REFİNANS (Faz 38) · ZAMANAŞIMI
         }
 
         public static readonly Region[] All =

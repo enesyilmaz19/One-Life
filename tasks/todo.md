@@ -13,7 +13,8 @@
 | 10 | 🎮 **Faz 32 testi** | **F6**, **N N**, **B** 3. boss → TAHVİL: sol tıkı BASILI TUT (VADE 1/2/3 yazar, saat iki kat akar), bırak · hemen **2** FAİZLİ = VADE FARKI · 4. bölgenin 3. sunağında MÜŞTEREK: bir düşmana vur, sonra başkasına → pembe çizgi = bağ; birine ne vurursan öbürü de yer · sağ tık ZİNCİRLEME · bağın üstünden dash = KOPARMA · **B** 4. boss → ARBİTRAJ: arkadan ×2.5, önden ×0.5 · sağ tık görünmezlik · düşmanın içinden dash + sol tık = TERS İŞLEM · 5. bölgenin 3. ara bölgesinin 4. odasında köşe → KİRA: kule kur, sağ tık TAHLİYE (kalan kirayı peşin ödersin) | Gördüklerini yaz: basılı tutmak sıkıcı mı, bağ okunuyor mu, arkaya geçmek zevkli mi, kule kirası adil mi |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 | 13 | 🎮 *(isteğe bağlı)* **Faz 33 his testi** | Bot oynadı (P33 3/3, P33c 12/12 — aşağıda "BOSS SÜRELERİ" bölümü). Sana kalan yalnızca göz: **F6**, **M** → sunak renkleri okunuyor mu (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), **B** → efsanevi "vay" dedirtiyor mu | Gördüklerini yaz |
-| 15–19 | 🤖 **Faz 34–37 his testleri → botta** | Enes (2026-10-22): *"testi de bota yaptır, oradan botun zorlanma ölçüsüne göre ilerleyelim şimdilik"*. P34–P37 ✅. Ölçü: mini zorlasın ama botu öldürmesin (saat kaybı < giriş saati) — Faz 38 A0 | — |
+| 15–19 | 🤖 **Faz 34–37 his testleri → botta** | Enes (2026-10-22): *"testi de bota yaptır, oradan botun zorlanma ölçüsüne göre ilerleyelim şimdilik"*. P34–P37 ✅. Ölçü: mini zorlasın ama botu öldürmesin (saat kaybı < giriş saati) — Faz 38'de uygulandı, P34–P38 ✅ | — |
+| 20 | 🧭 **8–10 saat yol haritası — üç karar** | Bot tam koşusu 3.9 sa, bitmiyor (aşağıda "8–10 SAAT YOL HARİTASI"). ① Süre nereden: tempo düzeltmesi + hikâye/olay odaları (öneri) / yalnız dövüşü uzatmak / daha çok oda · ② Hikâyeyi kim yazar: sen yazarsın, ben yerleştiririm / ben taslak, sen düzeltirsin · ③ Faz 38 commit + Faz 39'a başlayayım mı | Mesajla yaz |
 
 ---
 
@@ -232,6 +233,77 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 
 ---
 
+## 🧭 8–10 SAAT YOL HARİTASI — **ÖNERİ, Enes'in onayını bekliyor** (2026-10-22)
+
+Enes: *"şu an önceliğimiz oyunun hikaye ile birlikte yaklaşık 8-10 saat sürecek kıvama gereken hale getirmek olmalı"*.
+
+**Bugün (bot `TamKosu`, 2026-10-22):** 231 dk ≈ **3.9 saat ve bitmedi** — MURABAHACI 20 dk'da yenilmedi; saat 7 kez bitti, hepsi
+4. ve 5. bölgenin boss'unda. Dövüş odası ortalaması **38 sn** (YAPI planı ~90 sn). Odalar bölgeden bölgeye KISALIYOR (ara bölgenin
+son odası: 1. bölgede 65–70 sn, 3. bölgede 35–49 sn) — oyuncunun gücü (114 sunak alımı, hasar ×8) düşman büyümesini geçiyor; orta oyun
+kolaylaşıyor, son iki boss'ta duvar. **Hikâye oyunda hiç yok**: dünya, aile teminat, boss'lar ekonominin katları yalnızca TASARIM.md'de.
+
+**Hedef bileşim** (bot süresi; insan ölüm, okuma, karar ile üstüne — çarpanı ölçülmedi, tahmin ×1.2–1.4):
+
+| parça | bugün | hedef | nasıl |
+|---|---|---|---|
+| 175 dövüş odası | 38 sn → 1.8 sa | ~70 sn → 3.4 sa | bölgeler arası havuz büyümesi gücü yakalasın; odalar kısalmasın |
+| 25 mini boss | ~2.4 dk → 1.0 sa | ~3.5 dk → 1.5 sa | havuz |
+| 5 ana boss | ~46 dk, ikisi bitmiyor | 6–8 dk → 0.6 sa | geç boss'lar takviyesiz bitsin |
+| 25 hikâye/olay odası | yok | 2–3 dk → 1.0 sa | YENİ: ara bölge başına bir oda, karar = saniye |
+| anlatım (giriş, bölge, boss, son) | yok | ~0.5 sa | metin kartları |
+| **toplam** | **3.9 sa, bitmedi** | **~7 sa (bot)** | insanla ~8.5–10 sa |
+
+**Fazlar**
+1. **Faz 39 — Koşu bitsin + tempo eğrisi** (bot ölçer, ben yaparım; hikâye kararını beklemez): geç boss'lar takviyesiz, oda ortalaması
+   60–75 sn ve bölgeden bölgeye kısalmıyor, mini 3–4 dk, boss 6–8 dk. Kapı: `TamKosu` baştan sona, F5'siz.
+2. **Faz 40 — Hikâye iskeleti** (`docs/HIKAYE.md`): adlar, borcu kim aldı, son(lar), 3 perde × 5 bölge olay dizisi, her boss'un
+   hesaplaşması, diriliş eşyalarının kazanıldığı anlar. Kararlar Enes'te.
+3. **Faz 41 — Anlatım altyapısı**: metin kartı (giriş, bölge girişi, boss önce/sonra, kontrol noktası), hikâye/olay odası (ara bölge
+   başına 1), diriliş eşyasının hikâye anında verilmesi, final.
+4. **Faz 42 — Yazım + yerleştirme**: metinler, "dünya ilerledi" (ölümden sonra değişen satırlar), son(lar).
+5. **Faz 43 — Ölçüm**: bot tam koşu ~7 sa · istersen bir bölgeyi sen oyna (insan çarpanı).
+
+**Enes'in kararları:** ① Süre nereden: dövüş eğrisi + hikâye/olay odaları (öneri) mı, yalnız dövüşü uzatmak mı, daha çok oda mı?
+② Hikâyeyi kim yazar: sen mi (ben yerleştiririm), ben taslak/sen düzeltme mi? ③ Faz 39'a hemen başlayayım mı?
+
+---
+
+## 💸 FAZ 38 — Bölge 5 (SIZINTI) içeriği: MURABAHACI'nın adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'siz** (2026-10-22)
+
+Enes: *"commit at ve sonraki faza geç"* · *"testi de bota yaptır, oradan botun zorlanma ölçüsüne göre ilerleyelim şimdilik"*.
+Ölçü (benim yorumum): mini **zorlasın** (bota saat kazandırmasın) ama **öldürmesin** (kayıp < giriş saati) — `AdamlarıDöv` ikisine de bakıyor.
+
+**A0 — mini zorlasın, öldürmesin:** mini boss'un ısrar tavanı ×2.5 (`Tuning.miniBossStreakCap`; ana boss ×5). Önce: DELLAL −856,
+BAŞ SİMSAR −722 (giriş 615) · sonra −572 (1 takviye), −167. 25 mini'nin 25'i hem bota mal oluyor hem botu öldürmüyor (P34–P38).
+
+**38a — MURABAHACI'nın 5 adamı** — *borç işlemeye devam ediyor* · imza şekilleri ZİNCİR + RASTGELE NOKTA. Ailenin huyu: faz 1 aurası.
+
+| ara bölge | adam | imza | saldırılar | bot |
+|---|---|---|---|---|
+| 1 | TEFECİ | 1 sn vurulmazsa havuzu saniyede %0.8 dolar — **kredi**, hasat vermez · aura ×1.6 | VADE · BİLEŞİK FAİZ · İBRAZ | 3.2 dk · −46 |
+| 2 | VADECİ | 4 sn'de bir 1 sn kapanır, kapalıyken ×0.25 · aura ×1.2 | VADE · FAİZ · PROTESTO | 4.0 dk · −43 |
+| 3 | FAİZCİ | aurası 10 sn'de bir %4 binerek büyür (bot ×2.3'e çıkardı) | FAİZ · BİLEŞİK FAİZ · İBRAZ+ | 3.6 dk · −107 |
+| 4 | İCRA MEMURU | yarıdan sonra muaccel: aura ×1.6 | İCRA+ · FAİZ · MUACCELİYET | 4.2 dk · −278 |
+| 5 | BAŞ TEFECİ | FAİZCİ'nin bileşik faizi, yarı hızda | İCRA+ · FAİZ · PROTESTO+ · İHTARNAME | 5.1 dk · −297 |
+
+**38b — 2 yeni düşman** (MÜBAŞİR'den sonra, ZAMANAŞIMI hep sonda; tavanlar 4 · 7 · 10 · 14 · 17)
+- **MÜHLET**: sana gelmez, 6 birim uzakta durur, vurmaz; 15 sn içinde kesmezsen gider, bedeli 3 darbe — **yarış**. Bot (öncelik vermiyor): 20'nin 16'sı süresinde, 4'ü kaçtı.
+- **REFİNANS**: 4 birim içindeki öbürlerinin havuzunu saniyede %4 doldurur (kredi — hasat vermez) — **önce onu kes**. Bot: 19 REFİNANS +145 sn yeniledi.
+
+**38c — 2 yeni diziliş:** **SARMAL** (merkezden dışa kıvrılır) · **ZİKZAK** (yol boyu sağ-sol).
+
+- [x] A0 · A. Adamlar (`Adamlar[4]`, kancalar `Faiz`/`VadeAralığı…`/`BileşikFaiz`/`MuaccelAura`) — geçici mini kalmadı · B. MÜHLET · REFİNANS · C. SARMAL · ZİKZAK
+- [x] D. `Faz38SelfCheck` **13 kontrol**, bozmaların hepsi kırmızı (20 + kredi ×2 + uzak durma; TEFECİ'nin kontrolü ilk turda yeşil kaldı — "isabet faizi durdurur"u ölçmüyordu, düzeldi)
+- [x] E. Bot `Playtest38` ✅ · eski testler P29–P37, Kapı, Boss ✅ · tüm kapılar temiz
+
+**Botun bulduğu (düzeldi):**
+- TEFECİ bota +95 kazandırdı: faizle dolan havuz yeniden hasat ediliyordu → KREDİ (MURABAHACI'nın kuralı). Yine +87 → aura ×1.6 ve faiz %0.8.
+- VADECİ −985, İCRA MEMURU −1588 (giriş 830): kayıp İCRA'dan (dibindeki bota 91'de 27) → mini'lerde İCRA yok, İCRA+ var.
+- MÜHLET 18 sn'de de 12 sn'de de 20'nin 20'si yetişti: üstüne koşan MÜHLET ilk kalabalıkla ölüyordu → uzak durur.
+- REFİNANS'ın yenilediği de hasat ediliyordu → kredi. SENETÇİ'nin zorla alımı kalıyor: bedeli isabetle ödendi.
+
+---
+
 ## 🏷️ FAZ 37 — Bölge 4 (AĞIRLIK) içeriği: SİMSAR'ın adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'li** (2026-10-21)
 
 Enes: *"commitle ve sıradaki faza geç"*. Faz 34–36'nın deseni ve kuralları (tek faz, çağırma yok, saldırılar SİMSAR'dan, yakın + uzak,
@@ -274,7 +346,7 @@ Ailenin huyu: SİMSAR'ın faz 1 aurası ve 4 sn'de bir durduğun yere işaret (a
 **⚠️ Enes'in kararına — 4. bölgede tek boss darbesi pahalı:** DELLAL ve BAŞ SİMSAR'da bot −700…−850 sn kaybetti (saat 615'ten
 giriyor, %40'ta takviye). Kaynak yeni imzalar değil: bot dibinde durduğu için ISRAR ×5'e çıkıyor (Faz 26, Enes'in kuralı), bir de AĞIRLIK
 ×1.8 ve ilerleme ×4.3–5.1 → DEVİR'in tek isabeti ~170–210 sn. Bot DEVİR'i (200° koni) 38'de 5 kez yiyor. İnsan mesafe değiştirip ısrarı
-sıfırlar, ama yine de sert. **Enes (2026-10-22): botun zorlanma ölçüsüne göre** → Faz 38 A0: mini botu öldürmesin.
+sıfırlar, ama yine de sert. **Enes (2026-10-22): botun zorlanma ölçüsüne göre** → Faz 38 A0 yaptı: mini ısrarı ×2.5, DELLAL −572, BAŞ SİMSAR −167.
 
 ---
 

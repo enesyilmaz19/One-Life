@@ -686,3 +686,9 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
 - **İnce pay gürültüde döner (Faz 37):** ŞAHİT Faz 36'da −5 ile geçmişti; aynı kodla bir sonraki koşuda +4. Asıl kusur seçimdeydi —
   imzası dash'e bağlı, dibindeki dash atmıyor (KABADAYI dersi). **Kural:** "bota kazandırmıyor" kontrolünde −10'dan ince pay geçti
   sayılmaz; imzanın dibindeki oyuncuya gerçekten ne kadar mal olduğuna bak.
+- **Geri dolan havuz hasat edilirse imza tersine işler (Faz 38):** TEFECİ'nin faizi havuzu dolduruyordu, dolan yeniden vurulup hasat
+  ediliyordu — "borç işler" bota saat veriyordu (+95). MURABAHACI'da aynı şey yoktu çünkü onun havuzu fullenince tümü KREDİ.
+  **Kural:** düşmanın BEDAVA eklediği her saniye (TEFECİ'nin faizi, REFİNANS'ın yenilemesi) krediye yazılsın. Oyuncunun darbeyle
+  ÖDEDİĞİ (SENETÇİ'nin zorla alımı) geri vurulup alınabilir — bedeli zaten ödendi.
+- **Kayıp tek saldırıdan geliyorsa önce saldırı tablosuna bak (Faz 38):** VADECİ ve İCRA MEMURU botu öldürüyordu; "Saldırı başına
+  vurulma" satırı hepsinin İCRA'dan geldiğini gösterdi (91'de 27, öbürleri ~0). Adamın imzasını değil o saldırıyı mini'den çıkardım.

@@ -244,7 +244,7 @@ namespace TekCan
         public float ÖndenÇarpanı => Kind.ÖndenHasar * (Boss != null ? Boss.ÖndenHasar : 1f);
 
         // BLOKE · CEZAİ ŞART (Faz 37)
-        int _ceza; float _cezaKalan, _blokeHalka;
+        int _ceza; float _cezaKalan, _alanHalka;
         public int CezaZinciri => _ceza;
         static readonly Color BlokeRengi = new Color(0.55f, 0.5f, 0.8f, 0.3f);
 
@@ -312,7 +312,28 @@ namespace TekCan
         public float DeğerKaybı => Boss != null && Boss.Amortisman > 0f ? Mathf.Min(0.5f, Boss.Amortisman * Mathf.Floor(_dövüşSüresi / 10f)) : 0f;
 
         /// <summary>VADELİ (Faz 35): her `VadeAralığı`nın son `VadeAçıklığı` saniyesi açık; öbür türlerde hep açık.</summary>
-        public bool VadeAçık => Kind.VadeAralığı <= 0f || _aliveTime % Kind.VadeAralığı >= Kind.VadeAralığı - Kind.VadeAçıklığı;
+        public bool VadeAçık => Vade <= 0f || _aliveTime % Vade >= Vade - VadeAçıklık;
+        // VADECİ (Faz 38): boss'un vadesi türünkini ezer — VADELİ'nin boss hâli
+        bool BossVadeli => Boss != null && Boss.VadeAralığı > 0f;
+        float Vade => BossVadeli ? Boss.VadeAralığı : Kind.VadeAralığı;
+        float VadeAçıklık => BossVadeli ? Boss.VadeAçıklığı : Kind.VadeAçıklığı;
+        float KapalıÇarpan => BossVadeli ? Boss.KapalıHasar : Kind.KapalıHasar;
+
+        // MURABAHACI'nın adamları (Faz 38)
+        float _vurulmadan, _kredi;
+        /// <summary>TEFECİ (Faz 38): faizle dolan toplam havuz — otopilot ve kapı buradan sayıyor.</summary>
+        public float FaizleDolan { get; private set; }
+        /// <summary>FAİZCİ (Faz 38): aurasının bileşik çarpanı — dövüşün her 10 sn'si bir basamak.</summary>
+        public float BileşikÇarpanı => Boss != null && Boss.BileşikFaiz > 0f ? Mathf.Pow(1f + Boss.BileşikFaiz, Mathf.Floor(_dövüşSüresi / 10f)) : 1f;
+        /// <summary>İCRA MEMURU (Faz 38): havuzu yarıya indi, borç muaccel — aura katlanıyor.</summary>
+        public bool Muaccel => Boss != null && Boss.MuaccelAura != 1f && _startingPool > 0f && TimeLeft <= _startingPool * 0.5f;
+
+        // MÜHLET · REFİNANS (Faz 38)
+        /// <summary>MÜHLET (Faz 38): süresi doldu, ödemeden gitti — C# alanı, nesne yok edilse de okunur.</summary>
+        public bool MühletDoldu { get; private set; }
+        /// <summary>REFİNANS (Faz 38): öbürlerine yenilediği toplam havuz.</summary>
+        public float Yeniledi { get; private set; }
+        static readonly Color RefinansRengi = new Color(0.4f, 0.95f, 0.5f, 0.3f);
 
         /// <summary>KABADAYI (Faz 34): havuzu yarıya indi, öfkeli.</summary>
         public bool Öfkeli => Boss != null && Boss.ÖfkeHızı != 1f && _startingPool > 0f && TimeLeft <= _startingPool * 0.5f;
@@ -547,6 +568,7 @@ namespace TekCan
             ApplyAura(Time.deltaTime);
             TickBossPassives(Time.deltaTime);
             TickKindPassives(Time.deltaTime);
+            if (MühletDoldu) return;                                       // MÜHLET gitti (yok edilmesi kare sonunda)
 
             // KAÇAK: havuzu eşiğin altına inince kaçmaya başlar.
             if (!Fleeing && !Hollow && Kind.FleesBelowRatio > 0f &&
@@ -985,6 +1007,7 @@ namespace TekCan
                 if (_seçilenTür == _sonBant) _bantSerisi++;
                 else { _sonBant = _seçilenTür; _bantSerisi = 1; }
                 _ısrar = IsrarEğrisi(_t, _bantSerisi);
+                if (Boss != null && Boss.IsMini) _ısrar = Mathf.Min(_ısrar, _t.miniBossStreakCap);   // mini zorlasın, öldürmesin (Faz 38 A0)
             }
 
             SetAttack(_seçilen);
@@ -1249,6 +1272,7 @@ namespace TekCan
             // geçip doğrudan onu döverdi — "hepsi ölünce kendisi gelsin" kuralı
             // sessizce anlamsızlaşırdı.
             if (Dormant) return;
+            _vurulmadan = 0f;                                              // TEFECİ (Faz 38): vuruldu, faiz durur
 
             // TEMİNAT (GARANTÖR, Faz 36): teminat varken vuruş hasarsız yutulur — önce teminatı kır.
             if (_teminat > 0)
@@ -1281,9 +1305,12 @@ namespace TekCan
             if (ÖndenÇarpanı < 1f && _player != null && Önünde(_player.position)) damage *= ÖndenÇarpanı;   // ARACI (Faz 37) da
             damage *= 1f - DeğerKaybı;                                     // MUHASİP (Faz 35): dövüş uzadıkça vuruşun değer kaybeder
             if (Kefalette) damage *= Boss.Kefalet;                         // KEFALETÇİ (Faz 36): son çeyrekte kendini garantiler
-            if (!VadeAçık) damage *= Kind.KapalıHasar;                     // VADELİ (Faz 35): vadesi gelmeden ödemez
+            if (!VadeAçık) damage *= KapalıÇarpan;                         // VADELİ (Faz 35) · VADECİ (Faz 38): vadesi gelmeden ödemez
             float drained = Mathf.Min(damage, TimeLeft);
             TimeLeft -= drained;
+            // TEFECİ (Faz 38): önce faizle dolan kredi erir, hasat vermez — yoksa faiz bota saat kazandırıyordu (+95, P38)
+            float krediden = Mathf.Min(drained, _kredi);
+            _kredi -= krediden;
 
             // SEYYAR (Faz 37): havuzunun her %10'unu kaybedince oyuncudan geri sıçrar — kovala. Arenaya sığdırılır: köşede yeri yok.
             if (Boss != null && Boss.Sıçrayış > 0f && _player != null && _startingPool > 0f
@@ -1309,7 +1336,7 @@ namespace TekCan
                 // iki kez sömürülür ve son iki boss oyunun en büyük ZAMAN KAYNAĞI olurdu —
                 // oysa boss'un seni beslememesi gerekiyor (ölçüm de öyle diyordu).
                 float gain = OnCredit ? 0f
-                           : drained * clock.HarvestRate * harvestMult
+                           : (drained - krediden) * clock.HarvestRate * harvestMult
                              * Kind.HarvestMultiplier
                              * Region.Harvest                      // KITLIK bölgesi kuralı
                              * BossKind.ActiveHarvestMultiplier()  // EKSPER'in suçu
@@ -1362,7 +1389,7 @@ namespace TekCan
         /// Saniyede emdiği — TEK kaynak: oyun (`ApplyAura`) ve zorluk raporu buna soruyor. Rapor kendi
         /// formülünü yazıyordu ve mini boss'un yarım aurası yerine genel boss aurasını sayıyordu (10 kat).
         /// </summary>
-        public float AuraOranı => (Boss != null ? Boss.AuraDrain(_t, Phase)
+        public float AuraOranı => (Boss != null ? Boss.AuraDrain(_t, Phase) * BileşikÇarpanı * (Muaccel ? Boss.MuaccelAura : 1f)   // FAİZCİ · İCRA MEMURU (Faz 38)
                                                 : (IsBoss ? _t.bossAuraDrain : 0f))
                                 + Kind.AuraDrain(_t) * Rank.TraitMultiplier(_t);   // İRİ SIZINTI
 
@@ -1461,6 +1488,14 @@ namespace TekCan
 
             _dövüşSüresi += dt;                                            // MUHASİP'in amortismanı bundan
 
+            _vurulmadan += dt;                                             // TEFECİ (Faz 38): 1 sn vurulmazsa borç işler
+            if (Boss.Faiz > 0f && _vurulmadan >= 1f && TimeLeft < _startingPool)
+            {
+                float faiz = Mathf.Min(_startingPool - TimeLeft, _startingPool * Boss.Faiz * dt);
+                TimeLeft += faiz; FaizleDolan += faiz; _kredi += faiz;    // KREDİ: faizle dolan hasat vermez (MURABAHACI'nın kuralı)
+                if (_label != null) _label.Set(TimeLeft, Hollow);
+            }
+
             if (Boss.TeminatAralığı > 0f)                                  // GARANTÖR (Faz 36): teminatını yeniler
             {
                 _teminatSayacı -= dt;
@@ -1511,14 +1546,38 @@ namespace TekCan
             bool vadeÖnce = VadeAçık;
             _aliveTime += dt;
             if (VadeAçık != vadeÖnce) Paint();                             // VADELİ açılıp kapanınca görünsün
-            if (Kind.FaizHızı > 0f && Mathf.FloorToInt(_aliveTime) != Mathf.FloorToInt(_aliveTime - dt)) Paint();   // MEVDUAT olgunlaşıyor
+            if ((Kind.FaizHızı > 0f || Kind.MühletSüresi > 0f) && Mathf.FloorToInt(_aliveTime) != Mathf.FloorToInt(_aliveTime - dt)) Paint();   // MEVDUAT olgunlaşıyor · MÜHLET soluyor
             if (_ceza > 0 && (_cezaKalan -= dt) <= 0f) { _ceza = 0; Paint(); }      // CEZAİ ŞART: darbesiz geçti, zincir söndü
-            if (Kind.BlokeYarıçapı > 0f && (_blokeHalka -= dt) <= 0f)              // BLOKE: alanı görünsün
+            float alan = Mathf.Max(Kind.BlokeYarıçapı, Kind.RefinansYarıçapı);
+            if (alan > 0f && (_alanHalka -= dt) <= 0f)                             // BLOKE · REFİNANS: alanı görünsün
             {
-                _blokeHalka = 1f;
-                Arc.Spawn(transform.position, Quaternion.identity, Kind.BlokeYarıçapı, 360f, BlokeRengi, 0.7f, transform,
+                _alanHalka = 1f;
+                Arc.Spawn(transform.position, Quaternion.identity, alan, 360f, Kind.RefinansYarıçapı > 0f ? RefinansRengi : BlokeRengi, 0.7f, transform,
                           scaleFrom: 0.92f, scaleTo: 1f);
             }
+
+            // MÜHLET (Faz 38): süresi doldu — ödemeden gider, bedeli sana. Saatten doğrudan: dash'le kaçılmaz, mühlet bitti.
+            if (Kind.MühletSüresi > 0f && _aliveTime >= Kind.MühletSüresi)
+            {
+                MühletDoldu = true;
+                var c = Clock.Instance;
+                if (c != null) c.Spend(HitCost * Kind.MühletBedeli);
+                Arc.Spawn(transform.position, Quaternion.identity, Radius * 3f, 360f, new Color(1f, 0.85f, 0.4f, 0.8f), 0.4f, scaleFrom: 0.3f, scaleTo: 1.4f);
+                Escape();
+                return;
+            }
+
+            // REFİNANS (Faz 38): yanındakilerin borcunu yeniler — boşalmışı (tek atımlık) diriltmez, boss'u beslemez
+            if (Kind.RefinansYarıçapı > 0f)
+                foreach (var e in All)
+                {
+                    if (e == null || e == this || e.Hollow || e.IsBoss || e._startingPool <= 0f || e.TimeLeft >= e._startingPool) continue;
+                    Vector3 d = e.transform.position - transform.position; d.y = 0f;
+                    if (d.magnitude > Kind.RefinansYarıçapı) continue;
+                    float ek = Mathf.Min(e._startingPool - e.TimeLeft, e._startingPool * Kind.RefinansHızı * dt);
+                    e.TimeLeft += ek; e._kredi += ek; Yeniledi += ek;    // KREDİ: yenilenen hasat vermez — dövüşü uzatır, seni beslemez
+                    if (e._label != null) e._label.Set(e.TimeLeft, e.Hollow);
+                }
 
             // MÜBAŞİR: uzaktan tebligat — durduğun YERE bırakıyor, yaklaşmıyor.
             // Bu güne kadar bütün düşmanlar yakın dövüştü, yani "uzak dur" bedava
@@ -1961,6 +2020,7 @@ namespace TekCan
             else if (Kind.FaizHızı > 0f)                                                            // MEVDUAT: olgunlaştıkça altın
                 c = Color.Lerp(KindColor, new Color(1f, 0.85f, 0.2f), (Kind.Faiz(_aliveTime) - 1f) / Mathf.Max(0.01f, Kind.FaizTavanı - 1f));
             else if (_ceza > 0) c = Color.Lerp(KindColor, new Color(1f, 0.1f, 0.1f), Mathf.Min(1f, _ceza / 3f));   // CEZAİ ŞART: zincir kızarır
+            else if (Kind.MühletSüresi > 0f) c = Color.Lerp(KindColor, Color.white, 0.8f * _aliveTime / Kind.MühletSüresi);   // MÜHLET: süresi bittikçe solar
             else c = KindColor;                                                     // tür + rütbe rengi
 
             _renderer.material.color = c;

@@ -184,7 +184,8 @@ namespace TekCan.EditorTools
             $"|büyür={k.GrowthPerSecond > 0f}|kalkan={k.ÖndenHasar < 1f}|patlar={k.PatlamaYarıçapı > 0f}" +   // Faz 34
             $"|vade={k.VadeAralığı > 0f}|taksit={k.TaksitSayısı > 0}" +   // Faz 35
             $"|yapışır={k.YapışmaMenzili > 0f}|faiz={k.FaizHızı > 0f}" +   // Faz 36
-            $"|bloke={k.BlokeYarıçapı > 0f}|ceza={k.CezaArtışı > 0f}";   // Faz 37
+            $"|bloke={k.BlokeYarıçapı > 0f}|ceza={k.CezaArtışı > 0f}" +   // Faz 37
+            $"|mühlet={k.MühletSüresi > 0f}|refinans={k.RefinansYarıçapı > 0f}";   // Faz 38
 
         static int MarkCount() =>
             Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include).Length;

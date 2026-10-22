@@ -204,6 +204,28 @@ namespace TekCan
             }
         }
 
+        sealed class SpiralLayout : RoomLayout
+        {
+            public override string Name => "SARMAL";
+            public override Vector3 Position(Tuning t, int i, int n)
+            {
+                // Merkezden dışa kıvrılır (Faz 38): dıştakinden başlarsan içe, kalabalığa doğru ilerlersin; ortaya dalarsan hepsi sarar.
+                float k = n <= 1 ? 0f : i / (float)(n - 1), a = i * 75f * Mathf.Deg2Rad, r = 0.08f + 0.45f * k;
+                return At(t, Mathf.Cos(a) * r, Mathf.Sin(a) * r + 0.15f);
+            }
+        }
+
+        sealed class ZigzagLayout : RoomLayout
+        {
+            public override string Name => "ZİKZAK";
+            public override Vector3 Position(Tuning t, int i, int n)
+            {
+                // Yol boyu sağ-sol (Faz 38): her biri kendi hizasında, teker teker gelir ama hep yandan — koni ikisini zor alır.
+                float z = n <= 1 ? 0.2f : Mathf.Lerp(-0.15f, 0.6f, i / (float)(n - 1));
+                return At(t, i % 2 == 0 ? 0.4f : -0.4f, z);
+            }
+        }
+
         public static readonly RoomLayout Ring = new RingLayout();
         public static readonly RoomLayout Wall = new WallLayout();
         public static readonly RoomLayout Cluster = new ClusterLayout();
@@ -218,8 +240,10 @@ namespace TekCan
         public static readonly RoomLayout Column = new ColumnLayout();
         public static readonly RoomLayout Corners = new CornersLayout();
         public static readonly RoomLayout Cross = new CrossLayout();
+        public static readonly RoomLayout Spiral = new SpiralLayout();
+        public static readonly RoomLayout Zigzag = new ZigzagLayout();
 
-        public static readonly RoomLayout[] All = { Ring, Wall, Cluster, Flank, Scatter, Pincer, DoubleRow, Corridor, Arrow, Nested, Column, Corners, Cross };
+        public static readonly RoomLayout[] All = { Ring, Wall, Cluster, Flank, Scatter, Pincer, DoubleRow, Corridor, Arrow, Nested, Column, Corners, Cross, Spiral, Zigzag };
 
         /// <summary>Oda numarasından yerleşim — deterministik, ama arka arkaya tekrar etmiyor.</summary>
         public static RoomLayout For(int roomIndex) => All[Mathf.Abs(roomIndex) % All.Length];

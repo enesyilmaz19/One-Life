@@ -106,6 +106,12 @@ namespace TekCan.EditorTools
 
         public static void Playtest37() => Başlat(izle: false, senaryo: "p37");
 
+        /// <summary>Faz 38 playtest'i: MURABAHACI'nın 5 adamı (N×4, M) + 5. bölgenin dövüş odaları (MÜHLET, REFİNANS, dizilişler).</summary>
+        [MenuItem("Tek Can/Otopilot — Faz 38 playtest (izle)")]
+        public static void Playtest38Izle() => Başlat(izle: true, senaryo: "p38");
+
+        public static void Playtest38() => Başlat(izle: false, senaryo: "p38");
+
         /// <summary>Masa #14: son düşmanı kapının üstünde öldür → geçirmez; çık, yeniden bas → geçer. ~10 sn.</summary>
         public static void KapiTesti() => Başlat(izle: false, senaryo: "kapi");
 

@@ -290,6 +290,16 @@ namespace TekCan
         public virtual float DuranAura => 1f;
         /// <summary>SEYYAR (Faz 37): havuzunun her %10'unu kaybedince oyuncudan bu kadar birim geri sıçrar. 0 = yok.</summary>
         public virtual float Sıçrayış => 0f;
+        /// <summary>TEFECİ (Faz 38): 1 sn vurulmazsa havuzu saniyede başlangıcının bu oranı kadar dolar — MURABAHACI'nın faizi. 0 = yok.</summary>
+        public virtual float Faiz => 0f;
+        /// <summary>VADECİ (Faz 38): VADELİ'nin boss hâli — `VadeAralığı` sn'de bir `VadeAçıklığı` sn açık, kapalıyken hasar × `KapalıHasar`. 0 = yok.</summary>
+        public virtual float VadeAralığı => 0f;
+        public virtual float VadeAçıklığı => 0f;
+        public virtual float KapalıHasar => 1f;
+        /// <summary>FAİZCİ (Faz 38): aurası dövüşün her 10 sn'sinde bu oran kadar BİNEREK büyür. 0 = yok.</summary>
+        public virtual float BileşikFaiz => 0f;
+        /// <summary>İCRA MEMURU (Faz 38): havuzu yarıya inince aurası × bu — borç muaccel. 1 = yok.</summary>
+        public virtual float MuaccelAura => 1f;
 
         /// <summary>Sahnedeki yaşayan boss'ların dash bedeli toplamı (ŞAHİT) — `ActiveHarvestMultiplier` deseni, bayrak yok.</summary>
         public static float ActiveDashCost()
@@ -1137,8 +1147,8 @@ namespace TekCan
     /// saldırısını da gösteriyor). Mini boss'lar ana boss'un saldırılarını TEK TEK öğretiyor, ana
     /// boss hepsini birden yapıyor. Tek faz, çağırma yok, aura ve işaret yarı hızda.
     ///
-    /// ⚠️ 1–4. bölge ÖZGÜN (Faz 34–37, `Adamlar`: TAHSİLDAR'ın, EKSPER'in, KEFİL'in, SİMSAR'ın adamları); 5. bölge hâlâ GEÇİCİ:
-    /// unvanlar ve dilimler (todo "YAPI").
+    /// ⚠️ Beş bölgenin hepsi ÖZGÜN (Faz 34–38, `Adamlar`). Geçici dilim (unvan · boss adı) yalnızca ara bölge sayısı 5 değilse —
+    /// `Tuning.subRegionsPerRegion` değişirse oyun yine kurulsun diye.
     /// ⚠️ `BossKind.All`'da DEĞİL — boss listesinden dönen kapılar (tekel, kapsama, taşınma) onu
     /// görmesin. Nemesis defteri de ayrı: ana boss'un defteri değil, toparlanma defteri.
     /// </summary>
@@ -1160,6 +1170,7 @@ namespace TekCan
             public float ZorlaAlır, Kelepçe, Amortisman, HasatKilidi, YüzdeBedel, TeminatAralığı, DashBedeli, Öfke = 1f, Kefalet = 1f, YakınAura = 1f;
             /// <summary>TELLAL (Faz 37): yer işareti aralığı (sn) — 0 = ana boss'unkinin iki katı.</summary>
             public float İşaret, Sıçrayış, DönüşHızı, ÖndenHasar = 1f, DuranAura = 1f;
+            public float Faiz, VadeAralığı, VadeAçıklığı, BileşikFaiz, KapalıHasar = 1f, MuaccelAura = 1f;   // Faz 38
             public int TeminatSayısı;
             /// <summary>Oyuncunun hasadına çarpan yaşadığı sürece (EKSPER'in suçu) — 1 = kesmez.</summary>
             public float Hasat = 1f;
@@ -1169,7 +1180,7 @@ namespace TekCan
         // ⚠️ Her adamın en az bir YAKIN ve bir UZAK saldırısı olmalı (sonuncunun bir de HARİTA'sı): üç sıra kuralı (Faz 26)
         // mesafeye göre seçiyor; yakını olmayan SAĞ KOL dibinde duran bota hiç vuramadı, 1.6 dk'da harita saldırısı
         // gelmeden öldü — uzağı olmayan HACİZCİ'de de uzak durmak bedavaydı (bot P34, 2026-10-20).
-        // ponytail: 1–4. bölge (Faz 34–37); 5. bölge (MURABAHACI) geçici dilimde — sırada.
+        // ponytail: ara bölge sayısı 5 değilse hepsi geçici dilime düşer — sayı değişirse adam listeleri de değişmeli.
         public static readonly Adam[][] Adamlar =
         {
             new[]   // ① TAHSİLDAR — zorla alan: yanındayken emer, sonra kovalar
@@ -1210,6 +1221,16 @@ namespace TekCan
                 new Adam { Ad = "BAŞ SİMSAR", Suç = "patronun provası", Saldırı = new[] { "KOMİSYON+", "DEVİR+", "AÇIK ARTIRMA+", "BÜYÜK İHALE" }, Aura = 1f, Sıçrayış = 4f },
                 // ⚠️ BAŞ SİMSAR kalkansız: ARACI'nın kalkanıyla 6.4–6.7 dk sürdü (öbürleri ~3.3), botun 83 sn'si dolanmaya, ~70 sn'si
                 // BÜYÜK İHALE'ye gitti (P37). Açıklık dersi zaten KOMİSYON+ ve BÜYÜK İHALE'de.
+            },
+            new[]   // ⑤ MURABAHACI — borç işlemeye devam ediyor · imzaları ZİNCİR (yerleşemezsin) + RASTGELE NOKTA (oraya yetiş) (Faz 38).
+            {       // Ailenin huyu: MURABAHACI'nın faz 1 aurası (×1.2) — SIZINTI'nın emişinin üstüne: hepsi "hızlı bitir" der.
+                new Adam { Ad = "TEFECİ", Suç = "borç işler — vurmadığın her saniye havuzu dolar", Saldırı = new[] { "VADE", "BİLEŞİK FAİZ", "İBRAZ" }, Aura = 1.6f, Faiz = 0.008f },   // ×1 + %0.4 faizle bota +87 · ×1.45 + %0.4 ±0 · ×1.45 + %0.8 −11 (5. bölgenin hasadı büyük, P38)
+                new Adam { Ad = "VADECİ", Suç = "vadesi gelmeden ödemez — kapanınca bekle", Saldırı = new[] { "VADE", "FAİZ", "PROTESTO" }, Aura = 1.2f, VadeAralığı = 4f, VadeAçıklığı = 3f, KapalıHasar = 0.25f },
+                // ⚠️ Mini'lerde İCRA yok: dibindeki bota 91'de 27 kez değdi, VADECİ ile İCRA MEMURU botu öldürüyordu (−985 · −1588 / 830, P38).
+                // İCRA+ (220°) 29'da 0 — İCRA MEMURU onu öğretiyor. Vade 5 sn'de 2 sn kapalıyken 4.9 dk sürdü.
+                new Adam { Ad = "FAİZCİ", Suç = "faizi bileşik — aurası 10 sn'de bir %4 büyür", Saldırı = new[] { "FAİZ", "BİLEŞİK FAİZ", "İBRAZ+" }, Aura = 1f, BileşikFaiz = 0.04f },
+                new Adam { Ad = "İCRA MEMURU", Suç = "yarıdan sonra borç muaccel — daha çok emer", Saldırı = new[] { "İCRA+", "FAİZ", "MUACCELİYET" }, Aura = 1f, MuaccelAura = 1.6f },   // ×2 + VADE+ ile −831 / 830 (P38)
+                new Adam { Ad = "BAŞ TEFECİ", Suç = "patronun provası", Saldırı = new[] { "İCRA+", "FAİZ", "PROTESTO+", "İHTARNAME" }, Aura = 1f, BileşikFaiz = 0.02f },   // TEFECİ'nin faiziyle 5.1–5.5 dk sürdü (faiz dövüşü uzatıyor), FAİZCİ'ninki uzatmaz
             },
         };
 
@@ -1293,6 +1314,12 @@ namespace TekCan
         public override float DönüşHızı => Özgün != null ? Özgün.DönüşHızı : 0f;
         public override float DuranAura => Özgün != null ? Özgün.DuranAura : 1f;
         public override float Sıçrayış => Özgün != null ? Özgün.Sıçrayış : 0f;
+        public override float Faiz => Özgün != null ? Özgün.Faiz : 0f;
+        public override float VadeAralığı => Özgün != null ? Özgün.VadeAralığı : 0f;
+        public override float VadeAçıklığı => Özgün != null ? Özgün.VadeAçıklığı : 0f;
+        public override float KapalıHasar => Özgün != null ? Özgün.KapalıHasar : 1f;
+        public override float BileşikFaiz => Özgün != null ? Özgün.BileşikFaiz : 0f;
+        public override float MuaccelAura => Özgün != null ? Özgün.MuaccelAura : 1f;
         public override float SpeedMultiplier(int phase) => Ana.SpeedMultiplier(1);
         public override float PlayerHarvest(int phase) => Özgün != null ? Özgün.Hasat : Mathf.Lerp(1f, Ana.PlayerHarvest(1), 0.5f);
         public override float GroundMarkInterval(int phase)

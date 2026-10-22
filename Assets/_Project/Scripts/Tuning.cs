@@ -458,6 +458,11 @@ namespace TekCan
         public float bossStreakStep = 0.25f;
         [Tooltip("ISRAR: bedel çarpanının tavanı (Enes: şimdilik ×5)")]
         public float bossStreakCap = 5f;
+        /// <summary>
+        /// Mini boss'un ısrar tavanı (Faz 38 A0). Enes (2026-10-22): "botun zorlanma ölçüsüne göre" — mini zorlasın, öldürmesin.
+        /// ×5'te bot 4. bölgenin DELLAL'ından ve BAŞ SİMSAR'ından giriş saatinden fazla kaybederek çıktı (−856 / 615, P37).
+        /// </summary>
+        public float miniBossStreakCap = 2.5f;
         [Tooltip("Boss'a vurmak normal düşmanın kaç katı zaman kazandırır. DÜŞÜK olmalı: boss uzun bir dövüş, seni beslememeli.")]
         public float bossHarvestMultiplier = 0.4f;
 
