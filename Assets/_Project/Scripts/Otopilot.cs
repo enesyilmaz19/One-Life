@@ -389,7 +389,7 @@ namespace TekCan
                     int beklenen = b * S + s;
                     foreach (Altar.Kind k in new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash })
                         while (c.Alınan(k) < beklenen) c.Yükselt(k);
-                    float giriş = _t.harvestSoftCap * Mathf.Pow(_t.harvestSoftCapGrowth, b);
+                    float giriş = Clock.Tavan(_t, b);
                     c.Revive(giriş);
 
                     string ad = BossAdı(boss);
@@ -943,9 +943,9 @@ namespace TekCan
                 string ad = BossAdı(boss);
                 // Saat = bölgenin doyma tavanı (MiniTesti gibi). ⚠️ F5'in 300 sn'si ve 35 sn eşiği 5. bölgede tek
                 // vuruştan az (~100–200 sn): bot MURABAHACI'da 4 dk'da üç kez öldü, süre ölçülemedi (ilk koşu).
-                float giriş = _t.harvestSoftCap * Mathf.Pow(_t.harvestSoftCapGrowth, b);
+                float giriş = Clock.Tavan(_t, b);
                 c.Revive(giriş);
-                float havuz = boss.TimeLeft, d0 = c.TotalHitCost, t0 = Şimdi, faz2 = -1f;
+                float havuz = boss.TimeLeft, d0 = c.TotalHitCost, t0 = Şimdi, faz2 = -1f, s0 = c.Seconds, b0 = c.TotalGranted;
                 int f0 = _takviye;
                 while (Şimdi - t0 < 3600f && !_bitti && Saat == c && !c.Dead && Oda != null && Oda.IsBossRoom)   // ölüp kontrol noktasına dönmek "öldürdü" sayılmasın
                 {
@@ -960,14 +960,18 @@ namespace TekCan
                 float süre = Şimdi - t0;
                 bool öldü = Boss() == null && Saat == c && !c.Dead && Oda != null && Oda.IsBossRoom;
                 bool kısa = b > 0 && süre <= önceki;
+                float kayıp = s0 + (c.TotalGranted - b0) - c.Seconds;               // takviyeler düşülmüş net saat kaybı
+                // ⚠️ Bilgi, kapı değil: saat burada doyma TAVANINDA, gerçek koşuda boss'a tavanın 5–8 katıyla giriliyor (TamKosu, Faz 39).
+                // Boss'un botu öldürmediğini `TamKosu` ölçüyor (baştan sona F5'siz) — mini'lerde dövüş kısa olduğu için tavan ölçüsü yetiyor.
+                bool botuÖldürdü = kayıp >= giriş;
                 if (!öldü || kısa) sıralı = false;
                 önceki = süre;
                 satırlar.Add($"B{b + 1} {ad}: {süre / 60f:0.0} dk" + (faz2 >= 0f ? $" · faz 2 {faz2 / 60f:0.0}. dk'da" : "") +
-                             $" · havuz {havuz:0} · darbe −{c.TotalHitCost - d0:0} · F5 {_takviye - f0}" +
-                             (öldü ? "" : " · ❌ ÖLMEDİ") + (kısa ? " · ⚠️ öncekinden kısa" : ""));
+                             $" · havuz {havuz:0} · saat −{kayıp:0} / giriş {giriş:0} · darbe −{c.TotalHitCost - d0:0} · F5 {_takviye - f0}" +
+                             (öldü ? "" : " · ❌ ÖLMEDİ") + (kısa ? " · ⚠️ öncekinden kısa" : "") + (botuÖldürdü ? " · ⚠️ tavanla girse ölürdü" : ""));
                 Debug.Log($"[BOSS TESTİ] {satırlar[satırlar.Count - 1]}");
             }
-            Kaydet("BT", "Her ana boss öncekinden uzun sürüyor (beklenen güç)", sıralı, string.Join("<br>", satırlar));
+            Kaydet("BT", "Her ana boss öncekinden uzun sürüyor (beklenen güç, saat doyma tavanında; saat kaybı bilgi — ölmeyi TamKosu ölçer)", sıralı, string.Join("<br>", satırlar));
         }
 
         /// <summary>10 sn OYUN zamanında bir: havuz, inen hasar (karelik düşüşlerin toplamı), botun dalları.</summary>
@@ -1441,6 +1445,18 @@ namespace TekCan
         /// 2026-10-21: "zorlasınlar"), darbe, saldırı sayımı ve `Adam`'daki HER imzanın dövüşte görülüp görülmediği. İsabet isteyen
         /// imzalar (zorla alır, kelepçe, defter, yüzde bedel) yalnızca bot vurulduysa görülebilir; vurulmadıysa sayılmaz.
         /// </summary>
+        /// <summary>
+        /// BEKLENEN GÜÇ: N ile atlayan bot gerçek koşudaki sunak alımlarını yapmamış olur — her sunaktan türünden `alım` kez yükseltir
+        /// (mini testi ve oda testleri ortak). ⚠️ Faz 40: odalar bölgeyle büyüyünce yükseltmesiz bot 5. bölgede odaları 300 sn'de
+        /// bitiremedi, MÜHLET'lerin hepsi kaçtı (P38) — test oyunu değil atlamayı ölçüyordu. Gerçek koşuda o odalar ~100 sn.
+        /// </summary>
+        static void BeklenenGüç(Clock c, int alım)
+        {
+            if (c == null) return;
+            foreach (Altar.Kind k in new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash })
+                while (c.Alınan(k) < alım) c.Yükselt(k);
+        }
+
         IEnumerator AdamlarıDöv(int bölge, string etiket, string kayıtNo, string kayıtAdı)
         {
             int S = Mathf.Max(1, _t.subRegionsPerRegion);
@@ -1454,9 +1470,8 @@ namespace TekCan
                 var c = Saat; var boss = Boss();
                 if (c == null || Oda == null || !Oda.IsMiniBossRoom || Oda.RegionIndex != bölge || boss == null || tanım == null)
                 { satırlar.Add($"{s + 1}: {bölge + 1}. bölgenin mini boss odası açılmadı"); tamam = false; continue; }
-                foreach (Altar.Kind k in new[] { Altar.Kind.Harvest, Altar.Kind.Damage, Altar.Kind.Dash })
-                    while (c.Alınan(k) < bölge * S + s) c.Yükselt(k);
-                float giriş = _t.harvestSoftCap * Mathf.Pow(_t.harvestSoftCapGrowth, bölge);
+                BeklenenGüç(c, bölge * S + s);
+                float giriş = Clock.Tavan(_t, bölge);
                 c.Revive(giriş);
                 float s0 = c.Seconds, b0 = c.TotalGranted, t0 = Şimdi, d0 = c.TotalHitCost, sonDarbe = c.TotalHitCost, son = boss.TimeLeft;
                 float aura = 0f, hasatEnAz = 1f, değerKaybı = 0f, enBüyükPay = 0f;
@@ -1571,6 +1586,7 @@ namespace TekCan
             Bas(Key.F6); yield return Bekle(0.6f);
             _pc = null; _kam = null;
             for (int i = 0; i < 4; i++) { Bas(Key.N); yield return Bekle(1.2f); }
+            BeklenenGüç(Saat, 4 * Mathf.Max(1, _t.subRegionsPerRegion));                                     // gerçek koşudaki gibi güçlü gir
             var türler = new Dictionary<string, int>();
             var dizilişler = new HashSet<string>();
             var görülen = new HashSet<Enemy>();
@@ -1633,6 +1649,7 @@ namespace TekCan
             Bas(Key.F6); yield return Bekle(0.6f);
             _pc = null; _kam = null;
             for (int i = 0; i < 3; i++) { Bas(Key.N); yield return Bekle(1.2f); }
+            BeklenenGüç(Saat, 3 * Mathf.Max(1, _t.subRegionsPerRegion));                                     // gerçek koşudaki gibi güçlü gir
             var türler = new Dictionary<string, int>();
             var dizilişler = new HashSet<string>();
             var görülen = new HashSet<Enemy>();
@@ -1703,6 +1720,7 @@ namespace TekCan
             _pc = null; _kam = null;
             Bas(Key.N); yield return Bekle(1.2f);
             Bas(Key.N); yield return Bekle(1.2f);
+            BeklenenGüç(Saat, 2 * Mathf.Max(1, _t.subRegionsPerRegion));                                     // gerçek koşudaki gibi güçlü gir
             var türler = new Dictionary<string, int>();
             var dizilişler = new HashSet<string>();
             var görülen = new HashSet<Enemy>();
@@ -1765,6 +1783,7 @@ namespace TekCan
             Bas(Key.F6); yield return Bekle(0.6f);
             _pc = null; _kam = null;
             Bas(Key.N); yield return Bekle(1.2f);
+            BeklenenGüç(Saat, 1 * Mathf.Max(1, _t.subRegionsPerRegion));                                     // gerçek koşudaki gibi güçlü gir
             var türler = new Dictionary<string, int>();
             var dizilişler = new HashSet<string>();
             var görülen = new HashSet<Enemy>();
@@ -2904,15 +2923,17 @@ namespace TekCan
         Enemy EnYakın()
         {
             // VADELİ (Faz 35): insan gibi — vadesi kapalıysa vadesi açık olana dön; hepsi kapalıysa en yakına
-            Enemy en = null, açık = null; float d = float.MaxValue, da = float.MaxValue;
+            // MÜHLET (Faz 40): insan gibi — solan MÜHLET önce; uzak duruyor, en yakını seçen bot ona hiç sıra vermiyordu (27'de 22 kaçtı)
+            Enemy en = null, açık = null, mühlet = null; float d = float.MaxValue, da = float.MaxValue, dm = float.MaxValue;
             foreach (var e in Enemy.All)
             {
                 if (e == null || e.Dormant) continue;
                 float x = Düz(e.transform.position - Ben).magnitude;
                 if (x < d) { d = x; en = e; }
                 if (e.VadeAçık && x < da) { da = x; açık = e; }
+                if (e.Kind != null && e.Kind.MühletSüresi > 0f && !e.Hollow && x < dm) { dm = x; mühlet = e; }
             }
-            return açık != null ? açık : en;
+            return mühlet != null ? mühlet : açık != null ? açık : en;
         }
 
         /// <summary>Her karede: gözler (uyarılar), süre takviyesi, kaçış, hedef.</summary>

@@ -310,14 +310,15 @@ namespace TekCan.EditorTools
             foreach (var x in Enemy.All)
                 if (x != null && !x.IsBoss && (x.Kind == null || x.Kind.HarvestMultiplier > 0f)) { e = x; break; }
 
-            // DOYMA: aynı vuruş, saat tavanın altında ve 2 katında — kazanç yarıya iner
+            // DOYMA: aynı vuruş, saat tavanın altında ve 2 katında — kazanç (1/2)^üs'e iner (Faz 41)
             float tavan = t.harvestSoftCap;
             Canlandır(t, clock, tavan * 0.5f);
             float h0 = clock.TotalHarvested; e.TakeDamage(1f); float tam = clock.TotalHarvested - h0;
             Canlandır(t, clock, tavan * 2f);
             h0 = clock.TotalHarvested; e.TakeDamage(1f); float dolu = clock.TotalHarvested - h0;
-            failed += Check(ref total, $"⚠️⚠️ HASAT DOYMASI: saat tavanın 2 katıyken aynı vuruş yarı kazandırıyor ({dolu:0.000} / {tam:0.000})",
-                            tam > 0f && Mathf.Abs(dolu / tam - 0.5f) < 0.01f, dolu / Mathf.Max(0.0001f, tam));
+            float beklenenDoyma = Mathf.Pow(0.5f, t.harvestSoftCapExponent);
+            failed += Check(ref total, $"⚠️⚠️ HASAT DOYMASI: saat tavanın 2 katıyken aynı vuruş ×{dolu / Mathf.Max(0.0001f, tam):0.00} kazandırıyor (0.5^{t.harvestSoftCapExponent:0.#} = {beklenenDoyma:0.00})",
+                            tam > 0f && Mathf.Abs(dolu / tam - beklenenDoyma) < 0.01f, dolu / Mathf.Max(0.0001f, tam));
 
             // SUNAK: fiyat en az saatin yüzdesi; az saatte taban
             Canlandır(t, clock, 1000f);
@@ -327,7 +328,7 @@ namespace TekCan.EditorTools
             failed += Check(ref total, $"⚠️ SUNAK fiyatı saatin %{t.altarPricePercent * 100f:0}'u ({zengin:0} sn @1000), az saatte taban ({fakir:0} = {t.altarBasePrice:0})",
                             Mathf.Abs(zengin - 1000f * t.altarPricePercent) < 0.01f && Mathf.Abs(fakir - t.altarBasePrice) < 0.01f, zengin);
 
-            // İLERLEME: AYNI düşmanın vuruşu 2. bölgenin 3. ara bölgesinde ×büyüme^(S+2)
+            // İLERLEME: AYNI düşmanın vuruşu 2. bölgenin 3. ara bölgesinde ×saat büyümesi^(1 + 2/S) (Faz 39: saatle bağlı)
             var bedel = typeof(Enemy).GetProperty("HitCost", Özel);
             var oda = typeof(RoomManager).GetProperty("Room");
             var bölge = typeof(RoomManager).GetProperty("RegionIndex");
@@ -335,7 +336,7 @@ namespace TekCan.EditorTools
             oda.SetValue(rm, RoomManager.SunakOdası(t, 1) + 3);
             bölge.SetValue(rm, 1);
             float c1 = (float)bedel.GetValue(e);
-            float beklenen = Mathf.Pow(t.hitCostProgressGrowth, Mathf.Max(1, t.subRegionsPerRegion) + 2);
+            float beklenen = Mathf.Pow(t.harvestSoftCapGrowth, 1f + 2f / Mathf.Max(1, t.subRegionsPerRegion));
             failed += Check(ref total, $"⚠️ İLERLEME: aynı düşmanın vuruşu ileride pahalı ({c0:0.00} → {c1:0.00} sn = ×{c1 / Mathf.Max(0.0001f, c0):0.00} ≈ ×{beklenen:0.00})",
                             c0 > 0f && Mathf.Abs(c1 / c0 - beklenen) < 0.01f, c1 / Mathf.Max(0.0001f, c0));
             Temizle(root);

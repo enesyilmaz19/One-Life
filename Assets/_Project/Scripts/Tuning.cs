@@ -194,7 +194,7 @@ namespace TekCan
         [Tooltip("Her ara bölgede düşman havuzu bu kat büyür (ara bölge İÇİNDE ayrıca roomPoolGrowth)")]
         public float subRegionPoolGrowth = 1.12f;
         [Tooltip("Mini boss havuzu = bölgenin TABAN boss havuzunun bu payı")]
-        public float miniBossPoolShare = 5f;
+        public float miniBossPoolShare = 7f;   // Faz 40: 5'te mini'ler ort. ~2.5 dk (YAPI hedefi 3–4) — insan oynayışıyla aksiyon ≥ 7 saat
         [Tooltip("Ana boss havuzu ek çarpanı — tempo: ana boss 6–8 dk")]
         public float mainBossPoolScale = 12f;
         [Tooltip("Boss ve mini boss odasında saat akışı çarpanı — uzun dövüşte saat (can) erimesin")]
@@ -205,14 +205,19 @@ namespace TekCan
         // Enes (2026-10-14): "başlarda kolay ve oyuncu dostu, ilerledikçe zorlaşan ve bu zorluğu
         // bufflar ile kapatan… iyi oyuncu bile absürt saatlere ulaşmamalı." Sunak için B seçildi.
         [Header("── EKONOMİ: doyma · sunak yüzdesi · ilerleme (Faz 28) ──")]
-        [Tooltip("HASAT DOYMASI: saat bu sayının üstündeyken hasat ×(tavan / saat) — 1. bölgede")]
+        [Tooltip("HASAT DOYMASI: saat bu sayının üstündeyken hasat ×(tavan / saat)^üs — 1. bölgede")]
         public float harvestSoftCap = 250f;
+        /// <summary>
+        /// Doymanın sertliği (Faz 41, Enes: "saatin cömertliğini düzeltelim, oyun zorlamalı"). 1'de saat tavanın ~10 katında
+        /// dengeleniyordu (bot tam koşu: 2. bölgeden sonra medyan ×9–12, hiç ×1.5'in altına inmedi); 2'de denge ~karekökü.
+        /// </summary>
+        [Tooltip("Doyma üssü: tavanın üstünde hasat ×(tavan/saat)^bu — büyüdükçe saat tavana yakın durur")]
+        public float harvestSoftCapExponent = 2f;
         [Tooltip("Doyma tavanı her bölgede bu kat büyür (boss'lar büyüyor, tampon da büyümeli)")]
         public float harvestSoftCapGrowth = 1.35f;
         [Tooltip("Sunak fiyatı en az saatin bu payı — biriktiren daha çok öder")]
         public float altarPricePercent = 0.10f;
-        [Tooltip("İLERLEME: düşman vuruşunun bedeli her ara bölgede (bölgeler boyunca sayılır) bu kat artar")]
-        public float hitCostProgressGrowth = 1.09f;
+        // ⚠️ İLERLEME (darbe bedeli) artık kendi kadranı değil: `harvestSoftCapGrowth`'a bağlı (Faz 39) — bkz. RoomManager.İlerlemeÇarpanı.
 
         // Enes (eski Faz 20 listesi): "İPOTEK: dash-atak = şimdiki sağ tık, yeni sağ tık = büyük alan
         // içinde düşmanların üstüne birkaç saniye peş peşe ipotek" · "FAİZLİ İCRA yeniden: bedel saatin
@@ -302,11 +307,11 @@ namespace TekCan
 
         [Header("── ODALAR (Faz 8) ──")]
         [Tooltip("İlk odadaki düşman sayısı")]
-        public float roomBaseCount = 3f;
+        public float roomBaseCount = 4f;   // Faz 39: 3'te oda ortalaması 51 sn (hedef 60–75) — yoğunluk +%33, dalga sayısı değil
         [Tooltip("Her odada kaç düşman eklenir")]
-        public float roomCountGrowth = 1.5f;
+        public float roomCountGrowth = 2f;
         [Tooltip("Her odada düşman zaman havuzu bu kat büyür — odalar sertleşir")]
-        public float roomPoolGrowth = 1.10f;
+        public float roomPoolGrowth = 1.15f;   // Faz 40: 1.10'da oda ort. 64 sn (YAPI hedefi ~90)
 
         [Header("── DÜŞMAN TÜRLERİ (Faz 13) ──")]
         [Tooltip("SİGORTA: bu yarıçaptaki düşmanların hasadını kısar")]
@@ -375,7 +380,7 @@ namespace TekCan
         public float groundMarkCostMultiplier = 0.9f;
         [Tooltip("MURABAHACI faz 2: vurmadığın her saniye havuzunu bu kadar geri sarar. " +
                  "Kredi doldurmak hasat vermiyor — sadece dövüşü uzatıyor.")]
-        public float usurerRegenPerSecond = 6f;
+        public float usurerRegenPerSecond = 3f;   // Faz 39: 6'da faz 2'de botun hasarının üçte biri geri sarılıyordu
 
         [Header("── BÖLGELER (Faz 10) ──")]
         [Tooltip("Perdedeki bölge sayısı. Tavan Region.All uzunluğu. " +
@@ -383,6 +388,12 @@ namespace TekCan
         public int regionsPerAct = 5;
         [Tooltip("Her bölgede boss havuzu bu kat büyür — zincir tırmanmalı")]
         public float regionBossGrowth = 1.35f;
+        /// <summary>
+        /// Her bölgede dövüş odası havuzu bu kat büyür (Faz 39). Yokken odalar bölgeden bölgeye KISALIYORDU (bot tam koşu: 1. bölge 49 sn,
+        /// 2–5. bölge 33–37 sn) — oyuncu güçlenirken odalar aynı kalıyordu; hasatları da büyümediği için geç boss'lara saat yetmiyordu.
+        /// </summary>
+        [Tooltip("Her bölgede dövüş odası havuzu bu kat büyür — odalar ilerledikçe kısalmasın")]
+        public float regionRoomGrowth = 1.45f;   // 1.3'te oda ort. 52 · 45 · 44 · 59 · 70 sn — güç başta sıçrıyor, 2.–3. bölgede çukur
 
         [Header("── DİRİLİŞ / CHECKPOINT (Faz 9) ──")]
         [Tooltip("ÖLÜM ALDATMA: checkpoint'teki zamanın bu kadarıyla yerinde kalkarsın")]

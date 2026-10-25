@@ -692,3 +692,18 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   ÖDEDİĞİ (SENETÇİ'nin zorla alımı) geri vurulup alınabilir — bedeli zaten ödendi.
 - **Kayıp tek saldırıdan geliyorsa önce saldırı tablosuna bak (Faz 38):** VADECİ ve İCRA MEMURU botu öldürüyordu; "Saldırı başına
   vurulma" satırı hepsinin İCRA'dan geldiğini gösterdi (91'de 27, öbürleri ~0). Adamın imzasını değil o saldırıyı mini'den çıkardım.
+- **Aynı ders üçüncü kez — büyümeleri bağla (Faz 39):** darbe ara bölge başına ×1.09 (bölge başına ×1.54), saat ×1.35; odalar ise
+  hiç büyümüyordu, mini ve boss ×1.35. Faz 36'daki gibi farklı hızla büyüyen iki şey dengeyi kaydırdı: geç boss'ta tek isabet saatin
+  üçte biri, orta oyunda odalar kısa. Darbeyi ayrı kadran olarak bırakmadım, saatin büyümesinden TÜRETTİM — bir daha ayrışamaz.
+  **Kural:** "X bölgeyle büyür" yazan her kadran için sor: neyin büyümesine göre? Ayrı sayı tutma, türet.
+- **Kapı neyi geçiriyorsa onu ölç (Faz 39):** `BossTesti` "her boss öncekinden uzun"a bakıyordu; SİMSAR 15 dk / 7 ölüm, MURABAHACI
+  40 dk / 13 ölümle YEŞİLDİ. Tam koşunun bitmediği ancak `TamKosu` koşunca görüldü. **Kural:** fazın hedefi (koşu bitsin) hangi
+  testin hangi satırında? Yoksa yaz — yeşil bir kapı hedefi ölçmüyor olabilir.
+- **Sabit süreli kural büyüyen sayıyla yarışamaz (Faz 40):** MÜHLET'in 15 sn'si sabit, canı oda havuzuyla büyüyordu; Faz 39–40'ta odalar
+  ×5 büyüyünce 27'nin 25'i yetişilemez oldu. Bir süre/sayaç bir havuza karşı çalışıyorsa ikisi aynı ölçekte olmalı (ya can küçük
+  kalsın ya süre büyüsün). Ayrıca sorun bir kısmıyla bottaydı: en yakını seçen bot uzakta duran MÜHLET'e hiç sıra vermiyordu —
+  öncelik verince 27'nin 26'sı yetişti. **Kural:** "yarış" kuran mekanikte iki ölçüm al: öncelik veren oyuncu kazanabiliyor mu,
+  vermeyen bedel ödüyor mu.
+- **Atlama testi güçsüz girer (Faz 40):** N ile 5. bölgeye atlayan bot sunak alımı yapmamıştı; odalar bölgeyle büyüyünce 300 sn'de
+  bitmedi ve "oda temizlenmiyor" kırmızısı oyunun değil testin hatasıydı. Mini testi bunu zaten yapıyordu (beklenen güç); oda
+  testleri yapmıyordu. **Kural:** atlayan her senaryo gerçek koşunun gücüyle girsin (`BeklenenGüç`).

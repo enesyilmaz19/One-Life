@@ -255,6 +255,16 @@ daha uzun sürmeli."* Ölçen bot `BossTesti` (beklenen güç, saat bölgenin do
 EKSPER 4.5 · KEFİL 5.7 · SİMSAR 15.4 · MURABAHACI 39.9 dk (oyun zamanı). EKSPER TAHSİLDAR'la aynı
 sürüyordu; boss başına havuz payı (`BossKind.HavuzPayı`) onun havuzunu ×1.25 yaptı.
 
+**Faz 39 (2026-10-22) — koşu bitsin:** bot tam koşusu 3.9 saatte bitmiyordu (MURABAHACI'da takıldı, saat 7 kez bitti). İki kök:
+- **Odalarda bölge çarpanı yoktu** — mini'ler ve boss'lar bölge başına ×1.35 büyürken odalar aynı kalıyordu; oyuncu güçlendikçe
+  odalar kısaldı (1. bölge 49 sn, 2–5. bölge 33–37 sn). Artık oda havuzu bölge başına ×`regionRoomGrowth` (1.45; oda ortalaması 55 · 56 · 51 · 72 · 89 sn).
+- **Darbe saatten hızlı büyüyordu** (ara bölge başına ×1.09 = bölge başına ×1.54, saat ×1.35): 5. bölgede boss'un tek isabeti ~200 sn.
+  Artık darbe saatin büyümesine bağlı (`İlerlemeÇarpanı` = `harvestSoftCapGrowth`^(bölge + ara bölge/5)): bir darbenin saate oranı
+  bütün koşu boyunca aynı. "Hata affetmiyor" AĞIRLIK'ın kuralı, büyümenin değil.
+SİMSAR (fullenen havuz) ×0.55, MURABAHACI ×0.4 havuz payı, geri sarması 6 → 3 sn/sn: `BossTesti` 3.8 · 4.5 · 5.6 · 8.6 · 12.6 dk. Tam koşu: 294 dk (4.9 sa), kazanıldı, saat hiç bitmedi.
+`BossTesti` saati doyma tavanından veriyor; gerçek koşuda boss'a tavanın 5–8 katıyla giriliyor — boss'un botu öldürmediğini tam
+koşu ölçüyor (baştan sona F5'siz).
+
 ### Boss: yere vuruş ✅ (2026-08-24)
 
 Enes: *"boss baya kolay, dümdüz durup saldırarak kesiyorum."*
@@ -484,7 +494,7 @@ vurmalı.
 
 | tür | mekanik | değiştirdiği karar |
 |---|---|---|
-| **MÜHLET** | sana gelmez, 6 birim uzakta durur, vurmaz · 15 sn mühlet: kesilmezse ödemeden gider, bedeli 3 darbe (saatten, dash'le kaçılmaz); süre bittikçe solar | **yarış.** Odaya girince önce kimi keseceğin "kim tehlikeli" değil "kimin süresi bitiyor" |
+| **MÜHLET** | kırılgan (havuz ×0.25), sana gelmez, 6 birim uzakta durur, vurmaz · 15 sn mühlet: kesilmezse ödemeden gider, bedeli 3 darbe (saatten, dash'le kaçılmaz); süre bittikçe solar | **yarış.** Odaya girince önce kimi keseceğin "kim tehlikeli" değil "kimin süresi bitiyor" |
 | **REFİNANS** | 4 birim içindeki öbür düşmanların havuzunu saniyede %4 doldurur (boşalmışı ve boss'u değil), yeşil halka | **hedef sırası** — SİGORTA geliri kısar, bu dövüşü uzatır; SIZINTI'da uzayan her saniye emiliyor |
 
 Açılış sırası: TEMEL · SIZINTI · KALKANLI · MÜFLİS · KASA · VADELİ · TAKSİT · KAÇAK · SÜLÜK · MEVDUAT · BLOKE · CEZAİ ŞART ·
@@ -522,7 +532,7 @@ hepsini birden yapıyor."* Özgün olan **ad, imza, ders**:
 |---|---|---|
 | TELLAL | durduğun yeri ilan eder: 1.5 sn'de bir işaret | TELLALLIK · PAZARLIK · AÇIK ARTIRMA — SİMSAR'ın suçu: dur ve vur bitti |
 | ARACI | araya girer: önünden vuruş ×0.4, yavaş döner (80°/sn) | KOMİSYON · PAZARLIK · KAÇAK MAL — açıklık: arkasına geç |
-| DELLAL | yerinde durursan (0.5 sn) iki kat emer | DEVİR · TELLALLIK · AÇIK ARTIRMA — vururken de yürü |
+| DELLAL | yerinde durursan (0.5 sn) iki kat emer | KOMİSYON · TELLALLIK · AÇIK ARTIRMA — vururken de yürü (DEVİR çıktı: dövüş uzayınca botu öldürüyordu, Faz 40) |
 | SEYYAR | havuzunun her %10'unda 4 birim geri sıçrar | DEVİR+ · HARAÇ · KAÇAK MAL+ — geri sıçrama: kovala |
 | BAŞ SİMSAR | SEYYAR'ın sıçrayışı (kalkansız) | KOMİSYON+ · DEVİR+ · AÇIK ARTIRMA+ · BÜYÜK İHALE — provası |
 

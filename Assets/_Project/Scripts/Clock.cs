@@ -133,9 +133,12 @@ namespace TekCan
         /// </summary>
         public static float Doyma(Tuning t, float saat, int bölge)
         {
-            float tavan = t.harvestSoftCap * Mathf.Pow(t.harvestSoftCapGrowth, bölge);
-            return saat <= tavan ? 1f : tavan / saat;
+            float tavan = Tavan(t, bölge);
+            return saat <= tavan ? 1f : Mathf.Pow(tavan / saat, t.harvestSoftCapExponent);   // Faz 41: üs — saat tavana yakın dursun
         }
+
+        /// <summary>Bölgenin doyma tavanı — botun mini/boss testleri de saati buradan veriyor (tek yer).</summary>
+        public static float Tavan(Tuning t, int bölge) => t.harvestSoftCap * Mathf.Pow(t.harvestSoftCapGrowth, bölge);
 
         public float HasatDoyması
         {

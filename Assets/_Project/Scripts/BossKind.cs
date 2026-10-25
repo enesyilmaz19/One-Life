@@ -774,6 +774,8 @@ namespace TekCan
 
             // Faz 2 havuz BİTİNCE (Enes, 2026-09-30) — "kazandım" sandığın an.
             public override bool RefillsOnEmpty => true;
+            // Faz 39: tam havuzla 15.4 dk sürdü, bot 4 kez öldü (BossTesti) — fullenen havuz ikinci bir dövüş demek.
+            public override float HavuzPayı => 0.55f;
 
             // İMZA MEKANİĞİ: sana gelmiyor, DURDUĞUN YERE geliyor — ve faz 2'de
             // neredeyse iki kat sık geliyor.
@@ -886,6 +888,8 @@ namespace TekCan
         {
             public override string Name => "MURABAHACI";
             public override string Crime => "borç işlemeye devam ediyor";
+            // Faz 39: tam havuzla 40 dk sürdü (faz 1 tek başına 7.7 dk, faz 2–3 fullenip geri sarıyor), bot 8 kez öldü (BossTesti).
+            public override float HavuzPayı => 0.4f;
             public override Color Tint => new Color(0.55f, 0.35f, 0.8f);
 
             public override bool RefillsOnEmpty => true;
@@ -1214,9 +1218,9 @@ namespace TekCan
             },
             new[]   // ④ SİMSAR — durduğun yeri satıyor · imzaları AÇIKLIK (arkasına geç) + GERİ SIÇRAMA (kovala) (Faz 37).
             {       // Ailenin huyu: SİMSAR'ın faz 1 aurası ve 4 sn'de bir durduğun yere işaret (ana boss'un yarı hızı).
-                new Adam { Ad = "TELLAL", Suç = "durduğun yeri ilan eder — 1.5 sn'de bir işaret", Saldırı = new[] { "TELLALLIK", "PAZARLIK", "AÇIK ARTIRMA" }, Aura = 1f, İşaret = 1.5f },
+                new Adam { Ad = "TELLAL", Suç = "durduğun yeri ilan eder — 1.5 sn'de bir işaret", Saldırı = new[] { "TELLALLIK", "PAZARLIK", "AÇIK ARTIRMA" }, Aura = 1.2f, İşaret = 1.5f },   // ×1.2: darbe saatle büyüyünce (Faz 39) bota +2
                 new Adam { Ad = "ARACI", Suç = "araya girer — önünden vuruş az eder, arkasına geç", Saldırı = new[] { "KOMİSYON", "PAZARLIK", "KAÇAK MAL" }, Aura = 1f, ÖndenHasar = 0.4f, DönüşHızı = 80f },   // 120°/sn'de 4.5 dk (öbürleri ~3.3): arkası az kalıyordu
-                new Adam { Ad = "DELLAL", Suç = "yerinde durursan iki kat emer — vururken yürü", Saldırı = new[] { "DEVİR", "TELLALLIK", "AÇIK ARTIRMA" }, Aura = 1f, DuranAura = 2f },
+                new Adam { Ad = "DELLAL", Suç = "yerinde durursan iki kat emer — vururken yürü", Saldırı = new[] { "KOMİSYON", "TELLALLIK", "AÇIK ARTIRMA" }, Aura = 1f, DuranAura = 2f },   // DEVİR'le −783 / 615 (kayıp darbeden, Faz 40); PAZARLIK'la TELLAL'ın aynısıydı
                 new Adam { Ad = "SEYYAR", Suç = "vurdukça geri sıçrar — kovala", Saldırı = new[] { "DEVİR+", "HARAÇ", "KAÇAK MAL+" }, Aura = 1f, Sıçrayış = 4f },
                 new Adam { Ad = "BAŞ SİMSAR", Suç = "patronun provası", Saldırı = new[] { "KOMİSYON+", "DEVİR+", "AÇIK ARTIRMA+", "BÜYÜK İHALE" }, Aura = 1f, Sıçrayış = 4f },
                 // ⚠️ BAŞ SİMSAR kalkansız: ARACI'nın kalkanıyla 6.4–6.7 dk sürdü (öbürleri ~3.3), botun 83 sn'si dolanmaya, ~70 sn'si

@@ -139,11 +139,17 @@ namespace TekCan
 
         /// <summary>Odanın ara bölgesi (0'dan). Ana boss odası son ara bölgeye sayılıyor.</summary>
         /// <summary>
-        /// İLERLEME (Enes 2026-10-14: "başlarda kolay, ilerledikçe zorlaşan"): düşman vuruşunun bedeli
-        /// her ara bölgede ×`hitCostProgressGrowth`, bölgeler boyunca sayılarak. 1. ara bölge ×1.
+        /// İLERLEME (Enes 2026-10-14: "başlarda kolay, ilerledikçe zorlaşan"): düşman vuruşunun bedeli SAATİN büyümesiyle büyür —
+        /// bölge başına ×`harvestSoftCapGrowth`, ara bölgelere eşit bölünerek. 1. ara bölge ×1.
+        /// ⚠️ Faz 39: eskiden kendi kadranıydı (ara bölge başına ×1.09 = bölge başına ×1.54, saat ×1.35). Darbe saatten hızlı büyüdüğü
+        /// için 5. bölgede boss'un tek isabeti ~200 sn'ye çıktı (saat 830'la giriyor): bot MURABAHACI'da 13, SİMSAR'da 7 kez öldü.
+        /// Bağlı olunca bir darbenin saate oranı bütün koşu boyunca sabit — "hata affetmiyor" bölgenin kuralı (AĞIRLIK), büyüme değil.
         /// </summary>
         public static float İlerlemeÇarpanı(Tuning t, int bölge, int araBölge)
-            => Mathf.Pow(t.hitCostProgressGrowth, bölge * Mathf.Max(1, t.subRegionsPerRegion) + araBölge);
+        {
+            int S = Mathf.Max(1, t.subRegionsPerRegion);
+            return Mathf.Pow(t.harvestSoftCapGrowth, bölge + araBölge / (float)S);
+        }
 
         public static int AraBölge(Tuning t, int oda)
             => Mathf.Min((Mathf.Max(1, oda) - 1) / t.BlokBoyu, Mathf.Max(1, t.subRegionsPerRegion) - 1);
@@ -166,6 +172,10 @@ namespace TekCan
         /// <summary>Bölgenin taban boss havuzu (çarpan) — ana ve mini boss buradan.</summary>
         static float BölgeHavuzu(Tuning t, int bölge) => t.bossPoolMultiplier * Mathf.Pow(t.regionBossGrowth, bölge);
         public static float AnaBossHavuzu(Tuning t, int bölge) => BölgeHavuzu(t, bölge) * t.mainBossPoolScale * BossKind.For(bölge).HavuzPayı;
+        /// <summary>Dövüş odası düşmanının havuz çarpanı: oda sırası (ara bölge içinde) × ara bölge × BÖLGE (Faz 39).</summary>
+        public static float OdaHavuzu(Tuning t, int bölge, int araBölge, int araOda)
+            => Mathf.Pow(t.roomPoolGrowth, araOda - 1) * Mathf.Pow(t.subRegionPoolGrowth, araBölge)
+             * Mathf.Pow(t.regionRoomGrowth, bölge);                                  // Faz 39: odalar ilerledikçe kısalmasın
         public static float MiniBossHavuzu(Tuning t, int bölge, int s)
             => BölgeHavuzu(t, bölge) * t.miniBossPoolShare * Mathf.Pow(t.subRegionPoolGrowth, s);
 
@@ -558,7 +568,7 @@ namespace TekCan
         {
             int r = AraOda(_t, Room);
             int count = Mathf.RoundToInt(_t.roomBaseCount + _t.roomCountGrowth * (r - 1));
-            float poolMult = Mathf.Pow(_t.roomPoolGrowth, r - 1) * Mathf.Pow(_t.subRegionPoolGrowth, SubRegion);
+            float poolMult = OdaHavuzu(_t, RegionIndex, SubRegion, r);
             for (int i = 0; i < count; i++)
             {
                 int yuva = i + dalga * count;

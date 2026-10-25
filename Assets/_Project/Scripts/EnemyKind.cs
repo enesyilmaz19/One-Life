@@ -202,7 +202,10 @@ namespace TekCan
         public override void OnKilled(Clock clock, Tuning t, float startingPool)
         {
             // Bütün ödeme burada. Öldüremezsen sıfır.
-            clock?.Add(startingPool * (clock?.HarvestRate ?? 0f) * t.vaultKillBonus);
+            // ⚠️ Faz 41: normal hasadın kurallarından geçer — DOYMA ve bölge hasadı (KITLIK). Geçmiyordu: oda havuzları bölgeyle
+            // büyüyünce (Faz 39–40) KASA tek başına ~100 sn ödüyor, saat 2. bölgeden sonra doyma tavanının 6–9 katında kalıyordu.
+            if (clock == null) return;
+            clock.Add(startingPool * clock.HarvestRate * t.vaultKillBonus * Region.Harvest * clock.HasatDoyması);
         }
     }
 
@@ -404,7 +407,7 @@ namespace TekCan
         public override float MühletSüresi => 15f;
         public override float PreferredRange(Tuning t) => 6f;
         public override float MühletBedeli => 3f;
-        public override float PoolMultiplier => 0.8f;
+        public override float PoolMultiplier => 0.25f;   // Faz 40: oda havuzları büyüyünce (×0.8'de) 27'nin 25'i kaçtı — kırılgan olmalı, kovalayan yetişsin
         public override float SpeedMultiplier => 1.05f;
     }
 

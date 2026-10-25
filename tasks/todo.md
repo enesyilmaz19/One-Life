@@ -14,7 +14,9 @@
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 | 13 | 🎮 *(isteğe bağlı)* **Faz 33 his testi** | Bot oynadı (P33 3/3, P33c 12/12 — aşağıda "BOSS SÜRELERİ" bölümü). Sana kalan yalnızca göz: **F6**, **M** → sunak renkleri okunuyor mu (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), **B** → efsanevi "vay" dedirtiyor mu | Gördüklerini yaz |
 | 15–19 | 🤖 **Faz 34–37 his testleri → botta** | Enes (2026-10-22): *"testi de bota yaptır, oradan botun zorlanma ölçüsüne göre ilerleyelim şimdilik"*. P34–P37 ✅. Ölçü: mini zorlasın ama botu öldürmesin (saat kaybı < giriş saati) — Faz 38'de uygulandı, P34–P38 ✅ | — |
-| 20 | 🧭 **8–10 saat yol haritası — üç karar** | Bot tam koşusu 3.9 sa, bitmiyor (aşağıda "8–10 SAAT YOL HARİTASI"). ① Süre nereden: tempo düzeltmesi + hikâye/olay odaları (öneri) / yalnız dövüşü uzatmak / daha çok oda · ② Hikâyeyi kim yazar: sen yazarsın, ben yerleştiririm / ben taslak, sen düzeltirsin · ③ Faz 38 commit + Faz 39'a başlayayım mı | Mesajla yaz |
+| 20 | ⏱️ *(önerilir, ~10 dk)* **İnsan çarpanı** | Enes (2026-10-23): aksiyon İNSAN oynayışıyla ≥ 7 saat, kalanı ara sahne + anlatım (hikâye/olay odası yok). Botun ölçtüğünü insana çeviren çarpanı bilmiyoruz (×1.2 → bot 5.8 sa gerek, ×1.5 → bugünkü yeter). **F6**, 1. ara bölgeyi (7 oda + mini + sunak, bot ~9 dk — Faz 40'tan sonra) bir kez normal oyna, süreyi söyle | Mesajla yaz |
+| 21 | ⚖️ **Saat ekonomisi** | Bot orta oyunda 4000–6600 sn ile geziyor (tavan 456–830), odalar onu hiç zorlamıyor; sıkılırsa geç boss'lar yine öldürür (aşağıda FAZ 39). Şimdi mi, hikâyeden sonra mı? | Mesajla yaz |
+| 22 | 📖 **Hikâye — ortak** | `docs/HIKAYE.md`: senin üç notun yazılı, 6 açık soru (adlar · borcu kim aldı · ekipmanı kim geliştirdi · başlangıç zamanı neden o kadar · son · perdelerin olay sırası). Hangisinden başlayalım? · Faz 39 commit + Faz 40'a geçeyim mi? | Mesajla ya da doğrudan dosyaya yaz |
 
 ---
 
@@ -233,7 +235,110 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 
 ---
 
-## 🧭 8–10 SAAT YOL HARİTASI — **ÖNERİ, Enes'in onayını bekliyor** (2026-10-22)
+## ⚖️ FAZ 41 — Saat ekonomisi: oyun zorlasın — **YARIDA, commit'siz; burada durduk** (2026-10-25)
+
+Enes: *"saatin cömertliğini düzeltelim oyun zorlamalı oyuncuları"* · *"bitince sonuçları kaydedip burada duralım"*.
+
+**Bulgu:** bot 2. bölgeden sonra saatin doyma tavanının 9–12 katında geziyordu (hiç 1.5 katın altına inmiyordu).
+
+**Yapılan**
+- [x] Doyma sertleşti: tavanın üstünde hasat ×(tavan/saat)^`harvestSoftCapExponent` (2; önce 1) — `Clock.Doyma`, Faz 28 kapısı üsse
+      bağlı. **Tek başına az etki**: medyan 9–12 → 6–9 kat.
+- [x] **Kök: KASA'nın ödemesi doymadan ve KITLIK'tan geçmiyordu** — oda havuzları bölgeyle büyüyünce (Faz 39–40) tek KASA ~100 sn
+      ödüyordu. Artık normal hasatla aynı kurallar (`VaultKind.OnKilled`).
+
+**Ölçüm (bot `TamKosu`, son):** 351 dk = 5.85 sa, kazanıldı · oda ort. 74 sn · saat / tavan medyanı **1.4 · 2.5 · 2.5 · 2.8 · 2.4**
+(önce 1.8 · 10.9 · 12.4 · 9.1 · 8.8), en az 0.16 · 1.09 · 0.88 · 1.62 · 0.32 — oyun artık zorluyor. Tüm kapılar temiz.
+
+**⚠️ Kalan (sıradaki adım): boss'lar botu öldürmeye başladı** — saat 4 kez bitti: B2·O46 (EKSPER), B4·O46 (SİMSAR), B5·O46 ×2
+(MURABAHACI). Bekleniyordu (Faz 39 notu: ekonomi sıkılırsa geç boss'lar öldürür). Yapılacak: boss'ları yeni ekonomiye göre ayarla
+(havuz payı / aura / darbe), ölçü `TamKosu` baştan sona F5'siz + saat medyanı 1.5–3 kat. Mini testleri (P34–P38) ve `BossTesti` yeni
+ekonomiyle koşulmadı (saat orada tavandan veriliyor, etkilenmemeleri beklenir — doğrula).
+
+---
+
+## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **PLAN, araştırma başladı** (2026-10-25)
+
+Enes: *"12 silah için 28 combo bayağı az · 96 2'li combo ve 24 tane 3'lü combo olmalı · bazıları açılabilir bazıları direkt silahlarla
+yapılabilen cinsten olmalı, kalanı da satın alınabilir"* · *"combolar elle olmalı ama fikir edinmek için diğer oyundaki comboları
+araştırabilirsin, oradan temel bazılarını alıp oyuna geçirir, oradan fikir edinir ve özgün yeni fikirleri çıkartırız"*.
+
+**Bugün:** 22 combo (21 ikili + 1 üçlü: HACİZ KARARI) — 10 temel, 12 yükseltmeyle açılan (+ "+" hâlleri). **Eksik: 75 ikili + 23 üçlü.**
+
+**Dağılım (Enes: 1/4 · 1/4 · 1/2):** ikili 24 direkt · 24 açılır (yükseltme açar) · 48 satın alınır (sunakta saniyeyle) ·
+üçlü 6 direkt (2. bölgeden) · 6 açılır · 12 satın alınır. Var olan 22'nin yeri: 10 temel → direkt, 12 açılan → açılır.
+
+**Adımlar**
+- [x] A. Araştırma → `docs/COMBO_ARASTIRMA.md`: 12 kalıp (Hades, DMC/Bayonetta, Nioh, Dead Cells, DOS2, Warframe, Vampire Survivors) + silahların combo dili (ne bırakır / ne tüketir)
+- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo (ad · sıra · ne yapar · direkt/açılır/satın alınır · bölge şartı) — **Enes onaylar**, partiler hâlinde
+- [ ] C. Satın alma: combo sunağında saniyeyle (fiyat kuralı Faz 27/33'le aynı)
+- [ ] D. Kod partiler hâlinde (her partiye kapı + bir kez boz) · bot gerçek tuşlarla oynar (P33c gibi)
+- [ ] E. Tam koşu: combo'lar süreyi/dengeyi bozmadı mı
+
+**Sıra (Enes 2026-10-25):** Faz 41 saat ekonomisi → Faz 42 combo'lar → hikâye. **Kısa tekrar modu: hikâyeden sonra.**
+
+---
+
+## 🎯 FAZ 40 — Aksiyon insanla ≥ 7 saat — **BİTTİ (bot ölçüsüyle), commit'siz** (2026-10-23)
+
+Enes: *"hikayeden önce yapmamız gereken şey insan oynayışı ile aksiyonun en az 7 saat sürmesi. Kalanı cutscene ve hikaye anlatımı
+olacak"*. → Hikâye/olay odası YOK; süre tamamen aksiyondan. İnsan çarpanı ölçülmedi (masa #20) — temkinli hedef: **bot `TamKosu`
+≥ 6 saat** (×1.2 ile 7.2 sa), F5'siz, mini 3–4 dk, oda ~75 sn, boss sıralı. Kaldıraçlar YAPI'nın onaylı hedefleri (oda ~1.5 dk,
+mini 3–4 dk, boss 6–8 dk) — yeni içerik değil, eksik kalan ölçüler.
+
+- [x] A. Mini havuzu `miniBossPoolShare` 5 → 7 (mini ort. ~2.5 dk) · oda içi büyüme `roomPoolGrowth` 1.10 → 1.15 (oda ort. 64 sn)
+- [x] B. Bot: `TamKosu` + P34–P38 + tüm kapılar — bulduklarını düzelttim (aşağıda)
+- [x] C. Test düzeltmesi: N ile atlayan oda testleri GÜÇSÜZ giriyordu → `BeklenenGüç` (mini testiyle ortak)
+
+**Sonuç (bot `TamKosu`):** **368.7 dk = 6.15 sa, KAZANILDI, saat hiç bitmedi** · oda ortalaması 78 sn (61 · 63 · 67 · 89 · 108 —
+ilerledikçe uzuyor) · boss 3.8 · 4.8 · 6.4 · 7.9 · 11.6 dk (sıralı) · mini'ler 2.4–7.2 dk (bölge bölge: 1. 2.8–5.2, 2. 2.8–4.4,
+3. 2.4–4.9, 4. 3.9–7.2, 5. 4.4–7.2 — 4. ve 5. bölgede hedefin 3–4'ün üstünde). İnsan çarpanı ×1.2 ile 7.4 sa, ×1.4 ile 8.6 sa.
+
+**Botun bulduğu (düzeldi):**
+- DELLAL uzayınca DEVİR'den botu öldürdü (−783 / 615) → DEVİR çıktı; PAZARLIK'la TELLAL'ın dağarcığının aynısı oldu (Faz 28 kapısı
+  yakaladı) → KOMİSYON · TELLALLIK · AÇIK ARTIRMA, −199.
+- MÜHLET yetişilemezdi (27'de 25 kaçtı): canı oda havuzuyla ×5 büyümüştü, süresi sabit → havuz ×0.25. Bot en yakını seçtiği için uzakta
+  duran MÜHLET'e hiç sıra vermiyordu → bot artık ona öncelik veriyor (insan gibi): 27'de 26 yetişti. Öncelik vermeyen 22'sini kaçırıyordu.
+- ⚠️ Bilinen: bot REFİNANS'a öncelik vermiyor; 5. bölgenin odalarını uzatıyor (P38'de öbürlerine +2500–3900 sn yeniledi). İnsan
+  muhtemelen önce onu keser — bot süresi bu yüzden biraz uzun olabilir.
+
+---
+
+## ⏱️ FAZ 39 — Koşu bitsin + tempo eğrisi — **BİTTİ, commit'siz** (2026-10-22)
+
+Enes: *"commitleyip sonraki faza geç bot oynarken"*. Ölçü (bot): `TamKosu` baştan sona F5'siz; oda ortalaması 60–75 sn ve bölgeden
+bölgeye kısalmıyor; boss'lar öncekinden uzun ve botu öldürmüyor (`BossTesti` F5 = 0).
+
+**Kökler (bot ölçümünden):**
+1. Normal odaların havuzunda **bölge çarpanı yoktu** (`DalgaGönder`: oda sırası × ara bölge) — mini'ler ve boss'lar bölge başına ×1.35
+   büyürken odalar aynı kaldı: oda 1. bölgede 49 sn, 2–5. bölgede 33–37 sn; hasatları büyümediği için de geç boss'lara saat yetmedi.
+2. **Darbe saatten hızlı büyüyordu**: ara bölge başına ×1.09 (bölge başına ×1.54, sonda ×7.9) — saat (doyma tavanı) bölge başına ×1.35
+   (sonda ×3.3). 5. bölgede boss'un tek isabeti ~200 sn, saat 830'la giriyor: `BossTesti` SİMSAR 15.7 dk / F5 7, MURABAHACI 40.6 dk / F5 13
+   (test yalnızca "öncekinden uzun"a bakıyordu, geçiyordu).
+
+**Adımlar**
+- [x] A. Oda havuzu bölgeyle büyür: `Tuning.regionRoomGrowth` **1.45** (`RoomManager.OdaHavuzu`; 1.3'te 52 · 45 · 44 · 59 · 70 sn) · yoğunluk +%33 (`roomBaseCount` 4, `roomCountGrowth` 2 — koni çoğunu birlikte aldığı için az etkiledi: 51 → 54 sn)
+- [x] B. Darbe saatle büyür: `İlerlemeÇarpanı` = `harvestSoftCapGrowth`^(bölge + ara bölge / 5) — `hitCostProgressGrowth` kalktı
+- [x] C. `BossTesti` saat kaybını / girişi yazıyor (bilgi: saat orada doyma tavanında, gerçek koşuda tavanın 5–8 katı) — botun ölmediğini `TamKosu` ölçüyor · `Clock.Tavan` tek yer
+- [x] D. Geç boss'lar: SİMSAR havuz payı ×0.55, MURABAHACI ×0.4, geri sarma 6 → 3 sn/sn · TELLAL aura ×1.2 (darbe ucuzlayınca bota +2)
+- [x] E. `Faz39SelfCheck` **2 kontrol**, ikisi de bozulunca kırmızı · tüm kapılar temiz · P34–P38 ✅
+
+**Sonuç (bot):**
+
+| | önce | sonra |
+|---|---|---|
+| `TamKosu` | 231 dk, **bitmedi**, saat 7 kez bitti | **294 dk = 4.9 sa, KAZANILDI, saat hiç bitmedi** |
+| oda ortalaması | 38 sn (49 · 36 · 33 · 36 · 37) | **64 sn** (55 · 56 · 51 · 72 · 89) |
+| boss (tam koşu) | 3.4 · 4.3 · 4.4 · 14.2 · 20+ dk | 3.8 · 4.4 · 4.4 · 7.7 · 12.4 dk |
+| `BossTesti` | 3.8 · 4.5 · 5.7 · 15.4 · 40.6 dk | 3.8 · 4.5 · 5.6 · 8.6 · 12.6 dk (sıralı) |
+
+**⚠️ Enes'in kararına — saat ekonomisi çok cömert:** bot orta oyunda 4000–6600 sn ile geziyor (doyma tavanı 456–830). Doyma kuralı
+saati tavanın ~5–10 katında dengeliyor; odalar bota hiç zorluk vermiyor, tek zorlandığı yer boss. Ekonomi sıkılırsa geç boss'lar
+yine öldürür (`BossTesti`: tavanla giren bot SİMSAR'da −1190 / 615, MURABAHACI'da −1394 / 830) — ikisi birlikte ayarlanmalı.
+
+---
+
+## 🧭 8–10 SAAT YOL HARİTASI — **Enes onayladı: "commitleyip sonraki faza geç"** (2026-10-22)
 
 Enes: *"şu an önceliğimiz oyunun hikaye ile birlikte yaklaşık 8-10 saat sürecek kıvama gereken hale getirmek olmalı"*.
 
@@ -249,26 +354,23 @@ kolaylaşıyor, son iki boss'ta duvar. **Hikâye oyunda hiç yok**: dünya, aile
 | 175 dövüş odası | 38 sn → 1.8 sa | ~70 sn → 3.4 sa | bölgeler arası havuz büyümesi gücü yakalasın; odalar kısalmasın |
 | 25 mini boss | ~2.4 dk → 1.0 sa | ~3.5 dk → 1.5 sa | havuz |
 | 5 ana boss | ~46 dk, ikisi bitmiyor | 6–8 dk → 0.6 sa | geç boss'lar takviyesiz bitsin |
-| 25 hikâye/olay odası | yok | 2–3 dk → 1.0 sa | YENİ: ara bölge başına bir oda, karar = saniye |
-| anlatım (giriş, bölge, boss, son) | yok | ~0.5 sa | metin kartları |
-| **toplam** | **3.9 sa, bitmedi** | **~7 sa (bot)** | insanla ~8.5–10 sa |
+| ~~25 hikâye/olay odası~~ | — | — | **Enes 2026-10-23: yok** — süre aksiyondan, hikâye ara sahnede |
+| ara sahne + anlatım | yok | 1–3 sa | aksiyonun ÜSTÜNE (Faz 41+) |
+| **toplam aksiyon** | **3.9 sa, bitmedi** | **insanla ≥ 7 sa** (bot ≥ ~6, çarpan masa #20) | Faz 39–40 |
 
-**Fazlar**
-1. **Faz 39 — Koşu bitsin + tempo eğrisi** (bot ölçer, ben yaparım; hikâye kararını beklemez): geç boss'lar takviyesiz, oda ortalaması
-   60–75 sn ve bölgeden bölgeye kısalmıyor, mini 3–4 dk, boss 6–8 dk. Kapı: `TamKosu` baştan sona, F5'siz.
-2. **Faz 40 — Hikâye iskeleti** (`docs/HIKAYE.md`): adlar, borcu kim aldı, son(lar), 3 perde × 5 bölge olay dizisi, her boss'un
-   hesaplaşması, diriliş eşyalarının kazanıldığı anlar. Kararlar Enes'te.
-3. **Faz 41 — Anlatım altyapısı**: metin kartı (giriş, bölge girişi, boss önce/sonra, kontrol noktası), hikâye/olay odası (ara bölge
-   başına 1), diriliş eşyasının hikâye anında verilmesi, final.
-4. **Faz 42 — Yazım + yerleştirme**: metinler, "dünya ilerledi" (ölümden sonra değişen satırlar), son(lar).
-5. **Faz 43 — Ölçüm**: bot tam koşu ~7 sa · istersen bir bölgeyi sen oyna (insan çarpanı).
+**Fazlar** (Enes 2026-10-23: *"hikayeden önce ... insan oynayışı ile aksiyonun en az 7 saat sürmesi"*)
+1. ✅ **Faz 39 — Koşu bitsin + tempo eğrisi**: bot 4.9 sa, kazanıldı, F5'siz.
+2. **Faz 40 — Aksiyon insanla ≥ 7 saat**: bot `TamKosu` ≥ ~6 sa (insan çarpanı masa #20), mini 3–4 dk, oda ~75 sn.
+3. **Faz 41 — Hikâye iskeleti** (ORTAK, `docs/HIKAYE.md`): adlar, borcu kim aldı, son(lar), 3 perde × 5 bölge olay dizisi, her boss'un
+   hesaplaşması, diriliş eşyalarının kazanıldığı anlar.
+4. **Faz 42 — Ara sahne + anlatım altyapısı**: giriş, bölge girişi, boss önce/sonra, kontrol noktası, diriliş eşyasının hikâye anı, final.
+5. **Faz 43 — Yazım + yerleştirme**: metinler, "dünya ilerledi" (ölümden sonra değişen satırlar), son(lar).
 
-**Enes'in kararları:** ① Süre nereden: dövüş eğrisi + hikâye/olay odaları (öneri) mı, yalnız dövüşü uzatmak mı, daha çok oda mı?
-② Hikâyeyi kim yazar: sen mi (ben yerleştiririm), ben taslak/sen düzeltme mi? ③ Faz 39'a hemen başlayayım mı?
+**Enes'in kararları:** ① ✅ süre aksiyondan (insanla ≥ 7 sa), hikâye ara sahnede · ② ✅ hikâye ORTAK · ③ ✅ Faz 39 yapıldı.
 
 ---
 
-## 💸 FAZ 38 — Bölge 5 (SIZINTI) içeriği: MURABAHACI'nın adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'siz** (2026-10-22)
+## 💸 FAZ 38 — Bölge 5 (SIZINTI) içeriği: MURABAHACI'nın adamları · 2 yeni düşman · 2 yeni diziliş — **BİTTİ, commit'li (3d823de)** (2026-10-22)
 
 Enes: *"commit at ve sonraki faza geç"* · *"testi de bota yaptır, oradan botun zorlanma ölçüsüne göre ilerleyelim şimdilik"*.
 Ölçü (benim yorumum): mini **zorlasın** (bota saat kazandırmasın) ama **öldürmesin** (kayıp < giriş saati) — `AdamlarıDöv` ikisine de bakıyor.
