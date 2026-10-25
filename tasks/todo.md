@@ -235,7 +235,7 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 
 ---
 
-## ⚖️ FAZ 41 — Saat ekonomisi: oyun zorlasın — **YARIDA, commit'siz; burada durduk** (2026-10-25)
+## ⚖️ FAZ 41 — Saat ekonomisi: oyun zorlasın — **BİTTİ** (2026-10-25; ilk yarı 879809b'de)
 
 Enes: *"saatin cömertliğini düzeltelim oyun zorlamalı oyuncuları"* · *"bitince sonuçları kaydedip burada duralım"*.
 
@@ -250,10 +250,20 @@ Enes: *"saatin cömertliğini düzeltelim oyun zorlamalı oyuncuları"* · *"bit
 **Ölçüm (bot `TamKosu`, son):** 351 dk = 5.85 sa, kazanıldı · oda ort. 74 sn · saat / tavan medyanı **1.4 · 2.5 · 2.5 · 2.8 · 2.4**
 (önce 1.8 · 10.9 · 12.4 · 9.1 · 8.8), en az 0.16 · 1.09 · 0.88 · 1.62 · 0.32 — oyun artık zorluyor. Tüm kapılar temiz.
 
-**⚠️ Kalan (sıradaki adım): boss'lar botu öldürmeye başladı** — saat 4 kez bitti: B2·O46 (EKSPER), B4·O46 (SİMSAR), B5·O46 ×2
-(MURABAHACI). Bekleniyordu (Faz 39 notu: ekonomi sıkılırsa geç boss'lar öldürür). Yapılacak: boss'ları yeni ekonomiye göre ayarla
-(havuz payı / aura / darbe), ölçü `TamKosu` baştan sona F5'siz + saat medyanı 1.5–3 kat. Mini testleri (P34–P38) ve `BossTesti` yeni
-ekonomiyle koşulmadı (saat orada tavandan veriliyor, etkilenmemeleri beklenir — doğrula).
+**İkinci yarı (Enes: "commitle ve devam et") — boss'lar yeni ekonomiye:**
+- [x] Saat boss'tan hemen önceki SUNAKTA eriyordu: bot 40 sn yedekle alışveriş yapıyordu (MURABAHACI'ya 266 sn ile girdi). Bot artık
+      insan gibi yedek bırakıyor: boss öncesi sunakta tavan, öbürlerinde yarım tavan (her sunakta tam tavan fazla temkinliydi —
+      bot güçlenemedi, 1. bölgede öldü, koşu 7.4 sa'e uzadı).
+- [x] `BossTesti` yine KAPI: tavanla giren botu öldürmesin (bot sunakta tavanın altına harcamadığı için gerçek koşunun en kötü hâli).
+- [x] SİMSAR ve MURABAHACI'nın kredi fazları (hasat vermez) hafifledi — faz 1'e dokunulmadı (adamlar aurayı oradan alıyor):
+      SİMSAR havuz ×0.4, faz 2 aura ×0.6 ve işaret 1.4 sn · MURABAHACI havuz ×0.3, faz 2/3 aura 0.9/0.8, geri sarma 1.5 · KEFİL ×0.85
+      (sıra) · İCRA 170° / hazırlık ×1.4 (dibindekine 3'te 1 değiyordu, kapıyı şansa bağlıyordu).
+- `BossTesti` (3 koşu): 3.8 · 4.5 · 4.7–4.8 · 5.7–6.0 · 9.0–9.4 dk; tavanla giren bot SİMSAR'da −434…−601 / 615, MURABAHACI'da
+  −453…−896 / 830 — **gürültülü, ince**: üçte birinde MURABAHACI sınırı aşıyor. Gerçek koşuda (giriş ≥ tavan) sorun yok.
+
+**Sonuç (bot `TamKosu`):** **395 dk = 6.6 sa, KAZANILDI, saat hiç bitmedi** · saat / tavan medyanı 1.3 · 2.3 · 2.4 · 2.6 · 2.3, en az
+0.51 · 0.33 · 0.68 · 0.91 · 0.57 (önce medyan 9–12, hiç 1.5'in altına inmiyordu) · oda ort. 87 sn · boss 3.9 · 4.9 · 4.7 · 5.8 · 9.3 dk ·
+103 sunak alımı · tüm kapılar temiz · P34–P38 ✅.
 
 ---
 

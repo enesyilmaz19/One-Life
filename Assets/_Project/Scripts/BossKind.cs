@@ -648,6 +648,8 @@ namespace TekCan
             public override string Name => "KEFİL";
             public override string Crime => "borcu garantiye aldı";
             public override Color Tint => new Color(0.45f, 0.75f, 0.85f);
+            // Faz 41: SİMSAR kredi fazı hafifleyince (5.8 dk) KEFİL'den (6.0) kısa sürdü — "her boss öncekinden uzun".
+            public override float HavuzPayı => 0.85f;
 
             public override bool RefillsOnEmpty => true;
 
@@ -775,12 +777,14 @@ namespace TekCan
             // Faz 2 havuz BİTİNCE (Enes, 2026-09-30) — "kazandım" sandığın an.
             public override bool RefillsOnEmpty => true;
             // Faz 39: tam havuzla 15.4 dk sürdü, bot 4 kez öldü (BossTesti) — fullenen havuz ikinci bir dövüş demek.
-            public override float HavuzPayı => 0.55f;
+            public override float HavuzPayı => 0.4f;   // Faz 41: ekonomi sıkılınca ×0.55'te tavanla giren bot −1057 / 615
 
             // İMZA MEKANİĞİ: sana gelmiyor, DURDUĞUN YERE geliyor — ve faz 2'de
             // neredeyse iki kat sık geliyor.
-            public override float GroundMarkInterval(int phase) => phase >= 2 ? 1.1f : 2.0f;
-            public override float AuraDrain(Tuning t, int phase) => t.bossAuraDrain * 1f;
+            // Faz 41: faz 2 (kredi — hasat vermez) hafif emer ve seyrek işaretler; tavanla giren bot −663 / 615 ölüyordu. Faz 1'e
+            // dokunulmadı: SİMSAR'ın adamları aurayı faz 1'den alıyor.
+            public override float GroundMarkInterval(int phase) => phase >= 2 ? 1.4f : 2.0f;
+            public override float AuraDrain(Tuning t, int phase) => t.bossAuraDrain * (phase >= 2 ? 0.6f : 1f);
             public override float SpeedMultiplier(int phase) => phase >= 2 ? 1.2f : 0.85f;
 
             public override float SummonInterval(int phase) => phase >= 2 ? 8.5f : 0f;
@@ -889,12 +893,12 @@ namespace TekCan
             public override string Name => "MURABAHACI";
             public override string Crime => "borç işlemeye devam ediyor";
             // Faz 39: tam havuzla 40 dk sürdü (faz 1 tek başına 7.7 dk, faz 2–3 fullenip geri sarıyor), bot 8 kez öldü (BossTesti).
-            public override float HavuzPayı => 0.4f;
+            public override float HavuzPayı => 0.3f;   // Faz 41: ×0.4'te tavanla giren bot −1567 / 830; ×0.25'te 4.3–7.7 dk, SİMSAR'dan kısa kalabiliyor
             public override Color Tint => new Color(0.55f, 0.35f, 0.8f);
 
             public override bool RefillsOnEmpty => true;
             public override float AuraDrain(Tuning t, int phase)
-                => t.bossAuraDrain * (phase >= 3 ? 1.55f : phase >= 2 ? 1.35f : 1.2f);
+                => t.bossAuraDrain * (phase >= 3 ? 0.8f : phase >= 2 ? 0.9f : 1.2f);   // Faz 41: faz 2–3 (kredi) 1.35/1.55 → 0.9/0.8 — tavanla giren bot −1024 / 830; faz 1 adamların
 
             // İMZA MEKANİĞİ: vurmadığın her saniye havuzu doluyor.
             public override float RegenPerSecond(Tuning t, int phase)
@@ -1072,8 +1076,9 @@ namespace TekCan
 
                     // ÖZGÜN ZİNCİR ① — "bir cevaba yerleşemezsin". Borç İŞLER:
                     // her taksit bir öncekinin üstüne biniyor.
-                    new BossAttack { Name = "İCRA", RangeMul = 1.6f, Angle = 200f,
-                                     WindupMul = 1.2f, CostMul = 1.45f, Tint = Cone,
+                    // Faz 41: 200° / ×1.2'de dibindeki bota 3'te 1 değiyordu (öbür saldırılar %0–10) — kapıyı şansa bağlıyordu
+                    new BossAttack { Name = "İCRA", RangeMul = 1.6f, Angle = 170f,
+                                     WindupMul = 1.4f, CostMul = 1.45f, Tint = Cone,
                                      Then = new BossAttack { Name = "…ve TEMERRÜT", RangeMul = 1.2f,
                                          Angle = 150f, WindupMul = 0.6f, CostMul = 1.2f,
                                          Tint = Cone } },

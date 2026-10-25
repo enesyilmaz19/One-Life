@@ -707,3 +707,9 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
 - **Atlama testi güçsüz girer (Faz 40):** N ile 5. bölgeye atlayan bot sunak alımı yapmamıştı; odalar bölgeyle büyüyünce 300 sn'de
   bitmedi ve "oda temizlenmiyor" kırmızısı oyunun değil testin hatasıydı. Mini testi bunu zaten yapıyordu (beklenen güç); oda
   testleri yapmıyordu. **Kural:** atlayan her senaryo gerçek koşunun gücüyle girsin (`BeklenenGüç`).
+- **Saate giren her yol aynı freni görsün (Faz 41):** doymayı sertleştirmek (üs 1 → 2) neredeyse hiçbir şey değiştirmedi; saat KASA'nın
+  ödemesinden geliyordu ve o ödeme doymadan, KITLIK'tan geçmiyordu. Önce "saate yazan bütün `Add`'ler" listelendi, sonra fren takıldı.
+  **Kural:** ekonomi kadranını çevirmeden önce gelir kaynaklarını say; kadranın uğramadığı bir yol varsa sorun oradadır.
+- **Botun alışveriş kuralı ölçünün parçası (Faz 41):** bot sunakta 40 sn yedekle her şeyi alıyordu; sıkı ekonomide final boss'a 266 sn ile
+  girdi. Her sunakta tam tavan yedek ise botu güçsüz bıraktı (koşu 5.9 → 7.4 sa, 1. bölgede ölüm). "Boss öncesi tavan, öbürleri yarım"
+  6.6 sa ve takviyesiz. **Kural:** tempoyu bot süresiyle ölçüyorsan botun harcama kuralını da yaz ve gerekçelendir — süre ona bağlı.

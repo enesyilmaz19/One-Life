@@ -380,7 +380,7 @@ namespace TekCan
         public float groundMarkCostMultiplier = 0.9f;
         [Tooltip("MURABAHACI faz 2: vurmadığın her saniye havuzunu bu kadar geri sarar. " +
                  "Kredi doldurmak hasat vermiyor — sadece dövüşü uzatıyor.")]
-        public float usurerRegenPerSecond = 3f;   // Faz 39: 6'da faz 2'de botun hasarının üçte biri geri sarılıyordu
+        public float usurerRegenPerSecond = 1.5f;   // Faz 41: 3'te kredi fazları uzuyor, tavanla giren bot ölüyordu   // Faz 39: 6'da faz 2'de botun hasarının üçte biri geri sarılıyordu
 
         [Header("── BÖLGELER (Faz 10) ──")]
         [Tooltip("Perdedeki bölge sayısı. Tavan Region.All uzunluğu. " +

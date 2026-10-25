@@ -961,17 +961,17 @@ namespace TekCan
                 bool öldü = Boss() == null && Saat == c && !c.Dead && Oda != null && Oda.IsBossRoom;
                 bool kısa = b > 0 && süre <= önceki;
                 float kayıp = s0 + (c.TotalGranted - b0) - c.Seconds;               // takviyeler düşülmüş net saat kaybı
-                // ⚠️ Bilgi, kapı değil: saat burada doyma TAVANINDA, gerçek koşuda boss'a tavanın 5–8 katıyla giriliyor (TamKosu, Faz 39).
-                // Boss'un botu öldürmediğini `TamKosu` ölçüyor (baştan sona F5'siz) — mini'lerde dövüş kısa olduğu için tavan ölçüsü yetiyor.
+                // ⚠️ Faz 41'den beri yine KAPI: ekonomi sıkılınca gerçek koşuda saat tavanın 1.4–2.8 katında; bot sunakta tavanın altına
+                // harcamıyor, yani boss'a en az tavanla giriyor — tavanla giren botu öldürmeyen boss gerçek koşuda da öldürmez.
                 bool botuÖldürdü = kayıp >= giriş;
-                if (!öldü || kısa) sıralı = false;
+                if (!öldü || kısa || botuÖldürdü) sıralı = false;
                 önceki = süre;
                 satırlar.Add($"B{b + 1} {ad}: {süre / 60f:0.0} dk" + (faz2 >= 0f ? $" · faz 2 {faz2 / 60f:0.0}. dk'da" : "") +
                              $" · havuz {havuz:0} · saat −{kayıp:0} / giriş {giriş:0} · darbe −{c.TotalHitCost - d0:0} · F5 {_takviye - f0}" +
-                             (öldü ? "" : " · ❌ ÖLMEDİ") + (kısa ? " · ⚠️ öncekinden kısa" : "") + (botuÖldürdü ? " · ⚠️ tavanla girse ölürdü" : ""));
+                             (öldü ? "" : " · ❌ ÖLMEDİ") + (kısa ? " · ⚠️ öncekinden kısa" : "") + (botuÖldürdü ? " · ⚠️ BOTU ÖLDÜRÜRDÜ (kayıp > giriş)" : ""));
                 Debug.Log($"[BOSS TESTİ] {satırlar[satırlar.Count - 1]}");
             }
-            Kaydet("BT", "Her ana boss öncekinden uzun sürüyor (beklenen güç, saat doyma tavanında; saat kaybı bilgi — ölmeyi TamKosu ölçer)", sıralı, string.Join("<br>", satırlar));
+            Kaydet("BT", "Her ana boss öncekinden uzun sürüyor ve tavanla giren botu öldürmüyor (beklenen güç)", sıralı, string.Join("<br>", satırlar));
         }
 
         /// <summary>10 sn OYUN zamanında bir: havuz, inen hasar (karelik düşüşlerin toplamı), botun dalları.</summary>
@@ -2477,7 +2477,10 @@ namespace TekCan
                 }
                 else if (rm.IsAltarRoom)
                 {
-                    yield return SunaktanAl(40f);
+                    // Faz 41: insan gibi yedek bırakır — boss'tan hemen önceki sunakta tavanı, öbürlerinde yarım tavanı korur. 40 sn yedekle
+                    // sıkılan ekonomide MURABAHACI'ya tavanın üçte biriyle giriyordu; her sunakta tam tavanla da güçlenemeyip 1. bölgede ölüyordu.
+                    bool bossÖncesi = rm.Room == _t.RoomsInRegion - 1;
+                    yield return SunaktanAl(Clock.Tavan(_t, rm.RegionIndex) * (bossÖncesi ? 1f : 0.5f));
                     yield return KapıdanÇık(30f);
                 }
                 else if (rm.IsMiniBossRoom)

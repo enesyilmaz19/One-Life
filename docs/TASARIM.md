@@ -262,8 +262,11 @@ sürüyordu; boss başına havuz payı (`BossKind.HavuzPayı`) onun havuzunu ×1
   Artık darbe saatin büyümesine bağlı (`İlerlemeÇarpanı` = `harvestSoftCapGrowth`^(bölge + ara bölge/5)): bir darbenin saate oranı
   bütün koşu boyunca aynı. "Hata affetmiyor" AĞIRLIK'ın kuralı, büyümenin değil.
 SİMSAR (fullenen havuz) ×0.55, MURABAHACI ×0.4 havuz payı, geri sarması 6 → 3 sn/sn: `BossTesti` 3.8 · 4.5 · 5.6 · 8.6 · 12.6 dk. Tam koşu: 294 dk (4.9 sa), kazanıldı, saat hiç bitmedi.
-`BossTesti` saati doyma tavanından veriyor; gerçek koşuda boss'a tavanın 5–8 katıyla giriliyor — boss'un botu öldürmediğini tam
-koşu ölçüyor (baştan sona F5'siz).
+**Faz 41 (2026-10-25) — saat ekonomisi sıkıldı** (Enes: *"oyun zorlamalı oyuncuları"*): bot 2. bölgeden sonra saatin doyma tavanının
+9–12 katında geziyordu. Kök KASA'ydı — ödemesi doymadan ve KITLIK'tan geçmiyordu, oda havuzları büyüyünce tek KASA ~100 sn ödüyordu;
+artık normal hasatla aynı kurallar. Doyma da sertleşti: tavanın üstünde hasat ×(tavan/saat)². Sonuç: saat tavanın 1.3–2.6 katında,
+ara sıra altında. Boss'lar buna göre: SİMSAR ve MURABAHACI'nın kredi fazları (hasat vermeyen ikinci havuz) hafif emiyor, faz 1'leri aynı.
+`BossTesti` artık tavanla giren botu öldürmemeli; gerçek koşu (bot 6.6 sa) baştan sona saat takviyesiz.
 
 ### Boss: yere vuruş ✅ (2026-08-24)
 
