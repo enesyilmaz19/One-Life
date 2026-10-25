@@ -2479,7 +2479,7 @@ namespace TekCan
                 {
                     // Faz 41: insan gibi yedek bırakır — boss'tan hemen önceki sunakta tavanı, öbürlerinde yarım tavanı korur. 40 sn yedekle
                     // sıkılan ekonomide MURABAHACI'ya tavanın üçte biriyle giriyordu; her sunakta tam tavanla da güçlenemeyip 1. bölgede ölüyordu.
-                    bool bossÖncesi = rm.Room == _t.RoomsInRegion - 1;
+                    bool bossÖncesi = rm.Room == RoomManager.SunakOdası(_t, Mathf.Max(1, _t.subRegionsPerRegion) - 1);   // son ara bölgenin sunağı
                     yield return SunaktanAl(Clock.Tavan(_t, rm.RegionIndex) * (bossÖncesi ? 1f : 0.5f));
                     yield return KapıdanÇık(30f);
                 }

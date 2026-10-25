@@ -16,7 +16,8 @@
 | 15–19 | 🤖 **Faz 34–37 his testleri → botta** | Enes (2026-10-22): *"testi de bota yaptır, oradan botun zorlanma ölçüsüne göre ilerleyelim şimdilik"*. P34–P37 ✅. Ölçü: mini zorlasın ama botu öldürmesin (saat kaybı < giriş saati) — Faz 38'de uygulandı, P34–P38 ✅ | — |
 | 20 | ⏱️ *(önerilir, ~10 dk)* **İnsan çarpanı** | Enes (2026-10-23): aksiyon İNSAN oynayışıyla ≥ 7 saat, kalanı ara sahne + anlatım (hikâye/olay odası yok). Botun ölçtüğünü insana çeviren çarpanı bilmiyoruz (×1.2 → bot 5.8 sa gerek, ×1.5 → bugünkü yeter). **F6**, 1. ara bölgeyi (7 oda + mini + sunak, bot ~9 dk — Faz 40'tan sonra) bir kez normal oyna, süreyi söyle | Mesajla yaz |
 | 21 | ⚖️ **Saat ekonomisi** | Bot orta oyunda 4000–6600 sn ile geziyor (tavan 456–830), odalar onu hiç zorlamıyor; sıkılırsa geç boss'lar yine öldürür (aşağıda FAZ 39). Şimdi mi, hikâyeden sonra mı? | Mesajla yaz |
-| 22 | 📖 **Hikâye — ortak** | `docs/HIKAYE.md`: senin üç notun yazılı, 6 açık soru (adlar · borcu kim aldı · ekipmanı kim geliştirdi · başlangıç zamanı neden o kadar · son · perdelerin olay sırası). Hangisinden başlayalım? · Faz 39 commit + Faz 40'a geçeyim mi? | Mesajla ya da doğrudan dosyaya yaz |
+| 22 | 📖 **Hikâye — ortak** | `docs/HIKAYE.md`: senin üç notun yazılı, 6 açık soru (adlar · borcu kim aldı · ekipmanı kim geliştirdi · başlangıç zamanı neden o kadar · son · perdelerin olay sırası). Hangisinden başlayalım? | Mesajla ya da doğrudan dosyaya yaz |
+| 23 | 🔗 **Combo Parti 1 — onay** | `docs/COMBOLAR.md` "Parti 1": 15 direkt ikili + 5 direkt üçlü (ad · sıra · ne yapar). Beğenmediğin, adını değiştirmek istediğin ya da kendi fikrinle değiştirmek istediğin combo'yu yaz; onaylanan parti koda geçer | Mesajla ya da dosyaya yaz |
 
 ---
 
@@ -267,7 +268,7 @@ Enes: *"saatin cömertliğini düzeltelim oyun zorlamalı oyuncuları"* · *"bit
 
 ---
 
-## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **PLAN, araştırma başladı** (2026-10-25)
+## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **Parti 1 listesi Enes'in onayında** (2026-10-25)
 
 Enes: *"12 silah için 28 combo bayağı az · 96 2'li combo ve 24 tane 3'lü combo olmalı · bazıları açılabilir bazıları direkt silahlarla
 yapılabilen cinsten olmalı, kalanı da satın alınabilir"* · *"combolar elle olmalı ama fikir edinmek için diğer oyundaki comboları
@@ -280,7 +281,7 @@ araştırabilirsin, oradan temel bazılarını alıp oyuna geçirir, oradan fiki
 
 **Adımlar**
 - [x] A. Araştırma → `docs/COMBO_ARASTIRMA.md`: 12 kalıp (Hades, DMC/Bayonetta, Nioh, Dead Cells, DOS2, Warframe, Vampire Survivors) + silahların combo dili (ne bırakır / ne tüketir)
-- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo (ad · sıra · ne yapar · direkt/açılır/satın alınır · bölge şartı) — **Enes onaylar**, partiler hâlinde
+- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo partiler hâlinde, **Enes onaylar** — Parti 1 yazıldı (15 direkt ikili + 5 direkt üçlü), onay bekliyor · Parti 2 açılır · Parti 3–4 satın alınır
 - [ ] C. Satın alma: combo sunağında saniyeyle (fiyat kuralı Faz 27/33'le aynı)
 - [ ] D. Kod partiler hâlinde (her partiye kapı + bir kez boz) · bot gerçek tuşlarla oynar (P33c gibi)
 - [ ] E. Tam koşu: combo'lar süreyi/dengeyi bozmadı mı
