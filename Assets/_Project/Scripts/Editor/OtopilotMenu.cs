@@ -82,7 +82,7 @@ namespace TekCan.EditorTools
 
         public static void Playtest33c() => Başlat(izle: false, senaryo: "p33c");
 
-        /// <summary>Faz 42 playtest'i: Parti 1'in 20 direkt combo'su gerçek tuşlarla ("+" hâlleri verilmiş).</summary>
+        /// <summary>Faz 42 playtest'i: Parti 1'in 20 direkt + Parti 2'nin 18 açılır combo'su gerçek tuşlarla (açanlar, "+" hâlleri verilmiş).</summary>
         [MenuItem("Tek Can/Otopilot — Faz 42 combo'ları (izle)")]
         public static void Playtest42Izle() => Başlat(izle: true, senaryo: "p42");
 

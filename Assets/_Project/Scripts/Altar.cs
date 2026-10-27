@@ -207,7 +207,9 @@ namespace TekCan
                 IsoCamera.Shake(_t.hitShake * 0.7f);
                 foreach (var a in All) if (a != null) a.Paint();
                 Debug.Log($"[Tek Can] SİLAH SUNAĞI: [{SilahSunağı.EnderlikAdı[(int)SilahSunağı.Ender[(int)y]]}] {SilahSunağı.Ad[(int)y]} alındı ({Weapon.All[SilahSunağı.Silahı(y)].Name})");
-                if (Combo.Açtığı(y) is Combo.Tanım açılan) Combo.Duyur($"COMBO AÇILDI: {açılan.Ad} — {açılan.NeYapar}", 3f);   // Faz 33c
+                if (Combo.Açtığı(y) is Combo.Tanım açılan)                                                                       // Faz 33c · 42
+                    Combo.Duyur($"COMBO AÇILDI: {açılan.Ad}" + (Bölge() < açılan.MinBölge ? $" ({açılan.MinBölge + 1}. bölgeden)" : "")
+                                + $" — {açılan.NeYapar}", 3f);
                 return;
             }
 

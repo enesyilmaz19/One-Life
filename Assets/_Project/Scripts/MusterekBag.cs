@@ -13,6 +13,8 @@ namespace TekCan
         public static readonly List<MusterekBag> Tümü = new List<MusterekBag>();
         /// <summary>KONSORSİYUM combo'su (Faz 33c): bu vuruş boyunca yayılma tam (%100). Vuruşu yapan açıp kapatıyor.</summary>
         public static bool TamPay;
+        /// <summary>Faz 42: bağlılara AYRI vuruş inerken (HACZE İŞTİRAK · SPEKÜLATİF ATAK) yayılma kapalı — vuruş iki kez sayılmasın.</summary>
+        public static bool Kapalı;
 
         public readonly List<Enemy> Üyeler = new List<Enemy>();
         public float Pay { get; private set; }
@@ -54,7 +56,7 @@ namespace TekCan
         /// <summary>Kaynağa inen hasarın payını öbür üyelere indir. Yayılan hasar tekrar yayılmaz.</summary>
         public void Dağıt(Enemy kaynak, float hasar, float hasat)
         {
-            if (_dağıtıyor || Bitti) return;
+            if (_dağıtıyor || Bitti || Kapalı) return;
             _dağıtıyor = true;
             foreach (var e in Üyeler.ToArray())                       // vuruş öldürüp listeden çıkarabilir
                 if (e != null && e != kaynak && Enemy.All.Contains(e)) { e.TakeDamage(hasar * (TamPay ? 1f : Pay), hasat * HasatPayı); Yayılma++; }

@@ -107,6 +107,8 @@ namespace TekCan
         public void Yavaşlat(float sn, float çarpan) { _yavaşKalan = Mathf.Max(_yavaşKalan, sn); _yavaşÇarpan = çarpan; }
         /// <summary>KARŞILIK · RED (Faz 33b): bu süre boyunca yeni saldırı başlatamaz.</summary>
         public void Sustur(float sn) => _susKalan = Mathf.Max(_susKalan, sn);
+        /// <summary>ACİZ VESİKASI combo'su (Faz 42): saldırı hazırlığındaysa baştan başlar.</summary>
+        public void HazırlığıBaşaSar() { if (_state == State.Windup) _stateTimer = WindupDuration; }
         public bool Susturulmuş => _susKalan > 0f;
         /// <summary>TAKİP combo'su (Faz 33c): bu süre boyunca ARBİTRAJ'a hep sırtı dönük sayılır.</summary>
         public void SırtDön(float sn) => _sırtKalan = Mathf.Max(_sırtKalan, sn);

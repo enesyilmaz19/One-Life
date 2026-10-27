@@ -96,7 +96,7 @@ namespace TekCan
         /// ikisi zamanla ayrışırdı.
         /// </summary>
         public static GroundMark SpawnLien(Tuning t, Vector3 pos, float radius, float delay,
-                                           float damage, float harvestMult, Transform parent)
+                                           float damage, float harvestMult, Transform parent, Transform takip = null)
         {
             var go = new GameObject("Lien");
             go.transform.position = pos;
@@ -109,12 +109,13 @@ namespace TekCan
             m._hitsEnemies = true;
             m._enemyDamage = damage;
             m._harvestMult = harvestMult;
+            m.Takip = takip;
             ActiveLiens++;
 
             // Oyuncununki KENDİ RENGİNDE (İPOTEK moru) — düşmanın tebligatıyla
             // karışsaydı oyuncu kendi koyduğu işaretten kaçmaya çalışırdı.
             Arc.Spawn(pos, Quaternion.identity, radius, 360f, LienColor, delay,
-                      scaleFrom: 0.25f, scaleTo: 1f, scaled: true);
+                      scaleFrom: 0.25f, scaleTo: 1f, scaled: true, follow: takip);   // yapışık işaretin halkası da yürüsün
             return m;
         }
 
@@ -129,6 +130,11 @@ namespace TekCan
         public void Step(float dt)
         {
             if (_fired) return;
+            if (Takip != null)                                                 // KONUT KREDİSİ: düşmanla yürür
+            {
+                Vector3 p = Takip.position;
+                transform.position = new Vector3(p.x, transform.position.y, p.z);
+            }
             _timer -= dt;
             if (Çekim > 0f && _hitsEnemies)                                    // ÇEKİM (Faz 33)
                 foreach (var e in Enemy.All)
@@ -144,6 +150,9 @@ namespace TekCan
         }
 
         public bool Fired => _fired;
+
+        /// <summary>KONUT KREDİSİ combo'su (Faz 42): işaret bu düşmana yapışık, onunla yürür.</summary>
+        public Transform Takip { get; set; }
 
         /// <summary>MÜFLİS (Faz 34): oyuncuya vuran işaret patlayınca içindeki düşmanlara da bu kadar hasar.</summary>
         public float DüşmanHasarı { get; set; }

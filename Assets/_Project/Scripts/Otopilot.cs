@@ -1319,11 +1319,13 @@ namespace TekCan
             bool duyuruldu = açılan != null && Combo.SonCombo != null && Combo.SonCombo.Contains("COMBO AÇILDI: " + açılan.Ad);
             string duyuru = Combo.SonCombo;
             bool oldu = false; int deneme = 0;
-            for (int i = 0; i < Combo.Sayı && açılan != null; i++)
+            bool üçlü = açılan != null && açılan.MinBölge > RoomManager.AktifBölge;   // Faz 42: EFSANEVİ üçlü açar, 2. bölgeden — P42 deniyor
+            for (int i = 0; i < Combo.Sayı && açılan != null && !üçlü; i++)
                 if (Combo.Bu((ComboTür)i) == açılan) yield return ComboDene((ComboTür)i, (o, d) => { oldu = o; deneme = d; });
             Kaydet("33-3", "Dış halkadan alınan açan combo'yu açıyor: \"COMBO AÇILDI\" yazıyor, combo gerçek tuşlarla oluyor",
-                   duyuruldu && oldu,
-                   açılan == null ? "dış halkada açan yok" : $"{açılan.Ad} · duyuru \"{duyuru}\" · {(oldu ? "oldu" : "OLMADI")} ({deneme} deneme)");
+                   duyuruldu && (oldu || üçlü),
+                   açılan == null ? "dış halkada açan yok"
+                   : $"{açılan.Ad} · duyuru \"{duyuru}\" · " + (üçlü ? "üçlü, 2. bölgeden — tuşları P42'de" : $"{(oldu ? "oldu" : "OLMADI")} ({deneme} deneme)"));
         }
 
         // ── FAZ 33 FİYAT ÖLÇÜMÜ — Enes (2026-10-18): "fiyat uygunluğunu bot üzerinden deneyelim" ──
@@ -1949,11 +1951,12 @@ namespace TekCan
         IEnumerator P33c()
         {
             _bekçiDk = 30f;
-            for (int i = 0; i < Combo.Sayı; i++)                                 // açanlar + "+" hâlleri: "+" yolları da gerçek oyunda koşsun
+            int baş = (int)ComboTür.Sürü, son = (int)ComboTür.KiraGeliri;     // yalnız 33c'nin 12'si (Faz 42 Parti 2'nin açanlıları P42'de)
+            for (int i = baş; i <= son; i++)                                     // açanlar + "+" hâlleri: "+" yolları da gerçek oyunda koşsun
                 if (Combo.Bu((ComboTür)i).Açan is SilahYükseltme açan) { SilahSunağı.Al(açan, -1); Combo.ArtıAl((ComboTür)i, 0); }
             var satırlar = new List<string>();
             int tamam = 0, toplam = 0;
-            for (int i = 0; i < Combo.Sayı && !_bitti; i++)
+            for (int i = baş; i <= son && !_bitti; i++)
             {
                 var c = (ComboTür)i; var tanım = Combo.Bu(c);
                 if (!tanım.Açan.HasValue) continue;
@@ -1989,8 +1992,8 @@ namespace TekCan
                 if (Özeli(c) is int özel) { float t0 = Şimdi; while (pc.SpecialCooldownOf(özel) > 0f && Şimdi - t0 < 12f) yield return null; }   // sağ tık hazır olsun
                 float b0 = pc.ComboBeklemesi(c);
                 _adımNotu = "";
-                // HACİZ'li combo'da duruş — TAHVİL'li hariç: basılı tutarken düşmanlar 1 sn yaklaşıp ölü bölgeye giriyor, orada HACİZ anında uzaktaki aranır
-                if (System.Array.IndexOf(sıra, Kadro.HACİZ) >= 0 && System.Array.IndexOf(sıra, Kadro.TAHVİL) < 0) { yield return HacizDuruşu(d); var yakın = EnYakınBaşka(null); if (yakın != null) d = yakın; }
+                // HACİZ'li combo'da duruş — TAHVİL'le başlayan hariç: 1.1 sn basılı tutarken düşmanlar yaklaşıp ölü bölgeye giriyor, orada HACİZ anında uzaktaki aranır
+                if (System.Array.IndexOf(sıra, Kadro.HACİZ) >= 0 && sıra[0] != Kadro.TAHVİL) { yield return HacizDuruşu(d); var yakın = EnYakınBaşka(null); if (yakın != null) d = yakın; }
                 else yield return Git(d.transform.position, 1.1f + d.Radius, 3f);
                 for (int k = 0; k < sıra.Length && !_bitti; k++)
                 {
@@ -2008,10 +2011,13 @@ namespace TekCan
 
         string _adımNotu = "";                                                  // başarısız denemede adım adım ne oldu
         /// <summary>Bağ isteyen combo: MÜŞTEREK adımı ZİNCİRLEME (sağ tık) — oyuncu gibi, tek basışta bağ.</summary>
-        static bool BağGerekli(ComboTür c) => c == ComboTür.MüşterekKusur || c == ComboTür.OrtaklığınTasfiyesi;
+        static bool BağGerekli(ComboTür c) => c == ComboTür.MüşterekKusur || c == ComboTür.OrtaklığınTasfiyesi
+                                            || c == ComboTür.Hacizİştiraki || c == ComboTür.SpekülatifAtak;
+        /// <summary>İlk adımı arkadan isteyen combo: önce AÇIK POZİSYON (görünmezken her vuruş arkadan).</summary>
+        static bool ArkadanGerekli(ComboTür c) => c == ComboTür.Spekülasyon || c == ComboTür.ArkadanDolanım || c == ComboTür.Hileliİflas;
         /// <summary>İlk adımı sağ tıkla yapılan combo'nun silahı (ZİNCİRLEME · AÇIK POZİSYON) — deneme beklemesi bitince başlasın.</summary>
         static int? Özeli(ComboTür c) => BağGerekli(c) ? Kadro.MÜŞTEREK
-                                        : c == ComboTür.Spekülasyon || c == ComboTür.ArkadanDolanım ? Kadro.ARBİTRAJ : (int?)null;
+                                        : ArkadanGerekli(c) ? Kadro.ARBİTRAJ : (int?)null;
 
         /// <summary>
         /// HACİZ'li combo'nun duruşu, oyuncu gibi: bir düşmanın dibi (bitiriş ona), öbürü HACİZ'in menzilinde (yüzey 4.2–6.8; dipteki
@@ -2085,15 +2091,18 @@ namespace TekCan
             }
             else
             {
-                if (ilk && (c == ComboTür.Spekülasyon || c == ComboTür.ArkadanDolanım)) { _sağ = true; yield return Bekle(0.15f); }   // AÇIK POZİSYON: her vuruş arkadan
+                if (ilk && ArkadanGerekli(c)) { _sağ = true; yield return Bekle(0.15f); }   // AÇIK POZİSYON: her vuruş arkadan
                 if (ilk && silah == Kadro.REHİN)                                 // yakala (adım değil), sonra fırlat
                 {
                     _sol = true; yield return null;
                     float t1 = Şimdi;
                     while (Oyuncu != null && Oyuncu.Attacking && Şimdi - t1 < 1f) yield return null;
-                    if (d != null) NişanAl(d.transform.position);
+                    var at = EnYakınBaşka(d);                                   // oyuncu gibi yakındakine fırlat: rehine onun dibine düşer (MÜŞTEREK REHİN)
+                    if (at != null && c == ComboTür.MüşterekRehin)               // bitiriş MÜŞTEREK (menzil 2.6): fırlatmadan önce ona yaklaş
+                        yield return Git(at.transform.position, 1.8f + at.Radius, 2f);
+                    if (at != null) NişanAl(at.transform.position); else if (d != null) NişanAl(d.transform.position);
                 }
-                if (ilk && silah == Kadro.MÜŞTEREK && BağGerekli(c)) _sağ = true;   // ZİNCİRLEME: en yakın dördü tek bağa
+                if (silah == Kadro.MÜŞTEREK && BağGerekli(c)) _sağ = true;          // ZİNCİRLEME: en yakın dördü tek bağa
                 else _sol = true;
             }
             if (!adım) { yield return Bekle(0.25f); _adımNotu += $" · {not} bitiş"; yield break; }
@@ -2105,7 +2114,7 @@ namespace TekCan
             _adımNotu += $" · {not} {(Oyuncu != null && Oyuncu.AdımSayısı != adım0 ? $"✓ {Şimdi - an:0.00} sn" : "✗ YAZILMADI")}";
         }
 
-        // ── FAZ 42 PLAYTEST — Parti 1'in 20 direkt combo'su GERÇEK tuşlarla ("+" hâlleri verilmiş) ──
+        // ── FAZ 42 PLAYTEST — Parti 1'in 20 direkt + Parti 2'nin 18 açılır combo'su GERÇEK tuşlarla ("+" hâlleri, açanlar verilmiş) ──
         // İkililer 1. bölgede, üçlüler N ile 2. bölgede (üçlü kuralı). Kapı her combo'nun ETKİSİNİ ölçüyor; bu, oyuncunun tuş
         // yolunun (adım → geçiş → adım → geçiş → bitiriş) gerçekten açık olduğunu.
         IEnumerator P42()
@@ -2120,6 +2129,7 @@ namespace TekCan
                 {
                     var c = (ComboTür)i; var tanım = Combo.Bu(c);
                     if ((tanım.Sıra().Length == 3) != (üçlü == 1)) continue;
+                    if (tanım.Açan is SilahYükseltme açan) SilahSunağı.Al(açan, -1);   // Parti 2: açan yükseltme
                     Combo.ArtıAl(c, 0);
                     toplam++;
                     var adlar = new List<string>(); foreach (int w in tanım.Sıra()) adlar.Add(Weapon.All[w].Name);
@@ -2131,7 +2141,7 @@ namespace TekCan
                     Debug.Log($"[P42] {tanım.Ad}: {(oldu ? "oldu" : "OLMADI")} · {deneme} deneme");
                 }
             }
-            Kaydet("42", "Parti 1'in 20 direkt combo'su gerçek tuşlarla: ikililer 1. bölgede, üçlüler 2. bölgede (\"+\" hâlleri verilmiş)", tamam == toplam,
+            Kaydet("42", "Parti 1'in 20 direkt + Parti 2'nin 18 açılır combo'su gerçek tuşlarla: ikililer 1. bölgede, üçlüler 2. bölgede (açanlar ve \"+\" hâlleri verilmiş)", tamam == toplam,
                    $"{tamam}/{toplam} · {string.Join(" · ", satırlar)}");
         }
 

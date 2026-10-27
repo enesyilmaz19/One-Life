@@ -896,7 +896,7 @@ namespace TekCan.EditorTools
             int failed = 0;
             float Taban(int silah) => Weapon.All[silah].Damage(_t, _clock.AttackDamage);
 
-            var yeni = Enumerable.Range(0, Combo.Sayı).Select(i => (ComboTür)i).Where(c => Combo.Bu(c).Açan.HasValue).ToList();
+            var yeni = Enumerable.Range((int)ComboTür.Sürü, 12).Select(i => (ComboTür)i).ToList();   // 33c (Faz 42 Parti 2'nin açanlıları ayrı)
             YeniKoşu();
             bool yapı = yeni.Count == 12 && yeni.All(c =>
             {

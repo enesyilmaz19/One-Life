@@ -267,7 +267,7 @@ Enes: *"saatin cömertliğini düzeltelim oyun zorlamalı oyuncuları"* · *"bit
 
 ---
 
-## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **Parti 1 commit'li (direkt tamam: 42 combo) · Parti 2 onaylandı, kodlanıyor** (2026-10-27)
+## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **Parti 1–2 commit'li (60 combo) · Parti 3 + satın alma onaylandı, kodlanıyor** (2026-10-28)
 
 Enes: *"12 silah için 28 combo bayağı az · 96 2'li combo ve 24 tane 3'lü combo olmalı · bazıları açılabilir bazıları direkt silahlarla
 yapılabilen cinsten olmalı, kalanı da satın alınabilir"* · *"combolar elle olmalı ama fikir edinmek için diğer oyundaki comboları
@@ -280,8 +280,8 @@ araştırabilirsin, oradan temel bazılarını alıp oyuna geçirir, oradan fiki
 
 **Adımlar**
 - [x] A. Araştırma → `docs/COMBO_ARASTIRMA.md`: 12 kalıp (Hades, DMC/Bayonetta, Nioh, Dead Cells, DOS2, Warframe, Vampire Survivors) + silahların combo dili (ne bırakır / ne tüketir)
-- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo partiler hâlinde, **Enes onaylar** — Parti 1 ✅ kodlandı · Parti 2 ✅ onaylandı (2026-10-27: mevcut EPİK ikilileri, EFSANEVİ üçlüleri açar; "+" önerim) · Parti 3–4 satın alınır
-- [ ] C. Satın alma: combo sunağında saniyeyle (fiyat kuralı Faz 27/33'le aynı)
+- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo partiler hâlinde, **Enes onaylar** — Parti 1 ✅ · Parti 2 ✅ kodlandı (mevcut EPİK ikilileri, EFSANEVİ üçlüleri açar) · Parti 3 ✅ onaylandı (2026-10-28: "onaylıyorum herşeyi") · Parti 4 kalanı
+- [ ] C. Satın alma: combo sunağında saniyeyle (fiyat kuralı Faz 27/33'le aynı) — **karar (a)** (Enes 2026-10-28): ara bölge sunak odasında COMBO sunağı, 2 teklif / 1 alım, fiyat yükseltme kuralıyla
 - [ ] D. Kod partiler hâlinde (her partiye kapı + bir kez boz) · bot gerçek tuşlarla oynar (P33c gibi) — **Parti 1 ✅:**
   - 20 combo kodda: koni bitirişleri `Strike`'ta (vuruştan önce / sonra iki `switch`), İPOTEKLİ REHİN ve KİRALIK ARSA `PlaceLien`'de.
     Şartlı bitiriş (`Şart`): ARKADAN DOLANIM arkadan vuruş, VADESİ GELMİŞ POZİSYON 2. kademe, MÜŞTEREK KUSUR / Ü4 bağ, ZİNCİRLEME CİRO
@@ -296,6 +296,13 @@ araştırabilirsin, oradan temel bazılarını alıp oyuna geçirir, oradan fiki
   - Silah açılınca ekranda combo'lar yalnız adıyla (açıklamalı liste tek satıra sığmıyordu); 2. bölgede üçlüler tek duyuruda
     (tam koşuda görüldü: "COMBO AÇILDI: CEBRİ İCRA · ALACAK DEVRİ", "3'LÜ COMBO AÇILDI: HACİZ KARARI · İCRA TAKİBİ").
   - Tüm kapılar ✅ (2026-10-26).
+- **Parti 2 ✅ (2026-10-27):** 18 açılır combo — açan mevcut yükseltme (ikili EPİK, üçlü EFSANEVİ; açıklamasında "COMBO açar"). Yeni kancalar:
+  zincir adımı hedefini de taşıyor (`AdımHedefi`: İSTİHKAK / PROTESTOLU SENET iki adım geriye bakıyor), yapışık ipotek (`GroundMark.Takip`),
+  çeklerin dönüşü (`CekUcusu.İbraz`), bağa ayrı vuruş (`MusterekBag.Kapalı`), saldırı hazırlığını başa sarma (`Enemy.HazırlığıBaşaSar`).
+  SÜRÜ'nün bağı genelleşti (`TopluBağ`: SÜRÜ · TAPU TEVHİDİ · MÜŞTEREK REHİN). Kapı `Faz42SelfCheck` **43 kontrol**; bozma P1 18/18, P2 4/4
+  kırmızı. Bot `Playtest42` **38/38** (MÜŞTEREK KUSUR ikinci denemede), `Playtest33c` 12/12. Tüm kapılar ✅. Bot düzeltmeleri: P33c yalnız
+  kendi 12'si (açanlı Parti 2'yi de deniyordu), MÜŞTEREK REHİN'de rehineyi yakındakine fırlatıyor. Tam koşu koşulmadı — bot combo yapmıyor.
+  Sunakta EFSANEVİ 1. bölgede alınırsa duyuru "(2. bölgeden)" diyor; P33 3/3 dış halkadan üçlü açan gelirse tuşları P42'ye bırakıyor.
 - [x] E. Tam koşu (Parti 1 sonrası, 2026-10-26): **KAZANILDI · 352 dk (5.9 sa) · saat hiç bitmedi** · oda ort. 76 sn · boss 4.0 · 4.9 · 3.9 ·
   5.1 · 8.6 dk · 107 sunak alımı. Önceki 395 dk'dan kısa ama **sebep combo değil: bot tam koşuda hiç combo yapmıyor** (bu koşuda da
   öncekilerde de 0 — tek silahla dövüşüyor). Fark koşudan koşuya: yükseltme teklifleri rastgele (B1–B3 aynı, B4–B5 15–20 dk kısa).

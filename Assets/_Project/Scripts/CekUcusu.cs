@@ -54,6 +54,33 @@ namespace TekCan
             return n;
         }
 
+        /// <summary>Sahibinin havadaki bütün çekleri (KARŞILIKSIZ'ın serbestleri dahil).</summary>
+        public static int Havadaki(PlayerController p)
+        {
+            int n = 0;
+            foreach (var u in Uçanlar) if (u != null && u._sahibi == p) n++;
+            return n;
+        }
+
+        /// <summary>İBRAZ combo'su (Faz 42): sahibinin havadaki bütün çekleri hedefe döner, her biri ona bir kez (×çarpan), sonra biter.</summary>
+        public static int İbraz(PlayerController p, Enemy hedef, float çarpan)
+        {
+            int n = 0;
+            for (int i = Uçanlar.Count - 1; i >= 0; i--)
+            {
+                var u = Uçanlar[i];
+                if (u == null || u._sahibi != p) continue;
+                if (hedef != null && Enemy.All.Contains(hedef))
+                {
+                    Arc.Spawn(hedef.transform.position, Quaternion.identity, 0.9f, 360f, new Color(0.6f, 0.85f, 0.95f, 0.8f), 0.2f, scaleFrom: 0.4f, scaleTo: 1.2f);
+                    hedef.TakeDamage(u._hasar * çarpan, u._hasat);
+                    n++;
+                }
+                u.Bitir();
+            }
+            return n;
+        }
+
         public static CekUcusu Fırlat(PlayerController sahibi, Tuning t, Vector3 yön, float menzil, float hız,
                                       float hasar, float hasat, int sekme, float dönüşÇarpanı, Transform kök)
         {

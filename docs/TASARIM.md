@@ -387,7 +387,9 @@ hâli var (AĞIL, PUSU, İHTİYATİ HACİZ …) — "+" yeni bir etki ekliyor, s
 
 **Faz 42 (2026-10-25) — 120 combo hedefi** (Enes: *"96 2'li ve 24 3'lü… bazıları açılabilir, bazıları direkt, kalanı satın
 alınabilir"*; dağılım ¼ direkt · ¼ açılır · ½ satın alınır). Liste ve partiler: `docs/COMBOLAR.md`. Parti 1 (20 direkt: 15 ikili +
-5 üçlü) kodda → **direkt combo'lar tamam (24 ikili + 6 üçlü), toplam 42.** Yeni kural: ikili bir üçlünün ilk iki adımıysa combo
+5 üçlü) kodda → **direkt combo'lar tamam (24 ikili + 6 üçlü), toplam 42.** Parti 2 (18 açılır, Enes 2026-10-27: *"hem epik hem efsanevi
+açsın"*): combo'yu silahın MEVCUT yükseltmesi açıyor — ikilileri EPİK, üçlüleri EFSANEVİ; yükseltme hem kendi etkisini verir hem combo
+açar → **açılırlar da tamam, toplam 60.** Kalan 60 satın alınır (Parti 3–4). Yeni kural: ikili bir üçlünün ilk iki adımıysa combo
 bitince zincir silinmez, üçlüye devam edilir (FAİZLİ → HACİZ = ALACAK DEVRİ, → İFLAS = İCRA TAKİBİ). Bir sıra hem üçlünün sonu hem
 ikili olabilir — üçlü önce gelir. Bazı bitirişlerin şartı var (ARKADAN DOLANIM: ARBİTRAJ arkadan vurmuş olmalı; VADESİ GELMİŞ
 POZİSYON: TAHVİL 2. kademe; MÜŞTEREK KUSUR: bağ olmalı) — şart yoksa vuruş düz adım sayılır.

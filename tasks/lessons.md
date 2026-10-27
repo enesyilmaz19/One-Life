@@ -724,4 +724,8 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
 - **Botun "adım yazıldı"sı yanlış adımı sayıyordu (Faz 42):** sayaç denemenin sonunda okunuyordu, bitirişin adımı da sayılıyordu — HACİZ
   ıskalıyor, log "yazıldı" diyordu. Adım adım döküm (`✓ 0.07 sn` / `✗ YAZILMADI`, yüzey mesafesi) sorunu tek koşuda gösterdi: dash
   2.9'a açıyor, ölü bölge 3.2. **Kural:** botun teşhisi her adımı kendi anında ölçsün; "sonunda bir şey arttı mı" yetmez.
-
+- **"Özelliği olanları seç" diye yazılan test, özellik yayılınca şişer (Faz 42):** P33c ve Faz 33'ün yapı kontrolü "açanı olan combo'lar"ı
+  seçiyordu — 33c'nin 12'si demekti. Parti 2 de açanlı olunca ikisi de 30'u denedi; bot üçlüleri 1. bölgede denedi, yapı EPİK beklediği
+  yerde EFSANEVİ buldu. **Kural:** bir partiyi test eden kod partiyi adıyla seçsin (sıra aralığı), ortak bir özellikle değil.
+- **Merkezdekinin itilecek yönü yok (Faz 42):** İPOTEK ZİNCİRİ'nin "+"sı (patlama dışa iter) testte 0 itti — ölçtüğüm düşman işaretin tam
+  merkezindeydi, itme yönü sıfır vektör. Oyunda nadir ama testte her zaman. **Kural:** yönlü bir etkiyi (itme, çekme) merkezden ölçme.
