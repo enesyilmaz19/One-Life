@@ -140,6 +140,7 @@ namespace TekCan.EditorTools
             void Hazırla(SilahYükseltme y, bool açık, float saat)
             {
                 Temizle(); Yük(y, açık); SıfırlaÖzel(pc);
+                pc.TickCombo(10f);                      // önceki senaryonun adımı combo saymasın: KONİ → FAİZLİ artık TOPLU BORÇ (Faz 42)
                 pc.SetWeapon(SilahSunağı.Silahı(y));
                 pGo.transform.position = orta;
                 pGo.transform.rotation = Quaternion.LookRotation(ileri);

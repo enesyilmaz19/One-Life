@@ -295,6 +295,7 @@ namespace TekCan.EditorTools
                             _pc.SonBağ == null && eskiA.Bağ == null && eskiB.Bağ == null, 0f);
             YeniKoşu();
             (a, b) = Bağla();
+            _pc.TickCombo(1f);                          // pencere geçsin: MÜŞTEREK → KONİ artık MÜŞTEREK KUSUR (Faz 42)
 
             // Yayılma: bağlıya, BAŞKA silahla vurulan hasarın %60'ı iniyor
             b.transform.position = Yer(4f, 0f);                 // KONİ'nin dışında
@@ -308,6 +309,7 @@ namespace TekCan.EditorTools
             YeniKoşu();
             Yükselt(SilahYükseltme.SıkıBağ); Yükselt(SilahYükseltme.UzunBağ); Yükselt(SilahYükseltme.OrtakHasat);
             (a, b) = Bağla();
+            _pc.TickCombo(1f);                          // MÜŞTEREK KUSUR olmasın (Faz 42)
             bağ = _pc.SonBağ;
             b.transform.position = Yer(4f, 0f);
             bÖnce = b.TimeLeft;
@@ -320,6 +322,7 @@ namespace TekCan.EditorTools
             // Süre dolunca kopuyor
             YeniKoşu();
             (a, b) = Bağla();
+            _pc.TickCombo(1f);                          // MÜŞTEREK KUSUR olmasın (Faz 42)
             bağ = _pc.SonBağ;
             bool kuruldu = bağ != null;
             if (kuruldu) bağ.Step(_t.musterekSeconds + 0.1f);

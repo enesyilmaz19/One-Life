@@ -320,6 +320,8 @@ namespace TekCan
                 ? new[] { Kurulum(), FiyatÖlçümü(Kadro.ÇEK, Kadro.KARŞILIK, Kadro.TAHVİL, Kadro.MÜŞTEREK, Kadro.ARBİTRAJ, Kadro.KİRA), Bitir() }
                 : senaryo == "p33c"
                 ? new[] { Kurulum(), P33c(), Bitir() }
+                : senaryo == "p42"
+                ? new[] { Kurulum(), P42(), Bitir() }
                 : senaryo == "p34"
                 ? new[] { Kurulum(), P34(), Bitir() }
                 : senaryo == "kapi"
@@ -1967,64 +1969,123 @@ namespace TekCan
                    $"{tamam}/{toplam} · {string.Join(" · ", satırlar)}");
         }
 
-        /// <summary>Bir combo'yu gerçek tuşlarla dene (en çok 6 kez): A ile adım → 2 → B ile bitir.</summary>
+        /// <summary>Bir combo'yu gerçek tuşlarla dene (en çok 6 kez): adım → 2 → (adım → 3 →) bitir. Tetiklenen BU combo mu —
+        /// beklemesinden okunuyor: zincirde önce başka bir ikili de tetiklenebilir (ALACAK DEVRİ → İCRA TAKİBİ, Faz 42).</summary>
         IEnumerator ComboDene(ComboTür c, System.Action<bool, int> sonuç)
         {
             var tanım = Combo.Bu(c);
-            int A = tanım.Sıra()[0], B = tanım.Sıra()[1];
+            int[] sıra = tanım.Sıra();
             bool oldu = false; int deneme = 0;
             while (deneme < 6 && !oldu && !_bitti)
             {
                 deneme++;
                 yield return OdayaAtla(1);
-                Diz(A, B);
+                Diz(sıra);
                 Bas(Key.Digit1); yield return Bekle(0.3f);
                 var pc = Oyuncu;
                 var d = EnYakınBaşka(null);
                 if (pc == null || d == null) continue;
-                int c0 = pc.ComboSayısı;
-                if (A == Kadro.HACİZ)                                          // ölü bölge 3.2: oyuncu gibi UZAKTAKİNE at
-                {
-                    Enemy uzak = null; float iyi = float.MaxValue;
-                    foreach (var e in Enemy.All)
-                    {
-                        if (e == null || e.Dormant) continue;
-                        float y = Düz(e.transform.position - Ben).magnitude - e.Radius;
-                        if (y > 4f && y < 7f && Mathf.Abs(y - 5.5f) < iyi) { iyi = Mathf.Abs(y - 5.5f); uzak = e; }
-                    }
-                    if (uzak != null) d = uzak;
-                    else { yield return TekKareDash(Ben - d.transform.position); }   // yoksa açıl
-                }
+                while (pc.ComboBeklemesi(c) > 0f) yield return null;            // önceki denemenin beklemesi bitsin
+                if (Özeli(c) is int özel) { float t0 = Şimdi; while (pc.SpecialCooldownOf(özel) > 0f && Şimdi - t0 < 12f) yield return null; }   // sağ tık hazır olsun
+                float b0 = pc.ComboBeklemesi(c);
+                _adımNotu = "";
+                // HACİZ'li combo'da duruş — TAHVİL'li hariç: basılı tutarken düşmanlar 1 sn yaklaşıp ölü bölgeye giriyor, orada HACİZ anında uzaktaki aranır
+                if (System.Array.IndexOf(sıra, Kadro.HACİZ) >= 0 && System.Array.IndexOf(sıra, Kadro.TAHVİL) < 0) { yield return HacizDuruşu(d); var yakın = EnYakınBaşka(null); if (yakın != null) d = yakın; }
                 else yield return Git(d.transform.position, 1.1f + d.Radius, 3f);
-                int a0 = pc.AdımSayısı;
-                float mesafeA = d != null ? Düz(d.transform.position - Ben).magnitude - d.Radius : -1f;
-                yield return ComboAdımı(A, d, true, c);
-                int a1 = pc.AdımSayısı;
-                Bas(Key.Digit2); yield return null;
-                var bitir = c == ComboTür.Konsorsiyum || c == ComboTür.Öncelik ? d : EnYakınBaşka(null);   // bitiriş: bağlıya / en yakına
-                yield return ComboAdımı(B, bitir != null ? bitir : d, false, c);
+                for (int k = 0; k < sıra.Length && !_bitti; k++)
+                {
+                    if (k > 0) { Bas(k == 1 ? Key.Digit2 : Key.Digit3); yield return null; }
+                    var hedef = k == 0 || c == ComboTür.Konsorsiyum || c == ComboTür.Öncelik ? d : EnYakınBaşka(null);   // bitiriş: bağlıya / en yakına
+                    yield return ComboAdımı(sıra[k], hedef != null ? hedef : d, k, sıra.Length, c);
+                }
                 yield return Bekle(0.4f);
-                oldu = ComboOldu(pc, c0);
-                if (!oldu) Debug.Log($"[P33c] {tanım.Ad} deneme {deneme}: A adımı {(a1 > a0 ? "yazıldı" : "YAZILMADI")} (yüzey {mesafeA:0.0}) · " +
+                oldu = Oyuncu == pc && pc.ComboBeklemesi(c) > b0;
+                if (!oldu) Debug.Log($"[combo] {tanım.Ad} deneme {deneme}: adımlar{_adımNotu} · " +
                                      $"silah {(Oyuncu != null ? Oyuncu.Weapon.Name : "—")} · rehine {(Oyuncu != null && Oyuncu.Rehine != null ? (Oyuncu.Rehine == d ? "hedef" : "başka") : "yok")} · hedef {(d != null ? "canlı" : "öldü")}");
             }
             sonuç(oldu, deneme);
         }
 
-        /// <summary>Bir silahın combo adımı, oyuncunun yaptığı gibi: TAHVİL basılı tut-bırak, REHİN yakala-fırlat,
-        /// ÇEK değene kadar bekle, SPEKÜLASYON'da önce AÇIK POZİSYON (her vuruş arkadan); öbürleri tık.</summary>
-        IEnumerator ComboAdımı(int silah, Enemy d, bool ilk, ComboTür c)
+        string _adımNotu = "";                                                  // başarısız denemede adım adım ne oldu
+        /// <summary>Bağ isteyen combo: MÜŞTEREK adımı ZİNCİRLEME (sağ tık) — oyuncu gibi, tek basışta bağ.</summary>
+        static bool BağGerekli(ComboTür c) => c == ComboTür.MüşterekKusur || c == ComboTür.OrtaklığınTasfiyesi;
+        /// <summary>İlk adımı sağ tıkla yapılan combo'nun silahı (ZİNCİRLEME · AÇIK POZİSYON) — deneme beklemesi bitince başlasın.</summary>
+        static int? Özeli(ComboTür c) => BağGerekli(c) ? Kadro.MÜŞTEREK
+                                        : c == ComboTür.Spekülasyon || c == ComboTür.ArkadanDolanım ? Kadro.ARBİTRAJ : (int?)null;
+
+        /// <summary>
+        /// HACİZ'li combo'nun duruşu, oyuncu gibi: bir düşmanın dibi (bitiriş ona), öbürü HACİZ'in menzilinde (yüzey 4.2–6.8; dipteki
+        /// ölü bölgede kalır). En yakın dibe yürür, düşmanlar yürüdükçe yer yeniden hesaplanır. Böyle çift yoksa en yakının dibine.
+        /// ⚠️ Eski yol (önce en yakının dibi, uzak yoksa tek dash) ölü bölgede kalıyordu: dash 2.9'a açıyor, ölü bölge 3.2 (P42 ilk koşu).
+        /// </summary>
+        IEnumerator HacizDuruşu(Enemy d)
         {
+            Enemy N = null, F = null; float iyi = float.MaxValue;
+            foreach (var a in Enemy.All)
+            {
+                if (a == null || a.Dormant || a.Tutan != null) continue;
+                Vector3 p = Dibi(a);
+                foreach (var b in Enemy.All)
+                {
+                    if (b == null || b == a || b.Dormant) continue;
+                    float y = Düz(b.transform.position - p).magnitude - b.Radius;
+                    float yol = Düz(p - Ben).magnitude;
+                    if (y > 4.2f && y < 6.8f && yol < iyi) { iyi = yol; N = a; F = b; }
+                }
+            }
+            if (N == null) { yield return Git(d.transform.position, 1.1f + d.Radius, 3f); yield break; }
+            float t0 = Şimdi;
+            while (N != null && Enemy.All.Contains(N) && Şimdi - t0 < 3f)
+            {
+                Vector3 p = Dibi(N);
+                if (Düz(p - Ben).magnitude < 0.3f) break;
+                Yürü(KapıyıDolan(p));
+                yield return null;
+            }
+            Dur();
+        }
+
+        /// <summary>Düşmanın oyuncuya bakan tarafında, yüzeyinden 0.9 birim — combo'nun yakın vuruşları buradan değer.</summary>
+        Vector3 Dibi(Enemy e) => e.transform.position + Düz(Ben - e.transform.position).normalized * (e.Radius + 0.9f);
+
+        /// <summary>HACİZ'in hedefi, oyuncu gibi: yüzeyi 4–7 birim uzaktaki (ölü bölge 3.2), 5.5'e en yakın düşman (yoksa null).</summary>
+        Enemy Uzaktaki()
+        {
+            Enemy uzak = null; float iyi = float.MaxValue;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || e.Dormant) continue;
+                float y = Düz(e.transform.position - Ben).magnitude - e.Radius;
+                if (y > 4f && y < 7f && Mathf.Abs(y - 5.5f) < iyi) { iyi = Mathf.Abs(y - 5.5f); uzak = e; }
+            }
+            return uzak;
+        }
+
+        /// <summary>Bir silahın combo adımı (k. adım, n adımlı combo), oyuncunun yaptığı gibi: TAHVİL basılı tut-bırak (ilk adımda
+        /// 2. kademe, ortada 1. — 0.8 sn'lik pencereye sığsın), REHİN yakala-fırlat, ÇEK değene kadar bekle, HACİZ uzaktakine,
+        /// arkadan isteyen combo'da önce AÇIK POZİSYON, bağ isteyen MÜŞTEREK'te önce başkasını işaretle; öbürleri tık.</summary>
+        IEnumerator ComboAdımı(int silah, Enemy d, int k, int n, ComboTür c)
+        {
+            bool ilk = k == 0, adım = k < n - 1;
+            string not = Weapon.All[silah].Name;
+            if (silah == Kadro.HACİZ)
+            {
+                var uzak = Uzaktaki();
+                if (uzak != null) d = uzak;
+                else if (d != null) { not += "(uzak yok → dash)"; yield return TekKareDash(Ben - d.transform.position); }   // yoksa açıl
+            }
+            if (d != null) not += $" {Düz(d.transform.position - Ben).magnitude - d.Radius:0.0}";
+            float an = Şimdi;
             int adım0 = Oyuncu != null ? Oyuncu.AdımSayısı : 0;
             if (d != null) NişanAl(d.transform.position);
-            if (ilk && silah == Kadro.TAHVİL)                                    // 2. kademeye kadar tut, bırak
+            if (adım && silah == Kadro.TAHVİL)
             {
-                float t0 = Şimdi;
-                while (Şimdi - t0 < 1.1f) { if (d != null) NişanAl(d.transform.position); _sol = true; yield return null; }
+                float t0 = Şimdi, tut = ilk ? 1.1f : 0.55f;
+                while (Şimdi - t0 < tut) { if (d != null) NişanAl(d.transform.position); _sol = true; yield return null; }
             }
             else
             {
-                if (ilk && c == ComboTür.Spekülasyon) { _sağ = true; yield return Bekle(0.15f); }
+                if (ilk && (c == ComboTür.Spekülasyon || c == ComboTür.ArkadanDolanım)) { _sağ = true; yield return Bekle(0.15f); }   // AÇIK POZİSYON: her vuruş arkadan
                 if (ilk && silah == Kadro.REHİN)                                 // yakala (adım değil), sonra fırlat
                 {
                     _sol = true; yield return null;
@@ -2032,14 +2093,46 @@ namespace TekCan
                     while (Oyuncu != null && Oyuncu.Attacking && Şimdi - t1 < 1f) yield return null;
                     if (d != null) NişanAl(d.transform.position);
                 }
-                _sol = true;
+                if (ilk && silah == Kadro.MÜŞTEREK && BağGerekli(c)) _sağ = true;   // ZİNCİRLEME: en yakın dördü tek bağa
+                else _sol = true;
             }
-            if (!ilk) { yield return Bekle(0.25f); yield break; }
+            if (!adım) { yield return Bekle(0.25f); _adımNotu += $" · {not} bitiş"; yield break; }
             // Oyuncu gibi: adım zincire yazılır yazılmaz geç — beklersen HACİZ'in toparlanması 0.8 sn'lik pencereyi yer,
             // erken geçersen silah değişimi vuruşu keser.
             float t2 = Şimdi;
             yield return null;
             while (Oyuncu != null && Oyuncu.AdımSayısı == adım0 && Şimdi - t2 < 1.5f) yield return null;
+            _adımNotu += $" · {not} {(Oyuncu != null && Oyuncu.AdımSayısı != adım0 ? $"✓ {Şimdi - an:0.00} sn" : "✗ YAZILMADI")}";
+        }
+
+        // ── FAZ 42 PLAYTEST — Parti 1'in 20 direkt combo'su GERÇEK tuşlarla ("+" hâlleri verilmiş) ──
+        // İkililer 1. bölgede, üçlüler N ile 2. bölgede (üçlü kuralı). Kapı her combo'nun ETKİSİNİ ölçüyor; bu, oyuncunun tuş
+        // yolunun (adım → geçiş → adım → geçiş → bitiriş) gerçekten açık olduğunu.
+        IEnumerator P42()
+        {
+            _bekçiDk = 30f;
+            var satırlar = new List<string>();
+            int tamam = 0, toplam = 0;
+            for (int üçlü = 0; üçlü < 2 && !_bitti; üçlü++)
+            {
+                if (üçlü == 1) { Bas(Key.N); yield return Bekle(1.2f); }
+                for (int i = (int)ComboTür.Cebriİcra; i < Combo.Sayı && !_bitti; i++)
+                {
+                    var c = (ComboTür)i; var tanım = Combo.Bu(c);
+                    if ((tanım.Sıra().Length == 3) != (üçlü == 1)) continue;
+                    Combo.ArtıAl(c, 0);
+                    toplam++;
+                    var adlar = new List<string>(); foreach (int w in tanım.Sıra()) adlar.Add(Weapon.All[w].Name);
+                    Sahne($"P42 {tanım.Ad}", string.Join(" → ", adlar));
+                    bool oldu = false; int deneme = 0;
+                    yield return ComboDene(c, (o, d) => { oldu = o; deneme = d; });
+                    if (oldu) tamam++;
+                    satırlar.Add($"{(oldu ? "✅" : "❌")} {tanım.Ad} ({deneme})");
+                    Debug.Log($"[P42] {tanım.Ad}: {(oldu ? "oldu" : "OLMADI")} · {deneme} deneme");
+                }
+            }
+            Kaydet("42", "Parti 1'in 20 direkt combo'su gerçek tuşlarla: ikililer 1. bölgede, üçlüler 2. bölgede (\"+\" hâlleri verilmiş)", tamam == toplam,
+                   $"{tamam}/{toplam} · {string.Join(" · ", satırlar)}");
         }
 
         IEnumerator MiniTeşhis()

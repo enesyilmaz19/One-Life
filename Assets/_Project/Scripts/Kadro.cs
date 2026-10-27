@@ -217,7 +217,11 @@ namespace TekCan
                            AçığaSatış, VadeFarkı, OrtakGider,
                            // Faz 33c — combo açan yükseltmeyle (EPİK) açılır
                            Sürü, Takip, Öncelik, Teminat, Konkordato, Kefalet, CiroHattı, Mukabele, Temettü,
-                           Konsorsiyum, Spekülasyon, KiraGeliri }
+                           Konsorsiyum, Spekülasyon, KiraGeliri,
+                           // Faz 42 Parti 1 — direkt (açansız): 15 ikili + 5 üçlü
+                           Cebriİcra, TopluBorç, AlacakDevri, Tapuİptali, AmmeAlacağı, İflasMasası, İpotekliRehin, Ciro,
+                           KarşılıklıTahsil, VadeliHaciz, ZincirlemeCiro, MüşterekKusur, ArkadanDolanım, KiralıkArsa,
+                           VadesiGelmişPozisyon, İcraTakibi, SenetliRehin, TeminatlıTahvil, OrtaklığınTasfiyesi, KiraKontratı }
 
     /// <summary>
     /// Faz 30 — COMBO (Enes: "hızlı silah geçişleri ile combo saldırılar… bazı silahlarla 3'lü
@@ -309,6 +313,67 @@ namespace TekCan
             new Tanım { Ad = "KİRA GELİRİ", Sıra = () => new[] { Kadro.KİRA, Kadro.FAİZLİ }, Açan = SilahYükseltme.KiraGeliri,
                         NeYapar = "kule kur → FAİZLİ'yle vur: o kule durdukça FAİZLİ'nin savurma bedelini kule öder (savurma başı kulenin ömründen 1 sn)",
                         ArtıAd = "PEŞİN KİRA", ArtıNeYapar = "savurmalar kulenin ömründen de yemiyor" },
+            // Faz 42 Parti 1 — direkt; Enes'in onayı 2026-10-25 (docs/COMBOLAR.md). "+" hâlleri öneri
+            new Tanım { Ad = "CEBRİ İCRA", Sıra = () => new[] { Kadro.HACİZ, Kadro.KONİ },
+                        NeYapar = "HACİZ'le vur → KONİ: HACİZ'in vurduğu önüne çekilir (boss çekilmez), koni ×1.5",
+                        ArtıAd = "ZORLA GETİRME", ArtıNeYapar = "çekilen 1.5 sn yeni saldırı başlatamaz" },
+            new Tanım { Ad = "TOPLU BORÇ", Sıra = () => new[] { Kadro.KONİ, Kadro.FAİZLİ },
+                        NeYapar = "KONİ'yle vur → FAİZLİ: KONİ'nin vurduğu her düşman için +%15 (en çok +%75), savurma bedeli geri",
+                        ArtıAd = "KEFİLLİ BORÇ", ArtıNeYapar = "FAİZLİ vuruşu yanındaki düşmana da seker" },
+            new Tanım { Ad = "ALACAK DEVRİ", Sıra = () => new[] { Kadro.FAİZLİ, Kadro.HACİZ },
+                        NeYapar = "FAİZLİ'yle vur → HACİZ: FAİZLİ'nin son vuruşu kadar borç HACİZ'in vurduğuna iner",
+                        ArtıAd = "TEMLİK", ArtıNeYapar = "HACİZ'in vurduğu 2 sn sırtı dönük kalır" },
+            new Tanım { Ad = "TAPU İPTALİ", Sıra = () => new[] { Kadro.İPOTEK, Kadro.KONİ },
+                        NeYapar = "İPOTEK koy → KONİ'yle vur: işaret beklemeden patlar, koninin yayı +60°",
+                        ArtıAd = "İSTİMLAK", ArtıNeYapar = "KONİ'nin sağ tık (SÜPÜRME) beklemesi sıfırlanır" },
+            new Tanım { Ad = "AMME ALACAĞI", Sıra = () => new[] { Kadro.HACİZ, Kadro.İFLAS },
+                        NeYapar = "HACİZ'le vur → İFLAS: vurduğun patlar, vuruşun yarısı 3 birim içindekilere",
+                        ArtıAd = "GECİKME ZAMMI", ArtıNeYapar = "o vuruşun hasadı ×2" },
+            new Tanım { Ad = "İFLAS MASASI", Sıra = () => new[] { Kadro.İFLAS, Kadro.KONİ },
+                        NeYapar = "İFLAS'la vur → KONİ: İFLAS vuruşunun yarısı yaydaki herkese eklenir",
+                        ArtıAd = "MASA PAYI", ArtıNeYapar = "o vuruşun hasadı ×2" },
+            new Tanım { Ad = "İPOTEKLİ REHİN", Sıra = () => new[] { Kadro.REHİN, Kadro.İPOTEK },
+                        NeYapar = "REHİN'i fırlat → İPOTEK: işaret rehinenin düştüğü yere, neredeyse beklemeden (gecikme ×0.1)",
+                        ArtıAd = "İKİNCİ DERECE", ArtıNeYapar = "İPOTEK'in sağ tık (İPOTEK YAĞMURU) beklemesi sıfırlanır" },
+            new Tanım { Ad = "CİRO", Sıra = () => new[] { Kadro.ÇEK, Kadro.KONİ },
+                        NeYapar = "ÇEK isabet etti → KONİ: çekin son çarptığı yerde de yay patlar (koninin %80'i, 2.5 birim)",
+                        ArtıAd = "TAHSİL CİROSU", ArtıNeYapar = "patlamanın içindekiler 1 sn yeni saldırı başlatamaz" },
+            new Tanım { Ad = "KARŞILIKLI TAHSİL", Sıra = () => new[] { Kadro.KARŞILIK, Kadro.KONİ },
+                        NeYapar = "KARŞILIK'la vur → KONİ: KARŞILIK vuruşunun yarısı (birikim dahil) yaydaki herkese eklenir",
+                        ArtıAd = "MAHSUP", ArtıNeYapar = "KARŞILIK'ın sağ tık (İTİRAZ) beklemesi sıfırlanır" },
+            new Tanım { Ad = "VADELİ HACİZ", Sıra = () => new[] { Kadro.TAHVİL, Kadro.HACİZ },
+                        NeYapar = "TAHVİL'i boz → HACİZ: menzil ×1.5, TAHVİL'in kademesi başına +%20",
+                        ArtıAd = "HACİZ ŞERHİ", ArtıNeYapar = "vurulan 2 sn yarı hızda" },
+            new Tanım { Ad = "ZİNCİRLEME CİRO", Sıra = () => new[] { Kadro.ÇEK, Kadro.MÜŞTEREK },
+                        NeYapar = "ÇEK isabet etti → MÜŞTEREK: çekin son çarptığını tek vuruşta MÜŞTEREK'in vurduğuna bağlar (aynıysa yanındakine)",
+                        ArtıAd = "CİRO SİLSİLESİ", ArtıNeYapar = "bağa yanındaki üçüncü düşman da girer" },
+            new Tanım { Ad = "MÜŞTEREK KUSUR", Sıra = () => new[] { Kadro.MÜŞTEREK, Kadro.KONİ },
+                        NeYapar = "MÜŞTEREK'le bağla → KONİ: bağ kopar, bağlılara ve aralarındaki çizgide duranlara koni vuruşu bir kez daha iner",
+                        ArtıAd = "RÜCU", ArtıNeYapar = "MÜŞTEREK'in sağ tık (ZİNCİRLEME) beklemesi sıfırlanır" },
+            new Tanım { Ad = "ARKADAN DOLANIM", Sıra = () => new[] { Kadro.ARBİTRAJ, Kadro.KONİ },
+                        NeYapar = "ARBİTRAJ'la ARKADAN vur → KONİ: menzil ×1.3, vuruş ×1.3",
+                        ArtıAd = "KÖR NOKTA", ArtıNeYapar = "koninin vurdukları 2 sn sırtı dönük kalır" },
+            new Tanım { Ad = "KİRALIK ARSA", Sıra = () => new[] { Kadro.KİRA, Kadro.İPOTEK },
+                        NeYapar = "kule kur → İPOTEK: işaret kule ateşiyle hızlı patlar (gecikme ×0.3), ×1.5",
+                        ArtıAd = "MUAFİYET", ArtıNeYapar = "kule 4 sn kira almaz" },
+            new Tanım { Ad = "VADESİ GELMİŞ POZİSYON", Sıra = () => new[] { Kadro.TAHVİL, Kadro.ARBİTRAJ },
+                        NeYapar = "TAHVİL'i 2. kademede ya da üstünde boz → ARBİTRAJ: vuruş arkadan sayılır, sonra 1.5 sn görünmezsin",
+                        ArtıAd = "ZARAR KES", ArtıNeYapar = "ARBİTRAJ'ın sağ tık (AÇIK POZİSYON) beklemesi sıfırlanır" },
+            new Tanım { Ad = "İCRA TAKİBİ", Sıra = () => new[] { Kadro.FAİZLİ, Kadro.HACİZ, Kadro.İFLAS }, MinBölge = 1,
+                        NeYapar = "FAİZLİ → HACİZ → İFLAS: İFLAS saatin dörtte birindeymiş gibi sert, iki savurma bedeli geri",
+                        ArtıAd = "TAZMİNAT", ArtıNeYapar = "İFLAS'ın sağ tık (TASFİYE) beklemesi sıfırlanır" },
+            new Tanım { Ad = "SENETLİ REHİN", Sıra = () => new[] { Kadro.REHİN, Kadro.ÇEK, Kadro.KONİ }, MinBölge = 1,
+                        NeYapar = "REHİN'i fırlat → ÇEK → KONİ: çekin son çarptığı yerin 3 birim çevresindekiler önüne çekilir, koni ×1.5",
+                        ArtıAd = "KAMBİYO", ArtıNeYapar = "koni 360°" },
+            new Tanım { Ad = "TEMİNATLI TAHVİL", Sıra = () => new[] { Kadro.KARŞILIK, Kadro.TAHVİL, Kadro.FAİZLİ }, MinBölge = 1,
+                        NeYapar = "KARŞILIK → TAHVİL → FAİZLİ: VADE FARKI'ndan ×1.25 sert, KARŞILIK'ın son birikimi de üstüne",
+                        ArtıAd = "TEMİNAT İADESİ", ArtıNeYapar = "TAHVİL'in sağ tık (VADESİ GELMİŞ) beklemesi sıfırlanır" },
+            new Tanım { Ad = "ORTAKLIĞIN TASFİYESİ", Sıra = () => new[] { Kadro.MÜŞTEREK, Kadro.İPOTEK, Kadro.KONİ }, MinBölge = 1,
+                        NeYapar = "MÜŞTEREK'le bağla → İPOTEK → KONİ: işaret hemen patlar (×1.5), bağ kopar, bağlılara ve aradakilere koni vuruşu bir kez daha iner",
+                        ArtıAd = "KAYYUM", ArtıNeYapar = "bağlılar 1.5 sn yeni saldırı başlatamaz" },
+            new Tanım { Ad = "KİRA KONTRATI", Sıra = () => new[] { Kadro.KİRA, Kadro.ARBİTRAJ, Kadro.HACİZ }, MinBölge = 1,
+                        NeYapar = "kule kur → ARBİTRAJ → HACİZ: ×1.5, kule HACİZ'in vurduğuna kilitlenir (menzil sınırı yok)",
+                        ArtıAd = "İHTARNAME", ArtıNeYapar = "kilitlenen 2 sn yeni saldırı başlatamaz" },
         };
 
         public static int Sayı => Tümü.Length;
@@ -320,6 +385,20 @@ namespace TekCan
             return null;
         }
         public static Tanım Bu(ComboTür c) => Tümü[(int)c];
+
+        /// <summary>Faz 42: bu ikili kullanılabilir bir üçlünün ilk iki adımı mı — öyleyse combo bitince zincir silinmez,
+        /// üçlüye devam edilir (FAİZLİ → HACİZ = ALACAK DEVRİ, → İFLAS = İCRA TAKİBİ).</summary>
+        public static bool ÜçlüyeDevam(ComboTür c, int bölge)
+        {
+            var s = Bu(c).Sıra();
+            if (s.Length != 2) return false;
+            for (int i = 0; i < Sayı; i++)
+            {
+                var u = Bu((ComboTür)i).Sıra();
+                if (u.Length == 3 && u[0] == s[0] && u[1] == s[1] && Kullanılır((ComboTür)i, bölge)) return true;
+            }
+            return false;
+        }
 
         /// <summary>Silahları açık ve bölgesi gelmiş mi (3'lü combo'lar 2. bölgeden — Enes).</summary>
         public static bool Kullanılır(ComboTür c, int bölge)
@@ -364,29 +443,30 @@ namespace TekCan
         }
 
 
-        /// <summary>Bu silah açılınca kullanılabilir olan combo'ların tanıtımı (bölge şartı olanlar bölgesinde).</summary>
+        /// <summary>Bu silah açılınca kullanılabilir olan combo'ların ADLARI (bölge şartı olanlar bölgesinde). Faz 42: silah başına
+        /// 4–7 combo oldu, açıklamalı liste ekrandaki tek satıra sığmıyordu — açıklama combo yapılınca ve combo sunağında.</summary>
         public static string YeniAçılanlar(int silah)
         {
             int bölge = RoomManager.AktifBölge;
-            string m = "";
+            var adlar = new List<string>();
             for (int i = 0; i < Sayı; i++)
             {
                 var c = (ComboTür)i;
-                if (System.Array.IndexOf(Bu(c).Sıra(), silah) >= 0 && Kullanılır(c, bölge))
-                    m += $"   ·   COMBO AÇILDI: {Bu(c).Ad} — {Bu(c).NeYapar}";
+                if (System.Array.IndexOf(Bu(c).Sıra(), silah) >= 0 && Kullanılır(c, bölge)) adlar.Add(Bu(c).Ad);
             }
-            return m;
+            return adlar.Count > 0 ? "   ·   COMBO AÇILDI: " + string.Join(" · ", adlar) : "";
         }
 
         /// <summary>Bölgeye girerken: bölge şartı burada dolan combo'ların tanıtımı (3'lü combo 2. bölgede).</summary>
         public static void BölgeTanıtımı(int bölge)
         {
+            var adlar = new List<string>();                          // Faz 42: altı üçlü — tek tek duyurulunca yalnız sonuncusu görünüyordu
             for (int i = 0; i < Sayı; i++)
             {
                 var c = (ComboTür)i;
-                if (Bu(c).MinBölge == bölge && bölge > 0 && Kullanılır(c, bölge))
-                    Duyur($"3'LÜ COMBO AÇILDI: {Bu(c).Ad} — {Bu(c).NeYapar}", 6f);
+                if (Bu(c).MinBölge == bölge && bölge > 0 && Kullanılır(c, bölge)) adlar.Add(Bu(c).Ad);
             }
+            if (adlar.Count > 0) Duyur("3'LÜ COMBO AÇILDI: " + string.Join(" · ", adlar), 6f);
         }
 
         public static string SonCombo { get; private set; }

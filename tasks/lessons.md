@@ -713,3 +713,15 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
 - **Botun alışveriş kuralı ölçünün parçası (Faz 41):** bot sunakta 40 sn yedekle her şeyi alıyordu; sıkı ekonomide final boss'a 266 sn ile
   girdi. Her sunakta tam tavan yedek ise botu güçsüz bıraktı (koşu 5.9 → 7.4 sa, 1. bölgede ölüm). "Boss öncesi tavan, öbürleri yarım"
   6.6 sa ve takviyesiz. **Kural:** tempoyu bot süresiyle ölçüyorsan botun harcama kuralını da yaz ve gerekçelendir — süre ona bağlı.
+- **Yeni combo eski testin sırasını combo'ya çevirir (Faz 42):** 20 combo eklenince 5 eski kontrol düştü — KONİ → FAİZLİ, İPOTEK → KONİ,
+  MÜŞTEREK → KONİ artık combo; eski testler bu sıraları düz vuruş sanıyordu (Faz 29 aynı oyuncuyu senaryolar arasında taşıyordu,
+  zincir hiç kopmuyordu). Düzeltme etkiyi değil testi: senaryo başında / iki vuruş arasında pencereyi geçir (`TickCombo(1f)`).
+  **Kural:** combo eklerken önce "hangi eski senaryo bu sırayı vuruyor" diye düşün; kapı kırmızıysa önce yeni combo'nun tetiklenip
+  tetiklenmediğine bak.
+- **Üçlü, ikiliyi başında taşıyorsa hiç çalışmaz (Faz 42):** FAİZLİ → HACİZ → İFLAS'ın ilk iki adımı ALACAK DEVRİ; combo bitince zincir
+  siliniyordu. Onaylı listede fark edilmedi, kodu okurken çıktı. **Kural:** combo listesi yazarken her üçlünün başını (A → B) ve sonunu
+  (B → C) ikililerle karşılaştır; baş çakışırsa zincir sürmeli, son çakışırsa üçlü önce gelmeli. Kapı bu listeyi tutuyor.
+- **Botun "adım yazıldı"sı yanlış adımı sayıyordu (Faz 42):** sayaç denemenin sonunda okunuyordu, bitirişin adımı da sayılıyordu — HACİZ
+  ıskalıyor, log "yazıldı" diyordu. Adım adım döküm (`✓ 0.07 sn` / `✗ YAZILMADI`, yüzey mesafesi) sorunu tek koşuda gösterdi: dash
+  2.9'a açıyor, ölü bölge 3.2. **Kural:** botun teşhisi her adımı kendi anında ölçsün; "sonunda bir şey arttı mı" yetmez.
+

@@ -17,7 +17,6 @@
 | 20 | ⏱️ *(önerilir, ~10 dk)* **İnsan çarpanı** | Enes (2026-10-23): aksiyon İNSAN oynayışıyla ≥ 7 saat, kalanı ara sahne + anlatım (hikâye/olay odası yok). Botun ölçtüğünü insana çeviren çarpanı bilmiyoruz (×1.2 → bot 5.8 sa gerek, ×1.5 → bugünkü yeter). **F6**, 1. ara bölgeyi (7 oda + mini + sunak, bot ~9 dk — Faz 40'tan sonra) bir kez normal oyna, süreyi söyle | Mesajla yaz |
 | 21 | ⚖️ **Saat ekonomisi** | Bot orta oyunda 4000–6600 sn ile geziyor (tavan 456–830), odalar onu hiç zorlamıyor; sıkılırsa geç boss'lar yine öldürür (aşağıda FAZ 39). Şimdi mi, hikâyeden sonra mı? | Mesajla yaz |
 | 22 | 📖 **Hikâye — ortak** | `docs/HIKAYE.md`: senin üç notun yazılı, 6 açık soru (adlar · borcu kim aldı · ekipmanı kim geliştirdi · başlangıç zamanı neden o kadar · son · perdelerin olay sırası). Hangisinden başlayalım? | Mesajla ya da doğrudan dosyaya yaz |
-| 23 | 🔗 **Combo Parti 1 — onay** | `docs/COMBOLAR.md` "Parti 1": 15 direkt ikili + 5 direkt üçlü (ad · sıra · ne yapar). Beğenmediğin, adını değiştirmek istediğin ya da kendi fikrinle değiştirmek istediğin combo'yu yaz; onaylanan parti koda geçer | Mesajla ya da dosyaya yaz |
 
 ---
 
@@ -268,7 +267,7 @@ Enes: *"saatin cömertliğini düzeltelim oyun zorlamalı oyuncuları"* · *"bit
 
 ---
 
-## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **Parti 1 listesi Enes'in onayında** (2026-10-25)
+## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **Parti 1 commit'li (direkt tamam: 42 combo) · Parti 2 onaylandı, kodlanıyor** (2026-10-27)
 
 Enes: *"12 silah için 28 combo bayağı az · 96 2'li combo ve 24 tane 3'lü combo olmalı · bazıları açılabilir bazıları direkt silahlarla
 yapılabilen cinsten olmalı, kalanı da satın alınabilir"* · *"combolar elle olmalı ama fikir edinmek için diğer oyundaki comboları
@@ -281,10 +280,27 @@ araştırabilirsin, oradan temel bazılarını alıp oyuna geçirir, oradan fiki
 
 **Adımlar**
 - [x] A. Araştırma → `docs/COMBO_ARASTIRMA.md`: 12 kalıp (Hades, DMC/Bayonetta, Nioh, Dead Cells, DOS2, Warframe, Vampire Survivors) + silahların combo dili (ne bırakır / ne tüketir)
-- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo partiler hâlinde, **Enes onaylar** — Parti 1 yazıldı (15 direkt ikili + 5 direkt üçlü), onay bekliyor · Parti 2 açılır · Parti 3–4 satın alınır
+- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo partiler hâlinde, **Enes onaylar** — Parti 1 ✅ kodlandı · Parti 2 ✅ onaylandı (2026-10-27: mevcut EPİK ikilileri, EFSANEVİ üçlüleri açar; "+" önerim) · Parti 3–4 satın alınır
 - [ ] C. Satın alma: combo sunağında saniyeyle (fiyat kuralı Faz 27/33'le aynı)
-- [ ] D. Kod partiler hâlinde (her partiye kapı + bir kez boz) · bot gerçek tuşlarla oynar (P33c gibi)
-- [ ] E. Tam koşu: combo'lar süreyi/dengeyi bozmadı mı
+- [ ] D. Kod partiler hâlinde (her partiye kapı + bir kez boz) · bot gerçek tuşlarla oynar (P33c gibi) — **Parti 1 ✅:**
+  - 20 combo kodda: koni bitirişleri `Strike`'ta (vuruştan önce / sonra iki `switch`), İPOTEKLİ REHİN ve KİRALIK ARSA `PlaceLien`'de.
+    Şartlı bitiriş (`Şart`): ARKADAN DOLANIM arkadan vuruş, VADESİ GELMİŞ POZİSYON 2. kademe, MÜŞTEREK KUSUR / Ü4 bağ, ZİNCİRLEME CİRO
+    canlı hedef, Ü5 kule. Üçlüler `Bitirenler`'in başında (son iki adımı ikiliyle çakışabiliyor).
+  - **Yeni kural — zincir devamı:** ikili bir üçlünün başıysa combo bitince zincir silinmiyor (`Combo.ÜçlüyeDevam`). Onaylı Ü1 İCRA TAKİBİ
+    (FAİZLİ → HACİZ → İFLAS) bu olmadan hiç çalışmazdı: başı ALACAK DEVRİ.
+  - Kapı `Faz42SelfCheck` **24 kontrol** — her combo üç kurguda (pencere geçmiş · combo · combo + "+"), etkisi sayıyla; iki şart, 1. bölgede
+    üçlü yok, yapı. Bozma üç turda: **M1 20/20 · M2 6/6 · M3 2/2 kırmızı**, hepsi beklenen kontrol. Eski kapılardan 5 kontrol düştü — yeni
+    combo'lar eski testlerin sırasını combo'ya çevirdi (KONİ → FAİZLİ, İPOTEK → KONİ, MÜŞTEREK → KONİ); testlerde pencere geçiriliyor.
+  - Bot `…OtopilotMenu.Playtest42`: **20/20** gerçek tuşlarla (19'u ilk denemede, MÜŞTEREK KUSUR ikincide) · P33c yeni `ComboDene` ile
+    **12/12** ilk denemede. İlk koşu 15/20'ydi — combo değil bot: HACİZ'i ölü bölgeye atıyordu (dash 2.9'a açıyor, ölü bölge 3.2).
+  - Silah açılınca ekranda combo'lar yalnız adıyla (açıklamalı liste tek satıra sığmıyordu); 2. bölgede üçlüler tek duyuruda
+    (tam koşuda görüldü: "COMBO AÇILDI: CEBRİ İCRA · ALACAK DEVRİ", "3'LÜ COMBO AÇILDI: HACİZ KARARI · İCRA TAKİBİ").
+  - Tüm kapılar ✅ (2026-10-26).
+- [x] E. Tam koşu (Parti 1 sonrası, 2026-10-26): **KAZANILDI · 352 dk (5.9 sa) · saat hiç bitmedi** · oda ort. 76 sn · boss 4.0 · 4.9 · 3.9 ·
+  5.1 · 8.6 dk · 107 sunak alımı. Önceki 395 dk'dan kısa ama **sebep combo değil: bot tam koşuda hiç combo yapmıyor** (bu koşuda da
+  öncekilerde de 0 — tek silahla dövüşüyor). Fark koşudan koşuya: yükseltme teklifleri rastgele (B1–B3 aynı, B4–B5 15–20 dk kısa).
+  ⚠️ Yani tam koşu combo'ların süreye etkisini ÖLÇMÜYOR. İnsan combo yapınca oyun kısalır — tempo ayarı bütün partilerden sonra,
+  insan çarpanıyla (#20) birlikte.
 
 **Sıra (Enes 2026-10-25):** Faz 41 saat ekonomisi → Faz 42 combo'lar → hikâye. **Kısa tekrar modu: hikâyeden sonra.**
 

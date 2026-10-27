@@ -233,7 +233,7 @@ namespace TekCan.EditorTools
             foreach (var x in İşaretler()) Object.DestroyImmediate(x.gameObject);
             GroundMark.ResetLiens();
             var c = Düşman(İleri(koni * 0.5f));
-            _pc.TickCombo(0.5f);
+            _pc.TickCombo(1f);                          // pencere geçsin: İPOTEK → KONİ artık TAPU İPTALİ (Faz 42)
             Silahla(Kadro.KONİ); _pc.TickCombo(0.2f); Silahla(Kadro.İPOTEK);
             failed += Check(ref total, $"⚠️ aynı combo {_t.comboCooldown:0} sn içinde TEKRAR ETMİYOR (combo sayısı {sayım} → {_pc.ComboSayısı})",
                             _pc.ComboSayısı == sayım, _pc.ComboSayısı - sayım);

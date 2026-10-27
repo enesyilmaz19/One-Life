@@ -385,6 +385,13 @@ tekrar etmiyor. İlk 10 combo baştan açık ve boss sonrası alınan bir "+" h�
 KONSORSİYUM, SPEKÜLASYON, KİRA GELİRİ) EPİK bir "açan" yükseltmeyle açılıyor ve daha sert; onların da "+"
 hâli var (AĞIL, PUSU, İHTİYATİ HACİZ …) — "+" yeni bir etki ekliyor, sayı büyütmüyor.
 
+**Faz 42 (2026-10-25) — 120 combo hedefi** (Enes: *"96 2'li ve 24 3'lü… bazıları açılabilir, bazıları direkt, kalanı satın
+alınabilir"*; dağılım ¼ direkt · ¼ açılır · ½ satın alınır). Liste ve partiler: `docs/COMBOLAR.md`. Parti 1 (20 direkt: 15 ikili +
+5 üçlü) kodda → **direkt combo'lar tamam (24 ikili + 6 üçlü), toplam 42.** Yeni kural: ikili bir üçlünün ilk iki adımıysa combo
+bitince zincir silinmez, üçlüye devam edilir (FAİZLİ → HACİZ = ALACAK DEVRİ, → İFLAS = İCRA TAKİBİ). Bir sıra hem üçlünün sonu hem
+ikili olabilir — üçlü önce gelir. Bazı bitirişlerin şartı var (ARKADAN DOLANIM: ARBİTRAJ arkadan vurmuş olmalı; VADESİ GELMİŞ
+POZİSYON: TAHVİL 2. kademe; MÜŞTEREK KUSUR: bağ olmalı) — şart yoksa vuruş düz adım sayılır.
+
 ### YÜKSELTMELER — ENDERLİK (Faz 33, 2026-10-18)
 
 Enes: *"4 tip enderlik… mini bosslardan bir tane yaygın veya nadir, bosslardan 1 yaygın veya nadir 1 de epik

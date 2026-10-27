@@ -29,6 +29,8 @@ namespace TekCan
         float _saattenÖdenen;
         /// <summary>TEMİNAT combo'su (Faz 33c): bu kadar sn kira yok.</summary>
         public float KirasızKalan { get; set; }
+        /// <summary>KİRA KONTRATI combo'su (Faz 42): kule bu düşmana kilitli — o yaşadıkça menzil sınırı yok.</summary>
+        public Enemy Kilit { get; set; }
         bool _uzatıldı;
         bool OrtakÖdüyor => _ortak != null && !_ortak.Bitti;
 
@@ -110,8 +112,9 @@ namespace TekCan
 
         void Ateş()
         {
-            Enemy hedef = null; float en = float.MaxValue;
-            foreach (var e in Enemy.All)
+            Enemy hedef = Kilit != null && Enemy.All.Contains(Kilit) && !Kilit.Dormant ? Kilit : null;   // KİRA KONTRATI
+            float en = float.MaxValue;
+            if (hedef == null) foreach (var e in Enemy.All)
             {
                 if (e == null || e.Dormant || e.Tutan != null) continue;
                 Vector3 d = e.transform.position - transform.position; d.y = 0f;     // tuzak 2

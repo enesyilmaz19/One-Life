@@ -148,7 +148,7 @@ namespace TekCan
                 e.TakeDamage(_hasar * (Dönüyor ? _dönüşÇarpanı : 1f), _hasat);
                 İsabet++;
                 if (Dönüyor && Tahsilat > 0f && Clock.Instance != null) Clock.Instance.Add(Tahsilat * Clock.Instance.HasatDoyması);
-                _sahibi.Çekİsabeti(yer);
+                _sahibi.Çekİsabeti(yer, e);
             }
         }
 
@@ -180,7 +180,7 @@ namespace TekCan
                 Vector3 yer = e.transform.position;
                 e.TakeDamage(_hasar * _dönüşÇarpanı * 2f, _hasat);
                 İsabet++;
-                _sahibi.Çekİsabeti(yer);
+                _sahibi.Çekİsabeti(yer, e);
             }
             Arc.Spawn(o, Quaternion.identity, 2.5f, 360f, new Color(0.6f, 0.85f, 0.95f, 0.7f), 0.3f, scaleFrom: 0.4f, scaleTo: 1f);
         }
