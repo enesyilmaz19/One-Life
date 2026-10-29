@@ -355,6 +355,17 @@ namespace TekCan
             }
         }
 
+        /// <summary>COMBO sunağı (Faz 42 Parti 3) — sunak odasının sağında, şans sunağının iki yanında: satın alınır 2 teklif, 1 alım.</summary>
+        public static void SpawnComboBuyAltars(Tuning t, Transform player, Transform parent)
+        {
+            for (int i = 0; i < Combo.SatınTeklifSayısı; i++)
+            {
+                float a = (i == 0 ? 25f : -25f) * Mathf.Deg2Rad;
+                float r = t.arenaRadius * 0.55f;
+                SpawnAltar(t, new Vector3(Mathf.Cos(a) * r, ArenaCenter.y, Mathf.Sin(a) * r), player, Altar.Kind.ComboBuy, parent, i);
+            }
+        }
+
         /// <summary>Combo'nun "+" hâli (Faz 30) — silah sunağının önünde.</summary>
         /// ⚠️ 0.45R'deydi: Faz 33'ün dış halkasının 270°'deki sunağı (0.42R) üstüne düştü — iki sunak 0.4 birim arayla.
         public static void SpawnComboAltar(Tuning t, Transform player, Transform parent, ComboTür c)

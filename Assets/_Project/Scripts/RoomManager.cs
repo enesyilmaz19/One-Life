@@ -648,6 +648,8 @@ namespace TekCan
             Bootstrap.SpawnWeaponAltars(_t, _player, _roomRoot.transform, SunakGrubu.Mini);
             if (SilahSunağı.ŞansVar(_t, SunakAnahtarı(SunakGrubu.Şans)))
                 Bootstrap.SpawnWeaponAltars(_t, _player, _roomRoot.transform, SunakGrubu.Şans);
+            // Faz 42 Parti 3 (Enes 2026-10-28): satın alınır combo'lar — 2 teklif, 1 alım, saniyeyle.
+            Bootstrap.SpawnComboBuyAltars(_t, _player, _roomRoot.transform);
         }
 
         static bool AnyEnemyAlive()

@@ -18,6 +18,8 @@ namespace TekCan
 
         public readonly List<Enemy> Üyeler = new List<Enemy>();
         public float Pay { get; private set; }
+        /// <summary>TAHVİL ORTAKLIĞI · BİLEŞİK FAİZ (Faz 42): yayılma payı × bu.</summary>
+        public float PayÇarpanı { get; set; } = 1f;
         public float HasatPayı { get; private set; }
         public float Kalan { get; private set; }
         public bool Bitti { get; private set; }
@@ -59,7 +61,7 @@ namespace TekCan
             if (_dağıtıyor || Bitti || Kapalı) return;
             _dağıtıyor = true;
             foreach (var e in Üyeler.ToArray())                       // vuruş öldürüp listeden çıkarabilir
-                if (e != null && e != kaynak && Enemy.All.Contains(e)) { e.TakeDamage(hasar * (TamPay ? 1f : Pay), hasat * HasatPayı); Yayılma++; }
+                if (e != null && e != kaynak && Enemy.All.Contains(e)) { e.TakeDamage(hasar * (TamPay ? 1f : Pay * PayÇarpanı), hasat * HasatPayı); Yayılma++; }
             _dağıtıyor = false;
         }
 

@@ -297,6 +297,7 @@ namespace TekCan
                                                  : e == Enderlik.Epik ? rarityPriceEpic : rarityPriceLegendary;
         [Tooltip("Sunak odasında ŞANS sunağı çıkma ihtimali (her enderlikten satar)")] public float chanceAltarProbability = 0.3f;
         [Tooltip("ŞANS sunağının fiyat çarpanı")] public float chanceAltarPriceMul = 1.5f;
+        [Tooltip("COMBO sunağının fiyat çarpanı (Faz 42 — Enes: \"biraz pahalı, çok az\")")] public float comboAltarPriceMul = 0.85f;
 
         /// <summary>Bir ara bölgenin dövüş odası sayısı (en az 1).</summary>
         public int DövüşOdası => Mathf.Max(1, roomsPerSubRegion);

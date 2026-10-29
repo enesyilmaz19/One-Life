@@ -267,7 +267,7 @@ Enes: *"saatin cömertliğini düzeltelim oyun zorlamalı oyuncuları"* · *"bit
 
 ---
 
-## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **Parti 1–2 commit'li (60 combo) · Parti 3 + satın alma onaylandı, kodlanıyor** (2026-10-28)
+## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **Parti 1–3 commit'li (90 combo) · Parti 4 KODLANIYOR** (2026-10-29)
 
 Enes: *"12 silah için 28 combo bayağı az · 96 2'li combo ve 24 tane 3'lü combo olmalı · bazıları açılabilir bazıları direkt silahlarla
 yapılabilen cinsten olmalı, kalanı da satın alınabilir"* · *"combolar elle olmalı ama fikir edinmek için diğer oyundaki comboları
@@ -280,8 +280,8 @@ araştırabilirsin, oradan temel bazılarını alıp oyuna geçirir, oradan fiki
 
 **Adımlar**
 - [x] A. Araştırma → `docs/COMBO_ARASTIRMA.md`: 12 kalıp (Hades, DMC/Bayonetta, Nioh, Dead Cells, DOS2, Warframe, Vampire Survivors) + silahların combo dili (ne bırakır / ne tüketir)
-- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo partiler hâlinde, **Enes onaylar** — Parti 1 ✅ · Parti 2 ✅ kodlandı (mevcut EPİK ikilileri, EFSANEVİ üçlüleri açar) · Parti 3 ✅ onaylandı (2026-10-28: "onaylıyorum herşeyi") · Parti 4 kalanı
-- [ ] C. Satın alma: combo sunağında saniyeyle (fiyat kuralı Faz 27/33'le aynı) — **karar (a)** (Enes 2026-10-28): ara bölge sunak odasında COMBO sunağı, 2 teklif / 1 alım, fiyat yükseltme kuralıyla
+- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo partiler hâlinde, **Enes onaylar** — Parti 1 ✅ · Parti 2 ✅ kodlandı (mevcut EPİK ikilileri, EFSANEVİ üçlüleri açar) · Parti 3 ✅ kodlandı · Parti 4 ✅ onaylı (Enes 2026-10-29: *"sonraki partiye geç"*)
+- [x] C. Satın alma: combo sunağında saniyeyle (fiyat kuralı Faz 27/33'le aynı) — **karar (a)** (Enes 2026-10-28): ara bölge sunak odasında COMBO sunağı, 2 teklif / 1 alım, fiyat yükseltme kuralıyla
 - [ ] D. Kod partiler hâlinde (her partiye kapı + bir kez boz) · bot gerçek tuşlarla oynar (P33c gibi) — **Parti 1 ✅:**
   - 20 combo kodda: koni bitirişleri `Strike`'ta (vuruştan önce / sonra iki `switch`), İPOTEKLİ REHİN ve KİRALIK ARSA `PlaceLien`'de.
     Şartlı bitiriş (`Şart`): ARKADAN DOLANIM arkadan vuruş, VADESİ GELMİŞ POZİSYON 2. kademe, MÜŞTEREK KUSUR / Ü4 bağ, ZİNCİRLEME CİRO
@@ -303,6 +303,18 @@ araştırabilirsin, oradan temel bazılarını alıp oyuna geçirir, oradan fiki
   kırmızı. Bot `Playtest42` **38/38** (MÜŞTEREK KUSUR ikinci denemede), `Playtest33c` 12/12. Tüm kapılar ✅. Bot düzeltmeleri: P33c yalnız
   kendi 12'si (açanlı Parti 2'yi de deniyordu), MÜŞTEREK REHİN'de rehineyi yakındakine fırlatıyor. Tam koşu koşulmadı — bot combo yapmıyor.
   Sunakta EFSANEVİ 1. bölgede alınırsa duyuru "(2. bölgeden)" diyor; P33 3/3 dış halkadan üçlü açan gelirse tuşları P42'ye bırakıyor.
+- **Parti 3 ✅ (2026-10-28):** 30 satın alınır combo + COMBO sunağı (ara bölge sunak odası, şans sunağının iki yanı, 2 teklif / 1 alım,
+  fiyat yükseltme kuralıyla — ikili nadir, üçlü epik). Kayıt `comboBought` · `comboOfferBought` (koşu boyu, hemen yazılıyor). Yeni kancalar:
+  saatin bükülmesi (`Clock.AkışıBük` — AkışHızı'nın içinde, TAHVİL'in iki katı da bükülüyor), kulenin öncelikli / kiracısı / ömrü
+  (`KiraKulesi.Öncelikli · Kiracı · Ömür`), bağın yayılma çarpanı (`MusterekBag.PayÇarpanı`), çekin iadesi (`CekUcusu.İade`).
+  TAHVİL'in basılı tutma başında (`TahvilBaşlangıcı`), kule kurarken (`KuleBitirenleri`), REHİN'in uzaktan yakalaması (`UzakYakalayanlar`) tek yerde.
+  🐞 **Hata:** çok hedefli vuruş (KONİ · KARŞILIK · TAHVİL) "son vurulan"ı yazmıyordu → adımları hedefsizdi, KARŞI HAMLE hiç tetiklenmiyordu; düzeldi.
+  Kapı `Faz42SelfCheck` **76 kontrol**; bozma Q1 30/30, Q2 7/7 kırmızı (BİLEŞİK FAİZ önceliği tesadüfen yakalanıyordu — artık açıkça).
+  Bot `Playtest42`: COMBO sunağından gerçek [E] ile alım ✅ + **68/68** combo (MÜŞTEREK KUSUR, ORTAK BORÇ ikinci denemede); P33c 12/12.
+  Bot: REHİN ortadaki adımda da yakala-fırlat (TOPLU İCRA, KARŞI REHİN — 0.8 sn'ye sığıyor), ilk adımda bitiriş kısa menzilliyse önce yaklaş.
+  Tam koşu botu COMBO sunağından almıyor (`SunaktanAl`, "+" sunağı gibi) — combo yapmadığı için saniyesi boşa gider, tempo ölçüsü kayardı.
+  **Enes (2026-10-29):** *"combo sunağı biraz pahalı olmuş ama çok az onu ayarlayalım · combolar şimdilik dursun"* → fiyat × 0.85
+  (`comboAltarPriceMul`, 1. bölgede 45 → 38 sn; kapı fiyatı kuralla karşılaştırıyor, çarpanı silince kırmızı ✅); sadeleşenler kaldı.
 - [x] E. Tam koşu (Parti 1 sonrası, 2026-10-26): **KAZANILDI · 352 dk (5.9 sa) · saat hiç bitmedi** · oda ort. 76 sn · boss 4.0 · 4.9 · 3.9 ·
   5.1 · 8.6 dk · 107 sunak alımı. Önceki 395 dk'dan kısa ama **sebep combo değil: bot tam koşuda hiç combo yapmıyor** (bu koşuda da
   öncekilerde de 0 — tek silahla dövüşüyor). Fark koşudan koşuya: yükseltme teklifleri rastgele (B1–B3 aynı, B4–B5 15–20 dk kısa).

@@ -71,7 +71,13 @@ namespace TekCan
         /// (Faz 32) buradan okuyor. Dövüş dışı akış çarpanı (DARALMA) ve arka plan emişi (SIZINTI) dahil.
         /// </summary>
         public float AkışHızı => ((InCombat ? _t.drainInCombat : _t.drainOutOfCombat * Region.Drain)
-                                  + Region.Background) * DrainMultiplier;
+                                  + Region.Background) * DrainMultiplier * Bükülü;
+
+        // Faz 42 Parti 3 (MAL KAÇIRMA · KAÇIRMA · ZAMAN KİRASI): combo saati bir süre durdurur (0) ya da yavaşlatır.
+        // AkışHızı'nın içinde — TAHVİL'in "beklerken iki kat"ı da bükülüyor. Kalan süre Tick'te iner.
+        float _bükülüKalan, _bükülüÇarpan = 1f;
+        public float Bükülü => _bükülüKalan > 0f ? _bükülüÇarpan : 1f;
+        public void AkışıBük(float sn, float çarpan) { _bükülüKalan = sn; _bükülüÇarpan = çarpan; }
         public float TotalHarvested { get; private set; }
         public float TotalSpent { get; private set; }
         public int EnemiesKilled { get; private set; }
@@ -238,6 +244,7 @@ namespace TekCan
             _player = player;
             Seconds = startSeconds > 0f ? startSeconds : tuning.startSeconds;
             HarvestRate = tuning.harvestRate;
+            _bükülüKalan = 0f;
             AttackDamage = tuning.attackDamage;
             DashCooldown = tuning.dashCooldown;
             Dead = false;
@@ -282,6 +289,7 @@ namespace TekCan
             // arka plan emişi (SIZINTI) — ikisi de saatten geçiyor, çünkü yasa o.
             // Bölgeye özel zırh/direnç olsaydı ikinci bir sistem doğardı.
             float akış = AkışHızı * dt;
+            if (_bükülüKalan > 0f) _bükülüKalan -= dt;
             _seconds -= akış;
             _tickDrain += akış;
             CheckDeath();

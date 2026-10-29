@@ -30,7 +30,8 @@ namespace TekCan.EditorTools
                                    Başla = typeof(PlayerController).GetMethod("StartAttack", Gizli);
         static readonly FieldInfo Yavaş = typeof(Enemy).GetField("_yavaşKalan", Gizli),
                                   Durum = typeof(Enemy).GetField("_state", Gizli), DurumSayacı = typeof(Enemy).GetField("_stateTimer", Gizli),
-                                  İtme = typeof(Enemy).GetField("_push", Gizli);
+                                  İtme = typeof(Enemy).GetField("_push", Gizli), YavaşÇarpan = typeof(Enemy).GetField("_yavaşÇarpan", Gizli);
+        static readonly MethodInfo Al = typeof(Altar).GetMethod("Buy", Gizli);
 
         public static int Execute()
         {
@@ -52,6 +53,9 @@ namespace TekCan.EditorTools
             failed += Parti2Yapısı(ref total);
             failed += Parti2İkililer(ref total);
             failed += Parti2Üçlüler(ref total);
+            failed += Parti3Yapısı(ref total);
+            failed += Parti3İkililer(ref total);
+            failed += Parti3Üçlüler(ref total);
 
             Temizle();
             Object.DestroyImmediate(_root);
@@ -155,6 +159,7 @@ namespace TekCan.EditorTools
             {
                 YeniKoşu(saat);
                 if (Combo.Bu(c).Açan is SilahYükseltme açan) SilahSunağı.Al(açan, -1);   // Parti 2: açan yükseltme alınmış
+                if (Combo.Bu(c).Satın) Combo.SatınAl(c, -1);                              // Parti 3: satın alınmış
                 RoomManager rm = null;
                 if (Combo.Bu(c).MinBölge > 0)
                 {
@@ -182,7 +187,7 @@ namespace TekCan.EditorTools
         static int Yapısı(ref int total)
         {
             var yeni = Enumerable.Range((int)ComboTür.Cebriİcra, 20).Select(i => (ComboTür)i).ToList();
-            bool sayı = Combo.Sayı == 60 && System.Enum.GetValues(typeof(ComboTür)).Length == Combo.Sayı;
+            bool sayı = Combo.Sayı == 90 && System.Enum.GetValues(typeof(ComboTür)).Length == Combo.Sayı;
             int ikili = yeni.Count(c => Combo.Bu(c).Sıra().Length == 2), üçlü = yeni.Count(c => Combo.Bu(c).Sıra().Length == 3);
             bool direkt = yeni.All(c => !Combo.Bu(c).Açan.HasValue && !string.IsNullOrEmpty(Combo.Bu(c).ArtıAd)
                                         && Combo.Bu(c).MinBölge == (Combo.Bu(c).Sıra().Length == 3 ? 1 : 0));
@@ -190,11 +195,12 @@ namespace TekCan.EditorTools
             bool eşsiz = sıralar.Distinct().Count() == sıralar.Count;
             YeniKoşu();
             foreach (var t in Combo.Tümü) if (t.Açan is SilahYükseltme y) SilahSunağı.Al(y, -1);   // açılırlar da sayılsın
+            for (int i = 0; i < Combo.Sayı; i++) if (Combo.Bu((ComboTür)i).Satın) Combo.SatınAl((ComboTür)i, -1);   // satın alınırlar da
             // Bir üçlünün başı olan ikili bitince zincir silinmiyor, adım `_isabetYeri`'nden yazılıyor (ComboTetikle) — bugün
             // yalnızca ALACAK DEVRİ ve o koni vuruşuyla bitiyor. Yenisi gelirse burası kırmızı: bitiş yolunu kontrol et.
             var baş = Enumerable.Range(0, Combo.Sayı).Select(i => (ComboTür)i).Where(c => Combo.ÜçlüyeDevam(c, 4)).ToList();
             bool başlar = baş.Count == 1 && baş[0] == ComboTür.AlacakDevri && !Combo.ÜçlüyeDevam(ComboTür.AlacakDevri, 0);
-            return Check(ref total, $"⚠️ Parti 1: {Combo.Sayı} combo (= 60), yeni {ikili} ikili + {üçlü} üçlü, hepsi direkt ve \"+\"lı, üçlüler 2. bölgeden; " +
+            return Check(ref total, $"⚠️ Parti 1: {Combo.Sayı} combo (= 90), yeni {ikili} ikili + {üçlü} üçlü, hepsi direkt ve \"+\"lı, üçlüler 2. bölgeden; " +
                                     $"hiçbir sıra tekrar etmiyor; üçlünün başı olan ikili yalnızca ALACAK DEVRİ ({string.Join(", ", baş.Select(c => Combo.Bu(c).Ad))}), 1. bölgede değil",
                          sayı && ikili == 15 && üçlü == 5 && direkt && eşsiz && başlar, Combo.Sayı);
         }
@@ -779,6 +785,467 @@ namespace TekCan.EditorTools
             });
             failed += Check(ref total, $"⚠️ SPEKÜLATİF ATAK (ARBİTRAJ → MÜŞTEREK → ÇEK): bağlıya çek vuruşu arkadan ({sa.yok.uç:0.00} → {sa.var.uç:0.00} = {çek * _t.arbitrajBackMul:0.00}); KISA SATIŞ (+) bağlıların sırtı dönük",
                             sa.oldu && sa.yok.uç == 0f && Yakın(sa.var.uç, çek * _t.arbitrajBackMul) && !sa.var.sırt && sa.artı.sırt, sa.var.uç);
+            return failed;
+        }
+
+        // ── 7) PARTİ 3 — yapı + satın alma (COMBO sunağı) ───────────────────────
+        static int Parti3Yapısı(ref int total)
+        {
+            int failed = 0;
+            var p3 = Enumerable.Range((int)ComboTür.TopluVade, 30).Select(i => (ComboTür)i).ToList();
+            YeniKoşu();
+            bool satın = p3.All(c => { var t = Combo.Bu(c); return t.Satın && !t.Açan.HasValue && !string.IsNullOrEmpty(t.ArtıAd) && t.MinBölge == (t.Sıra().Length == 3 ? 1 : 0); });
+            bool kapalı = p3.All(c => !Combo.Kullanılır(c, 4));
+            int ikili = p3.Count(c => Combo.Bu(c).Sıra().Length == 2);
+            var t1 = Combo.SatınTeklif(5, 4); var t2 = Combo.SatınTeklif(5, 4); var t0 = Combo.SatınTeklif(5, 0);
+            bool teklif = t1.Count == 2 && t1[0] != t1[1] && t1.SequenceEqual(t2) && t0.Count == 2 && t0.All(c => Combo.Bu(c).MinBölge == 0);
+            Combo.SatınAl(t1[0], -1);
+            bool açıldı = Combo.Kullanılır(t1[0], 4) && !Combo.SatınTeklif(5, 4).Contains(t1[0]);
+            failed += Check(ref total, $"⚠️ Parti 3: {ikili} ikili + {p3.Count - ikili} üçlü satın alınır, açansız; alınmadan kapalı ({(kapalı ? "kapalı" : "AÇIK")}), alınınca açık ({(açıldı ? "açık" : "KAPALI")}); " +
+                                       $"teklif 2 farklı combo, aynı sunakta aynı, 1. bölgede üçlü yok, alınan teklifte yok",
+                            ikili == 24 && satın && kapalı && teklif && açıldı, ikili);
+
+            // Sunak odası: COMBO sunağı — 2 teklif, saniyeyle, sunak başı 1 alım
+            YeniKoşu();
+            var go = new GameObject("faz42-sunak"); go.transform.SetParent(_root.transform);
+            var rm = go.AddComponent<RoomManager>();
+            rm.Init(_t, _pGo.transform, null, startRoom: RoomManager.SunakOdası(_t, 0), startRegion: 0);
+            var sunaklar = Altar.All.Where(a => a != null && a.Type == Altar.Kind.ComboBuy).ToList();
+            bool iki = sunaklar.Count == 2 && sunaklar.All(a => a.SatılıkCombo().HasValue && !a.SoldOut)
+                       && sunaklar[0].SatılıkCombo() != sunaklar[1].SatılıkCombo();
+            var ilk = sunaklar.FirstOrDefault();
+            var alınan = ilk != null ? ilk.SatılıkCombo() : null;
+            float fiyat = ilk != null ? ilk.Price : 0f, s0 = _clock.Seconds;
+            if (ilk != null) Al.Invoke(ilk, null);
+            float ödenen = s0 - _clock.Seconds;
+            bool alındı = alınan.HasValue && Combo.Alındı(alınan.Value) && Combo.Kullanılır(alınan.Value, 0);
+            bool tükendi = sunaklar.Count == 2 && sunaklar.All(a => a.SoldOut);
+            string etiket = sunaklar.Count == 2 ? sunaklar[1].Label() : "";
+            float kural = Clock.SilahFiyatı(_t, s0, Enderlik.Nadir) * _t.comboAltarPriceMul;   // 1. bölgede yalnız ikili → nadir × çarpan
+            Object.DestroyImmediate(go); RoomManager.Reset();
+            failed += Check(ref total, $"⚠️ COMBO sunağı: sunak odasında 2 ayrı teklif ({sunaklar.Count} sunak), [E] {fiyat:0.0} sn alıyor (kural {kural:0.0}, {ödenen:0.0} ödendi), combo açılıyor, sunak başı 1 alım (öbürü \"{etiket}\")",
+                            iki && fiyat > 0f && Yakın(fiyat, kural) && _t.comboAltarPriceMul < 1f && Yakın(ödenen, fiyat) && alındı && tükendi && etiket.Contains("bu sunaktan alındı"), ödenen);
+            return failed;
+        }
+
+        // ── 8) PARTİ 3 — ikililer (satın alınmış) ───────────────────────────────
+        static int Parti3İkililer(ref int total)
+        {
+            int failed = 0;
+            float koni = Taban(Kadro.KONİ), haciz = Taban(Kadro.HACİZ), arb = Taban(Kadro.ARBİTRAJ), kar = Taban(Kadro.KARŞILIK);
+            float fırlat = Taban(Kadro.REHİN) * _t.rehinThrowDamageMul, v2 = Tahvil.KademeÇarpanı(2);
+            var iflas = Weapon.All[Kadro.İFLAS];
+            float kiraR = Weapon.All[Kadro.KİRA].Range(_t), ipotekR = Weapon.All[Kadro.İPOTEK].Range(_t);
+
+            var tv = Üç<(float vade, float bek)>(ComboTür.TopluVade, () =>
+            {
+                Düşman(Yer(-0.7f, 1.3f)); Düşman(İleri(1.3f)); Düşman(Yer(0.7f, 1.3f));
+                Silahla(Kadro.KONİ); Geç();                                     // üçünü vurur
+                Bekle(Kadro.TAHVİL, 5f);
+                W(Kadro.TAHVİL); Bas();                                         // basılı tutma başı
+                return ((float)Alan("_vade"), _pc.SpecialCooldownOf(Kadro.TAHVİL));
+            });
+            failed += Check(ref total, $"TOPLU VADE (KONİ → TAHVİL): üç vuruş olgunluğa +0.75 sn ({tv.yok.vade:0.00} → {tv.var.vade:0.00}); ERKEN İTFA (+) beklemesi sıfır",
+                            tv.oldu && tv.yok.vade == 0f && Yakın(tv.var.vade, 0.75f) && tv.var.bek == 5f && tv.artı.bek == 0f, tv.var.vade);
+
+            var ks = Üç<(float kalan, float a, bool sus)>(ComboTür.KiracıSürüsü, () =>
+            {
+                var a = Düşman(İleri(1.3f));
+                Silahla(Kadro.KONİ); Geç();
+                Silahla(Kadro.KİRA);                                            // kule nişana
+                var k = _pc.Kule;
+                if (k == null) return (-1f, -1f, false);
+                Düşman(Yer(1f, kiraR));                                         // kulenin dibinde: öncelik yoksa kule buna
+                float h = Hasar(a, () => k.Step(0.05f));
+                return (k.Kalan, h, a.Susturulmuş);
+            });
+            failed += Check(ref total, $"KİRACI SÜRÜSÜ (KONİ → KİRA): kule KONİ'nin vurduğuna öncelik veriyor ({ks.yok.a:0.00} → {ks.var.a:0.00}), ömür +1 ({ks.yok.kalan:0.00} → {ks.var.kalan:0.00}); KİRA İHTARI (+) susturuyor",
+                            ks.oldu && ks.yok.a == 0f && ks.var.a > 0f && Yakın(ks.var.kalan, ks.yok.kalan + 1f, 0.01f) && !ks.var.sus && ks.artı.sus, ks.var.a);
+
+            var fy = Üç<(float h1, float h2, float hasat)>(ComboTür.FaizYükü, () =>
+            {
+                var e = Düşman(İleri(1.3f));
+                Silahla(Kadro.FAİZLİ); Geç();
+                float h1 = 0f;
+                float hs = Hasat(() => h1 = Hasar(e, () => Silahla(Kadro.KONİ)));
+                _pc.TickCombo(4.1f);                                            // combo beklemesi bitsin
+                Silahla(Kadro.FAİZLİ); Geç();
+                float h2 = Hasar(e, () => Silahla(Kadro.KONİ));
+                return (h1, h2, hs);
+            });
+            failed += Check(ref total, $"FAİZ YÜKÜ (FAİZLİ → KONİ): odada her seferinde +%15 ({fy.yok.h1:0.00} → {fy.var.h1:0.00} → {fy.var.h2:0.00}); FAİZE FAİZ (+) hasat ×{fy.artı.hasat / Mathf.Max(0.0001f, fy.var.hasat):0.00}",
+                            fy.oldu && Yakın(fy.yok.h1, koni) && Yakın(fy.yok.h2, koni) && Yakın(fy.var.h1, koni * 1.15f) && Yakın(fy.var.h2, koni * 1.3f)
+                            && Yakın(fy.artı.hasat / Mathf.Max(0.0001f, fy.var.hasat), 2f, 0.05f), fy.var.h2);
+
+            var fs = Üç<(float saat, float bek)>(ComboTür.FaizliSenet, () =>
+            {
+                HasatKapat();
+                Düşman(İleri(1.3f));
+                Silahla(Kadro.FAİZLİ); Geç();
+                Bekle(Kadro.FAİZLİ, 5f);
+                float s0 = _clock.Seconds;
+                ÇekAt();                                                        // ilk isabet (dibindeki)
+                return (_clock.Seconds - s0, _pc.SpecialCooldownOf(Kadro.FAİZLİ));
+            });
+            failed += Check(ref total, $"FAİZLİ SENET (FAİZLİ → ÇEK): çekin isabeti savurma bedelini geri ödüyor ({fs.yok.saat:+0.00} → {fs.var.saat:+0.00} sn); SENET İADESİ (+) FAİZLİ'nin beklemesi sıfır",
+                            fs.oldu && Yakın(fs.yok.saat, 0f) && Yakın(fs.var.saat, _t.faizliSwingCost) && fs.var.bek == 5f && fs.artı.bek == 0f, fs.var.saat);
+
+            var it = Üç<(float uzaklık, bool çakılı, bool sus)>(ComboTür.İhtiyatiTedbir, () =>
+            {
+                var uzak = Düşman(İleri(6.5f));
+                Silahla(Kadro.HACİZ); Geç();
+                Silahla(Kadro.İPOTEK);
+                var m = İşaretler().FirstOrDefault();
+                if (m == null) return (-1f, false, false);
+                Vector3 d = m.transform.position - uzak.transform.position; d.y = 0f;
+                return (d.magnitude, (float)Yavaş.GetValue(uzak) > 0f && (float)YavaşÇarpan.GetValue(uzak) == 0f, uzak.Susturulmuş);
+            });
+            failed += Check(ref total, $"İHTİYATİ TEDBİR (HACİZ → İPOTEK): işaret HACİZ'in vurduğunun altına ({it.yok.uzaklık:0.00} → {it.var.uzaklık:0.00} birim), o yerine çakılı ({it.var.çakılı}); TEDBİR ŞERHİ (+) susturuyor",
+                            it.oldu && it.yok.uzaklık > 1f && it.var.uzaklık >= 0f && it.var.uzaklık < 0.01f && !it.yok.çakılı && it.var.çakılı && !it.var.sus && it.artı.sus, it.var.uzaklık);
+
+            var va = Üç<(bool yavaş, float bek)>(ComboTür.VadeliAlacak, () =>
+            {
+                var uzak = Düşman(İleri(5.5f));
+                Silahla(Kadro.HACİZ); Geç();
+                Bekle(Kadro.HACİZ, 5f);
+                W(Kadro.TAHVİL); Bas(); _pc.Vadelen(0.1f);                      // basılı tutarken
+                return ((float)Yavaş.GetValue(uzak) > 0f, _pc.SpecialCooldownOf(Kadro.HACİZ));
+            });
+            failed += Check(ref total, $"VADELİ ALACAK (HACİZ → TAHVİL): basılı tuttukça HACİZ'in vurduğu yavaş ({va.yok.yavaş} → {va.var.yavaş}); ALACAK FAİZİ (+) HACİZ'in beklemesi sıfır",
+                            va.oldu && !va.yok.yavaş && va.var.yavaş && va.var.bek == 5f && va.artı.bek == 0f, 0f);
+
+            var ii = Üç<(float h, float iç, float itme)>(ComboTür.İpotekliİflas, () =>
+            {
+                var içte = Düşman(İleri(ipotekR)); var kenar = Düşman(İleri(ipotekR) + Vector3.right);
+                Silahla(Kadro.İPOTEK); Geç();
+                var e = Düşman(İleri(1.3f));
+                float i0 = içte.TimeLeft, p0 = İtmesi(kenar);
+                float h = Hasar(e, () => Silahla(Kadro.İFLAS));
+                return (h, i0 - içte.TimeLeft, İtmesi(kenar) - p0);
+            });
+            float iflasDip = iflas.Damage(_t, _clock.AttackDamage) * iflas.DesperationMultiplier(0f, _t);
+            failed += Check(ref total, $"İPOTEKLİ İFLAS (İPOTEK → İFLAS): İFLAS saatin dibindeymiş gibi ({ii.yok.h:0.00} → {ii.var.h:0.00} = {iflasDip:0.00}), işaret hemen patlıyor ({ii.yok.iç:0.00} → {ii.var.iç:0.00}); İCRAİ SATIŞ (+) itiyor",
+                            ii.oldu && ii.yok.iç == 0f && ii.var.iç > 0f && Yakın(ii.var.h, iflasDip) && ii.var.h > ii.yok.h * 2f && ii.artı.itme > ii.var.itme + 1f, ii.var.h);
+
+            var asp = Üç<(float h, bool görünmez)>(ComboTür.ArsaSpekülasyonu, () =>
+            {
+                Düşman(İleri(ipotekR));                                          // işaretin içinde biri (şart)
+                Silahla(Kadro.İPOTEK); Geç();
+                var e = Bakan(İleri(1.2f), Vector3.back);                       // yüzü sana: önden
+                float h = Hasar(e, () => Silahla(Kadro.ARBİTRAJ));
+                return (h, _pc.Görünmez);
+            });
+            failed += Check(ref total, $"ARSA SPEKÜLASYONU (İPOTEK → ARBİTRAJ): önden vuruş arkadan ({asp.yok.h:0.00} → {asp.var.h:0.00}); ARSA SPEKÜLATÖRÜ (+) görünmez",
+                            asp.oldu && Yakın(asp.yok.h, arb * _t.arbitrajFrontMul) && Yakın(asp.var.h, arb * _t.arbitrajBackMul) && !asp.var.görünmez && asp.artı.görünmez, asp.var.h);
+            YeniKoşu(); _ara = 0.2f; Combo.SatınAl(ComboTür.ArsaSpekülasyonu, -1);
+            Silahla(Kadro.İPOTEK); Geç(); Bakan(İleri(1.2f), Vector3.back); Silahla(Kadro.ARBİTRAJ);
+            failed += Check(ref total, "ARSA SPEKÜLASYONU: işaretin içi boşsa combo YOK (şart)", !Yaptı(ComboTür.ArsaSpekülasyonu), 0f);
+
+            var mk = Üç<(bool tuttu, float bükülü, float bek)>(ComboTür.MalKaçırma, () =>
+            {
+                var e = Düşman(İleri(2f)); Düşman(Yer(0.9f, 0.6f));             // ikincisi İFLAS'ın yayı dışında, REHİN'inkinde ve daha yakın
+                Silahla(Kadro.İFLAS); Geç();
+                Bekle(Kadro.İFLAS, 5f);
+                Silahla(Kadro.REHİN);
+                return (_pc.Rehine == e, _clock.Bükülü, _pc.SpecialCooldownOf(Kadro.İFLAS));
+            });
+            failed += Check(ref total, $"MAL KAÇIRMA (İFLAS → REHİN): İFLAS'ın vurduğu yakalanıyor ({(mk.var.tuttu ? "tuttu" : "TUTMADI")}), saat duruyor (akış ×{mk.yok.bükülü:0.0} → ×{mk.var.bükülü:0.0}); MAL GİZLEME (+) beklemesi sıfır",
+                            mk.oldu && !mk.yok.tuttu && mk.var.tuttu && Yakın(mk.yok.bükülü, 1f) && mk.var.bükülü == 0f && mk.var.bek == 5f && mk.artı.bek == 0f, mk.var.bükülü);
+
+            var tk = Üç<(float atış, float stopaj, float s)>(ComboTür.TasfiyeKulesi, () =>
+            {
+                HasatKapat();
+                Düşman(İleri(1.3f));
+                Silahla(Kadro.İFLAS); Geç();
+                float s = _clock.Seconds;
+                Silahla(Kadro.KİRA);
+                var k = _pc.Kule;
+                if (k == null) return (-1f, -1f, s);
+                var hedef = Düşman(Yer(1f, kiraR));
+                return (Hasar(hedef, () => k.Step(0.05f)), k.Stopaj, s);
+            }, saat: 30f);
+            float dm = Mathf.Max(1f, iflas.DesperationMultiplier(tk.var.s, _t));
+            failed += Check(ref total, $"TASFİYE KULESİ (İFLAS → KİRA): saat {tk.var.s:0} sn'de atış İFLAS'ın çarpanıyla ({tk.yok.atış:0.00} → {tk.var.atış:0.00} = ×{dm:0.00}); TASFİYE PAYI (+) STOPAJ ({tk.var.stopaj:0} → {tk.artı.stopaj:0})",
+                            tk.oldu && dm > 1.5f && Yakın(tk.var.atış, tk.yok.atış * dm) && tk.var.stopaj == 0f && tk.artı.stopaj >= 1f, tk.var.atış);
+
+            var rk = Üç<(float h, float bek)>(ComboTür.RehinKarşılığı, () =>
+            {
+                Düşman(İleri(1.5f)); Düşman(İleri(4f));
+                Silahla(Kadro.REHİN); Silahla(Kadro.REHİN); Geç();            // yakala, fırlat (adım)
+                var e = Düşman(İleri(1.3f));
+                Bekle(Kadro.KARŞILIK, 5f);
+                float h = Hasar(e, () => Silahla(Kadro.KARŞILIK));
+                return (h, _pc.SpecialCooldownOf(Kadro.KARŞILIK));
+            });
+            failed += Check(ref total, $"REHİN KARŞILIĞI (REHİN → KARŞILIK): fırlatma birikene, KARŞILIK indiriyor ({rk.yok.h:0.00} → {rk.var.h:0.00} = {kar:0.00} + {fırlat:0.00}); KARŞILIK İADESİ (+) beklemesi sıfır",
+                            rk.oldu && Yakın(rk.yok.h, kar * 0.6f) && Yakın(rk.var.h, kar + fırlat) && rk.var.bek == 5f && rk.artı.bek == 0f, rk.var.h);
+
+            var iş = Üç<(float uzaklık, float saat, float kalan)>(ComboTür.İşgal, () =>
+            {
+                HasatKapat();
+                var r = Düşman(İleri(1.5f)); Düşman(İleri(4f));
+                Silahla(Kadro.REHİN); Silahla(Kadro.REHİN); Geç();            // yakala, fırlat (adım)
+                Silahla(Kadro.KİRA);
+                var k = _pc.Kule;
+                if (k == null) return (-1f, -1f, -1f);
+                Vector3 d = k.transform.position - r.transform.position; d.y = 0f;
+                float s0 = _clock.Seconds;
+                k.Step(1f);
+                return (d.magnitude, _clock.Seconds - s0, k.Kalan);
+            });
+            failed += Check(ref total, $"İŞGAL (REHİN → KİRA): kule rehinenin düştüğü yere ({iş.yok.uzaklık:0.00} → {iş.var.uzaklık:0.00} birim), kirayı rehine ödüyor (saat {iş.yok.saat:+0.00} → {iş.var.saat:+0.00}); TAHLİYE DAVASI (+) ömür +3",
+                            iş.oldu && iş.yok.uzaklık > 1f && iş.var.uzaklık >= 0f && iş.var.uzaklık < 0.01f && iş.yok.saat < -0.1f && Yakın(iş.var.saat, 0f)
+                            && Yakın(iş.artı.kalan, iş.var.kalan + 3f, 0.01f), iş.var.saat);
+
+            var çi = Üç<(float vade, float bek)>(ComboTür.Çekİskontosu, () =>
+            {
+                var uzak = Düşman(İleri(5f));
+                ÇekAt(); Geç();
+                Bekle(Kadro.ÇEK, 5f);
+                W(Kadro.TAHVİL); Bas();
+                float v0 = (float)Alan("_vade");
+                _pc.Çekİsabeti(uzak.transform.position, uzak);                  // havadaki çekin bir isabeti daha
+                return ((float)Alan("_vade") - v0, _pc.SpecialCooldownOf(Kadro.ÇEK));
+            });
+            failed += Check(ref total, $"ÇEK İSKONTOSU (ÇEK → TAHVİL): basılı tutarken çek isabeti olgunluğa +0.25 ({çi.yok.vade:0.00} → {çi.var.vade:0.00}); İSKONTO ORANI (+) ÇEK'in beklemesi sıfır",
+                            çi.oldu && çi.yok.vade == 0f && Yakın(çi.var.vade, 0.25f) && çi.var.bek == 5f && çi.artı.bek == 0f, çi.var.vade);
+
+            var kç = Üç<(float uzaklık, float kirasız, float bek)>(ComboTür.KiraÇeki, () =>
+            {
+                var uzak = Düşman(İleri(4f));
+                ÇekAt(); Geç();
+                Vector3 çarptı = uzak.transform.position;
+                Bekle(Kadro.ÇEK, 5f);
+                Silahla(Kadro.KİRA);
+                var k = _pc.Kule;
+                if (k == null) return (-1f, -1f, -1f);
+                Vector3 d = k.transform.position - çarptı; d.y = 0f;
+                return (d.magnitude, k.KirasızKalan, _pc.SpecialCooldownOf(Kadro.ÇEK));
+            });
+            failed += Check(ref total, $"KİRA ÇEKİ (ÇEK → KİRA): kule çekin çarptığı yere ({kç.yok.uzaklık:0.00} → {kç.var.uzaklık:0.00} birim), 3 sn kirasız ({kç.var.kirasız:0}); ÇEKLE ÖDEME (+) ÇEK'in beklemesi sıfır",
+                            kç.oldu && kç.yok.uzaklık > 1f && kç.var.uzaklık >= 0f && kç.var.uzaklık < 0.01f && kç.yok.kirasız == 0f && kç.var.kirasız == 3f
+                            && kç.var.bek == 5f && kç.artı.bek == 0f, kç.var.uzaklık);
+
+            var kı = Üç<(float h, float b, bool yavaş)>(ComboTür.Karşılıksızİflas, () =>
+            {
+                var e = Düşman(İleri(1.3f));
+                Alan("_biriken", 2f);
+                Silahla(Kadro.KARŞILIK); Geç();
+                float b = (float)Alan("_sonBirikenHasarı");
+                float h = Hasar(e, () => Silahla(Kadro.İFLAS));
+                return (h, b, (float)Yavaş.GetValue(e) > 0f);
+            });
+            failed += Check(ref total, $"KARŞILIKSIZ İFLAS (KARŞILIK → İFLAS): birikimin iki katı İFLAS'a ({kı.yok.h:0.00} → {kı.var.h:0.00} = +2×{kı.var.b:0.00}); SAHTE İFLAS (+) yavaşlatıyor",
+                            kı.oldu && kı.var.b > 0f && Yakın(kı.var.h, kı.yok.h + 2f * kı.var.b) && !kı.var.yavaş && kı.artı.yavaş, kı.var.h);
+
+            var kh = Üç<(float h, bool sus)>(ComboTür.KarşıHamle, () =>
+            {
+                var e = Bakan(İleri(1.3f), Vector3.back);                       // yüzü sana
+                Silahla(Kadro.KARŞILIK); Geç();
+                float h = Hasar(e, () => Silahla(Kadro.ARBİTRAJ));
+                return (h, e.Susturulmuş);
+            });
+            failed += Check(ref total, $"KARŞI HAMLE (KARŞILIK → ARBİTRAJ): KARŞILIK'ın vurduğunun arkasına geçip vuruyor ({kh.yok.h:0.00} → {kh.var.h:0.00}); KARŞI İHTAR (+) susturuyor",
+                            kh.oldu && Yakın(kh.yok.h, arb * _t.arbitrajFrontMul) && Yakın(kh.var.h, arb * _t.arbitrajBackMul) && !kh.var.sus && kh.artı.sus, kh.var.h);
+
+            var vt = Üç<(float kalan, float hasar, float bek)>(ComboTür.VadeliTapu, () =>
+            {
+                Düşman(İleri(1.3f));
+                TahvilBoz(1.1f); Geç();                                        // 2. kademe
+                Bekle(Kadro.İPOTEK, 5f);
+                Silahla(Kadro.İPOTEK);
+                var m = İşaretler().FirstOrDefault();
+                return m == null ? (-1f, -1f, -1f) : (m.Kalan, m.Hasar, _pc.SpecialCooldownOf(Kadro.İPOTEK));
+            });
+            failed += Check(ref total, $"VADELİ TAPU (TAHVİL 2. kademe → İPOTEK): gecikme yarı ({vt.yok.kalan:0.00} → {vt.var.kalan:0.00}), hasar ×{v2} ({vt.yok.hasar:0.00} → {vt.var.hasar:0.00}); TAPU İSKONTOSU (+) beklemesi sıfır",
+                            vt.oldu && vt.yok.kalan > 0f && Yakın(vt.var.kalan, vt.yok.kalan * 0.5f) && Yakın(vt.var.hasar, vt.yok.hasar * v2) && vt.var.bek == 5f && vt.artı.bek == 0f, vt.var.kalan);
+
+            var to = Üç<(float kalan, float payÇ, bool sus)>(ComboTür.TahvilOrtaklığı, () =>
+            {
+                var a = Düşman(İleri(1.5f)); Düşman(Yer(1.5f, 0f));
+                Silahla(Kadro.MÜŞTEREK);                                        // a işaretli (bekleyen)
+                TahvilBoz(1.1f); Geç();                                        // 2. kademe (adım)
+                _pGo.transform.rotation = Quaternion.LookRotation(Vector3.right);
+                Silahla(Kadro.MÜŞTEREK);                                        // b → bağ
+                Ortaya();
+                var bağ = _pc.SonBağ;
+                return bağ == null ? (-1f, -1f, false) : (bağ.Kalan, bağ.PayÇarpanı, a.Susturulmuş);
+            });
+            failed += Check(ref total, $"TAHVİL ORTAKLIĞI (TAHVİL 2. kademe → MÜŞTEREK): bağ +4 sn ({to.yok.kalan:0.0} → {to.var.kalan:0.0}), yayılma ×{to.var.payÇ:0.00}; ORTAKLIK PAYI (+) bağlılar susuyor",
+                            to.oldu && Yakın(to.yok.kalan, _t.musterekSeconds) && Yakın(to.var.kalan, _t.musterekSeconds + 4f) && Yakın(to.yok.payÇ, 1f) && Yakın(to.var.payÇ, 1.2f)
+                            && !to.var.sus && to.artı.sus, to.var.kalan);
+
+            var ob = Üç<(float uç, float saat, bool yavaş)>(ComboTür.OrtakBorç, () =>
+            {
+                HasatKapat();
+                var (a, _, _) = BağKurgusu(); Geç();
+                Düşman(İleri(1.3f));
+                float a0 = a.TimeLeft, s0 = _clock.Seconds;
+                Silahla(Kadro.FAİZLİ);
+                return (a0 - a.TimeLeft, _clock.Seconds - s0, (float)Yavaş.GetValue(a) > 0f);
+            });
+            failed += Check(ref total, $"ORTAK BORÇ (MÜŞTEREK → FAİZLİ): bedel kadar bağlıya ({ob.yok.uç:0.00} → {ob.var.uç:0.00}), bedel sana ({ob.yok.saat:+0.00} → {ob.var.saat:+0.00}); MÜŞTEREK BORÇLU (+) yavaşlatıyor",
+                            ob.oldu && ob.yok.uç == 0f && Yakın(ob.var.uç, _t.faizliSwingCost) && Yakın(ob.yok.saat, 0f) && Yakın(ob.var.saat, _t.faizliSwingCost)
+                            && !ob.var.yavaş && ob.artı.yavaş, ob.var.uç);
+
+            var iç = Üç<(float h, float bek)>(ComboTür.İçİşlem, () =>
+            {
+                var a = Bakan(İleri(1.5f), Vector3.back); Düşman(Yer(1.5f, 0f));   // a'nın yüzü sana
+                Silahla(Kadro.MÜŞTEREK);
+                _pGo.transform.rotation = Quaternion.LookRotation(Vector3.right);
+                Silahla(Kadro.MÜŞTEREK);                                        // bağ (adım)
+                Ortaya(); Geç();
+                Bekle(Kadro.ARBİTRAJ, 5f);
+                float h = Hasar(a, () => Silahla(Kadro.ARBİTRAJ));
+                return (h, _pc.SpecialCooldownOf(Kadro.ARBİTRAJ));
+            });
+            failed += Check(ref total, $"İÇ İŞLEM (MÜŞTEREK → ARBİTRAJ): bağlılar sırtını dönüyor, yüzü sana olana arkadan ({iç.yok.h:0.00} → {iç.var.h:0.00}); İÇERİDEN BİLGİ (+) beklemesi sıfır",
+                            iç.oldu && Yakın(iç.yok.h, arb * _t.arbitrajFrontMul) && Yakın(iç.var.h, arb * _t.arbitrajBackMul) && iç.var.bek == 5f && iç.artı.bek == 0f, iç.var.h);
+
+            var gh = Üç<(float h, bool görünmez)>(ComboTür.GizliHaciz, () =>
+            {
+                var e = Bakan(İleri(1.2f), Vector3.forward);                    // sırtı sana: arkadan
+                Silahla(Kadro.ARBİTRAJ); Geç();
+                float h = Hasar(e, () => Silahla(Kadro.HACİZ));                // dibinde: ölü bölgede
+                return (h, _pc.Görünmez);
+            });
+            failed += Check(ref total, $"GİZLİ HACİZ (ARBİTRAJ arkadan → HACİZ): ölü bölge yok, ×1.3 ({gh.yok.h:0.00} → {gh.var.h:0.00}); SESSİZ HACİZ (+) görünmez",
+                            gh.oldu && gh.yok.h == 0f && Yakın(gh.var.h, haciz * 1.3f) && !gh.var.görünmez && gh.artı.görünmez, gh.var.h);
+
+            var kc = Üç<(bool tuttu, float bükülü, float bek)>(ComboTür.Kaçırma, () =>
+            {
+                var e = Bakan(İleri(2f), Vector3.forward);                      // sırtı sana: arkadan
+                Düşman(Yer(1f, 0.36f));                                         // ARBİTRAJ'ın yayı dışında, REHİN'inkinde ve daha yakın
+                Silahla(Kadro.ARBİTRAJ); Geç();
+                Bekle(Kadro.REHİN, 5f);
+                Silahla(Kadro.REHİN);
+                return (_pc.Rehine == e, _clock.Bükülü, _pc.SpecialCooldownOf(Kadro.REHİN));
+            });
+            failed += Check(ref total, $"KAÇIRMA (ARBİTRAJ arkadan → REHİN): ARBİTRAJ'ın vurduğu yakalanıyor ({(kc.var.tuttu ? "tuttu" : "TUTMADI")}), saat yarı akıyor (×{kc.yok.bükülü:0.0} → ×{kc.var.bükülü:0.0}); FİDYE (+) beklemesi sıfır",
+                            kc.oldu && !kc.yok.tuttu && kc.var.tuttu && Yakın(kc.yok.bükülü, 1f) && Yakın(kc.var.bükülü, 0.5f) && kc.var.bek == 5f && kc.artı.bek == 0f, kc.var.bükülü);
+
+            var sk = Üç<(float h, float kalan)>(ComboTür.SüpürgeKulesi, () =>
+            {
+                Silahla(Kadro.KİRA); Geç();                                     // kule nişana
+                var kuleDibi = Düşman(Yer(1f, kiraR));
+                Düşman(İleri(1.3f));
+                var k = _pc.Kule;
+                float h = Hasar(kuleDibi, () => Silahla(Kadro.KONİ));
+                return (h, k != null ? k.Kalan : -1f);
+            });
+            failed += Check(ref total, $"SÜPÜRGE KULESİ (KİRA → KONİ): kulenin dibindekine de KONİ ({sk.yok.h:0.00} → {sk.var.h:0.00}); KULE SÜPÜRMESİ (+) ömür +2",
+                            sk.oldu && sk.yok.h == 0f && Yakın(sk.var.h, koni) && Yakın(sk.artı.kalan, sk.var.kalan + 2f, 0.01f), sk.var.h);
+
+            var kg = Üç<(float saat, float bek)>(ComboTür.KiraGetirisi, () =>
+            {
+                Silahla(Kadro.KİRA); Geç();
+                Bekle(Kadro.TAHVİL, 5f);
+                W(Kadro.TAHVİL); Bas();
+                float s0 = _clock.Seconds;
+                _pc.Vadelen(1f);
+                return (_clock.Seconds - s0, _pc.SpecialCooldownOf(Kadro.TAHVİL));
+            });
+            failed += Check(ref total, $"KİRA GETİRİSİ (KİRA → TAHVİL): basılı tutarken saat iki kat akmıyor ({kg.yok.saat:+0.00} → {kg.var.saat:+0.00} sn/sn); GETİRİ PAYI (+) beklemesi sıfır",
+                            kg.oldu && kg.yok.saat < -0.01f && Yakın(kg.var.saat, 0f) && kg.var.bek == 5f && kg.artı.bek == 0f, kg.var.saat);
+            return failed;
+        }
+
+        // ── 9) PARTİ 3 — üçlüler (2. bölge, satın alınmış) ──────────────────────
+        static int Parti3Üçlüler(ref int total)
+        {
+            int failed = 0;
+            float koni = Taban(Kadro.KONİ), arb = Taban(Kadro.ARBİTRAJ);
+
+            var ti = Üç<(float saat, float doyma, bool öldü, float bek)>(ComboTür.TopluİCRA, () =>
+            {
+                HasatKapat();
+                var zayıf = Düşman(Yer(-1f, 1f)); Düşman(Yer(1f, 1f)); Düşman(İleri(1.2f));   // KONİ üçünü vurur; ortadaki rehine olacak
+                zayıf.TakeDamage(zayıf.TimeLeft - 1f, 0f);                      // havuzu 1 sn
+                Silahla(Kadro.KONİ); Geç();
+                Silahla(Kadro.REHİN); Silahla(Kadro.REHİN); Geç();             // ortadakini yakala, fırlat (adım)
+                Düşman(İleri(1.3f));
+                Bekle(Kadro.KONİ, 5f);
+                float s0 = _clock.Seconds, doyma = _clock.HasatDoyması;
+                Silahla(Kadro.İFLAS);
+                return (_clock.Seconds - s0, doyma, !Enemy.All.Contains(zayıf), _pc.SpecialCooldownOf(Kadro.KONİ));
+            });
+            failed += Check(ref total, $"⚠️ TOPLU İCRA (KONİ → REHİN → İFLAS): KONİ'nin vurduklarından en zayıfı İFLAS'ın dip vuruşuyla ölüyor ({(ti.var.öldü ? "öldü" : "ÖLMEDİ")}), +2 sn ({ti.yok.saat:+0.00} → {ti.var.saat:+0.00} = {2f * ti.var.doyma:+0.00}); İCRA MASRAFI (+) KONİ'nin beklemesi sıfır",
+                            ti.oldu && Yakın(ti.yok.saat, 0f) && Yakın(ti.var.saat, 2f * ti.var.doyma) && ti.var.öldü && ti.var.bek == 5f && ti.artı.bek == 0f, ti.var.saat);
+
+            var bf = Üç<(float payÇ, bool yavaş, bool ortaklık)>(ComboTür.BileşikFaiz, () =>
+            {
+                Combo.SatınAl(ComboTür.TahvilOrtaklığı, -1);                    // TAHVİL → MÜŞTEREK de açık: üçlü önce gelmeli
+                var a = Düşman(İleri(1.5f)); Düşman(Yer(1.5f, 0f));
+                Silahla(Kadro.MÜŞTEREK);                                        // a işaretli
+                Silahla(Kadro.FAİZLİ); Geç();                                   // (adım)
+                TahvilBoz(0.6f); Geç();                                        // 1. kademe (adım)
+                _pGo.transform.rotation = Quaternion.LookRotation(Vector3.right);
+                Silahla(Kadro.MÜŞTEREK);                                        // b → bağ (bitiriş)
+                Ortaya();
+                var bağ = _pc.SonBağ;
+                return (bağ != null ? bağ.PayÇarpanı : -1f, (float)Yavaş.GetValue(a) > 0f, Yaptı(ComboTür.TahvilOrtaklığı));
+            });
+            float v1 = Mathf.Min(Tahvil.KademeÇarpanı(1), 1f / _t.musterekShare);
+            failed += Check(ref total, $"⚠️ BİLEŞİK FAİZ (FAİZLİ → TAHVİL 1. kademe → MÜŞTEREK): yayılma ×kademe ({bf.yok.payÇ:0.00} → {bf.var.payÇ:0.00} = {v1:0.00}), TAHVİL ORTAKLIĞI {(bf.var.ortaklık ? "TETİKLENDİ" : "tetiklenmedi")}; FAİZ TAHAKKUKU (+) bağlılar yavaş",
+                            bf.oldu && Yakın(bf.var.payÇ, v1) && !bf.var.ortaklık && !bf.var.yavaş && bf.artı.yavaş, bf.var.payÇ);
+
+            var zt = Üç<(bool kilit, float uzama, bool çek, bool sus)>(ComboTür.ZincirlemeTahsil, () =>
+            {
+                Combo.SatınAl(ComboTür.KiraÇeki, -1);                           // ÇEK → KİRA da açık: üçlü önce gelmeli
+                var uzak = Düşman(İleri(5.5f));
+                Silahla(Kadro.HACİZ); Geç();
+                ÇekAt(); Geç();                                                 // çek uzaktakine (adım)
+                Silahla(Kadro.KİRA);
+                var k = _pc.Kule;
+                if (k == null) return (false, -1f, false, false);
+                float k0 = k.Kalan;
+                _pc.Çekİsabeti(uzak.transform.position, uzak);                  // çekin bir isabeti daha
+                return (k.Kilit == uzak, k.Kalan - k0, Yaptı(ComboTür.KiraÇeki), uzak.Susturulmuş);
+            });
+            failed += Check(ref total, $"⚠️ ZİNCİRLEME TAHSİL (HACİZ → ÇEK → KİRA): kule HACİZ'in vurduğuna kilitli ({zt.var.kilit}), çek isabeti ömre +1 ({zt.yok.uzama:0.00} → {zt.var.uzama:0.00}), KİRA ÇEKİ {(zt.var.çek ? "TETİKLENDİ" : "tetiklenmedi")}; TAHSİL EMRİ (+) susturuyor",
+                            zt.oldu && !zt.yok.kilit && zt.var.kilit && Yakın(zt.yok.uzama, 0f) && Yakın(zt.var.uzama, 1f) && !zt.var.çek && !zt.var.sus && zt.artı.sus, zt.var.uzama);
+
+            var kr = Üç<(float h, float b, bool sırt, bool açığa)>(ComboTür.KarşıRehin, () =>
+            {
+                Düşman(İleri(1.3f));
+                Alan("_biriken", 2f);
+                Silahla(Kadro.KARŞILIK); Geç();
+                float b = (float)Alan("_sonBirikenHasarı");
+                Silahla(Kadro.REHİN); Silahla(Kadro.REHİN); Geç();             // yakala, fırlat (adım)
+                var t = Bakan(İleri(1.3f), Vector3.back);                       // yüzü sana
+                float h = Hasar(t, () => Silahla(Kadro.ARBİTRAJ));
+                return (h, b, t.SırtDönük, Yaptı(ComboTür.AçığaSatış));
+            });
+            failed += Check(ref total, $"⚠️ KARŞI REHİN (KARŞILIK → REHİN → ARBİTRAJ): arkadan, birikim de üstüne ({kr.yok.h:0.00} → {kr.var.h:0.00} = ({arb:0.00} + {kr.var.b:0.00}) × {_t.arbitrajBackMul}), AÇIĞA SATIŞ {(kr.var.açığa ? "TETİKLENDİ" : "tetiklenmedi")}; REHİN AÇIĞI (+) sırtı dönük",
+                            kr.oldu && Yakın(kr.yok.h, arb * _t.arbitrajFrontMul) && kr.var.b > 0f && Yakın(kr.var.h, (arb + kr.var.b) * _t.arbitrajBackMul) && !kr.var.açığa
+                            && !kr.var.sırt && kr.artı.sırt, kr.var.h);
+
+            var ok = Üç<(float uç, float arka, float k, bool tahsil, float bek)>(ComboTür.OrtakKarşılık, () =>
+            {
+                var (a, _, ara) = BağKurgusu(); Geç();
+                var e = Düşman(İleri(1.3f));
+                float k = Hasar(e, () => Silahla(Kadro.KARŞILIK)); Geç();
+                Bekle(Kadro.KARŞILIK, 5f);
+                float a0 = a.TimeLeft, r0 = ara.TimeLeft;
+                Silahla(Kadro.KONİ);
+                return (a0 - a.TimeLeft, r0 - ara.TimeLeft, k, Yaptı(ComboTür.KarşılıklıTahsil), _pc.SpecialCooldownOf(Kadro.KARŞILIK));
+            });
+            failed += Check(ref total, $"⚠️ ORTAK KARŞILIK (MÜŞTEREK → KARŞILIK → KONİ): koni 360° (arkadaki {ok.yok.arka:0.00} → {ok.var.arka:0.00}), KARŞILIK'ın vuruşu bağlıya ({ok.yok.uç:0.00} → {ok.var.uç:0.00} = {ok.var.k:0.00}), KARŞILIKLI TAHSİL {(ok.var.tahsil ? "TETİKLENDİ" : "tetiklenmedi")}; KARŞILIKLI ORTAKLIK (+) beklemesi sıfır",
+                            ok.oldu && ok.yok.uç == 0f && ok.yok.arka == 0f && Yakın(ok.var.uç, ok.var.k) && Yakın(ok.var.arka, koni) && !ok.var.tahsil
+                            && ok.var.bek == 5f && ok.artı.bek == 0f, ok.var.uç);
+
+            var zk = Üç<(float bükülü, float çekH, float uzama)>(ComboTür.ZamanKirası, () =>
+            {
+                Silahla(Kadro.KİRA); Geç();
+                var e = Düşman(İleri(1.3f));
+                Silahla(Kadro.İFLAS); Geç();
+                var k = _pc.Kule;
+                float k0 = k != null ? k.Kalan : 0f;
+                float h = Hasar(e, () => ÇekAt());
+                return (_clock.Bükülü, h, k != null ? k.Kalan - k0 : -1f);
+            });
+            failed += Check(ref total, $"⚠️ ZAMAN KİRASI (KİRA → İFLAS → ÇEK): saat duruyor (×{zk.yok.bükülü:0.0} → ×{zk.var.bükülü:0.0}), çek ×1.5 ({zk.yok.çekH:0.00} → {zk.var.çekH:0.00}); ZAMAN AŞIMI (+) kule +3 sn ({zk.artı.uzama:0.0})",
+                            zk.oldu && Yakın(zk.yok.bükülü, 1f) && zk.var.bükülü == 0f && Yakın(zk.var.çekH, zk.yok.çekH * 1.5f) && Yakın(zk.var.uzama, 0f) && Yakın(zk.artı.uzama, 3f), zk.var.çekH);
             return failed;
         }
 

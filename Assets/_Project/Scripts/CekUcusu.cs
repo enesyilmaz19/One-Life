@@ -31,6 +31,8 @@ namespace TekCan
         public bool Protesto { get; set; }
         /// <summary>MUKABELE + TEDBİR (Faz 33c): vurduğu düşman 1 sn yeni saldırı başlatamaz.</summary>
         public bool Susturur { get; set; }
+        /// <summary>FAİZLİ SENET combo'su (Faz 42): her isabette saate bu kadar geri (FAİZLİ'nin savurma bedeli).</summary>
+        public float İade { get; set; }
         /// <summary>KARŞILIKSIZ+: havadayken sahibini silahsız bırakmaz (`Sahibinin` saymıyor).</summary>
         public bool Serbest { get; set; }
 
@@ -175,6 +177,7 @@ namespace TekCan
                 e.TakeDamage(_hasar * (Dönüyor ? _dönüşÇarpanı : 1f), _hasat);
                 İsabet++;
                 if (Dönüyor && Tahsilat > 0f && Clock.Instance != null) Clock.Instance.Add(Tahsilat * Clock.Instance.HasatDoyması);
+                if (İade > 0f && Clock.Instance != null) Clock.Instance.Add(İade);   // FAİZLİ SENET
                 _sahibi.Çekİsabeti(yer, e);
             }
         }

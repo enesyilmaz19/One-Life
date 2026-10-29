@@ -9,12 +9,12 @@
 | | direkt | açılır | satın alınır | toplam |
 |---|---|---|---|---|
 | ikili hedef | 24 | 24 | 48 | 96 |
-| ikili var | **24 ✅** | **24 ✅** | 0 | 48 |
+| ikili var | **24 ✅** | **24 ✅** | 24 | 72 |
 | üçlü hedef | 6 | 6 | 12 | 24 |
-| üçlü var | **6 ✅** | **6 ✅** | 0 | 12 |
-| **Parti 3 (onaylı)** | — | — | **24 ikili + 6 üçlü** | 30 |
+| üçlü var | **6 ✅** | **6 ✅** | 6 | 18 |
+| **Parti 4 (öneri)** | — | — | **24 ikili + 6 üçlü** | 30 |
 
-Direkt ve açılır combo'lar tamam (Parti 1 + 2 kodlandı). Kodda 60 combo var; kalan 60'ı satın alınır (Parti 3–4).
+Direkt ve açılır combo'lar tamam, satın alınırların yarısı kodda (Parti 1–3). Kodda 90 combo var; kalan 30 Parti 4.
 
 ## Zincir kuralı (Faz 42'de eklendi)
 
@@ -135,62 +135,119 @@ süre ayarı bütün combo'lardan sonra.
 - **A12:** çek kuleye uğrayıp sekmiyor; çek yine normal atılıyor, kulenin menzilindekilere vuruş o anda iniyor.
 - Botta: MÜŞTEREK REHİN'de bot rehineyi yakındaki düşmana fırlatıyor (oyuncu gibi) — yoksa MÜŞTEREK'in vuracağı kimse menzilde kalmıyor.
 
-## Parti 3 — satın alınır — **ONAYLANDI** (Enes 2026-10-28: *"onaylıyorum herşeyi"*), kodlanıyor
+## Parti 3 — satın alınır — **KODLANDI** (Enes'in onayı 2026-10-28: *"onaylıyorum herşeyi"*; sadeleşenler 2026-10-29: *"combolar şimdilik dursun"*)
 
-Kalan 48 satın alınır ikili + 12 üçlüyü ikiye böldüm: **Parti 3 = 24 ikili + 6 üçlü** (her silah iki ikilinin başında), Parti 4 kalanı.
-Ağırlık K8 (zaman bükme — saat durur / yavaşlar) ve K9 (evrim — odada kullandıkça büyür): satın alınan combo'nun saniyesini
-geri ödemesi lazım. Üçlülerin başı olan 11 sıra (KONİ → HACİZ, REHİN → ÇEK, …) ikiliye verilmedi.
+**Satın alma (karar a):** her ara bölgenin sunak odasında, şans sunağının iki yanında **COMBO sunağı** (turkuaz): elindeki silahlarla
+yapılabilen, alınmamış, bölgesi gelmiş satın alınır combo'lardan 2 teklif; birini alırsın (sunak başı 1). Teklif koşunun tohumundan,
+odaya dönünce aynı. Fiyat yükseltmelerin kuralıyla — ikili NADİR, üçlü EPİK fiyatında, × 0.85 (Enes 2026-10-29: *"biraz pahalı olmuş ama çok az"* — kadran `comboAltarPriceMul`;
+1. bölgede saat 300'ken 45 → **38 sn**).
+Alınca "COMBO ALINDI: …". Bir koşuda ~25 sunak odası → 60 satın alınırın yarısından azı; her koşu başka.
 
-**Satın alma — karar: (a)** (Enes 2026-10-28, öneriyi onayladı):
-- (a) **Seçilen:** her ara bölgenin sunak odasında bir **COMBO sunağı**: elindeki silahlarla yapılabilen 2 satın alınır combo teklif eder,
-  birini alırsın; fiyat yükseltmelerinkiyle aynı kural (bölgeyle büyür). Koşu başına ~25 sunak → 60'ın yarısından azı; her koşu başka.
-- (b) Boss sonrası combo sunağında, "+"nın yanında (koşu başına 5 alım — çoğu hiç görülmez).
+"Ne yapar" kodda olan hâli; "+" hâlleri benim önerim.
+
+### İkili (24)
+
+| # | sıra | ad | ne yapar (kodda) | "+" (öneri) |
+|---|---|---|---|---|
+| S1 | KONİ → TAHVİL | **TOPLU VADE** | KONİ'yle vur → TAHVİL: KONİ'nin vurduğu her düşman olgunluğa +0.25 sn yazar (basılı tutma kısalır) | ERKEN İTFA: TAHVİL'in sağ tık beklemesi sıfırlanır |
+| S2 | KONİ → KİRA | **KİRACI SÜRÜSÜ** | KONİ'yle vur → kule kur: kule KONİ'nin vurduklarına öncelik verir, her biri kulenin ömrüne +1 sn | KİRA İHTARI: öncelikliler 1 sn yeni saldırı başlatamaz |
+| S3 | FAİZLİ → KONİ | **FAİZ YÜKÜ** | FAİZLİ'yle vur → KONİ: bu odada her seferinde +%15 daha sert (en çok +%60; oda değişince baştan) | FAİZE FAİZ: o vuruşun hasadı ×2 |
+| S4 | FAİZLİ → ÇEK | **FAİZLİ SENET** | FAİZLİ'yle vur → ÇEK: çekin her isabeti FAİZLİ'nin savurma bedelini geri öder | SENET İADESİ: FAİZLİ'nin sağ tık beklemesi sıfırlanır |
+| S5 | HACİZ → İPOTEK | **İHTİYATİ TEDBİR** | HACİZ'le vur → İPOTEK: HACİZ'in vurduğu 2 sn yerine çakılır, işaret tam altına | TEDBİR ŞERHİ: çakılan 2 sn yeni saldırı başlatamaz |
+| S6 | HACİZ → TAHVİL | **VADELİ ALACAK** | HACİZ'le vur → TAHVİL: basılı tuttukça HACİZ'in vurduğu yarı hızda | ALACAK FAİZİ: HACİZ'in sağ tık beklemesi sıfırlanır |
+| S7 | İPOTEK → İFLAS | **İPOTEKLİ İFLAS** | İPOTEK'in içinde düşman varken İFLAS: saatin dibindeymiş gibi, bekleyen işaretler hemen patlar | İCRAİ SATIŞ: patlamalar içindekileri dışa iter |
+| S8 | İPOTEK → ARBİTRAJ | **ARSA SPEKÜLASYONU** | İPOTEK'in içinde düşman varken ARBİTRAJ: vuruş her yönden arkadan | ARSA SPEKÜLATÖRÜ: sonra 1 sn görünmezsin |
+| S9 | İFLAS → REHİN | **MAL KAÇIRMA** | İFLAS'la vur → REHİN: vurduğunu çekip yakalarsın; 3 sn saat akmaz | MAL GİZLEME: İFLAS'ın sağ tık beklemesi sıfırlanır |
+| S10 | İFLAS → KİRA | **TASFİYE KULESİ** | İFLAS'la vur → kule kur: atışlar İFLAS'ın çaresizlik çarpanıyla (saat azsa sert, en az ×1) | TASFİYE PAYI: kule öldürünce +1 sn (doymaya tabi) |
+| S11 | REHİN → KARŞILIK | **REHİN KARŞILIĞI** | REHİN'i fırlat → KARŞILIK: fırlatmanın hasarı birikene yazılır, KARŞILIK onu indirir | KARŞILIK İADESİ: KARŞILIK'ın sağ tık beklemesi sıfırlanır |
+| S12 | REHİN → KİRA | **İŞGAL** | REHİN'i fırlat → kule kur: kule rehinenin düştüğü yere, kirasını rehine öder | TAHLİYE DAVASI: kulenin ömrü +3 sn |
+| S13 | ÇEK → TAHVİL | **ÇEK İSKONTOSU** | ÇEK isabet etti → TAHVİL: basılı tutarken çekin her isabeti olgunluğa +0.25 sn | İSKONTO ORANI: ÇEK'in sağ tık beklemesi sıfırlanır |
+| S14 | ÇEK → KİRA | **KİRA ÇEKİ** | ÇEK isabet etti → kule kur: kule çekin son çarptığı yere, ilk 3 sn kirasız | ÇEKLE ÖDEME: ÇEK'in sağ tık beklemesi sıfırlanır |
+| S15 | KARŞILIK → İFLAS | **KARŞILIKSIZ İFLAS** | KARŞILIK'la vur → İFLAS: KARŞILIK'ın son birikiminin iki katı da iner | SAHTE İFLAS: vurulan 2 sn yarı hızda |
+| S16 | KARŞILIK → ARBİTRAJ | **KARŞI HAMLE** | KARŞILIK'la vur → ARBİTRAJ: vurduğunun arkasına geçersin, vuruş arkadan | KARŞI İHTAR: arkasına geçtiğin 1.5 sn yeni saldırı başlatamaz |
+| S17 | TAHVİL → İPOTEK | **VADELİ TAPU** | TAHVİL'i boz → İPOTEK: gecikme kademe başına −%25, hasar kademe çarpanıyla | TAPU İSKONTOSU: İPOTEK'in sağ tık beklemesi sıfırlanır |
+| S18 | TAHVİL → MÜŞTEREK | **TAHVİL ORTAKLIĞI** | TAHVİL'i boz → MÜŞTEREK: bağın süresi kademe × 2 sn uzar, yayılması kademe başına +%10 | ORTAKLIK PAYI: bağlılar 1 sn yeni saldırı başlatamaz |
+| S19 | MÜŞTEREK → FAİZLİ | **ORTAK BORÇ** | MÜŞTEREK'le bağla → FAİZLİ: savurma bedelini bağlılar öder (her birine bedel kadar vuruş, bedel sana geri) | MÜŞTEREK BORÇLU: bağlılar 2 sn yarı hızda |
+| S20 | MÜŞTEREK → ARBİTRAJ | **İÇ İŞLEM** | MÜŞTEREK'le bağla → ARBİTRAJ: bağlıların hepsi 2 sn sırtını döner — ARBİTRAJ onlara arkadan vurur | İÇERİDEN BİLGİ: ARBİTRAJ'ın sağ tık beklemesi sıfırlanır |
+| S21 | ARBİTRAJ → HACİZ | **GİZLİ HACİZ** | ARBİTRAJ'la ARKADAN vur → HACİZ: ölü bölge yok, ×1.3 | SESSİZ HACİZ: sonra 1 sn görünmezsin |
+| S22 | ARBİTRAJ → REHİN | **KAÇIRMA** | ARBİTRAJ'la ARKADAN vur → REHİN: vurduğunu çekip yakalarsın; 4 sn saat yarı akar | FİDYE: REHİN'in sağ tık beklemesi sıfırlanır |
+| S23 | KİRA → KONİ | **SÜPÜRGE KULESİ** | kule kur → KONİ: kulenin menzilindekilere de KONİ vuruşu iner | KULE SÜPÜRMESİ: kulenin ömrü +2 sn |
+| S24 | KİRA → TAHVİL | **KİRA GETİRİSİ** | kule kur → TAHVİL: kule duruyorsa basılı tutarken saat iki kat akmaz | GETİRİ PAYI: TAHVİL'in sağ tık beklemesi sıfırlanır |
+
+### Üçlü (6, 2. bölgeden)
+
+| # | sıra | ad | ne yapar (kodda) | "+" (öneri) |
+|---|---|---|---|---|
+| SÜ1 | KONİ → REHİN → İFLAS | **TOPLU İCRA** | KONİ → REHİN → İFLAS: KONİ'nin vurduklarından havuzu en azına İFLAS'ın dip vuruşu da iner; öldürürse +2 sn (doymaya tabi) | İCRA MASRAFI: KONİ'nin sağ tık beklemesi sıfırlanır |
+| SÜ2 | FAİZLİ → TAHVİL → MÜŞTEREK | **BİLEŞİK FAİZ** | FAİZLİ → TAHVİL → MÜŞTEREK: bağın yayılması TAHVİL'in kademe çarpanıyla büyür (en çok %100) | FAİZ TAHAKKUKU: bağlılar 2 sn yarı hızda |
+| SÜ3 | HACİZ → ÇEK → KİRA | **ZİNCİRLEME TAHSİL** | HACİZ → ÇEK → kule kur: kule HACİZ'in vurduğuna kilitli (menzilsiz); çekin her isabeti kulenin ömrüne +1 sn | TAHSİL EMRİ: kilitlenen 2 sn yeni saldırı başlatamaz |
+| SÜ4 | KARŞILIK → REHİN → ARBİTRAJ | **KARŞI REHİN** | KARŞILIK → REHİN → ARBİTRAJ: vuruş arkadan, KARŞILIK'ın son birikimi de üstüne | REHİN AÇIĞI: vurulan 2 sn sırtı dönük |
+| SÜ5 | MÜŞTEREK → KARŞILIK → KONİ | **ORTAK KARŞILIK** | MÜŞTEREK → KARŞILIK → KONİ: koni 360°, KARŞILIK'ın son vuruşu bağlıların her birine de iner | KARŞILIKLI ORTAKLIK: KARŞILIK'ın sağ tık beklemesi sıfırlanır |
+| SÜ6 | KİRA → İFLAS → ÇEK | **ZAMAN KİRASI** | kule kur → İFLAS → ÇEK: kule duruyorsa 3 sn saat akmaz, çek ×1.5 | ZAMAN AŞIMI: kulenin ömrü +3 sn |
+
+### Onaylı metinden sadeleşenler / değişenler (kodlarken)
+
+- **Orta adıma yine etki yok:** TOPLU İCRA'da REHİN "en zayıfı yakalamıyor" — İFLAS bitirişinde KONİ'nin vurduklarından en zayıfına dip
+  vuruşu iniyor; ORTAK KARŞILIK'ta 3 sn'lik birikim yok — KARŞILIK'ın son vuruşu bağlılara iniyor; KARŞI REHİN'de birikim rehineye binmiyor —
+  ARBİTRAJ'ın vuruşuna ekleniyor (arka çarpanıyla birlikte); ZAMAN KİRASI'nda çek kuleden dönmüyor — ×1.5.
+- **"Tutarken" → "yakalayınca":** MAL KAÇIRMA 3 sn saat durur, KAÇIRMA 4 sn yarı akar — bıraksan da sürüyor.
+- **İPOTEKLİ İFLAS · ARSA SPEKÜLASYONU:** "işaretin içindekine" değil — işaretin içinde düşman varken İFLAS / ARBİTRAJ kimi vurursa.
+- **KARŞI HAMLE:** "son karşıladığın saldırgan" değil, KARŞILIK'ın vurduğu (karşılama şart olsaydı bot da insan da zor denerdi).
+- **İÇ İŞLEM değişti:** "yayılması da arkadan" KONSORSİYUM'un aynısı oluyordu → bağlıların hepsi 2 sn sırtını döner, ARBİTRAJ onlara arkadan.
+- **GİZLİ HACİZ:** "görünmezken" olamıyordu — ARBİTRAJ'ın vuruşu görünmezliği bitiriyor; şart "ARBİTRAJ arkadan vurdu", üstüne ×1.3.
+- **ORTAK BORÇ:** her bağlıya bedel kadar vuruş (hasatsız), bedel bir kez sana geri.
+- **FAİZ YÜKÜ:** ilk seferde de +%15 (×1.15 · 1.30 · 1.45 · 1.60).
+- **BİLEŞİK FAİZ:** yayılma en çok %100.
+
+**Yolda bulunan hata:** çok hedefli vuruşlar (KONİ, KARŞILIK, TAHVİL) "son vurulan düşman"ı hiç yazmıyordu — zincirde adımları hedefsizdi,
+KARŞI HAMLE hiç tetiklenmiyordu. Artık en yakın vurulan yazılıyor (eski kapıların hiçbiri bozulmadı).
+
+## Parti 4 — satın alınır, kalan — **KODLANIYOR** (Enes 2026-10-29: *"commitle ve sonraki partiye geç"*)
+
+Son parti: **24 ikili + 6 üçlü** → toplam 120. Her silah iki ikilinin başında; üçlüler bugüne kadar tek üçlüsü olan altı silaha
+(REHİN, İPOTEK, İFLAS, ÇEK, TAHVİL, ARBİTRAJ) — böylece her silah iki üçlünün başında. Satın alma Parti 3'teki gibi.
 
 ### İkili (24)
 
 | # | sıra | ad | ne yapar | kalıp |
 |---|---|---|---|---|
-| S1 | KONİ → TAHVİL | **TOPLU VADE** | KONİ'nin vurduğu her düşman TAHVİL'in olgunluğuna +0.25 sn yazar (basılı tutma kısalır) | K8 zaman |
-| S2 | KONİ → KİRA | **KİRACI SÜRÜSÜ** | kule KONİ'nin vurduklarına öncelik verir; her biri kulenin ömrüne +1 sn | K3 · K12 |
-| S3 | FAİZLİ → KONİ | **FAİZ YÜKÜ** | bu odada her FAİZLİ → KONİ bir öncekinden +%15 sert (en çok +%60; oda bitince sıfır) | K9 evrim |
-| S4 | FAİZLİ → ÇEK | **FAİZLİ SENET** | çekin her isabeti FAİZLİ'nin savurma bedelini geri öder | K11 risk |
-| S5 | HACİZ → İPOTEK | **İHTİYATİ TEDBİR** | HACİZ'in vurduğu 2 sn yerine çakılır (yürüyemez), ipotek tam altına | K3 · K1 |
-| S6 | HACİZ → TAHVİL | **VADELİ ALACAK** | TAHVİL'i basılı tuttukça HACİZ'in vurduğu yarı hızda | K8 zaman |
-| S7 | İPOTEK → İFLAS | **İPOTEKLİ İFLAS** | işaretin içindekine İFLAS: işaret hemen patlar, İFLAS saatin dibindeymiş gibi | K12 · K5 |
-| S8 | İPOTEK → ARBİTRAJ | **ARSA SPEKÜLASYONU** | işaretin içindekilere ARBİTRAJ vuruşu her yönden arkadan | K6 konum |
-| S9 | İFLAS → REHİN | **MAL KAÇIRMA** | İFLAS'ın vurduğunu çekip yakalarsın; tutarken saat akmaz (en çok 3 sn) | K8 zaman |
-| S10 | İFLAS → KİRA | **TASFİYE KULESİ** | kulenin atışları İFLAS'ın çaresizlik çarpanıyla (saat azsa sert) | K5 bitiriş |
-| S11 | REHİN → KARŞILIK | **REHİN KARŞILIĞI** | fırlatmanın verdiği hasar birikene yazılır | K7 savunma → saldırı |
-| S12 | REHİN → KİRA | **İŞGAL** | kule rehinenin düştüğü yere kurulur, kirasını rehine öder | K3 durum + durum |
-| S13 | ÇEK → TAHVİL | **ÇEK İSKONTOSU** | havadaki çekin her isabeti TAHVİL'e +0.25 sn olgunluk | K8 zaman |
-| S14 | ÇEK → KİRA | **KİRA ÇEKİ** | kule çekin son çarptığı yere kurulur, ilk 3 sn kirasız | K12 kurulum |
-| S15 | KARŞILIK → İFLAS | **KARŞILIKSIZ İFLAS** | İFLAS'a birikimin iki katı iner | K7 savunma → saldırı |
-| S16 | KARŞILIK → ARBİTRAJ | **KARŞI HAMLE** | son karşıladığın saldırganın arkasına geçip vurursun | K6 · K7 |
-| S17 | TAHVİL → İPOTEK | **VADELİ TAPU** | ipotek gecikmesi kademe başına −%25, hasarı kademe çarpanıyla | K5 bitiriş |
-| S18 | TAHVİL → MÜŞTEREK | **TAHVİL ORTAKLIĞI** | bağın süresi kademe × 2 sn uzar, yayılması kademe başına +%10 | K5 · K3 |
-| S19 | MÜŞTEREK → FAİZLİ | **ORTAK BORÇ** | FAİZLİ'nin savurma bedelini bağlılar öder (her birinden bedel kadar hasar, saniye sana) | K11 risk |
-| S20 | MÜŞTEREK → ARBİTRAJ | **İÇ İŞLEM** | bağlıya arkadan vuruşun yayılması da "arkadan" (arka çarpanıyla) | K6 · K10 |
-| S21 | ARBİTRAJ → HACİZ | **GİZLİ HACİZ** | görünmezken HACİZ ölü bölgesiz, vurunca görünmezlik bozulmaz | K6 konum |
-| S22 | ARBİTRAJ → REHİN | **KAÇIRMA** | arkadan vurduğunu yakalarsın; tutarken saat yarı akar | K8 zaman |
-| S23 | KİRA → KONİ | **SÜPÜRGE KULESİ** | kulenin menzilindekilere de KONİ vuruşu iner | K12 kurulum + tetik |
-| S24 | KİRA → TAHVİL | **KİRA GETİRİSİ** | kule durdukça TAHVİL basılı tutarken saat akmaz | K8 zaman |
+| T1 | KONİ → ÇEK | **TOPLU TAHSİLAT** | çek KONİ'nin vurduklarının her birine bir kez uğrar | K10 zincir |
+| T2 | KONİ → ARBİTRAJ | **SÜRÜDEN AYIR** | KONİ'nin vurduklarından en uzaktakinin arkasına geçersin, vuruş arkadan | K6 konum |
+| T3 | FAİZLİ → REHİN | **BORÇ ESARETİ** | FAİZLİ'nin vurduğunu çekip yakalarsın; tuttukça her sn savurma bedeli kadar sana akar | K3 · K11 |
+| T4 | FAİZLİ → KİRA | **FAİZLİ KİRA** | kule kurulurken 4 savurma bedeli ödersin, kule ×2 sert atar | K11 risk |
+| T5 | HACİZ → MÜŞTEREK | **HACİZ ORTAKLIĞI** | HACİZ'in vurduğu, menzil sınırı olmadan MÜŞTEREK'in vurduğuna bağlanır | K3 · K10 |
+| T6 | HACİZ → KİRA | **KİRA HACZİ** | kule HACİZ'in vurduğunun yanına kurulur, ona ×1.5 ateş eder | K12 kurulum |
+| T7 | İPOTEK → FAİZLİ | **TAPU KREDİSİ** | işaretin içindekine FAİZLİ ×2, savurma bedeli geri | K12 · K11 |
+| T8 | İPOTEK → TAHVİL | **TAPU VADESİ** | basılı tutma 1. kademe dolu başlar; işaret patlarsa TAHVİL'e +1 kademe | K8 zaman |
+| T9 | İFLAS → İPOTEK | **İFLAS İPOTEĞİ** | işaret İFLAS'ın vurduğunun altına, gecikme ×0.2, hasarı İFLAS'ın çaresizliğiyle | K5 bitiriş |
+| T10 | İFLAS → MÜŞTEREK | **İFLAS ORTAKLIĞI** | İFLAS'ın vurduğu MÜŞTEREK'in vurduğuna bağlanır; bağın yayılması İFLAS'ın çaresizliğiyle | K3 · K5 |
+| T11 | REHİN → FAİZLİ | **REHİNLİ KREDİ** | fırlatılan rehineye FAİZLİ ×1.5, bedelsiz | K11 risk |
+| T12 | REHİN → TAHVİL | **REHİN VADESİ** | fırlatılan rehine 3 sn yerine çakılı; basılı tutma 1. kademe dolu başlar | K8 · K3 |
+| T13 | ÇEK → FAİZLİ | **ÇEKLİ KREDİ** | havada çek varken FAİZLİ ×1.3 ve bedel geri | K11 risk |
+| T14 | ÇEK → KARŞILIK | **KARŞILIKLI ÇEK** | çekin her isabeti birikene 0.5 sn yazar (KARŞILIK indirene dek) | K7 savunma → saldırı |
+| T15 | KARŞILIK → HACİZ | **KARŞI HACİZ** | KARŞILIK'ın birikimi HACİZ'e biner, ölü bölge yok | K7 · K5 |
+| T16 | KARŞILIK → KİRA | **KİRA KARŞILIĞI** | kule birikim kadar sn kirasız başlar | K7 · K12 |
+| T17 | TAHVİL → REHİN | **VADELİ REHİN** | REHİN kademe kadar uzaktan yakalar (menzil ×kademe), fırlatma kademe çarpanıyla | K5 bitiriş |
+| T18 | TAHVİL → ÇEK | **VADELİ ÇEK** | çek kademe kadar fazla seker, kademe çarpanıyla | K5 · K10 |
+| T19 | MÜŞTEREK → ÇEK | **SENET ORTAKLIĞI** | çek bağlıya çarpınca bağ tam (%100) yayar | K10 · K3 |
+| T20 | MÜŞTEREK → TAHVİL | **ORTAK VADE** | bağ yaşadıkça TAHVİL basılı tutarken saat iki kat akmaz | K8 zaman |
+| T21 | ARBİTRAJ → İPOTEK | **GİZLİ İPOTEK** | arkadan vurduysan işaret hedefin altına, 1.5 sn görünmezsin | K6 · K1 |
+| T22 | ARBİTRAJ → KİRA | **GİZLİ KULE** | arkadan vurduysan kulenin atışları "arkadan" (ARBİTRAJ'ın arka çarpanıyla) | K6 · K12 |
+| T23 | KİRA → HACİZ | **KULE HACZİ** | kulenin menzilindekilere HACİZ ölü bölgesiz, ×1.3 | K12 · K5 |
+| T24 | KİRA → REHİN | **KİRACI REHİN** | REHİN kulenin son vurduğunu nerede olursa olsun çekip yakalar | K12 · K2 |
 
 ### Üçlü (6, 2. bölgeden)
 
 | # | sıra | ad | ne yapar | kalıp |
 |---|---|---|---|---|
-| SÜ1 | KONİ → REHİN → İFLAS | **TOPLU İCRA** | KONİ'nin vurduklarından havuzu en az olanı yakalarsın, İFLAS onu dip vuruşuyla bitirir; öldürürse +2 sn (doymaya tabi) | K2 · K1 |
-| SÜ2 | FAİZLİ → TAHVİL → MÜŞTEREK | **BİLEŞİK FAİZ** | bağ süresince bağa inen her hasar TAHVİL'in kademe çarpanıyla yayılır | K9 · K3 |
-| SÜ3 | HACİZ → ÇEK → KİRA | **ZİNCİRLEME TAHSİL** | kule HACİZ'in vurduğuna kilitli kurulur; çekin her isabeti kulenin ömrüne +1 sn | K10 · K12 |
-| SÜ4 | KARŞILIK → REHİN → ARBİTRAJ | **KARŞI REHİN** | birikim yakaladığın rehineye biner; ARBİTRAJ'la arkadan vurunca rehine ve arkasındakiler birikimi yer | K7 · K6 |
-| SÜ5 | MÜŞTEREK → KARŞILIK → KONİ | **ORTAK KARŞILIK** | 3 sn bağlılara inen her hasar birikene yazılır; KONİ birikimi 360° boşaltır | K7 · K3 |
-| SÜ6 | KİRA → İFLAS → ÇEK | **ZAMAN KİRASI** | kule durdukça 3 sn saat akmaz; çek İFLAS'ın vurduğuna kuleden döner | K8 · K10 |
+| TÜ1 | REHİN → İFLAS → ÇEK | **İFLAS SENEDİ** | çek İFLAS'ın çaresizliğiyle atılır, 2 kez fazla seker | K5 · K10 |
+| TÜ2 | İPOTEK → KARŞILIK → KONİ | **TAPU KARŞILIĞI** | bekleyen işaretler patlar, vurdukları kadar birikime yazılır; KONİ birikimi indirir | K12 · K7 |
+| TÜ3 | İFLAS → ARBİTRAJ → HACİZ | **ARKADAN İCRA** | HACİZ İFLAS'ın çaresizliğiyle ve arkadan (arka çarpanı), ölü bölgesiz | K5 · K6 |
+| TÜ4 | ÇEK → REHİN → KİRA | **SENETLİ KİRA** | kule rehinenin düştüğü yere, 5 sn kirasız, ömrü +5 sn | K12 · K2 |
+| TÜ5 | TAHVİL → KARŞILIK → İFLAS | **VADELİ KARŞILIK** | İFLAS'a KARŞILIK'ın birikimi TAHVİL'in kademe çarpanıyla iner | K5 · K7 |
+| TÜ6 | ARBİTRAJ → ÇEK → MÜŞTEREK | **GİZLİ ORTAKLIK** | çekin çarptıkları (en çok 4) MÜŞTEREK'in vurduğuyla tek bağa, bağlılar 2 sn sırtı dönük | K10 · K6 |
 
 Notlar:
-- Hiçbir sıra tekrar etmiyor; Parti 3'ün ikilileri hiçbir üçlünün başı değil.
-- ⚠️ K8'liler (saat akmaz / yarı akar) yasanın kalbine dokunuyor: saat = can = para. Satın alınır olmaları bilerek — saniyeyle alınan
-  şey saniye kazandırmalı. Aşırı gelirse süre ayarında (bütün combo'lardan sonra) kısarız.
-- "+" hâllerini kodlarken öneririm.
-
-## Sıradaki partiler (plan)
-- **Parti 4 — satın alınır 24 ikili + 6 üçlü:** kalan sıralar (üçlü başları dahil, zincir kuralıyla), Parti 3'ün satın alma kararına göre.
+- Hiçbir sıra tekrar etmiyor; Parti 4'ün ikilileri hiçbir üçlünün başı değil. Üçlülerin sonları bazı ikililerle aynı (TÜ2 ⊃ KARŞILIKLI
+  TAHSİL, TÜ3 ⊃ GİZLİ HACİZ, TÜ4 ⊃ İŞGAL, TÜ5 ⊃ KARŞILIKSIZ İFLAS, TÜ6 ⊃ ZİNCİRLEME CİRO) — üçlü önce gelir, kapı bunu da ölçer.
+- "+" hâllerini kodlarken öneririm. Bu partiden sonra 120 combo tamam; sonra süre ayarı (senin oynayışınla, #20).

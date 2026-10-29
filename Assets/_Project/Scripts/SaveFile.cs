@@ -95,6 +95,9 @@ namespace TekCan
         public int[] loadout = new int[0];
         public int[] comboUpgrades = new int[0];
         public int[] comboAltarBought = new int[0];
+        // Faz 42 Parti 3 — satın alınan combo'lar (koşu boyu) ve ara bölge COMBO sunağının alımı (sunak anahtarı başına)
+        public int[] comboBought = new int[0];
+        public int[] comboOfferBought = new int[0];
     }
 
     /// <summary>

@@ -389,7 +389,10 @@ hâli var (AĞIL, PUSU, İHTİYATİ HACİZ …) — "+" yeni bir etki ekliyor, s
 alınabilir"*; dağılım ¼ direkt · ¼ açılır · ½ satın alınır). Liste ve partiler: `docs/COMBOLAR.md`. Parti 1 (20 direkt: 15 ikili +
 5 üçlü) kodda → **direkt combo'lar tamam (24 ikili + 6 üçlü), toplam 42.** Parti 2 (18 açılır, Enes 2026-10-27: *"hem epik hem efsanevi
 açsın"*): combo'yu silahın MEVCUT yükseltmesi açıyor — ikilileri EPİK, üçlüleri EFSANEVİ; yükseltme hem kendi etkisini verir hem combo
-açar → **açılırlar da tamam, toplam 60.** Kalan 60 satın alınır (Parti 3–4). Yeni kural: ikili bir üçlünün ilk iki adımıysa combo
+açar → **açılırlar da tamam, toplam 60.** Parti 3 (30 satın alınır, Enes 2026-10-28): her ara bölgenin sunak odasında COMBO sunağı —
+elindeki silahlarla yapılabilen 2 teklif, birini saniyeyle alırsın (fiyat yükseltme kuralıyla). Satın alınırlarda saati büken combo'lar var
+(MAL KAÇIRMA 3 sn durdurur, KAÇIRMA yarı akıtır, ZAMAN KİRASI durdurur): saniyeyle alınan şey saniye kazandırıyor — süre ayarında bakılacak.
+Kodda 90; kalan 30 Parti 4. Yeni kural: ikili bir üçlünün ilk iki adımıysa combo
 bitince zincir silinmez, üçlüye devam edilir (FAİZLİ → HACİZ = ALACAK DEVRİ, → İFLAS = İCRA TAKİBİ). Bir sıra hem üçlünün sonu hem
 ikili olabilir — üçlü önce gelir. Bazı bitirişlerin şartı var (ARKADAN DOLANIM: ARBİTRAJ arkadan vurmuş olmalı; VADESİ GELMİŞ
 POZİSYON: TAHVİL 2. kademe; MÜŞTEREK KUSUR: bağ olmalı) — şart yoksa vuruş düz adım sayılır.

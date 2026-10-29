@@ -225,7 +225,12 @@ namespace TekCan
                            // Faz 42 Parti 2 — açılır: ikilileri silahın EPİK, üçlüleri EFSANEVİ yükseltmesi açar
                            AcizVesikası, KonutKredisi, HacizMemuru, TapuTevhidi, İflasDairesi, MüşterekRehin, İbraz,
                            TeminatAkçesi, KiraSertifikası, Hacizİştiraki, Hileliİflas, KiraTahsilatı,
-                           İstihkak, İpotekZinciri, İflasErtelemesi, ProtestoluSenet, VadeSonuTahsilatı, SpekülatifAtak }
+                           İstihkak, İpotekZinciri, İflasErtelemesi, ProtestoluSenet, VadeSonuTahsilatı, SpekülatifAtak,
+                           // Faz 42 Parti 3 — satın alınır (ara bölge sunak odasının COMBO sunağında, saniyeyle)
+                           TopluVade, KiracıSürüsü, FaizYükü, FaizliSenet, İhtiyatiTedbir, VadeliAlacak, İpotekliİflas,
+                           ArsaSpekülasyonu, MalKaçırma, TasfiyeKulesi, RehinKarşılığı, İşgal, Çekİskontosu, KiraÇeki,
+                           Karşılıksızİflas, KarşıHamle, VadeliTapu, TahvilOrtaklığı, OrtakBorç, İçİşlem, GizliHaciz, Kaçırma,
+                           SüpürgeKulesi, KiraGetirisi, TopluİCRA, BileşikFaiz, ZincirlemeTahsil, KarşıRehin, OrtakKarşılık, ZamanKirası }
 
     /// <summary>
     /// Faz 30 — COMBO (Enes: "hızlı silah geçişleri ile combo saldırılar… bazı silahlarla 3'lü
@@ -243,6 +248,8 @@ namespace TekCan
             public int MinBölge;
             /// <summary>Faz 33c: bu yükseltme alınmadan combo kapalı (null = baştan açık).</summary>
             public SilahYükseltme? Açan;
+            /// <summary>Faz 42 Parti 3: satın alınır — COMBO sunağında alınmadan kapalı.</summary>
+            public bool Satın;
         }
 
         public static readonly Tanım[] Tümü =
@@ -434,6 +441,97 @@ namespace TekCan
             new Tanım { Ad = "SPEKÜLATİF ATAK", Sıra = () => new[] { Kadro.ARBİTRAJ, Kadro.MÜŞTEREK, Kadro.ÇEK }, MinBölge = 1, Açan = SilahYükseltme.KısaPozisyon,
                         NeYapar = "ARBİTRAJ → MÜŞTEREK → ÇEK: bağlıların her birine çek vuruşu 'arkadan' iner (ARBİTRAJ'ın arka çarpanıyla)",
                         ArtıAd = "KISA SATIŞ", ArtıNeYapar = "bağlılar 2 sn sırtı dönük" },
+            // Faz 42 Parti 3 — satın alınır (Enes 2026-10-28: "onaylıyorum herşeyi"); "+" hâlleri öneri
+            new Tanım { Ad = "TOPLU VADE", Sıra = () => new[] { Kadro.KONİ, Kadro.TAHVİL }, Satın = true,
+                        NeYapar = "KONİ'yle vur → TAHVİL: KONİ'nin vurduğu her düşman olgunluğa +0.25 sn yazar (basılı tutma kısalır)",
+                        ArtıAd = "ERKEN İTFA", ArtıNeYapar = "TAHVİL'in sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "KİRACI SÜRÜSÜ", Sıra = () => new[] { Kadro.KONİ, Kadro.KİRA }, Satın = true,
+                        NeYapar = "KONİ'yle vur → kule kur: kule KONİ'nin vurduklarına öncelik verir, her biri kulenin ömrüne +1 sn",
+                        ArtıAd = "KİRA İHTARI", ArtıNeYapar = "öncelikliler 1 sn yeni saldırı başlatamaz" },
+            new Tanım { Ad = "FAİZ YÜKÜ", Sıra = () => new[] { Kadro.FAİZLİ, Kadro.KONİ }, Satın = true,
+                        NeYapar = "FAİZLİ'yle vur → KONİ: bu odada her seferinde +%15 daha sert (en çok +%60; oda değişince baştan)",
+                        ArtıAd = "FAİZE FAİZ", ArtıNeYapar = "o vuruşun hasadı ×2" },
+            new Tanım { Ad = "FAİZLİ SENET", Sıra = () => new[] { Kadro.FAİZLİ, Kadro.ÇEK }, Satın = true,
+                        NeYapar = "FAİZLİ'yle vur → ÇEK: çekin her isabeti FAİZLİ'nin savurma bedelini geri öder",
+                        ArtıAd = "SENET İADESİ", ArtıNeYapar = "FAİZLİ'nin sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "İHTİYATİ TEDBİR", Sıra = () => new[] { Kadro.HACİZ, Kadro.İPOTEK }, Satın = true,
+                        NeYapar = "HACİZ'le vur → İPOTEK: HACİZ'in vurduğu 2 sn yerine çakılır, işaret tam altına",
+                        ArtıAd = "TEDBİR ŞERHİ", ArtıNeYapar = "çakılan 2 sn yeni saldırı başlatamaz" },
+            new Tanım { Ad = "VADELİ ALACAK", Sıra = () => new[] { Kadro.HACİZ, Kadro.TAHVİL }, Satın = true,
+                        NeYapar = "HACİZ'le vur → TAHVİL: basılı tuttukça HACİZ'in vurduğu yarı hızda",
+                        ArtıAd = "ALACAK FAİZİ", ArtıNeYapar = "HACİZ'in sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "İPOTEKLİ İFLAS", Sıra = () => new[] { Kadro.İPOTEK, Kadro.İFLAS }, Satın = true,
+                        NeYapar = "İPOTEK'in içinde düşman varken İFLAS: saatin dibindeymiş gibi, bekleyen işaretler hemen patlar",
+                        ArtıAd = "İCRAİ SATIŞ", ArtıNeYapar = "patlamalar içindekileri dışa iter" },
+            new Tanım { Ad = "ARSA SPEKÜLASYONU", Sıra = () => new[] { Kadro.İPOTEK, Kadro.ARBİTRAJ }, Satın = true,
+                        NeYapar = "İPOTEK'in içinde düşman varken ARBİTRAJ: vuruş her yönden arkadan",
+                        ArtıAd = "ARSA SPEKÜLATÖRÜ", ArtıNeYapar = "sonra 1 sn görünmezsin" },
+            new Tanım { Ad = "MAL KAÇIRMA", Sıra = () => new[] { Kadro.İFLAS, Kadro.REHİN }, Satın = true,
+                        NeYapar = "İFLAS'la vur → REHİN: vurduğunu çekip yakalarsın; 3 sn saat akmaz",
+                        ArtıAd = "MAL GİZLEME", ArtıNeYapar = "İFLAS'ın sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "TASFİYE KULESİ", Sıra = () => new[] { Kadro.İFLAS, Kadro.KİRA }, Satın = true,
+                        NeYapar = "İFLAS'la vur → kule kur: atışlar İFLAS'ın çaresizlik çarpanıyla (saat azsa sert, en az ×1)",
+                        ArtıAd = "TASFİYE PAYI", ArtıNeYapar = "kule öldürünce +1 sn (doymaya tabi)" },
+            new Tanım { Ad = "REHİN KARŞILIĞI", Sıra = () => new[] { Kadro.REHİN, Kadro.KARŞILIK }, Satın = true,
+                        NeYapar = "REHİN'i fırlat → KARŞILIK: fırlatmanın hasarı birikene yazılır, KARŞILIK onu indirir",
+                        ArtıAd = "KARŞILIK İADESİ", ArtıNeYapar = "KARŞILIK'ın sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "İŞGAL", Sıra = () => new[] { Kadro.REHİN, Kadro.KİRA }, Satın = true,
+                        NeYapar = "REHİN'i fırlat → kule kur: kule rehinenin düştüğü yere, kirasını rehine öder",
+                        ArtıAd = "TAHLİYE DAVASI", ArtıNeYapar = "kulenin ömrü +3 sn" },
+            new Tanım { Ad = "ÇEK İSKONTOSU", Sıra = () => new[] { Kadro.ÇEK, Kadro.TAHVİL }, Satın = true,
+                        NeYapar = "ÇEK isabet etti → TAHVİL: basılı tutarken çekin her isabeti olgunluğa +0.25 sn",
+                        ArtıAd = "İSKONTO ORANI", ArtıNeYapar = "ÇEK'in sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "KİRA ÇEKİ", Sıra = () => new[] { Kadro.ÇEK, Kadro.KİRA }, Satın = true,
+                        NeYapar = "ÇEK isabet etti → kule kur: kule çekin son çarptığı yere, ilk 3 sn kirasız",
+                        ArtıAd = "ÇEKLE ÖDEME", ArtıNeYapar = "ÇEK'in sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "KARŞILIKSIZ İFLAS", Sıra = () => new[] { Kadro.KARŞILIK, Kadro.İFLAS }, Satın = true,
+                        NeYapar = "KARŞILIK'la vur → İFLAS: KARŞILIK'ın son birikiminin iki katı da iner",
+                        ArtıAd = "SAHTE İFLAS", ArtıNeYapar = "vurulan 2 sn yarı hızda" },
+            new Tanım { Ad = "KARŞI HAMLE", Sıra = () => new[] { Kadro.KARŞILIK, Kadro.ARBİTRAJ }, Satın = true,
+                        NeYapar = "KARŞILIK'la vur → ARBİTRAJ: vurduğunun arkasına geçersin, vuruş arkadan",
+                        ArtıAd = "KARŞI İHTAR", ArtıNeYapar = "arkasına geçtiğin 1.5 sn yeni saldırı başlatamaz" },
+            new Tanım { Ad = "VADELİ TAPU", Sıra = () => new[] { Kadro.TAHVİL, Kadro.İPOTEK }, Satın = true,
+                        NeYapar = "TAHVİL'i boz → İPOTEK: gecikme kademe başına −%25, hasar kademe çarpanıyla",
+                        ArtıAd = "TAPU İSKONTOSU", ArtıNeYapar = "İPOTEK'in sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "TAHVİL ORTAKLIĞI", Sıra = () => new[] { Kadro.TAHVİL, Kadro.MÜŞTEREK }, Satın = true,
+                        NeYapar = "TAHVİL'i boz → MÜŞTEREK: bağın süresi kademe × 2 sn uzar, yayılması kademe başına +%10",
+                        ArtıAd = "ORTAKLIK PAYI", ArtıNeYapar = "bağlılar 1 sn yeni saldırı başlatamaz" },
+            new Tanım { Ad = "ORTAK BORÇ", Sıra = () => new[] { Kadro.MÜŞTEREK, Kadro.FAİZLİ }, Satın = true,
+                        NeYapar = "MÜŞTEREK'le bağla → FAİZLİ: savurma bedelini bağlılar öder (her birine bedel kadar vuruş, bedel sana geri)",
+                        ArtıAd = "MÜŞTEREK BORÇLU", ArtıNeYapar = "bağlılar 2 sn yarı hızda" },
+            new Tanım { Ad = "İÇ İŞLEM", Sıra = () => new[] { Kadro.MÜŞTEREK, Kadro.ARBİTRAJ }, Satın = true,
+                        NeYapar = "MÜŞTEREK'le bağla → ARBİTRAJ: bağlıların hepsi 2 sn sırtını döner — ARBİTRAJ onlara arkadan vurur",
+                        ArtıAd = "İÇERİDEN BİLGİ", ArtıNeYapar = "ARBİTRAJ'ın sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "GİZLİ HACİZ", Sıra = () => new[] { Kadro.ARBİTRAJ, Kadro.HACİZ }, Satın = true,
+                        NeYapar = "ARBİTRAJ'la ARKADAN vur → HACİZ: ölü bölge yok, ×1.3",
+                        ArtıAd = "SESSİZ HACİZ", ArtıNeYapar = "sonra 1 sn görünmezsin" },
+            new Tanım { Ad = "KAÇIRMA", Sıra = () => new[] { Kadro.ARBİTRAJ, Kadro.REHİN }, Satın = true,
+                        NeYapar = "ARBİTRAJ'la ARKADAN vur → REHİN: vurduğunu çekip yakalarsın; 4 sn saat yarı akar",
+                        ArtıAd = "FİDYE", ArtıNeYapar = "REHİN'in sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "SÜPÜRGE KULESİ", Sıra = () => new[] { Kadro.KİRA, Kadro.KONİ }, Satın = true,
+                        NeYapar = "kule kur → KONİ: kulenin menzilindekilere de KONİ vuruşu iner",
+                        ArtıAd = "KULE SÜPÜRMESİ", ArtıNeYapar = "kulenin ömrü +2 sn" },
+            new Tanım { Ad = "KİRA GETİRİSİ", Sıra = () => new[] { Kadro.KİRA, Kadro.TAHVİL }, Satın = true,
+                        NeYapar = "kule kur → TAHVİL: kule duruyorsa basılı tutarken saat iki kat akmaz",
+                        ArtıAd = "GETİRİ PAYI", ArtıNeYapar = "TAHVİL'in sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "TOPLU İCRA", Sıra = () => new[] { Kadro.KONİ, Kadro.REHİN, Kadro.İFLAS }, MinBölge = 1, Satın = true,
+                        NeYapar = "KONİ → REHİN → İFLAS: KONİ'nin vurduklarından havuzu en azına İFLAS'ın dip vuruşu da iner; öldürürse +2 sn (doymaya tabi)",
+                        ArtıAd = "İCRA MASRAFI", ArtıNeYapar = "KONİ'nin sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "BİLEŞİK FAİZ", Sıra = () => new[] { Kadro.FAİZLİ, Kadro.TAHVİL, Kadro.MÜŞTEREK }, MinBölge = 1, Satın = true,
+                        NeYapar = "FAİZLİ → TAHVİL → MÜŞTEREK: bağın yayılması TAHVİL'in kademe çarpanıyla büyür (en çok %100)",
+                        ArtıAd = "FAİZ TAHAKKUKU", ArtıNeYapar = "bağlılar 2 sn yarı hızda" },
+            new Tanım { Ad = "ZİNCİRLEME TAHSİL", Sıra = () => new[] { Kadro.HACİZ, Kadro.ÇEK, Kadro.KİRA }, MinBölge = 1, Satın = true,
+                        NeYapar = "HACİZ → ÇEK → kule kur: kule HACİZ'in vurduğuna kilitli (menzilsiz); çekin her isabeti kulenin ömrüne +1 sn",
+                        ArtıAd = "TAHSİL EMRİ", ArtıNeYapar = "kilitlenen 2 sn yeni saldırı başlatamaz" },
+            new Tanım { Ad = "KARŞI REHİN", Sıra = () => new[] { Kadro.KARŞILIK, Kadro.REHİN, Kadro.ARBİTRAJ }, MinBölge = 1, Satın = true,
+                        NeYapar = "KARŞILIK → REHİN → ARBİTRAJ: vuruş arkadan, KARŞILIK'ın son birikimi de üstüne",
+                        ArtıAd = "REHİN AÇIĞI", ArtıNeYapar = "vurulan 2 sn sırtı dönük" },
+            new Tanım { Ad = "ORTAK KARŞILIK", Sıra = () => new[] { Kadro.MÜŞTEREK, Kadro.KARŞILIK, Kadro.KONİ }, MinBölge = 1, Satın = true,
+                        NeYapar = "MÜŞTEREK → KARŞILIK → KONİ: koni 360°, KARŞILIK'ın son vuruşu bağlıların her birine de iner",
+                        ArtıAd = "KARŞILIKLI ORTAKLIK", ArtıNeYapar = "KARŞILIK'ın sağ tık beklemesi sıfırlanır" },
+            new Tanım { Ad = "ZAMAN KİRASI", Sıra = () => new[] { Kadro.KİRA, Kadro.İFLAS, Kadro.ÇEK }, MinBölge = 1, Satın = true,
+                        NeYapar = "kule kur → İFLAS → ÇEK: kule duruyorsa 3 sn saat akmaz, çek ×1.5",
+                        ArtıAd = "ZAMAN AŞIMI", ArtıNeYapar = "kulenin ömrü +3 sn" },
         };
 
         public static int Sayı => Tümü.Length;
@@ -466,8 +564,64 @@ namespace TekCan
             var t = Bu(c);
             if (bölge < t.MinBölge) return false;
             if (t.Açan.HasValue && !SilahSunağı.Var(t.Açan.Value)) return false;      // Faz 33c: açan yükseltme şart
+            if (t.Satın && !Alındı(c)) return false;                                   // Faz 42 Parti 3: satın alınmış olmalı
             foreach (var w in t.Sıra()) if (w < 0 || !Kadro.Açık(w)) return false;
             return true;
+        }
+
+        // ── Faz 42 Parti 3: SATIN ALMA — ara bölge sunak odasının COMBO sunağı (Enes 2026-10-28, öneri a) ──
+        public const int SatınTeklifSayısı = 2;
+
+        public static bool Alındı(ComboTür c)
+        {
+            var s = SaveFile.Current;
+            int i = (int)c;
+            return s != null && s.comboBought != null && i < s.comboBought.Length && s.comboBought[i] > 0;
+        }
+
+        /// <summary>Bu sunaktan kaç combo alındı (sunak başı 1).</summary>
+        public static int SatınGrupAlımı(int anahtar)
+        {
+            var s = SaveFile.Current;
+            return s != null && s.comboOfferBought != null && anahtar >= 0 && anahtar < s.comboOfferBought.Length ? s.comboOfferBought[anahtar] : 0;
+        }
+
+        /// <summary>Satın alınan combo'yu kayda yaz — kaydın TEK yazma yolu (anahtar &lt; 0: sunak sayılmaz, öz-denetim/otopilot).</summary>
+        public static void SatınAl(ComboTür c, int anahtar)
+        {
+            var s = SaveFile.Current;
+            if (s == null) return;
+            s.comboBought = SaveFile.Büyüt(s.comboBought, Sayı);
+            s.comboBought[(int)c] = 1;
+            if (anahtar < 0) return;
+            s.comboOfferBought = SaveFile.Büyüt(s.comboOfferBought, anahtar + 1);
+            s.comboOfferBought[anahtar]++;
+        }
+
+        /// <summary>
+        /// COMBO sunağının teklifi: satın alınır, alınmamış, silahları açık, bölgesi gelmiş combo'lardan rastgele 2. Tohum koşu + sunak —
+        /// odaya dönünce aynı teklif. Sunak teklifini ilk sorduğunda saklar (alım yapınca kalanı kaymasın).
+        /// </summary>
+        public static List<ComboTür> SatınTeklif(int anahtar, int bölge)
+        {
+            var aday = new List<ComboTür>();
+            for (int i = 0; i < Sayı; i++)
+            {
+                var c = (ComboTür)i; var t = Bu(c);
+                if (!t.Satın || Alındı(c) || bölge < t.MinBölge) continue;
+                bool açık = true;
+                foreach (var w in t.Sıra()) if (w < 0 || !Kadro.Açık(w)) açık = false;
+                if (açık) aday.Add(c);
+            }
+            var r = new System.Random(unchecked(SilahSunağı.Tohum * 53 + anahtar * 6151));
+            var seçilen = new List<ComboTür>();
+            while (seçilen.Count < SatınTeklifSayısı && aday.Count > 0)
+            {
+                int i = r.Next(aday.Count);
+                seçilen.Add(aday[i]);
+                aday.RemoveAt(i);
+            }
+            return seçilen;
         }
 
         public static bool Artı(ComboTür c)

@@ -729,3 +729,11 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   yerde EFSANEVİ buldu. **Kural:** bir partiyi test eden kod partiyi adıyla seçsin (sıra aralığı), ortak bir özellikle değil.
 - **Merkezdekinin itilecek yönü yok (Faz 42):** İPOTEK ZİNCİRİ'nin "+"sı (patlama dışa iter) testte 0 itti — ölçtüğüm düşman işaretin tam
   merkezindeydi, itme yönü sıfır vektör. Oyunda nadir ama testte her zaman. **Kural:** yönlü bir etkiyi (itme, çekme) merkezden ölçme.
+- **Tek hedefli silahlarda kurulan kural çok hedeflide sessizce boştu (Faz 42):** "son vurulan" yalnız tek hedefli vuruşta yazılıyordu; çok
+  hedefli KONİ / KARŞILIK / TAHVİL'in zincir adımı hedefsizdi. 33c'den beri hiçbir combo buna bakmadığı için görünmedi; ilk bakan (KARŞI
+  HAMLE) hiç tetiklenmedi. Teşhis: testin içinde `ComboHazır` ve `Şart`'ı ayrı ayrı yazdırmak — "hazır ama şart değil" tek koşuda gösterdi.
+  **Kural:** bir alanı yazan yerleri say; dallanan bir fonksiyonun (tek / çok hedef) her dalı aynı sözleşmeyi yazıyor mu bak.
+- **Bozma iki mutasyonu birden kırmızı yapıyorsa test bir şeyi tesadüfen ölçüyor (Faz 42):** BİLEŞİK FAİZ, üçlü önceliğini ancak satın kilidi
+  de kalkınca yakaladı — önceliği sınayan rakip ikili testte açık değildi. **Kural:** öncelik testi rakibi kendisi açsın (ZİNCİRLEME TAHSİL'de
+  KİRA ÇEKİ, İPOTEK ZİNCİRİ'nde İBRAZ gibi).
+

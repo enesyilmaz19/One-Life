@@ -2012,9 +2012,11 @@ namespace TekCan
         string _adımNotu = "";                                                  // başarısız denemede adım adım ne oldu
         /// <summary>Bağ isteyen combo: MÜŞTEREK adımı ZİNCİRLEME (sağ tık) — oyuncu gibi, tek basışta bağ.</summary>
         static bool BağGerekli(ComboTür c) => c == ComboTür.MüşterekKusur || c == ComboTür.OrtaklığınTasfiyesi
-                                            || c == ComboTür.Hacizİştiraki || c == ComboTür.SpekülatifAtak;
+                                            || c == ComboTür.Hacizİştiraki || c == ComboTür.SpekülatifAtak
+                                            || c == ComboTür.OrtakBorç || c == ComboTür.İçİşlem || c == ComboTür.OrtakKarşılık;
         /// <summary>İlk adımı arkadan isteyen combo: önce AÇIK POZİSYON (görünmezken her vuruş arkadan).</summary>
-        static bool ArkadanGerekli(ComboTür c) => c == ComboTür.Spekülasyon || c == ComboTür.ArkadanDolanım || c == ComboTür.Hileliİflas;
+        static bool ArkadanGerekli(ComboTür c) => c == ComboTür.Spekülasyon || c == ComboTür.ArkadanDolanım || c == ComboTür.Hileliİflas
+                                                || c == ComboTür.GizliHaciz || c == ComboTür.Kaçırma;
         /// <summary>İlk adımı sağ tıkla yapılan combo'nun silahı (ZİNCİRLEME · AÇIK POZİSYON) — deneme beklemesi bitince başlasın.</summary>
         static int? Özeli(ComboTür c) => BağGerekli(c) ? Kadro.MÜŞTEREK
                                         : ArkadanGerekli(c) ? Kadro.ARBİTRAJ : (int?)null;
@@ -2092,13 +2094,13 @@ namespace TekCan
             else
             {
                 if (ilk && ArkadanGerekli(c)) { _sağ = true; yield return Bekle(0.15f); }   // AÇIK POZİSYON: her vuruş arkadan
-                if (ilk && silah == Kadro.REHİN)                                 // yakala (adım değil), sonra fırlat
+                if (adım && silah == Kadro.REHİN)                                // yakala (adım değil), sonra fırlat — ortadaki REHİN de (TOPLU İCRA · KARŞI REHİN)
                 {
                     _sol = true; yield return null;
                     float t1 = Şimdi;
                     while (Oyuncu != null && Oyuncu.Attacking && Şimdi - t1 < 1f) yield return null;
-                    var at = EnYakınBaşka(d);                                   // oyuncu gibi yakındakine fırlat: rehine onun dibine düşer (MÜŞTEREK REHİN)
-                    if (at != null && c == ComboTür.MüşterekRehin)               // bitiriş MÜŞTEREK (menzil 2.6): fırlatmadan önce ona yaklaş
+                    var at = EnYakınBaşka(d);                                   // oyuncu gibi yakındakine fırlat: rehine onun dibine düşer
+                    if (at != null && ilk)                                       // ilk adımda zaman var: yaklaş — bitiriş kısa menzilli olabilir (MÜŞTEREK · KARŞILIK)
                         yield return Git(at.transform.position, 1.8f + at.Radius, 2f);
                     if (at != null) NişanAl(at.transform.position); else if (d != null) NişanAl(d.transform.position);
                 }
@@ -2114,12 +2116,25 @@ namespace TekCan
             _adımNotu += $" · {not} {(Oyuncu != null && Oyuncu.AdımSayısı != adım0 ? $"✓ {Şimdi - an:0.00} sn" : "✗ YAZILMADI")}";
         }
 
-        // ── FAZ 42 PLAYTEST — Parti 1'in 20 direkt + Parti 2'nin 18 açılır combo'su GERÇEK tuşlarla ("+" hâlleri, açanlar verilmiş) ──
+        // ── FAZ 42 PLAYTEST — Parti 1–3'ün 68 combo'su GERÇEK tuşlarla (açanlar, satın alınanlar ve "+" hâlleri verilmiş) ──
+        // Önce satın alma yolu: 1. ara bölgenin sunak odasında COMBO sunağına yürü, [E] ile al.
         // İkililer 1. bölgede, üçlüler N ile 2. bölgede (üçlü kuralı). Kapı her combo'nun ETKİSİNİ ölçüyor; bu, oyuncunun tuş
         // yolunun (adım → geçiş → adım → geçiş → bitiriş) gerçekten açık olduğunu.
         IEnumerator P42()
         {
             _bekçiDk = 30f;
+            Sahne("P42 SATIN ALMA", "sunak odasında COMBO sunağı: yürü, [E]");
+            for (int w = 0; w < Weapon.All.Length; w++) Kadro.Aç(w, "otopilot");   // teklif açık silahlara göre
+            yield return OdayaAtla(RoomManager.SunakOdası(_t, 0));
+            Altar sunak = null;
+            foreach (var a in Altar.All) if (a != null && a.Type == Altar.Kind.ComboBuy && !a.SoldOut) { sunak = a; break; }
+            var teklif = sunak != null ? sunak.SatılıkCombo() : null;
+            float s0 = Saat != null ? Saat.Seconds : 0f, fiyat = sunak != null ? sunak.Price : 0f;
+            yield return AltaraAl(sunak);
+            bool alındı = teklif.HasValue && Combo.Alındı(teklif.Value);
+            Kaydet("42-0", "Sunak odasında COMBO sunağı: satın alınır combo gerçek [E] ile saniyeyle alınıyor", alındı,
+                   teklif.HasValue ? $"{Combo.Bu(teklif.Value).Ad} · {fiyat:0.0} sn · saat {s0:0} → {(Saat != null ? Saat.Seconds : 0f):0} · {(alındı ? "alındı" : "ALINMADI")}" : "sunakta teklif yok");
+
             var satırlar = new List<string>();
             int tamam = 0, toplam = 0;
             for (int üçlü = 0; üçlü < 2 && !_bitti; üçlü++)
@@ -2130,6 +2145,7 @@ namespace TekCan
                     var c = (ComboTür)i; var tanım = Combo.Bu(c);
                     if ((tanım.Sıra().Length == 3) != (üçlü == 1)) continue;
                     if (tanım.Açan is SilahYükseltme açan) SilahSunağı.Al(açan, -1);   // Parti 2: açan yükseltme
+                    if (tanım.Satın) Combo.SatınAl(c, -1);                             // Parti 3: satın alınmış
                     Combo.ArtıAl(c, 0);
                     toplam++;
                     var adlar = new List<string>(); foreach (int w in tanım.Sıra()) adlar.Add(Weapon.All[w].Name);
@@ -2141,7 +2157,7 @@ namespace TekCan
                     Debug.Log($"[P42] {tanım.Ad}: {(oldu ? "oldu" : "OLMADI")} · {deneme} deneme");
                 }
             }
-            Kaydet("42", "Parti 1'in 20 direkt + Parti 2'nin 18 açılır combo'su gerçek tuşlarla: ikililer 1. bölgede, üçlüler 2. bölgede (açanlar ve \"+\" hâlleri verilmiş)", tamam == toplam,
+            Kaydet("42", "Parti 1–3'ün 68 combo'su (20 direkt · 18 açılır · 30 satın alınır) gerçek tuşlarla: ikililer 1. bölgede, üçlüler 2. bölgede", tamam == toplam,
                    $"{tamam}/{toplam} · {string.Join(" · ", satırlar)}");
         }
 
@@ -2639,6 +2655,7 @@ namespace TekCan
                 Altar en = null;
                 foreach (var a in Altar.All)
                     if (a != null && a.Type != Altar.Kind.Repair && a.Type != Altar.Kind.Loadout && a.Type != Altar.Kind.ComboPlus
+                        && a.Type != Altar.Kind.ComboBuy                          // Faz 42: bot tam koşuda combo yapmıyor — saniyesi boşa gider
                         && !a.SoldOut && (en == null || a.Price < en.Price)) en = a;
                 if (en == null || Saat.Seconds - en.Price < yedek) break;
                 yield return Git(en.transform.position, 1.2f, 6f);

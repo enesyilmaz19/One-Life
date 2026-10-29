@@ -16,7 +16,7 @@ namespace TekCan
     public class Altar : MonoBehaviour
     {
         // ⚠️ Sıra: ilk beşi `Clock._alınan` dizisinin indisi (sayım kayıtta) — araya ekleme yapma.
-        public enum Kind { Harvest, Damage, Dash, Insurance, Patience, Weapon, Loadout, Unlock, ComboPlus, Repair }
+        public enum Kind { Harvest, Damage, Dash, Insurance, Patience, Weapon, Loadout, Unlock, ComboPlus, Repair, ComboBuy }
 
         public static readonly List<Altar> All = new List<Altar>();
         public static void ResetAll() => All.Clear();
@@ -33,6 +33,7 @@ namespace TekCan
                              : Type == Kind.Loadout ? false
                              : Type == Kind.Unlock ? Kadro.Açık(Yuva)
                              : Type == Kind.ComboPlus ? Combo.Artı((ComboTür)Yuva) || Combo.BölgeAlımı(Bölge()) >= 1
+                             : Type == Kind.ComboBuy ? !(SatılıkCombo() is ComboTür sc) || Combo.Alındı(sc) || Combo.SatınGrupAlımı(_anahtar) >= 1
                              : Type != Kind.Repair && _bought >= _t.altarMaxPurchases;
 
         /// <summary>SİLAH SUNAĞI'nın yuvası (0–2): kuşanılan silahın TEKLİFİNİN kaçıncısı (Faz 33).</summary>
@@ -46,6 +47,7 @@ namespace TekCan
         // değişince sıfırlanmıyor (kartopu buradan büyüyordu). `_bought` yalnızca sunak başı tavan.
         public float Price => Type == Kind.Weapon ? SilahFiyatı()
                             : Type == Kind.ComboPlus ? Clock.SilahFiyatı(_t, Clock.Instance != null ? Clock.Instance.Seconds : 0f, Enderlik.Nadir)
+                            : Type == Kind.ComboBuy ? ComboFiyatı()
                             : Type == Kind.Loadout ? 0f
                             : Type == Kind.Unlock ? Clock.SilahAçmaFiyatı(_t, Clock.Instance != null ? Clock.Instance.Seconds : 0f, Kadro.Keşifti(Yuva))
                             : Type == Kind.Repair ? _t.revivalRepairPrice
@@ -70,7 +72,7 @@ namespace TekCan
             Type = kind;
             Yuva = yuva;
             Grup = grup;
-            if (kind == Kind.Weapon)
+            if (kind == Kind.Weapon || kind == Kind.ComboBuy)
                 _anahtar = RoomManager.Instance != null ? RoomManager.Instance.SunakAnahtarı(grup)
                          : SilahSunağı.Anahtar(0, 0, Mathf.Max(1, tuning.subRegionsPerRegion), grup);   // oda yok (öz-denetim)
             _renderer = GetComponentInChildren<Renderer>();
@@ -144,6 +146,17 @@ namespace TekCan
                 if (clock == null || !clock.TryBuy(Price)) return;
                 Kadro.Aç(Yuva, Kadro.Keşifti(Yuva) ? "keşifte kaçırılmıştı, satın alındı" : "satın alındı");
                 Sfx.Buy();
+                foreach (var a in All) if (a != null) a.Paint();
+                return;
+            }
+            if (Type == Kind.ComboBuy)                                             // Faz 42 Parti 3
+            {
+                if (!(SatılıkCombo() is ComboTür sc) || clock == null || !clock.TryBuy(Price)) return;
+                Combo.SatınAl(sc, _anahtar);
+                SaveFile.Flush();          // koşu boyu kalıcı — hemen yazılıyor
+                Combo.Duyur($"COMBO ALINDI: {Combo.Bu(sc).Ad} — {Combo.Bu(sc).NeYapar}", 5f);
+                Sfx.Buy();
+                IsoCamera.Shake(_t.hitShake * 0.7f);
                 foreach (var a in All) if (a != null) a.Paint();
                 return;
             }
@@ -248,6 +261,15 @@ namespace TekCan
                 string ad = $"YENİ SİLAH: {Weapon.All[Yuva].Name}" + (Kadro.Keşifti(Yuva) ? "  (keşifte kaçırılmıştı)" : "");
                 return SoldOut ? $"{ad}   [ALINDI]" : $"{ad}   —   {Price:0.0} saniye   [E]";
             }
+            if (Type == Kind.ComboBuy)
+            {
+                if (!(SatılıkCombo() is ComboTür sc)) return "COMBO SUNAĞI · [satılık combo yok — silahların açtıkça çoğalır]";
+                var t = Combo.Bu(sc);
+                var adlar = new List<string>(); foreach (int w in t.Sıra()) adlar.Add(Weapon.All[w].Name);
+                string ad = $"COMBO SATIN AL · {t.Ad} ({string.Join(" → ", adlar)}) — {t.NeYapar}";
+                return Combo.Alındı(sc) ? $"{ad}   [ALINDI]"
+                     : SoldOut ? $"{ad}   [bu sunaktan alındı]" : $"{ad}   —   {Price:0.0} saniye   [E]";
+            }
             if (Type == Kind.ComboPlus)
             {
                 var c = Combo.Bu((ComboTür)Yuva);
@@ -294,6 +316,7 @@ namespace TekCan
                 Kind.Loadout => new Color(0.9f, 0.9f, 0.95f),
                 Kind.Unlock => YuvaRengi(),
                 Kind.ComboPlus => new Color(1f, 0.8f, 0.2f),
+                Kind.ComboBuy => new Color(0.3f, 0.9f, 0.85f),
                 Kind.Repair => FirstBroken() != null ? RepairColor : SoldOutColor,
                 _ => DashColor,
             };
@@ -340,6 +363,20 @@ namespace TekCan
         }
 
         static int Bölge() => RoomManager.AktifBölge;
+
+        // ── COMBO sunağı (Faz 42 Parti 3) — teklif sunağın ömrü boyunca sabit (alım yapınca öbürü kaymasın) ──
+        List<ComboTür> _comboTeklif;
+        public ComboTür? SatılıkCombo()
+        {
+            _comboTeklif ??= Combo.SatınTeklif(_anahtar, Bölge());
+            return Yuva < _comboTeklif.Count ? _comboTeklif[Yuva] : (ComboTür?)null;
+        }
+
+        /// <summary>Yükseltmelerin fiyat kuralı (bölgeyle / saatle büyür): ikili nadir, üçlü epik fiyatında, × `comboAltarPriceMul`.</summary>
+        float ComboFiyatı() => SatılıkCombo() is ComboTür sc
+            ? Clock.SilahFiyatı(_t, Clock.Instance != null ? Clock.Instance.Seconds : 0f, Combo.Bu(sc).Sıra().Length == 3 ? Enderlik.Epik : Enderlik.Nadir)
+              * _t.comboAltarPriceMul
+            : 0f;
 
         /// <summary>Her gruptan 1 alım (Enes: mini boss'tan 1, boss'tan 1 + 1, şans 1).</summary>
         bool SilahTükendi() => !(Yükseltme() is SilahYükseltme y) || SilahSunağı.Var(y) || SilahSunağı.GrupAlımı(_anahtar) >= 1;

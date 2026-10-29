@@ -31,6 +31,10 @@ namespace TekCan
         public float KirasızKalan { get; set; }
         /// <summary>KİRA KONTRATI combo'su (Faz 42): kule bu düşmana kilitli — o yaşadıkça menzil sınırı yok.</summary>
         public Enemy Kilit { get; set; }
+        /// <summary>KİRACI SÜRÜSÜ (Faz 42): kule önce bunlara ateş eder.</summary>
+        public readonly HashSet<Enemy> Öncelikli = new HashSet<Enemy>();
+        /// <summary>İŞGAL (Faz 42): kirayı bu düşman öder (yaşadıkça) — ORTAK GİDER'in bağı gibi, tek kişi.</summary>
+        public Enemy Kiracı { get; set; }
         bool _uzatıldı;
         bool OrtakÖdüyor => _ortak != null && !_ortak.Bitti;
 
@@ -86,12 +90,14 @@ namespace TekCan
             float borç = _kira * dt;
             if (KirasızKalan > 0f) { KirasızKalan -= dt; borç = 0f; }      // TEMİNAT
             ÖdenenKira += borç;
-            if (OrtakÖdüyor)
+            bool kiracı = Kiracı != null && Enemy.All.Contains(Kiracı);           // İŞGAL
+            if (kiracı || OrtakÖdüyor)
             {
                 _ortakBorç += borç;
-                if (_ortakBorç >= 0.5f && _ortak.Üyeler.Count > 0)
+                Enemy öder = kiracı ? Kiracı : _ortak.Üyeler.Count > 0 ? _ortak.Üyeler[0] : null;
+                if (_ortakBorç >= 0.5f && öder != null)
                 {
-                    _ortak.Üyeler[0].TakeDamage(_ortakBorç, 0f);   // bağ öbürlerine de yayıyor
+                    öder.TakeDamage(_ortakBorç, 0f);   // ORTAK GİDER'de bağ öbürlerine de yayıyor
                     _ortakBorç = 0f;
                 }
             }
@@ -121,6 +127,7 @@ namespace TekCan
                 float yüzey = d.magnitude - e.Radius;
                 if (yüzey > Yarıçap) continue;
                 if (_aidat && OrtakÖdüyor && e.Bağ == _ortak) yüzey -= 1000f;        // AİDAT: önce bağlılar
+                if (Öncelikli.Contains(e)) yüzey -= 1000f;                           // KİRACI SÜRÜSÜ
                 if (yüzey < en) { en = yüzey; hedef = e; }
             }
             if (hedef == null) return;
@@ -156,6 +163,10 @@ namespace TekCan
             _uzatıldı = true;
             Kalan += sn;
         }
+
+        /// <summary>KİRACI SÜRÜSÜ · İŞGAL · ZİNCİRLEME TAHSİL · SÜPÜRGE KULESİ · ZAMAN KİRASI (Faz 42): ömür uzar — SAĞLAM YAPI'nın
+        /// Uzat'ı tek seferlik, bu değil.</summary>
+        public void Ömür(float sn) { if (!Bitti) Kalan += sn; }
 
         /// <summary>KİRA GELİRİ combo'su (Faz 33c): FAİZLİ'nin bedelini kule ömründen öder.</summary>
         public void Kısalt(float sn) => Kalan -= sn;
