@@ -3,6 +3,8 @@
 > Enes (2026-10-25): 96 ikili + 24 üçlü, **elle**; ¼ direkt · ¼ açılır (yükseltme açar) · ½ satın alınır (sunakta saniyeyle).
 > Kalıplar: `docs/COMBO_ARASTIRMA.md` (K1–K12). Bu dosya partiler hâlinde büyüyor; her parti **Enes'in onayıyla** koda geçer.
 > Kural: A ile İSABET → combo penceresinde (0.8 sn) B'ye geç ve vur (üçlüde bir adım daha). "Daha çok hasar" tek başına combo değildir.
+> ⚠️ **Faz 43 (2026-10-30): ÇEK oyundan çıktı, yerine ÇİFT İMZA (çifte tabanca).** Aşağıdaki tablolarda ÇEK'li 24 combo'nun
+> ESKİ hâli duruyor; güncel adları ve etkileri `docs/CIFT_IMZA.md`'de (sıra ve tür aynı, sayı yine 120).
 
 ## Sayım
 

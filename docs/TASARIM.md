@@ -372,7 +372,7 @@ kadar 4; sonra her bölgede +2 (biri boss'tan, öbürü sunakta satın ya da ke�
 | silah | açılış | sorduğu SORU |
 |---|---|---|
 | **REHİN** | 2. bölge, sunak | *kimi tutayım* — yakala, tutarken önden geleni o yer, fırlat |
-| **ÇEK** | 2. boss | *geri dönüş yolunu nasıl kurarım* — fırlat, seker, döner; dönene kadar silahsız |
+| **ÇİFT İMZA** *(Faz 43, ÇEK'in yerine)* | 2. boss | *nişanı tek hedefte tutabilir miyim* — çifte tabanca: basılı tuttukça seri ateş, aynı düşmana peş peşe ikinci mermi ONAY'lı (×1.5); ateşte yürünür, yavaş. Ayrıntı `docs/CIFT_IMZA.md` |
 | **KARŞILIK** | 3. bölge, keşif | *ne zaman karşılamalıyım* — karşılanan darbe saatten düşmez, sonraki vuruşa biner |
 | **TAHVİL** | 3. boss | *ne kadar bekleyeyim* — basılı tut, olgunlaşır; beklerken saat iki kat akar |
 | **MÜŞTEREK** | 4. bölge, sunak | *kimi kime bağlarım* — bağlıya inen hasar öbürüne de iner |

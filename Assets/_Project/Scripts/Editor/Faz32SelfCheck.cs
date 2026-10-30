@@ -608,8 +608,6 @@ namespace TekCan.EditorTools
         static void Temizle()
         {
             HepsiniÖldür();
-            foreach (var u in CekUcusu.Uçanlar.ToArray()) if (u != null) Object.DestroyImmediate(u.gameObject);
-            CekUcusu.Uçanlar.Clear();
             foreach (var b in MusterekBag.Tümü.ToArray()) if (b != null) b.Bitir();
             MusterekBag.Tümü.Clear();
             foreach (var k in KiraKulesi.Tümü.ToArray()) if (k != null) k.Bitir();

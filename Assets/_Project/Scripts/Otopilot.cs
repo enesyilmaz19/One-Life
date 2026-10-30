@@ -317,7 +317,7 @@ namespace TekCan
                 : senaryo == "fiyat"
                 ? new[] { Kurulum(), FiyatÖlçümü(Kadro.KONİ, Kadro.FAİZLİ, Kadro.HACİZ, Kadro.İPOTEK, Kadro.İFLAS, Kadro.REHİN), Bitir() }
                 : senaryo == "fiyat33b"
-                ? new[] { Kurulum(), FiyatÖlçümü(Kadro.ÇEK, Kadro.KARŞILIK, Kadro.TAHVİL, Kadro.MÜŞTEREK, Kadro.ARBİTRAJ, Kadro.KİRA), Bitir() }
+                ? new[] { Kurulum(), FiyatÖlçümü(Kadro.İMZA, Kadro.KARŞILIK, Kadro.TAHVİL, Kadro.MÜŞTEREK, Kadro.ARBİTRAJ, Kadro.KİRA), Bitir() }
                 : senaryo == "p33c"
                 ? new[] { Kurulum(), P33c(), Bitir() }
                 : senaryo == "p42"
@@ -670,7 +670,7 @@ namespace TekCan
                    $"İFLAS {(Kadro.Açık(Kadro.İFLAS) ? "açık" : "KAPALI")} · combo sunağı {(combo != null ? Combo.Bu((ComboTür)combo.Yuva).ArtıAd : "YOK")}");
         }
 
-        // ── FAZ 31 PLAYTEST — REHİN · ÇEK · KARŞILIK: açılış yolları + gerçek tuşlarla hamleler ve combo'lar ──
+        // ── FAZ 31 PLAYTEST — REHİN · ÇİFT İMZA (Faz 43'e dek ÇEK) · KARŞILIK: açılış yolları + gerçek tuşlarla hamleler ve combo'lar ──
         /// <summary>Test kurgusu: silahları aç ve sırayla 1–3 yuvalarına diz.</summary>
         void Diz(params int[] silahlar)
         {
@@ -726,7 +726,7 @@ namespace TekCan
         IEnumerator P31()
         {
             _bekçiDk = 55f;
-            int REHİN = Kadro.REHİN, ÇEK = Kadro.ÇEK, KARŞILIK = Kadro.KARŞILIK;
+            int REHİN = Kadro.REHİN, İMZA = Kadro.İMZA, KARŞILIK = Kadro.KARŞILIK;
 
             Sahne("P31 1/6 REHİN AÇILIŞI", "2. bölge: 2. ara bölgenin sunağında yok, 3.'sünde satın");
             Bas(Key.N); yield return Bekle(1.2f);
@@ -772,67 +772,61 @@ namespace TekCan
                    yakaladı > 0 && fırlattı > 0 && Oyuncu.ComboSayısı > c0,
                    $"{yakaladı} yakalama · {fırlattı} fırlatma · {Oyuncu.ComboSayısı - c0} combo · kalkan {Oyuncu.KalkanSayısı - kalkan0} vuruş yedi");
 
-            Sahne("P31 3/6 ÇEK AÇILIŞI", "2. boss → ÇEK");
-            bool önceÇek = Kadro.Açık(ÇEK);
+            Sahne("P31 3/6 ÇİFT İMZA AÇILIŞI", "2. boss → ÇİFT İMZA");
+            bool önceİmza = Kadro.Açık(İMZA);
             Bas(Key.Digit1); yield return Bekle(0.3f);
             Bas(Key.B); yield return Bekle(1f);
             Bas(Key.F5); yield return Bekle(0.3f);
             yield return BossuÖldür(900f);
             if (_bitti) yield break;
             yield return Bekle(1f);
-            Kaydet("31-3", "2. boss düşünce ÇEK açıldı", !önceÇek && Kadro.Açık(ÇEK) && Kadro.SonMesaj != null && Kadro.SonMesaj.Contains("ÇEK"),
-                   $"ÇEK {(Kadro.Açık(ÇEK) ? "açık" : "KAPALI")} · \"{Kadro.SonMesaj}\"");
+            Kaydet("31-3", "2. boss düşünce ÇİFT İMZA açıldı", !önceİmza && Kadro.Açık(İMZA) && Kadro.SonMesaj != null && Kadro.SonMesaj.Contains("ÇİFT İMZA"),
+                   $"ÇİFT İMZA {(Kadro.Açık(İMZA) ? "açık" : "KAPALI")} · \"{Kadro.SonMesaj}\"");
 
-            Sahne("P31 4/6 ÇEK", "fırlat → değince (2) HACİZ = SENET HACZİ");
+            Sahne("P31 4/6 ÇİFT İMZA", "basılı tut: seri ateş → değince (2) HACİZ = SENET HACZİ");
             yield return KapıdanÇık(30f);                                    // 3. bölgenin ilk odası
             yield return Bekle(1f);
-            Diz(ÇEK, Kadro.HACİZ, Kadro.KONİ);
+            Diz(İMZA, Kadro.HACİZ, Kadro.KONİ);
             Bas(Key.F5); yield return Bekle(0.3f);
-            int atış = 0, değdi = 0, enÇokİsabet = 0;
+            int seri = 0, değdi = 0, enÇokMermi = 0;
             c0 = Oyuncu.ComboSayısı;
             float bant = Weapon.All[Kadro.HACİZ].Range(_t) * 0.7f;
             t0 = Şimdi;
-            while (Şimdi - t0 < 150f && (Oyuncu.ComboSayısı == c0 || enÇokİsabet < 2))
+            while (Şimdi - t0 < 150f && (Oyuncu.ComboSayısı == c0 || enÇokMermi < 3))
             {
                 yield return Sürdür();
                 var d = EnYakınBaşka(null);
                 if (d == null) { yield return null; continue; }
-                Bas(Key.Digit1); yield return null;                          // ÇEK
+                Bas(Key.Digit1); yield return null;                          // ÇİFT İMZA
                 yield return Git(d.transform.position, bant, 3f);            // HACİZ'in bandında dur
                 if (d == null) continue;
-                NişanAl(d.transform.position);
-                _sol = true;
-                // ⚠️ İsabeti ÇEKİN KENDİSİNDEN oku. Havuz kendi kendine de akıyor: "havuz düştü" ilk koşuda
-                // çek daha atılmadan HACİZ'e geçirtti, geçiş de ÇEK savurmasını iptal etti (0 combo).
-                CekUcusu çek = null;
+                // ⚠️ İsabeti zincirden oku (`AdımSayısı`), havuzdan değil: havuz kendi kendine de akıyor (ÇEK'te yanılttı).
+                int mermi0 = Oyuncu.SwingsSpawned, adım0 = Oyuncu.AdımSayısı;
                 float ta = Şimdi;
-                while (çek == null && Şimdi - ta < 0.5f)
+                while (Şimdi - ta < 0.6f)                                    // 0.6 sn basılı tut: seri
                 {
-                    if (CekUcusu.Uçanlar.Count > 0) çek = CekUcusu.Uçanlar[0];
+                    if (d != null) NişanAl(d.transform.position);
+                    _sol = true;
                     yield return null;
                 }
-                if (ReferenceEquals(çek, null)) continue;
-                atış++;
-                while (çek != null && çek.İsabet == 0 && Şimdi - ta < 1.5f) yield return null;
-                bool isabet = çek.İsabet > 0;                                // yok edilse de C# nesnesinden okunur
-                if (isabet)
+                seri++;
+                enÇokMermi = Mathf.Max(enÇokMermi, Oyuncu.SwingsSpawned - mermi0);
+                if (Oyuncu.AdımSayısı != adım0)
                 {
                     değdi++;
                     Bas(Key.Digit2); yield return null;                      // HACİZ — hızlı geçiş
                     if (d != null) NişanAl(d.transform.position);
                     _sol = true;
+                    yield return Bekle(0.5f);
                 }
-                float tb = Şimdi;
-                while (çek != null && Şimdi - tb < 2.5f) yield return null;   // çek dönene kadar
-                enÇokİsabet = Mathf.Max(enÇokİsabet, çek.İsabet);
             }
-            Kaydet("31-4", "ÇEK gerçek tuşlarla: gidip dönüyor, değince (2) HACİZ = SENET HACZİ",
-                   değdi > 0 && enÇokİsabet >= 2 && Oyuncu.ComboSayısı > c0,
-                   $"{atış} atış · {değdi} isabet · bir çekte en çok {enÇokİsabet} isabet (gidiş + dönüş) · {Oyuncu.ComboSayısı - c0} combo");
+            Kaydet("31-4", "ÇİFT İMZA gerçek tuşlarla: basılı tutunca seri ateş, değince (2) HACİZ = SENET HACZİ",
+                   değdi > 0 && enÇokMermi >= 3 && Oyuncu.ComboSayısı > c0,
+                   $"{seri} seri · {değdi} isabetli · bir seride en çok {enÇokMermi} mermi (0.6 sn) · {Oyuncu.ComboSayısı - c0} combo");
 
             Sahne("P31 5/6 KARŞILIK AÇILIŞI", "3. bölgenin 3. ara bölgesi, 4. oda: köşe");
             bool önceKarşılık = Kadro.Açık(KARŞILIK);
-            Diz(Kadro.KONİ, Kadro.HACİZ, ÇEK);
+            Diz(Kadro.KONİ, Kadro.HACİZ, İMZA);
             yield return OdayaAtla(2 * _t.BlokBoyu + Kadro.KeşifOdası);
             Bas(Key.Digit1); yield return Bekle(0.3f);
             yield return OdayıTemizle(300f);
@@ -2072,7 +2066,7 @@ namespace TekCan
         }
 
         /// <summary>Bir silahın combo adımı (k. adım, n adımlı combo), oyuncunun yaptığı gibi: TAHVİL basılı tut-bırak (ilk adımda
-        /// 2. kademe, ortada 1. — 0.8 sn'lik pencereye sığsın), REHİN yakala-fırlat, ÇEK değene kadar bekle, HACİZ uzaktakine,
+        /// 2. kademe, ortada 1. — 0.8 sn'lik pencereye sığsın), REHİN yakala-fırlat, İMZA değene kadar bekle, HACİZ uzaktakine,
         /// arkadan isteyen combo'da önce AÇIK POZİSYON, bağ isteyen MÜŞTEREK'te önce başkasını işaretle; öbürleri tık.</summary>
         IEnumerator ComboAdımı(int silah, Enemy d, int k, int n, ComboTür c)
         {
@@ -3110,6 +3104,7 @@ namespace TekCan
                         Dur();
                         if (_tahvilTut && pc.Weapon.Saldırı == Biçim.Tahvil)
                         { if (pc.VadeKademesi < 3) _sol = true; }                   // oyuncu gibi: 3. kademeye kadar basılı tut, bırak
+                        else if (pc.Weapon.Saldırı == Biçim.İmza) _sol = true;           // ÇİFT İMZA (Faz 43): oyuncu gibi basılı tut — seri
                         else if (!pc.Attacking && Time.time - _sonVuruş > 0.15f) { _sol = true; _sonVuruş = Time.time; }
                         if (pc.SpecialCooldownLeft <= 0f && d < menzil * 0.8f) _sağ = true;
                     }

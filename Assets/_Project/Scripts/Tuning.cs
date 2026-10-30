@@ -256,15 +256,17 @@ namespace TekCan
         [Tooltip("Sunakta silah açma: en az saatin bu payı (keşifte kaçırılmışsa ×2)")]
         public float weaponUnlockPercent = 0.15f;
 
-        [Header("── Faz 31: REHİN · ÇEK · KARŞILIK ──")]
+        [Header("── Faz 31: REHİN · KARŞILIK (+ Faz 43: ÇİFT İMZA, ÇEK'in yerine) ──")]
         [Tooltip("REHİN · TAKAS bekleme")] public float specialCooldownRehin = 7.5f;
-        [Tooltip("ÇEK · KARŞILIKSIZ bekleme")] public float specialCooldownCek = 6.5f;
+        [Tooltip("ÇİFT İMZA · TOPLU İMZA bekleme")] public float specialCooldownImza = 6.5f;
         [Tooltip("KARŞILIK · İTİRAZ bekleme")] public float specialCooldownKarsilik = 11f;
         [Tooltip("REHİN: fırlatma menzili")] public float rehinThrowRange = 8f;
         [Tooltip("REHİN: fırlatma hasarı = silah hasarı × bu")] public float rehinThrowDamageMul = 2.2f;
         [Tooltip("REHİN: rehinenin yediği vuruş, bedelinin bu katı hasar olarak ona iner")] public float rehinShieldDamagePerSecond = 3f;
-        [Tooltip("ÇEK: uçuş hızı (birim/sn)")] public float cekSpeed = 14f;
-        [Tooltip("ÇEK: kaç kez seker")] public int cekBounces = 1;
+        [Tooltip("ÇİFT İMZA: saniyede mermi (iki tabanca toplam)")] public float imzaShotsPerSecond = 6f;
+        [Tooltip("ÇİFT İMZA: mermi hasarı = silah hasarı × bu")] public float imzaBulletMul = 0.35f;
+        [Tooltip("ÇİFT İMZA · ONAY: aynı düşmana peş peşe ikinci mermi × bu")] public float imzaOnayMul = 1.5f;
+        [Tooltip("ÇİFT İMZA: ateş ederken yürüyüş × bu")] [Range(0f, 1f)] public float imzaMoveDamping = 0.7f;
         [Tooltip("KARŞILIK: karşılanan her saniye bedel için bir sonraki vuruşa eklenen hasar")] public float karsilikDamagePerSecond = 2.5f;
         [Tooltip("KARŞILIK · İTİRAZ: uzun karşılama süresi (sn)")] public float karsilikItirazSeconds = 1.5f;
 

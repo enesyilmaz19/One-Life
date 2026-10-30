@@ -28,7 +28,7 @@ namespace TekCan
 
     /// <summary>Saldırının biçimi (Faz 31): `PlayerController` buna göre dallanıyor, silah adına göre değil.
     /// Yer vuruşu (İPOTEK) ayrı biçim değil — `GroundMarkDelay` &gt; 0.</summary>
-    public enum Biçim { Koni, Rehin, Çek, Karşılık, Tahvil, Müşterek, Arbitraj, Kira }
+    public enum Biçim { Koni, Rehin, İmza, Karşılık, Tahvil, Müşterek, Arbitraj, Kira }
 
     /// <summary>
     /// Sağ tık saldırısı — silahın İKİNCİ hamlesi. `BossAttack` ile aynı desen:
@@ -121,7 +121,7 @@ namespace TekCan
         ÇiftTapu, HızlıTapu, GenişArsa,        // İPOTEK
         Dip, Seri, Kapanış,                    // İFLAS
         AğırRehin, GenişKol, Kalkan,           // REHİN (Faz 31)
-        ÇiftCiro, HızlıTahsil, DönüşKesintisi, // ÇEK
+        UzunNamlu, SeriEl, DeliciMermi,        // ÇİFT İMZA (Faz 43 — ÇEK'in yuvaları: numaralar aynı, kayıt bozulmaz)
         GenişPencere, TamKarşılık, İade,       // KARŞILIK
         KısaVade, YüksekFaiz, İskonto,         // TAHVİL (Faz 32)
         SıkıBağ, UzunBağ, OrtakHasat,          // MÜŞTEREK
@@ -135,7 +135,7 @@ namespace TekCan
         SonKuyruk, Cesaret, Kurtarma, İflasZinciri,    // İFLAS
         SıkıTutuş, Sorgu, Domino, Tehdit,              // REHİN
         // Faz 33b
-        Tahsilat, Yönelim, KarşılıksızArtı, Protesto,          // ÇEK
+        OnayHakkı, Yönelim, TopluİmzaArtı, Protesto,           // ÇİFT İMZA
         Temyiz, Red, Birikim, KısmiÖdeme,                      // KARŞILIK
         Hareketli, Rollover, Kilit, VadeSonu,                  // TAHVİL
         ZincirlemeArtı, Çekişme, GenişOrtaklık, Müteselsil,    // MÜŞTEREK
@@ -164,7 +164,7 @@ namespace TekCan
             "ÇİFT TAPU", "HIZLI TAPU", "GENİŞ ARSA",
             "DİP", "SERİ", "KAPANIŞ",
             "AĞIR REHİN", "GENİŞ KOL", "KALKAN",
-            "ÇİFT CİRO", "HIZLI TAHSİL", "DÖNÜŞ KESİNTİSİ",
+            "UZUN NAMLU", "SERİ EL", "DELİCİ MERMİ",
             "GENİŞ PENCERE", "TAM KARŞILIK", "İADE",
             "KISA VADE", "YÜKSEK FAİZ", "İSKONTO",
             "SIKI BAĞ", "UZUN BAĞ", "ORTAK HASAT",
@@ -176,7 +176,7 @@ namespace TekCan
             "BOŞ ARSA", "DERİN TEMEL", "ÇEKİM", "ZİNCİR TAPU",
             "SON KUYRUK", "CESARET", "KURTARMA", "İFLAS ZİNCİRİ",
             "SIKI TUTUŞ", "SORGU", "DOMİNO", "TEHDİT",
-            "TAHSİLAT", "YÖNELİM", "KARŞILIKSIZ+", "PROTESTO",
+            "ONAY HAKKI", "YÖNELİM", "TOPLU İMZA+", "PROTESTO",
             "TEMYİZ", "RED", "BİRİKİM", "KISMİ ÖDEME",
             "HAREKETLİ", "ROLLOVER", "KİLİT", "VADE SONU",
             "ZİNCİRLEME+", "ÇEKİŞME", "GENİŞ ORTAKLIK", "MÜTESELSİL",
@@ -194,7 +194,7 @@ namespace TekCan
             "aynı anda iki ipotek · COMBO açar: İPOTEK → MÜŞTEREK", "ipotek gecikmesi −%30", "ipotek alanı +%30",
             "dipte daha erken sertleşir (eşikler ×1.5)", "TASFİYE +2 vuruş", "dipte hasat +%50",
             "fırlatma hasarı ×1.6", "tutma menzili ×1.5", "yandan gelenleri de karşılar",
-            "bir sekme daha", "çek ×1.4 hızlı", "dönüşte hasar ×1.5",
+            "menzil +%30", "ateş hızı +%30", "mermi ilk düşmanı deler, arkadakine yarım hasarla geçer",
             "karşılama penceresi ×1.6", "biriken hasar ×1.5", "karşıladığın darbenin yarısı saate geri",
             "kademeler ×0.7 sürede olgunlaşır", "3. kademe ×1.4", "beklerken saat ×1.5 akar (×2 değil) · COMBO açar: TAHVİL → KİRA",
             "bağlıya yayılan hasar %60 → %90", "bağın süresi ×2", "yayılan hasarın hasadı tam (yarım değil)",
@@ -203,32 +203,32 @@ namespace TekCan
             "2+ düşmana değen savurmada hasat ×1.3", "her savurma yarım hasarla bir kez daha iner", "dash-atak çevrendeki herkese (360°)", "vurduklarının saldırı hazırlığı 3 sn boyunca ×1.8 uzun · COMBO açar: KONİ → İFLAS",
             "saat doyma tavanının üstündeyken savurma bedeli yarı", "öldürme iadesi ×2 → ×2.6", "öldürünce yanındakine aynı hasar sıçrar", "isabet eden savurma bedel ödemez · COMBO açar: FAİZLİ → İPOTEK",
             "vurulan 1.5 sn yarı hızla yürür · COMBO açar: HACİZ → ARBİTRAJ", "menzilin son çeyreğinde vuruş ×1.4", "UZUN VADE'nin mesafe hasarı ×1.5", "vurunca bir adım geri kayarsın — mesafe korunur",
-            "işaret boşa patlarsa İPOTEK'in sağ tık beklemesi −2 sn", "işaretin merkezinde hasar ×1.5", "patlamadan önce içindekileri merkeze çeker", "patlama vurduklarının yerine (en çok 3) küçük ikinci işaret bırakır, tam hasarla · COMBO açar: İPOTEK → ÇEK → İFLAS",
+            "işaret boşa patlarsa İPOTEK'in sağ tık beklemesi −2 sn", "işaretin merkezinde hasar ×1.5", "patlamadan önce içindekileri merkeze çeker", "patlama vurduklarının yerine (en çok 3) küçük ikinci işaret bırakır, tam hasarla · COMBO açar: İPOTEK → İMZA → İFLAS",
             "saat 30'un altındayken dash beklemesi yarı", "dipteyken alınan darbe −%20", "dipteyken öldürünce +3 sn · COMBO açar: İFLAS → HACİZ", "TASFİYE öldürürse beklemesi sıfırlanır, öldürdüğü her düşman seriye +1 vuruş (en çok +3) · COMBO açar: İFLAS → TAHVİL → HACİZ",
             "kalkan rehineyi yarı yıpratır", "tutarken rehinenin havuzu akar, sana hasat olur", "fırlatılan rehine çarptığından bir kez daha seker · COMBO açar: REHİN → MÜŞTEREK", "tutarken önündekiler saldırı başlatmaz",
-            "dönüşte vurduğu her düşman için +0.25 sn", "sekince en yakın düşmana döner", "KARŞILIKSIZ üç yerine beş çek, beklemesi −%30, havadayken de savurursun · COMBO açar: ÇEK → İFLAS", "dönüşte vurduklarını yanına çeker, yakalayınca çevrene dönüş hasarının iki katı iner · COMBO açar: ÇEK → ARBİTRAJ → REHİN",
+            "ONAY'lı mermi öldürürse +0.5 sn (doymaya tabi)", "mermiler nişanın 10° yakınındaki düşmana kıvrılır", "TOPLU İMZA 10 yerine 16 mermi, beklemesi −%30 · COMBO açar: İMZA → İFLAS", "her mermi bir kez yanındaki düşmana seker · COMBO açar: İMZA → ARBİTRAJ → REHİN",
             "İTİRAZ ×1.5 uzun", "karşıladığın saldırgan 1 sn yeni saldırı başlatamaz", "biriken tutuldukça büyür: saniyede +%25, en çok ×2 · COMBO açar: KARŞILIK → İPOTEK", "biriken inince yarısı kalır",
             "basılı tutarken yürüyüş ×0.4 → ×0.8", "basılıyken ilk dash ERKEN BOZDURMA'yı da vurur, olgunluğu da bozmaz", "3. kademede beklemek saat akıtmaz", "3. kademe çevrendeki herkese (360°) · COMBO açar: TAHVİL → İFLAS → KONİ",
             "ZİNCİRLEME dört yerine altı düşman", "bağlılar birbirine sürüklenir", "ikinci vuruş yanındakini de bağlar (üçlü bağ) · COMBO açar: MÜŞTEREK → HACİZ", "bağlı biri ölünce öbürleri havuzunun %10'unu kaybeder",
-            "görünmezken yürüyüş ×1.3", "arkadan vuruşun yarısı yanındakine iner", "TERS İŞLEM iki kez vurur · COMBO açar: ARBİTRAJ → İFLAS", "arkadan öldürünce AÇIK POZİSYON hemen hazır · COMBO açar: ARBİTRAJ → MÜŞTEREK → ÇEK",
-            "TAŞINMA kuleyi bir kez +3 sn uzatır", "kule süresi dolunca ödediğin kiranın %30'u geri", "kule öldürünce +1.5 sn · COMBO açar: KİRA → ÇEK", "aynı anda iki kule, kule başı kira yarım; TAHLİYE ikisini birden",
+            "görünmezken yürüyüş ×1.3", "arkadan vuruşun yarısı yanındakine iner", "TERS İŞLEM iki kez vurur · COMBO açar: ARBİTRAJ → İFLAS", "arkadan öldürünce AÇIK POZİSYON hemen hazır · COMBO açar: ARBİTRAJ → MÜŞTEREK → İMZA",
+            "TAŞINMA kuleyi bir kez +3 sn uzatır", "kule süresi dolunca ödediğin kiranın %30'u geri", "kule öldürünce +1.5 sn · COMBO açar: KİRA → İMZA", "aynı anda iki kule, kule başı kira yarım; TAHLİYE ikisini birden",
             "COMBO açar: KONİ → MÜŞTEREK", "COMBO açar: FAİZLİ → ARBİTRAJ", "COMBO açar: HACİZ → REHİN",
             "COMBO açar: İPOTEK → KİRA", "COMBO açar: İFLAS → KARŞILIK", "COMBO açar: REHİN → HACİZ",
-            "COMBO açar: ÇEK → İPOTEK", "COMBO açar: KARŞILIK → ÇEK", "COMBO açar: TAHVİL → KONİ",
+            "COMBO açar: İMZA → İPOTEK", "COMBO açar: KARŞILIK → İMZA", "COMBO açar: TAHVİL → KONİ",
             "COMBO açar: MÜŞTEREK → İFLAS", "COMBO açar: ARBİTRAJ → TAHVİL", "COMBO açar: KİRA → FAİZLİ",
         };
 
         // Enderlik — sıra `SilahYükseltme` ile aynı (Y yaygın · N nadir · E epik · F efsanevi).
         // Denge (Enes 2026-10-19, karar A): bot fiyat ölçümünde değerine göre takas — silah başına 3·2·1·1 aynı.
         // FAİZLİ SERMAYE↔FAİZ ORANI · HACİZ DAR ÖLÜ BÖLGE F, GERİ ÇEKİL E, İHTAR N, SON SÖZ ve UZUN VADE+ Y ·
-        // REHİN AĞIR REHİN↔KALKAN · ÇEK HIZLI TAHSİL↔YÖNELİM · TAHVİL KISA VADE↔ROLLOVER, İSKONTO↔KİLİT ·
+        // REHİN AĞIR REHİN↔KALKAN · ÇEK (bugün ÇİFT İMZA) HIZLI TAHSİL↔YÖNELİM · TAHVİL KISA VADE↔ROLLOVER, İSKONTO↔KİLİT ·
         // KİRA UCUZ KİRA ve GENİŞ ARAZİ N, UZUN KONTRAT ve DEPOZİTO Y. İkinci ölçümden: HACİZ İHTAR E ↔ GERİ ÇEKİL N,
         // ÇEK TAHSİLAT N ↔ ÇİFT CİRO Y, FAİZLİ SIÇRAMA F ↔ FAİZSİZ KREDİ E.
         const Enderlik Y = Enderlik.Yaygın, N = Enderlik.Nadir, E = Enderlik.Epik, F = Enderlik.Efsanevi;
         public static readonly Enderlik[] Ender =
         {
             Y, Y, N,   N, Y, Y,   Y, N, F,   E, Y, Y,   Y, N, Y,   N, Y, Y,      // KONİ … REHİN
-            Y, N, Y,   Y, Y, N,   N, Y, E,   Y, Y, N,   N, Y, Y,   N, N, Y,      // ÇEK … KİRA
+            Y, N, Y,   Y, Y, N,   N, Y, E,   Y, Y, N,   N, Y, Y,   N, N, Y,      // ÇİFT İMZA … KİRA
             N, F, Y, E,   N, Y, F, E,   E, Y, Y, N,   Y, N, N, F,   Y, N, E, F,   Y, N, E, F,   // Faz 33a
             N, Y, E, F,   Y, N, E, F,   Y, Y, N, F,   Y, N, E, F,   Y, N, E, F,   Y, Y, E, F,   // Faz 33b
             E, E, E, E, E, E,   E, E, E, E, E, E,                                                    // Faz 33c — combo açanlar
@@ -246,11 +246,11 @@ namespace TekCan
             Kadro.KONİ, Kadro.KONİ, Kadro.KONİ, Kadro.KONİ,     Kadro.FAİZLİ, Kadro.FAİZLİ, Kadro.FAİZLİ, Kadro.FAİZLİ,
             Kadro.HACİZ, Kadro.HACİZ, Kadro.HACİZ, Kadro.HACİZ, Kadro.İPOTEK, Kadro.İPOTEK, Kadro.İPOTEK, Kadro.İPOTEK,
             Kadro.İFLAS, Kadro.İFLAS, Kadro.İFLAS, Kadro.İFLAS, Kadro.REHİN, Kadro.REHİN, Kadro.REHİN, Kadro.REHİN,
-            Kadro.ÇEK, Kadro.ÇEK, Kadro.ÇEK, Kadro.ÇEK,         Kadro.KARŞILIK, Kadro.KARŞILIK, Kadro.KARŞILIK, Kadro.KARŞILIK,
+            Kadro.İMZA, Kadro.İMZA, Kadro.İMZA, Kadro.İMZA,     Kadro.KARŞILIK, Kadro.KARŞILIK, Kadro.KARŞILIK, Kadro.KARŞILIK,
             Kadro.TAHVİL, Kadro.TAHVİL, Kadro.TAHVİL, Kadro.TAHVİL, Kadro.MÜŞTEREK, Kadro.MÜŞTEREK, Kadro.MÜŞTEREK, Kadro.MÜŞTEREK,
             Kadro.ARBİTRAJ, Kadro.ARBİTRAJ, Kadro.ARBİTRAJ, Kadro.ARBİTRAJ, Kadro.KİRA, Kadro.KİRA, Kadro.KİRA, Kadro.KİRA,
             Kadro.KONİ, Kadro.FAİZLİ, Kadro.HACİZ, Kadro.İPOTEK, Kadro.İFLAS, Kadro.REHİN,
-            Kadro.ÇEK, Kadro.KARŞILIK, Kadro.TAHVİL, Kadro.MÜŞTEREK, Kadro.ARBİTRAJ, Kadro.KİRA,
+            Kadro.İMZA, Kadro.KARŞILIK, Kadro.TAHVİL, Kadro.MÜŞTEREK, Kadro.ARBİTRAJ, Kadro.KİRA,
         };
 
         public static int Silahı(SilahYükseltme y) => (int)y < İlkSıra ? (int)y / SilahBaşına : EkSilah[(int)y - İlkSıra];
@@ -470,7 +470,7 @@ namespace TekCan
         /// </summary>
         public string Category(Tuning t) =>
               Saldırı == Biçim.Rehin    ? "tutma"
-            : Saldırı == Biçim.Çek      ? "fırlatma"
+            : Saldırı == Biçim.İmza     ? "seri ateş"
             : Saldırı == Biçim.Karşılık ? "karşılama"
             : Saldırı == Biçim.Tahvil   ? "olgunlaşma"
             : Saldırı == Biçim.Müşterek ? "bağ"
@@ -503,7 +503,7 @@ namespace TekCan
         public static Weapon[] All => _all ??= new Weapon[]
         {
             new ConeBlade(), new Faizli(), new Haciz(), new Ipotek(), new Iflas(),
-            new Rehin(), new Cek(), new Karsilik(),         // Faz 31
+            new Rehin(), new CiftImza(), new Karsilik(),    // Faz 31 · ÇİFT İMZA Faz 43'te ÇEK'in yerine
             new Tahvil(), new Musterek(), new Arbitraj(), new Kira()   // Faz 32
         };
         static Weapon[] _all;
@@ -768,25 +768,30 @@ namespace TekCan
     }
 
     /// <summary>
-    /// ÇEK — "geri dönüş yolunu nasıl kurarım?" Fırlatılır, arena kenarından seker, sana döner;
-    /// gidişte de dönüşte de vurur. Dönene kadar silahsızsın (`CekUcusu`).
+    /// ÇİFT İMZA (Faz 43, Enes: "çifte tabanca gibi olcak seri menzilli saldırabileceğiz" — ÇEK'in yerine). Sol tık basılı
+    /// tutuldukça iki tabanca sırayla ateş eder; her "savurma" tek mermi (süresi = ateş aralığı), mermi nişanda ilk değdiğine
+    /// anında iner. Soru: "nişanı tek hedefte tutabilir miyim?" — aynı düşmana peş peşe değen ikinci mermi ONAY'lı (×1.5).
+    /// Ateş ederken yürünür (yavaş). Şarjör/ısınma YOK: yasa "tek sayı saniye", ayrı sayaç ikinci bir kaynak olurdu.
     /// </summary>
-    public sealed class Cek : Weapon
+    public sealed class CiftImza : Weapon
     {
-        public override string Name => "ÇEK";
+        public override string Name => "ÇİFT İMZA";
         public override Color Tint => new Color(0.6f, 0.85f, 0.95f, 0.5f);
-        public override Biçim Saldırı => Biçim.Çek;
+        public override Biçim Saldırı => Biçim.İmza;
         public override float HarvestMultiplier => 1.3f;
-        public override float Range(Tuning t) => t.attackRange * 4f;        // gidiş mesafesi
-        public override float Damage(Tuning t, float baseDamage) => baseDamage * 0.9f;
-        public override string DashAtakAdı => "CİRO";
-        public override string DashAtakNeYapar => "havadaki çeki yakalayıp dash yönüne yeniden fırlatır";
+        public override int MaxTargets => 1;
+        public override float Range(Tuning t) => t.attackRange * 3.5f;          // HACİZ kadar, ölü bölgesiz
+        public override float Damage(Tuning t, float baseDamage) => baseDamage * 0.9f;   // mermi bunun `imzaBulletMul`'u
+        public override float Duration(Tuning t) => 1f / Mathf.Max(0.1f, t.imzaShotsPerSecond);   // bir mermi
+        public override float HitMoment(Tuning t) => 0f;                        // tetiğe basınca
+        public override string DashAtakAdı => "ÇAPRAZ ATEŞ";
+        public override string DashAtakNeYapar => "iki yana (sağa ve sola) birer ağır mermi";
 
-        /// KARŞILIKSIZ — üç çek yelpaze gibi, her biri bir kez seker.
+        /// TOPLU İMZA — 60° yelpaze, on mermi.
         public override WeaponSpecial Special(Tuning t) => new WeaponSpecial
         {
-            Name = "KARŞILIKSIZ", Cooldown = t.specialCooldownCek, Hits = 3, DamageMul = 0.6f,
-            NeYapar = "üç çek yelpaze gibi fırlar, her biri seker",
+            Name = "TOPLU İMZA", Cooldown = t.specialCooldownImza, Hits = 10, DamageMul = 0.6f, Angle = 60f,
+            NeYapar = "60° yelpaze gibi on mermi",
             Tint = new Color(0.6f, 0.85f, 0.95f, 0.6f)
         };
     }

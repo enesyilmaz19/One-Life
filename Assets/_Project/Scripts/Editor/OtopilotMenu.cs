@@ -44,7 +44,7 @@ namespace TekCan.EditorTools
 
         public static void Playtest30() => Başlat(izle: false, senaryo: "p30");
 
-        /// <summary>Faz 31 playtest'i: REHİN sunakta, ÇEK 2. boss'tan, KARŞILIK keşifte; gerçek tuşlarla hamleler ve üç combo. ~20 dk.</summary>
+        /// <summary>Faz 31 playtest'i: REHİN sunakta, ÇİFT İMZA 2. boss'tan, KARŞILIK keşifte; gerçek tuşlarla hamleler ve üç combo. ~20 dk.</summary>
         [MenuItem("Tek Can/Otopilot — Faz 31 playtest (izle)")]
         public static void Playtest31Izle() => Başlat(izle: true, senaryo: "p31");
 
@@ -73,7 +73,7 @@ namespace TekCan.EditorTools
         /// tavanı → değer (sn/oda) ve geri ödeme (oda); rakip: ilk hasat/hasar/dash sunağı. Hızlandırılmış ~2.5 dk.</summary>
         public static void FiyatOlcum() => Başlat(izle: false, senaryo: "fiyat");
 
-        /// <summary>Aynı ölçüm, 33b'nin altı silahı (ÇEK … KİRA) — rakipsiz. Hızlandırılmış ~2.5 dk.</summary>
+        /// <summary>Aynı ölçüm, 33b'nin altı silahı (ÇİFT İMZA … KİRA) — rakipsiz. Hızlandırılmış ~2.5 dk.</summary>
         public static void FiyatOlcum33b() => Başlat(izle: false, senaryo: "fiyat33b");
 
         /// <summary>Faz 33c playtest'i: 12 yeni combo gerçek tuşlarla (açanlar verilmiş). Hızlandırılmış ~1 dk.</summary>

@@ -534,9 +534,6 @@ namespace TekCan.EditorTools
                 if (gecikme > 0f)
                     foreach (var m in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include))
                         m.Step(gecikme + 0.05f);
-                // ÇEK (Faz 31) uçarak vuruyor: uçuşu sonuna kadar götür.
-                for (int k = 0; k < 300 && CekUcusu.Uçanlar.Count > 0; k++)
-                    foreach (var u in CekUcusu.Uçanlar.ToArray()) u.Step(0.02f);
                 // KİRA'nın kulesi ateş ederek vuruyor: bir saniye çalıştır, sonra kaldır.
                 foreach (var k in KiraKulesi.Tümü.ToArray()) k.Step(1f);
 

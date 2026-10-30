@@ -117,18 +117,9 @@ namespace TekCan.EditorTools
         static float Hasar(Enemy e, System.Action a) { float önce = e.TimeLeft; a(); return önce - e.TimeLeft; }
         static float Hasat(System.Action a) { float h0 = _clock.TotalHarvested; a(); return _clock.TotalHarvested - h0; }
         static GroundMark[] İşaretler() => Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Exclude).Where(m => m != null && m.Bekliyor).ToArray();
-        static int Uçur(System.Func<bool> dur = null)
-        {
-            int n = 0;
-            for (; n < 2000 && CekUcusu.Uçanlar.Count > 0; n++)
-            {
-                if (dur != null && dur()) break;
-                foreach (var u in CekUcusu.Uçanlar.ToArray()) u.Step(0.02f);
-            }
-            return n;
-        }
-        /// <summary>ÇEK'i ileri at, ilk isabete kadar uçur (adım yazıldı, çek havada).</summary>
-        static void ÇekAt() { Silahla(Kadro.ÇEK); var ç = CekUcusu.Uçanlar.First(); Uçur(() => ç.İsabet >= 1); }
+        /// <summary>ÇİFT İMZA'nın tek mermisi (Faz 43): önündeki hatta ilk düşmana anında iner — adım yazıldı.</summary>
+        static void İmzaAt() => Silahla(Kadro.İMZA);
+        static readonly PropertyInfo SavurmaSüresi = typeof(PlayerController).GetProperty("SavurmaSüresi", Gizli);
         static bool Yakın(float a, float b, float pay = 0.02f) => Mathf.Abs(a - b) <= pay * Mathf.Max(1f, Mathf.Abs(b));
         static float Taban(int silah) => Weapon.All[silah].Damage(_t, _clock.AttackDamage);
         static Enemy Boş(Vector3 yer) { var e = Düşman(yer); e.TakeDamage(e.TimeLeft, 0f); return e; }   // bir vuruşta ölür (hasatsız boşaltıldı)
@@ -305,12 +296,12 @@ namespace TekCan.EditorTools
             var cr = Üç<(float uzak, bool sus)>(ComboTür.Ciro, () =>
             {
                 var uzak = Düşman(İleri(5f));
-                ÇekAt(); Geç();
+                İmzaAt(); Geç();
                 Düşman(İleri(1.3f));
                 float h = Hasar(uzak, () => Silahla(Kadro.KONİ));
                 return (h, uzak.Susturulmuş);
             });
-            failed += Check(ref total, $"CİRO (ÇEK → KONİ): çekin çarptığı yerde koninin %80'i ({cr.yok.uzak:0.00} → {cr.var.uzak:0.00} = {koni * 0.8f:0.00}); TAHSİL CİROSU (+) susturuyor",
+            failed += Check(ref total, $"CİRO (İMZA → KONİ): merminin değdiği yerde koninin %80'i ({cr.yok.uzak:0.00} → {cr.var.uzak:0.00} = {koni * 0.8f:0.00}); TAHSİL CİROSU (+) susturuyor",
                             cr.oldu && cr.yok.uzak == 0f && Yakın(cr.var.uzak, koni * 0.8f) && !cr.var.sus && cr.artı.sus, cr.var.uzak);
 
             var kt = Üç<(float h, float k, float bek)>(ComboTür.KarşılıklıTahsil, () =>
@@ -339,13 +330,13 @@ namespace TekCan.EditorTools
             var zc = Üç<int>(ComboTür.ZincirlemeCiro, () =>
             {
                 var uzak = Düşman(İleri(5f));
-                ÇekAt(); Geç();
+                İmzaAt(); Geç();
                 var yakın = Düşman(İleri(1.3f)); Düşman(Yer(-2.5f, 1.3f));    // üçüncü: yakının yanında, MÜŞTEREK'in yayı dışında
                 Silahla(Kadro.MÜŞTEREK);
                 var b = _pc.SonBağ;
                 return b == null ? 0 : b.Üyeler.Count + (b.Üyeler.Contains(uzak) && b.Üyeler.Contains(yakın) ? 10 : 0);
             });
-            failed += Check(ref total, $"ZİNCİRLEME CİRO (ÇEK → MÜŞTEREK): tek vuruşta çekin çarptığına bağ (üye {zc.yok % 10} → {zc.var % 10}, çekinki ve vurulan {(zc.var >= 10 ? "bağda" : "BAĞDA DEĞİL")}); CİRO SİLSİLESİ (+) üçüncü ({zc.artı % 10})",
+            failed += Check(ref total, $"ZİNCİRLEME CİRO (İMZA → MÜŞTEREK): tek vuruşta merminin vurduğuna bağ (üye {zc.yok % 10} → {zc.var % 10}, merminin ve vurulan {(zc.var >= 10 ? "bağda" : "BAĞDA DEĞİL")}); CİRO SİLSİLESİ (+) üçüncü ({zc.artı % 10})",
                             zc.oldu && zc.yok == 0 && zc.var == 12 && zc.artı == 13, zc.var);
 
             var mk = Üç<(float ara, float uç, bool bağ, float bek)>(ComboTür.MüşterekKusur, () =>
@@ -433,13 +424,13 @@ namespace TekCan.EditorTools
             {
                 var r = Düşman(İleri(1.5f)); var hedef = Düşman(İleri(4f));
                 Silahla(Kadro.REHİN); Silahla(Kadro.REHİN); Geç();            // yakala, fırlat (adım)
-                ÇekAt(); Geç();                                                 // çek rehineye çarpar (adım)
+                İmzaAt(); Geç();                                                 // mermi rehineye (adım)
                 var arka = Düşman(Yer(0f, -1.3f));
                 float a0 = arka.TimeLeft;
                 float h = Hasar(hedef, () => Silahla(Kadro.KONİ));
                 return (h, Yaptı(ComboTür.Ciro), a0 - arka.TimeLeft);
             });
-            failed += Check(ref total, $"⚠️ SENETLİ REHİN (REHİN → ÇEK → KONİ): çekin çarptığı kümedeki önüne çekilip ×1.5 yiyor ({sr.yok.h:0.00} → {sr.var.h:0.00} = {koni * 1.5f:0.00}), CİRO {(sr.var.ciro ? "TETİKLENDİ" : "tetiklenmedi")}; KAMBİYO (+) 360° (arkadaki {sr.var.arka:0.00} → {sr.artı.arka:0.00})",
+            failed += Check(ref total, $"⚠️ SENETLİ REHİN (REHİN → İMZA → KONİ): merminin değdiği kümedeki önüne çekilip ×1.5 yiyor ({sr.yok.h:0.00} → {sr.var.h:0.00} = {koni * 1.5f:0.00}), CİRO {(sr.var.ciro ? "TETİKLENDİ" : "tetiklenmedi")}; KAMBİYO (+) 360° (arkadaki {sr.var.arka:0.00} → {sr.artı.arka:0.00})",
                             sr.oldu && sr.yok.h == 0f && Yakın(sr.var.h, koni * 1.5f) && !sr.var.ciro && sr.var.arka == 0f && Yakın(sr.artı.arka, koni * 1.5f), sr.var.h);
 
             var tt = Üç<(float h, float k, bool vade, float bek)>(ComboTür.TeminatlıTahvil, () =>
@@ -498,8 +489,8 @@ namespace TekCan.EditorTools
             // 1. bölgede üçlü yok: aynı sıra (KONİ'siz) ikiliye düşer — SENETLİ REHİN değil CİRO
             YeniKoşu(); _ara = 0.2f;
             Düşman(İleri(1.5f)); Düşman(İleri(4f));
-            Silahla(Kadro.REHİN); Silahla(Kadro.REHİN); Geç(); ÇekAt(); Geç(); Düşman(İleri(1.3f)); Silahla(Kadro.KONİ);
-            failed += Check(ref total, "üçlüler 1. bölgede kapalı: REHİN → ÇEK → KONİ orada CİRO", !Yaptı(ComboTür.SenetliRehin) && Yaptı(ComboTür.Ciro), 0f);
+            Silahla(Kadro.REHİN); Silahla(Kadro.REHİN); Geç(); İmzaAt(); Geç(); Düşman(İleri(1.3f)); Silahla(Kadro.KONİ);
+            failed += Check(ref total, "üçlüler 1. bölgede kapalı: REHİN → İMZA → KONİ orada CİRO", !Yaptı(ComboTür.SenetliRehin) && Yaptı(ComboTür.Ciro), 0f);
             return failed;
         }
 
@@ -531,7 +522,7 @@ namespace TekCan.EditorTools
         static int Parti2İkililer(ref int total)
         {
             int failed = 0;
-            float koni = Taban(Kadro.KONİ), haciz = Taban(Kadro.HACİZ), çek = Taban(Kadro.ÇEK);
+            float koni = Taban(Kadro.KONİ), haciz = Taban(Kadro.HACİZ), mermi = Taban(Kadro.İMZA) * _t.imzaBulletMul;
             float arbArka = Taban(Kadro.ARBİTRAJ) * _t.arbitrajBackMul;
 
             var av = Üç<(float h, float kalan, float tam, bool sırt)>(ComboTür.AcizVesikası, () =>
@@ -611,17 +602,16 @@ namespace TekCan.EditorTools
             failed += Check(ref total, $"MÜŞTEREK REHİN (REHİN → MÜŞTEREK): rehine, çarptığı ve sektiği vurulanla tek bağda (üye {mr.yok.üye} → {mr.var.üye}); TEMİNAT TAMAMLAMA (+) bağlılar susuyor",
                             mr.oldu && mr.yok.üye == 0 && mr.var.üye == 4 && !mr.var.sus && mr.artı.sus, mr.var.üye);
 
-            var ib = Üç<(float h, int havada, float bek)>(ComboTür.İbraz, () =>
+            var ib = Üç<(float h, float bek)>(ComboTür.İbraz, () =>
             {
-                Düşman(İleri(5f));
-                ÇekAt(); Geç();                                                 // çek havada
                 var e = Düşman(İleri(1.3f));
+                İmzaAt(); Geç();                                                 // bir isabet (adım)
                 Bekle(Kadro.İFLAS, 5f);
                 float h = Hasar(e, () => Silahla(Kadro.İFLAS));
-                return (h, CekUcusu.Uçanlar.Count, _pc.SpecialCooldownOf(Kadro.İFLAS));
+                return (h, _pc.SpecialCooldownOf(Kadro.İFLAS));
             });
-            failed += Check(ref total, $"İBRAZ (ÇEK → İFLAS): havadaki çek İFLAS'ın vurduğuna dönüp ×1.5 iniyor ({ib.yok.h:0.00} → {ib.var.h:0.00} = +{1.5f * çek:0.00}, havada {ib.yok.havada} → {ib.var.havada}); KAMBİYO TAKİBİ (+) İFLAS'ın beklemesi sıfır",
-                            ib.oldu && ib.yok.havada == 1 && ib.var.havada == 0 && Yakın(ib.var.h, ib.yok.h + 1.5f * çek) && ib.var.bek == 5f && ib.artı.bek == 0f, ib.var.h);
+            failed += Check(ref total, $"İBRAZ (İMZA → İFLAS): İMZA'nın isabeti İFLAS'ın vurduğuna bir mermi daha ×1.5 ({ib.yok.h:0.00} → {ib.var.h:0.00} = +{1.5f * mermi:0.00}); KAMBİYO TAKİBİ (+) İFLAS'ın beklemesi sıfır",
+                            ib.oldu && Yakın(ib.var.h, ib.yok.h + 1.5f * mermi) && ib.var.bek == 5f && ib.artı.bek == 0f, ib.var.h);
 
             var ta = Üç<(float kalan, float hasar, float yarıçap, float biriken, float bek)>(ComboTür.TeminatAkçesi, () =>
             {
@@ -683,13 +673,13 @@ namespace TekCan.EditorTools
                 Silahla(Kadro.KİRA); Geç();                                     // kule nişana
                 float kr2 = Weapon.All[Kadro.KİRA].Range(_t);
                 var a = Düşman(Yer(1.5f, kr2)); Boş(Yer(-1.5f, kr2));          // boş olan vuruşta ölür → STOPAJ
-                Bekle(Kadro.ÇEK, 5f);
+                Bekle(Kadro.İMZA, 5f);
                 float s0 = _clock.Seconds, doyma = _clock.HasatDoyması;
-                float h = Hasar(a, () => Silahla(Kadro.ÇEK));
-                return (h, _clock.Seconds - s0, doyma, _pc.SpecialCooldownOf(Kadro.ÇEK));
+                float h = Hasar(a, () => Silahla(Kadro.İMZA));
+                return (h, _clock.Seconds - s0, doyma, _pc.SpecialCooldownOf(Kadro.İMZA));
             });
-            failed += Check(ref total, $"KİRA TAHSİLATI (KİRA → ÇEK): kulenin menzilindekine çek vuruşu ({kt.yok.h:0.00} → {kt.var.h:0.00} = {çek:0.00}), öldürdüğü STOPAJ ödüyor ({kt.yok.saat:+0.00} → {kt.var.saat:+0.00} sn); VERGİ İADESİ (+) ÇEK'in beklemesi sıfır",
-                            kt.oldu && kt.yok.h == 0f && Yakın(kt.var.h, çek) && Yakın(kt.yok.saat, 0f) && Yakın(kt.var.saat, 1.5f * kt.var.doyma)
+            failed += Check(ref total, $"KİRA TAHSİLATI (KİRA → İMZA): kulenin menzilindekine birer mermi ({kt.yok.h:0.00} → {kt.var.h:0.00} = {mermi:0.00}), öldürdüğü STOPAJ ödüyor ({kt.yok.saat:+0.00} → {kt.var.saat:+0.00} sn); VERGİ İADESİ (+) İMZA'nın beklemesi sıfır",
+                            kt.oldu && kt.yok.h == 0f && Yakın(kt.var.h, mermi) && Yakın(kt.yok.saat, 0f) && Yakın(kt.var.saat, 1.5f * kt.var.doyma)
                             && kt.var.bek == 5f && kt.artı.bek == 0f, kt.var.saat);
             return failed;
         }
@@ -698,7 +688,7 @@ namespace TekCan.EditorTools
         static int Parti2Üçlüler(ref int total)
         {
             int failed = 0;
-            float koni = Taban(Kadro.KONİ), haciz = Taban(Kadro.HACİZ), çek = Taban(Kadro.ÇEK), rehin = Taban(Kadro.REHİN), işaret = Taban(Kadro.İPOTEK);
+            float koni = Taban(Kadro.KONİ), haciz = Taban(Kadro.HACİZ), mermi = Taban(Kadro.İMZA) * _t.imzaBulletMul, rehin = Taban(Kadro.REHİN), işaret = Taban(Kadro.İPOTEK);
             var iflas = Weapon.All[Kadro.İFLAS];
             float İflas(float sn) => iflas.Damage(_t, _clock.AttackDamage) * iflas.DesperationMultiplier(sn, _t);
 
@@ -718,17 +708,17 @@ namespace TekCan.EditorTools
 
             var iz = Üç<(float iç, float h, float s0, float itme, bool ibraz)>(ComboTür.İpotekZinciri, () =>
             {
-                SilahSunağı.Al(SilahYükseltme.KarşılıksızArtı, -1);              // İBRAZ (ÇEK → İFLAS) da açık: üçlü önce gelmeli
+                SilahSunağı.Al(SilahYükseltme.TopluİmzaArtı, -1);                // İBRAZ (İMZA → İFLAS) da açık: üçlü önce gelmeli
                 var içte = Düşman(İleri(Weapon.All[Kadro.İPOTEK].Range(_t)));
                 Silahla(Kadro.İPOTEK); Geç();                                   // işaret (adım)
-                ÇekAt(); Geç();                                                 // çek içtekine çarpar (adım)
+                İmzaAt(); Geç();                                                 // mermi içtekine (adım)
                 var kenar = Düşman(İleri(Weapon.All[Kadro.İPOTEK].Range(_t)) + Vector3.right);   // merkezdekinin itilecek yönü yok
                 var e = Düşman(İleri(1.3f));
                 float i0 = içte.TimeLeft, p0 = İtmesi(kenar), s0 = _clock.Seconds;
                 float h = Hasar(e, () => Silahla(Kadro.İFLAS));
                 return (i0 - içte.TimeLeft, h, s0, İtmesi(kenar) - p0, Yaptı(ComboTür.İbraz));
             }, saat: 128f);                                                     // 300 sn'de yarı saat de güvenli eşiğin üstü — fark görünmüyor
-            failed += Check(ref total, $"⚠️ İPOTEK ZİNCİRİ (İPOTEK → ÇEK → İFLAS): İFLAS saatin yarısındaymış gibi ({iz.yok.h:0.00} → {iz.var.h:0.00} = {İflas(iz.var.s0 * 0.5f):0.00}), işaret hemen patlıyor ve içindekine İFLAS da iniyor ({iz.yok.iç:0.00} → {iz.var.iç:0.00} = {işaret:0.00} + {iz.var.h:0.00}), İBRAZ {(iz.var.ibraz ? "TETİKLENDİ" : "tetiklenmedi")}; TAHLİYE EMRİ (+) itiyor ({iz.var.itme:0.0} → {iz.artı.itme:0.0})",
+            failed += Check(ref total, $"⚠️ İPOTEK ZİNCİRİ (İPOTEK → İMZA → İFLAS): İFLAS saatin yarısındaymış gibi ({iz.yok.h:0.00} → {iz.var.h:0.00} = {İflas(iz.var.s0 * 0.5f):0.00}), işaret hemen patlıyor ve içindekine İFLAS da iniyor ({iz.yok.iç:0.00} → {iz.var.iç:0.00} = {işaret:0.00} + {iz.var.h:0.00}), İBRAZ {(iz.var.ibraz ? "TETİKLENDİ" : "tetiklenmedi")}; TAHLİYE EMRİ (+) itiyor ({iz.var.itme:0.0} → {iz.artı.itme:0.0})",
                             iz.oldu && iz.yok.iç == 0f && iz.var.h > iz.yok.h * 1.3f && Yakın(iz.var.h, İflas(iz.var.s0 * 0.5f)) && Yakın(iz.var.iç, işaret + iz.var.h) && !iz.var.ibraz && iz.artı.itme > iz.var.itme + 1f, iz.var.iç);
 
             var ie = Üç<(float h, bool vade, bool yavaş)>(ComboTür.İflasErtelemesi, () =>
@@ -745,19 +735,19 @@ namespace TekCan.EditorTools
             var ps = Üç<(bool tuttu, float atış, float bek)>(ComboTür.ProtestoluSenet, () =>
             {
                 var uzak = Düşman(İleri(5f));
-                ÇekAt(); Geç();                                                 // çek uzaktakine (adım)
+                İmzaAt(); Geç();                                                 // mermi uzaktakine (adım)
                 var yakın = Düşman(İleri(1.3f));
                 Silahla(Kadro.ARBİTRAJ); Geç();
-                Bekle(Kadro.ÇEK, 5f);
+                Bekle(Kadro.İMZA, 5f);
                 Silahla(Kadro.REHİN);                                           // yakala
                 bool tuttu = _pc.Rehine == uzak;
-                float bek = _pc.SpecialCooldownOf(Kadro.ÇEK);
+                float bek = _pc.SpecialCooldownOf(Kadro.İMZA);
                 if (tuttu) { Enemy.All.Remove(yakın); Object.DestroyImmediate(yakın.gameObject); }   // fırlatma yolu boş kalsın
                 var hedef = Düşman(İleri(4f));
                 float atış = Hasar(hedef, () => Silahla(Kadro.REHİN));         // fırlat
                 return (tuttu, atış, bek);
             });
-            failed += Check(ref total, $"⚠️ PROTESTOLU SENET (ÇEK → ARBİTRAJ → REHİN): çekin vurduğu 5 birimden yakalanıyor ({(ps.var.tuttu ? "tuttu" : "TUTMADI")}), fırlatması ×2 ({ps.yok.atış:0.00} → {ps.var.atış:0.00}); ŞERH (+) ÇEK'in beklemesi sıfır",
+            failed += Check(ref total, $"⚠️ PROTESTOLU SENET (İMZA → ARBİTRAJ → REHİN): merminin vurduğu 5 birimden yakalanıyor ({(ps.var.tuttu ? "tuttu" : "TUTMADI")}), fırlatması ×2 ({ps.yok.atış:0.00} → {ps.var.atış:0.00}); ŞERH (+) İMZA'nın beklemesi sıfır",
                             ps.oldu && !ps.yok.tuttu && ps.var.tuttu && ps.yok.atış > 0f && Yakın(ps.var.atış, 2f * ps.yok.atış) && ps.var.bek == 5f && ps.artı.bek == 0f, ps.var.atış);
 
             var vs = Üç<(float h, float arka, float i, float hasat, bool masa)>(ComboTür.VadeSonuTahsilatı, () =>
@@ -783,11 +773,11 @@ namespace TekCan.EditorTools
                 var (a, _, _) = BağKurgusu();                                   // iki MÜŞTEREK isabeti: bağ (adım)
                 Geç();
                 float a0 = a.TimeLeft;
-                Silahla(Kadro.ÇEK);
+                Silahla(Kadro.İMZA);
                 return (a0 - a.TimeLeft, a.SırtDönük);
             });
-            failed += Check(ref total, $"⚠️ SPEKÜLATİF ATAK (ARBİTRAJ → MÜŞTEREK → ÇEK): bağlıya çek vuruşu arkadan ({sa.yok.uç:0.00} → {sa.var.uç:0.00} = {çek * _t.arbitrajBackMul:0.00}); KISA SATIŞ (+) bağlıların sırtı dönük",
-                            sa.oldu && sa.yok.uç == 0f && Yakın(sa.var.uç, çek * _t.arbitrajBackMul) && !sa.var.sırt && sa.artı.sırt, sa.var.uç);
+            failed += Check(ref total, $"⚠️ SPEKÜLATİF ATAK (ARBİTRAJ → MÜŞTEREK → İMZA): bağlıya bir mermi arkadan ({sa.yok.uç:0.00} → {sa.var.uç:0.00} = {mermi * _t.arbitrajBackMul:0.00}); KISA SATIŞ (+) bağlıların sırtı dönük",
+                            sa.oldu && sa.yok.uç == 0f && Yakın(sa.var.uç, mermi * _t.arbitrajBackMul) && !sa.var.sırt && sa.artı.sırt, sa.var.uç);
             return failed;
         }
 
@@ -887,11 +877,11 @@ namespace TekCan.EditorTools
                 Silahla(Kadro.FAİZLİ); Geç();
                 Bekle(Kadro.FAİZLİ, 5f);
                 float s0 = _clock.Seconds;
-                ÇekAt();                                                        // ilk isabet (dibindeki)
+                İmzaAt(); İmzaAt(); İmzaAt();                                   // üç isabet (dibindeki)
                 return (_clock.Seconds - s0, _pc.SpecialCooldownOf(Kadro.FAİZLİ));
             });
-            failed += Check(ref total, $"FAİZLİ SENET (FAİZLİ → ÇEK): çekin isabeti savurma bedelini geri ödüyor ({fs.yok.saat:+0.00} → {fs.var.saat:+0.00} sn); SENET İADESİ (+) FAİZLİ'nin beklemesi sıfır",
-                            fs.oldu && Yakın(fs.yok.saat, 0f) && Yakın(fs.var.saat, _t.faizliSwingCost) && fs.var.bek == 5f && fs.artı.bek == 0f, fs.var.saat);
+            failed += Check(ref total, $"FAİZLİ SENET (FAİZLİ → İMZA): serinin ilk iki isabeti savurma bedelini geri ödüyor (üç isabette {fs.yok.saat:+0.00} → {fs.var.saat:+0.00} sn = 2 bedel); SENET İADESİ (+) FAİZLİ'nin beklemesi sıfır",
+                            fs.oldu && Yakın(fs.yok.saat, 0f) && Yakın(fs.var.saat, 2f * _t.faizliSwingCost) && fs.var.bek == 5f && fs.artı.bek == 0f, fs.var.saat);
 
             var it = Üç<(float uzaklık, bool çakılı, bool sus)>(ComboTür.İhtiyatiTedbir, () =>
             {
@@ -1000,32 +990,30 @@ namespace TekCan.EditorTools
                             iş.oldu && iş.yok.uzaklık > 1f && iş.var.uzaklık >= 0f && iş.var.uzaklık < 0.01f && iş.yok.saat < -0.1f && Yakın(iş.var.saat, 0f)
                             && Yakın(iş.artı.kalan, iş.var.kalan + 3f, 0.01f), iş.var.saat);
 
-            var çi = Üç<(float vade, float bek)>(ComboTür.Çekİskontosu, () =>
+            var çi = Üç<(float vade, float bek)>(ComboTür.Senetİskontosu, () =>
             {
-                var uzak = Düşman(İleri(5f));
-                ÇekAt(); Geç();
-                Bekle(Kadro.ÇEK, 5f);
+                Düşman(İleri(5f));
+                İmzaAt(); İmzaAt(); İmzaAt(); Geç();                            // üç isabet (adım)
+                Bekle(Kadro.İMZA, 5f);
                 W(Kadro.TAHVİL); Bas();
-                float v0 = (float)Alan("_vade");
-                _pc.Çekİsabeti(uzak.transform.position, uzak);                  // havadaki çekin bir isabeti daha
-                return ((float)Alan("_vade") - v0, _pc.SpecialCooldownOf(Kadro.ÇEK));
+                return ((float)Alan("_vade"), _pc.SpecialCooldownOf(Kadro.İMZA));
             });
-            failed += Check(ref total, $"ÇEK İSKONTOSU (ÇEK → TAHVİL): basılı tutarken çek isabeti olgunluğa +0.25 ({çi.yok.vade:0.00} → {çi.var.vade:0.00}); İSKONTO ORANI (+) ÇEK'in beklemesi sıfır",
-                            çi.oldu && çi.yok.vade == 0f && Yakın(çi.var.vade, 0.25f) && çi.var.bek == 5f && çi.artı.bek == 0f, çi.var.vade);
+            failed += Check(ref total, $"SENET İSKONTOSU (İMZA → TAHVİL): her isabet olgunluğa +0.1 ({çi.yok.vade:0.00} → {çi.var.vade:0.00} = 3 × 0.1); İSKONTO ORANI (+) İMZA'nın beklemesi sıfır",
+                            çi.oldu && çi.yok.vade == 0f && Yakın(çi.var.vade, 0.3f) && çi.var.bek == 5f && çi.artı.bek == 0f, çi.var.vade);
 
-            var kç = Üç<(float uzaklık, float kirasız, float bek)>(ComboTür.KiraÇeki, () =>
+            var kç = Üç<(float uzaklık, float kirasız, float bek)>(ComboTür.KiraSenedi, () =>
             {
                 var uzak = Düşman(İleri(4f));
-                ÇekAt(); Geç();
+                İmzaAt(); Geç();
                 Vector3 çarptı = uzak.transform.position;
-                Bekle(Kadro.ÇEK, 5f);
+                Bekle(Kadro.İMZA, 5f);
                 Silahla(Kadro.KİRA);
                 var k = _pc.Kule;
                 if (k == null) return (-1f, -1f, -1f);
                 Vector3 d = k.transform.position - çarptı; d.y = 0f;
-                return (d.magnitude, k.KirasızKalan, _pc.SpecialCooldownOf(Kadro.ÇEK));
+                return (d.magnitude, k.KirasızKalan, _pc.SpecialCooldownOf(Kadro.İMZA));
             });
-            failed += Check(ref total, $"KİRA ÇEKİ (ÇEK → KİRA): kule çekin çarptığı yere ({kç.yok.uzaklık:0.00} → {kç.var.uzaklık:0.00} birim), 3 sn kirasız ({kç.var.kirasız:0}); ÇEKLE ÖDEME (+) ÇEK'in beklemesi sıfır",
+            failed += Check(ref total, $"KİRA SENEDİ (İMZA → KİRA): kule merminin değdiği yere ({kç.yok.uzaklık:0.00} → {kç.var.uzaklık:0.00} birim), 3 sn kirasız ({kç.var.kirasız:0}); SENETLE ÖDEME (+) İMZA'nın beklemesi sıfır",
                             kç.oldu && kç.yok.uzaklık > 1f && kç.var.uzaklık >= 0f && kç.var.uzaklık < 0.01f && kç.yok.kirasız == 0f && kç.var.kirasız == 3f
                             && kç.var.bek == 5f && kç.artı.bek == 0f, kç.var.uzaklık);
 
@@ -1194,19 +1182,19 @@ namespace TekCan.EditorTools
 
             var zt = Üç<(bool kilit, float uzama, bool çek, bool sus)>(ComboTür.ZincirlemeTahsil, () =>
             {
-                Combo.SatınAl(ComboTür.KiraÇeki, -1);                           // ÇEK → KİRA da açık: üçlü önce gelmeli
+                Combo.SatınAl(ComboTür.KiraSenedi, -1);                         // İMZA → KİRA da açık: üçlü önce gelmeli
                 var uzak = Düşman(İleri(5.5f));
                 Silahla(Kadro.HACİZ); Geç();
-                ÇekAt(); Geç();                                                 // çek uzaktakine (adım)
+                İmzaAt(); Geç();                                                 // mermi uzaktakine (adım)
                 Silahla(Kadro.KİRA);
                 var k = _pc.Kule;
                 if (k == null) return (false, -1f, false, false);
                 float k0 = k.Kalan;
-                _pc.Çekİsabeti(uzak.transform.position, uzak);                  // çekin bir isabeti daha
-                return (k.Kilit == uzak, k.Kalan - k0, Yaptı(ComboTür.KiraÇeki), uzak.Susturulmuş);
+                İmzaAt();                                                       // İMZA'nın bir isabeti daha
+                return (k.Kilit == uzak, k.Kalan - k0, Yaptı(ComboTür.KiraSenedi), uzak.Susturulmuş);
             });
-            failed += Check(ref total, $"⚠️ ZİNCİRLEME TAHSİL (HACİZ → ÇEK → KİRA): kule HACİZ'in vurduğuna kilitli ({zt.var.kilit}), çek isabeti ömre +1 ({zt.yok.uzama:0.00} → {zt.var.uzama:0.00}), KİRA ÇEKİ {(zt.var.çek ? "TETİKLENDİ" : "tetiklenmedi")}; TAHSİL EMRİ (+) susturuyor",
-                            zt.oldu && !zt.yok.kilit && zt.var.kilit && Yakın(zt.yok.uzama, 0f) && Yakın(zt.var.uzama, 1f) && !zt.var.çek && !zt.var.sus && zt.artı.sus, zt.var.uzama);
+            failed += Check(ref total, $"⚠️ ZİNCİRLEME TAHSİL (HACİZ → İMZA → KİRA): kule HACİZ'in vurduğuna kilitli ({zt.var.kilit}), İMZA'nın isabeti ömre +0.25 ({zt.yok.uzama:0.00} → {zt.var.uzama:0.00}), KİRA SENEDİ {(zt.var.çek ? "TETİKLENDİ" : "tetiklenmedi")}; TAHSİL EMRİ (+) susturuyor",
+                            zt.oldu && !zt.yok.kilit && zt.var.kilit && Yakın(zt.yok.uzama, 0f) && Yakın(zt.var.uzama, 0.25f) && !zt.var.çek && !zt.var.sus && zt.artı.sus, zt.var.uzama);
 
             var kr = Üç<(float h, float b, bool sırt, bool açığa)>(ComboTür.KarşıRehin, () =>
             {
@@ -1244,10 +1232,10 @@ namespace TekCan.EditorTools
                 Silahla(Kadro.İFLAS); Geç();
                 var k = _pc.Kule;
                 float k0 = k != null ? k.Kalan : 0f;
-                float h = Hasar(e, () => ÇekAt());
+                float h = Hasar(e, () => İmzaAt());
                 return (_clock.Bükülü, h, k != null ? k.Kalan - k0 : -1f);
             });
-            failed += Check(ref total, $"⚠️ ZAMAN KİRASI (KİRA → İFLAS → ÇEK): saat duruyor (×{zk.yok.bükülü:0.0} → ×{zk.var.bükülü:0.0}), çek ×1.5 ({zk.yok.çekH:0.00} → {zk.var.çekH:0.00}); ZAMAN AŞIMI (+) kule +3 sn ({zk.artı.uzama:0.0})",
+            failed += Check(ref total, $"⚠️ ZAMAN KİRASI (KİRA → İFLAS → İMZA): saat duruyor (×{zk.yok.bükülü:0.0} → ×{zk.var.bükülü:0.0}), seri ×1.5 ({zk.yok.çekH:0.00} → {zk.var.çekH:0.00}); ZAMAN AŞIMI (+) kule +3 sn ({zk.artı.uzama:0.0})",
                             zk.oldu && Yakın(zk.yok.bükülü, 1f) && zk.var.bükülü == 0f && Yakın(zk.var.çekH, zk.yok.çekH * 1.5f) && Yakın(zk.var.uzama, 0f) && Yakın(zk.artı.uzama, 3f), zk.var.çekH);
             return failed;
         }
@@ -1270,9 +1258,6 @@ namespace TekCan.EditorTools
                          Combo.Sayı == 120 && ikili == 24 && satın && kapalı && dağılım && ikiÜçlü, Combo.Sayı);
         }
 
-        static readonly FieldInfo ÇekHasarı = typeof(CekUcusu).GetField("_hasar", Gizli), ÇekSekme = typeof(CekUcusu).GetField("_sekme", Gizli);
-        static (float hasar, int sekme) ÇekGücü() { var ç = CekUcusu.Uçanlar.FirstOrDefault(); return ç == null ? (-1f, -1) : ((float)ÇekHasarı.GetValue(ç), (int)ÇekSekme.GetValue(ç)); }
-
         // ── 11) PARTİ 4 — ikililer (satın alınmış) ───────────────────────────────
         static int Parti4İkililer(ref int total)
         {
@@ -1287,10 +1272,10 @@ namespace TekCan.EditorTools
                 var sol = Düşman(Yer(-1.2f, 1.2f)); var sağ = Düşman(Yer(1.2f, 1.2f)); Düşman(İleri(1.3f));
                 Silahla(Kadro.KONİ); Geç();                                     // üçünü vurur
                 float s0 = sol.TimeLeft, ğ0 = sağ.TimeLeft;
-                Silahla(Kadro.ÇEK); Uçur();                                     // dönene kadar
+                Silahla(Kadro.İMZA);                                            // ilk mermi
                 return ((sol.TimeLeft < s0 ? 1 : 0) + (sağ.TimeLeft < ğ0 ? 1 : 0), (sol.Susturulmuş ? 1 : 0) + (sağ.Susturulmuş ? 1 : 0));
             });
-            failed += Check(ref total, $"TOPLU TAHSİLAT (KONİ → ÇEK): çek yandakilere de uğruyor ({tt.yok.yan} → {tt.var.yan}/2); TAHSİL MAKBUZU (+) susturuyor ({tt.artı.sus}/2)",
+            failed += Check(ref total, $"TOPLU TAHSİLAT (KONİ → İMZA): yandakilere de birer mermi ({tt.yok.yan} → {tt.var.yan}/2); TAHSİL MAKBUZU (+) susturuyor ({tt.artı.sus}/2)",
                             tt.oldu && tt.yok.yan == 0 && tt.var.yan == 2 && tt.var.sus == 0 && tt.artı.sus == 2, tt.var.yan);
 
             var sa = Üç<(float h, bool sırt)>(ComboTür.SürüdenAyır, () =>
@@ -1442,33 +1427,31 @@ namespace TekCan.EditorTools
             failed += Check(ref total, $"REHİN VADESİ (REHİN → TAHVİL): rehine çakılı ({rv.yok.çakılı} → {rv.var.çakılı}), basılı tutma 1. kademeden ({rv.yok.k} → {rv.var.k}); HAPİS HAKKI (+) susturuyor",
                             rv.oldu && !rv.yok.çakılı && rv.var.çakılı && rv.yok.k == 0 && rv.var.k == 1 && !rv.var.sus && rv.artı.sus, rv.var.k);
 
-            var çk = Üç<(float h, float saat, int havada)>(ComboTür.ÇekliKredi, () =>
+            var çk = Üç<(float h, float saat, bool sus)>(ComboTür.İmzalıKredi, () =>
             {
                 HasatKapat();
                 Düşman(İleri(5f));
-                ÇekAt(); Geç();                                                 // çek havada (adım)
+                İmzaAt(); Geç();                                                // mermi (adım)
                 var e = Düşman(İleri(1.3f));
                 float s0 = _clock.Seconds;
                 float h = Hasar(e, () => Silahla(Kadro.FAİZLİ));
-                return (h, _clock.Seconds - s0, CekUcusu.Havadaki(_pc));
+                return (h, _clock.Seconds - s0, e.Susturulmuş);
             });
-            failed += Check(ref total, $"ÇEKLİ KREDİ (ÇEK havada → FAİZLİ): ×1.3 ({çk.yok.h:0.00} → {çk.var.h:0.00}), bedel geri ({çk.yok.saat:+0.00} → {çk.var.saat:+0.00}); ELDEN TAHSİL (+) çek eline dönüyor ({çk.var.havada} → {çk.artı.havada})",
+            failed += Check(ref total, $"İMZALI KREDİ (İMZA → FAİZLİ): ×1.3 ({çk.yok.h:0.00} → {çk.var.h:0.00}), bedel geri ({çk.yok.saat:+0.00} → {çk.var.saat:+0.00}); KEFİL İMZASI (+) vurulan susuyor",
                             çk.oldu && Yakın(çk.yok.h, faizli) && Yakın(çk.var.h, faizli * 1.3f) && Yakın(çk.yok.saat, 0f) && Yakın(çk.var.saat, cost)
-                            && çk.var.havada == 1 && çk.artı.havada == 0, çk.var.h);
+                            && !çk.var.sus && çk.artı.sus, çk.var.h);
 
-            var kç = Üç<(float b, float bek)>(ComboTür.KarşılıklıÇek, () =>
+            var kç = Üç<(float h, float bek)>(ComboTür.Karşılıklıİmza, () =>
             {
-                Düşman(İleri(5f));
-                ÇekAt(); Geç();                                                 // çek havada (adım)
-                Düşman(İleri(1.3f));
-                Bekle(Kadro.ÇEK, 5f);
-                Silahla(Kadro.KARŞILIK);                                        // birikeni indirir (sıfır)
-                float b0 = _pc.Biriken;
-                Uçur();                                                         // çek döner: yoldakilere yine çarpar
-                return (_pc.Biriken - b0, _pc.SpecialCooldownOf(Kadro.ÇEK));
+                var e = Düşman(İleri(1.3f));
+                İmzaAt(); İmzaAt(); İmzaAt(); Geç();                            // üç isabet (adım)
+                Bekle(Kadro.İMZA, 5f);
+                float h = Hasar(e, () => Silahla(Kadro.KARŞILIK));             // birikimi indirir
+                return (h, _pc.SpecialCooldownOf(Kadro.İMZA));
             });
-            failed += Check(ref total, $"KARŞILIKLI ÇEK (ÇEK → KARŞILIK): havadaki çekin isabetleri birikene ({kç.yok.b:0.0} → {kç.var.b:0.0} sn, isabet başı 0.5); KARŞILIK ÇEKİ (+) ÇEK'in beklemesi sıfır",
-                            kç.oldu && kç.yok.b == 0f && kç.var.b >= 0.5f && Yakın(kç.var.b * 2f, Mathf.Round(kç.var.b * 2f)) && kç.var.bek == 5f && kç.artı.bek == 0f, kç.var.b);
+            float kar = Taban(Kadro.KARŞILIK);
+            failed += Check(ref total, $"KARŞILIKLI İMZA (İMZA → KARŞILIK): üç isabet birikene 0.75 sn, KARŞILIK indiriyor ({kç.yok.h:0.00} → {kç.var.h:0.00} = {kar:0.00} + 0.75 × {_t.karsilikDamagePerSecond}); KARŞILIK İMZASI (+) İMZA'nın beklemesi sıfır",
+                            kç.oldu && Yakın(kç.yok.h, kar * 0.6f) && Yakın(kç.var.h, kar + 0.75f * _t.karsilikDamagePerSecond) && kç.var.bek == 5f && kç.artı.bek == 0f, kç.var.h);
 
             var kz = Üç<(float h, float b, bool sus)>(ComboTür.KarşıHaciz, () =>
             {
@@ -1511,17 +1494,17 @@ namespace TekCan.EditorTools
             failed += Check(ref total, $"VADELİ REHİN (TAHVİL 2. kademe → REHİN): ×2 menzilden yakalıyor ({(vr.var.tuttu ? "tuttu" : "TUTMADI")}), fırlatma ×{v2} ({vr.var.h:0.00} = {fırlat * v2:0.00}); REHİN İTFASI (+) beklemesi sıfır",
                             vr.oldu && !vr.yok.tuttu && vr.var.tuttu && Yakın(vr.var.h, fırlat * v2) && vr.var.bek == 5f && vr.artı.bek == 0f, vr.var.h);
 
-            var vç = Üç<(float hasar, int sekme, float bek)>(ComboTür.VadeliÇek, () =>
+            var vç = Üç<(float h, float aralık, float bek)>(ComboTür.VadeliSenet, () =>
             {
-                Düşman(İleri(1.3f));
+                var e = Düşman(İleri(1.3f));
                 TahvilBoz(1.1f); Geç();                                        // 2. kademe
-                Bekle(Kadro.ÇEK, 5f);
-                Silahla(Kadro.ÇEK);
-                var (h, s) = ÇekGücü();
-                return (h, s, _pc.SpecialCooldownOf(Kadro.ÇEK));
+                Bekle(Kadro.İMZA, 5f);
+                W(Kadro.İMZA);
+                float h = Hasar(e, () => Vur.Invoke(_pc, null));                // ilk mermi
+                return (h, (float)SavurmaSüresi.GetValue(_pc), _pc.SpecialCooldownOf(Kadro.İMZA));
             });
-            failed += Check(ref total, $"VADELİ ÇEK (TAHVİL 2. kademe → ÇEK): çek ×{v2} ({vç.yok.hasar:0.00} → {vç.var.hasar:0.00}), 2 fazla sekme ({vç.yok.sekme} → {vç.var.sekme}); KEŞİDE (+) beklemesi sıfır",
-                            vç.oldu && Yakın(vç.var.hasar, vç.yok.hasar * v2) && vç.var.sekme == vç.yok.sekme + 2 && vç.var.bek == 5f && vç.artı.bek == 0f, vç.var.hasar);
+            failed += Check(ref total, $"VADELİ SENET (TAHVİL 2. kademe → İMZA): seri ×{v2} ({vç.yok.h:0.00} → {vç.var.h:0.00}), ×1.5 hızlı (mermi aralığı {vç.yok.aralık:0.000} → {vç.var.aralık:0.000}); KEŞİDE (+) beklemesi sıfır",
+                            vç.oldu && Yakın(vç.var.h, vç.yok.h * v2) && Yakın(vç.yok.aralık / vç.var.aralık, 1.5f) && vç.var.bek == 5f && vç.artı.bek == 0f, vç.var.h);
 
             var so = Üç<(float yayılan, float çek, float kalan)>(ComboTür.SenetOrtaklığı, () =>
             {
@@ -1534,10 +1517,10 @@ namespace TekCan.EditorTools
                 if (bağ == null) return (-1f, -1f, -1f);
                 bağ.Step(1f);                                                   // bağ 1 sn eskidi
                 float a0 = a.TimeLeft, b0 = b.TimeLeft;
-                ÇekAt();                                                        // ilk isabet a
+                İmzaAt();                                                       // ilk mermi a
                 return (b0 - b.TimeLeft, a0 - a.TimeLeft, bağ.Kalan);
             });
-            failed += Check(ref total, $"SENET ORTAKLIĞI (MÜŞTEREK → ÇEK): çek bağlıya çarpınca tam yayıyor ({so.yok.yayılan:0.00} → {so.var.yayılan:0.00} = {so.var.çek:0.00}); SENET YENİLEME (+) bağ tazeleniyor ({so.var.kalan:0.0} → {so.artı.kalan:0.0})",
+            failed += Check(ref total, $"SENET ORTAKLIĞI (MÜŞTEREK → İMZA): mermi bağlıya değince tam yayıyor ({so.yok.yayılan:0.00} → {so.var.yayılan:0.00} = {so.var.çek:0.00}); SENET YENİLEME (+) bağ tazeleniyor ({so.var.kalan:0.0} → {so.artı.kalan:0.0})",
                             so.oldu && Yakın(so.yok.yayılan, so.yok.çek * _t.musterekShare) && Yakın(so.var.yayılan, so.var.çek) && Yakın(so.var.kalan, _t.musterekSeconds - 1f)
                             && Yakın(so.artı.kalan, _t.musterekSeconds), so.var.yayılan);
 
@@ -1617,21 +1600,20 @@ namespace TekCan.EditorTools
             var iflas = Weapon.All[Kadro.İFLAS];
             float ipotekR = Weapon.All[Kadro.İPOTEK].Range(_t);
 
-            var isn = Üç<(float hasar, int sekme, float bek, float s)>(ComboTür.İflasSenedi, () =>
+            var isn = Üç<(float h, float yan, float bek, float s)>(ComboTür.İflasSenedi, () =>
             {
                 Düşman(İleri(1.5f)); Düşman(İleri(4f));
                 Silahla(Kadro.REHİN); Silahla(Kadro.REHİN); Geç();            // yakala, fırlat (adım)
-                Düşman(İleri(1.3f));
+                var e = Düşman(İleri(1.3f)); var yan = Düşman(Yer(-1f, 1.3f));  // yan: hattın dışında, e'ye en yakın
                 Silahla(Kadro.İFLAS); Geç();
                 Bekle(Kadro.İFLAS, 5f);
-                float s = _clock.Seconds;
-                Silahla(Kadro.ÇEK);
-                var (h, sk) = ÇekGücü();
-                return (h, sk, _pc.SpecialCooldownOf(Kadro.İFLAS), s);
+                float s = _clock.Seconds, y0 = yan.TimeLeft;
+                float h = Hasar(e, () => Silahla(Kadro.İMZA));                  // ilk mermi
+                return (h, y0 - yan.TimeLeft, _pc.SpecialCooldownOf(Kadro.İFLAS), s);
             }, saat: 30f);
             float dmS = Mathf.Max(1f, iflas.DesperationMultiplier(isn.var.s, _t));
-            failed += Check(ref total, $"⚠️ İFLAS SENEDİ (REHİN → İFLAS → ÇEK): çek ×çaresizlik ({isn.yok.hasar:0.00} → {isn.var.hasar:0.00} = ×{dmS:0.00}), 2 fazla sekme ({isn.yok.sekme} → {isn.var.sekme}); MASA ALACAĞI (+) İFLAS'ın beklemesi sıfır",
-                            isn.oldu && dmS > 1.5f && Yakın(isn.var.hasar, isn.yok.hasar * dmS) && isn.var.sekme == isn.yok.sekme + 2 && isn.var.bek == 5f && isn.artı.bek == 0f, isn.var.hasar);
+            failed += Check(ref total, $"⚠️ İFLAS SENEDİ (REHİN → İFLAS → İMZA): seri ×çaresizlik ({isn.yok.h:0.00} → {isn.var.h:0.00} = ×{dmS:0.00}), mermi yanındakine seker ({isn.yok.yan:0.00} → {isn.var.yan:0.00}); MASA ALACAĞI (+) İFLAS'ın beklemesi sıfır",
+                            isn.oldu && dmS > 1.5f && Yakın(isn.var.h, isn.yok.h * dmS) && isn.yok.yan == 0f && Yakın(isn.var.yan, isn.var.h) && isn.var.bek == 5f && isn.artı.bek == 0f, isn.var.h);
 
             var tk = Üç<(float h, float mh, float iç, float itme, bool tahsil)>(ComboTür.TapuKarşılığı, () =>
             {
@@ -1666,7 +1648,7 @@ namespace TekCan.EditorTools
             {
                 Combo.SatınAl(ComboTür.İşgal, -1);                              // REHİN → KİRA da açık: üçlü önce gelmeli
                 Düşman(İleri(5f));
-                ÇekAt(); Geç();                                                 // çek (adım), havada
+                İmzaAt(); Geç();                                                 // mermi (adım)
                 var r = Düşman(İleri(1.5f));
                 Silahla(Kadro.REHİN); Silahla(Kadro.REHİN); Geç();            // yakala, fırlat (adım): ileridekinin dibine
                 Silahla(Kadro.KİRA);
@@ -1675,7 +1657,7 @@ namespace TekCan.EditorTools
                 Vector3 d = k.transform.position - r.transform.position; d.y = 0f;
                 return (d.magnitude, k.KirasızKalan, k.Kalan, Yaptı(ComboTür.İşgal), k.Kiracı == r);
             });
-            failed += Check(ref total, $"⚠️ SENETLİ KİRA (ÇEK → REHİN → KİRA): kule rehinenin düştüğü yere ({sk.yok.uzaklık:0.00} → {sk.var.uzaklık:0.00}), 5 sn kirasız, ömür +5 ({sk.yok.kalan:0.0} → {sk.var.kalan:0.0}), İŞGAL {(sk.var.işgal ? "TETİKLENDİ" : "tetiklenmedi")}; SENETLİ KİRACI (+) kirayı rehine ödüyor",
+            failed += Check(ref total, $"⚠️ SENETLİ KİRA (İMZA → REHİN → KİRA): kule rehinenin düştüğü yere ({sk.yok.uzaklık:0.00} → {sk.var.uzaklık:0.00}), 5 sn kirasız, ömür +5 ({sk.yok.kalan:0.0} → {sk.var.kalan:0.0}), İŞGAL {(sk.var.işgal ? "TETİKLENDİ" : "tetiklenmedi")}; SENETLİ KİRACI (+) kirayı rehine ödüyor",
                             sk.oldu && sk.yok.uzaklık > 1f && sk.var.uzaklık >= 0f && sk.var.uzaklık < 0.01f && sk.var.kirasız == 5f && Yakın(sk.var.kalan, sk.yok.kalan + 5f, 0.01f)
                             && !sk.var.işgal && !sk.var.kiracı && sk.artı.kiracı, sk.var.kirasız);
 
@@ -1695,9 +1677,11 @@ namespace TekCan.EditorTools
 
             var go = Üç<(int üye, bool sırt, bool ciro, float bek)>(ComboTür.GizliOrtaklık, () =>
             {
-                var a = Düşman(İleri(1.2f)); Düşman(İleri(4f)); var d = Düşman(Yer(1.5f, 0f));
+                var a = Düşman(İleri(1.2f)); var c = Düşman(Yer(-1.5f, 3f)); var d = Düşman(Yer(1.5f, 0f));
                 Silahla(Kadro.ARBİTRAJ); Geç();                                 // a (adım)
-                Silahla(Kadro.ÇEK); var ç = CekUcusu.Uçanlar.First(); Uçur(() => ç.İsabet >= 2); Geç();   // çek a'ya ve ilerdekine (adım)
+                İmzaAt();                                                       // mermi a'ya (adım)
+                _pGo.transform.rotation = Quaternion.LookRotation(c.transform.position - _pGo.transform.position);
+                İmzaAt(); Ortaya(); Geç();                                      // ikincisi c'ye — aynı adım
                 Bekle(Kadro.ARBİTRAJ, 5f);
                 _pGo.transform.rotation = Quaternion.LookRotation(Vector3.right);
                 Silahla(Kadro.MÜŞTEREK);                                        // d
@@ -1705,21 +1689,21 @@ namespace TekCan.EditorTools
                 var bağ = _pc.SonBağ;
                 return (bağ != null ? bağ.Üyeler.Count : 0, d.SırtDönük, Yaptı(ComboTür.ZincirlemeCiro), _pc.SpecialCooldownOf(Kadro.ARBİTRAJ));
             });
-            failed += Check(ref total, $"⚠️ GİZLİ ORTAKLIK (ARBİTRAJ → ÇEK → MÜŞTEREK): çekin çarptıkları + MÜŞTEREK'in vurduğu tek bağda ({go.yok.üye} → {go.var.üye} üye), sırtları dönük ({go.var.sırt}), ZİNCİRLEME CİRO {(go.var.ciro ? "TETİKLENDİ" : "tetiklenmedi")}; GİZLİ PAY (+) ARBİTRAJ'ın beklemesi sıfır",
+            failed += Check(ref total, $"⚠️ GİZLİ ORTAKLIK (ARBİTRAJ → İMZA → MÜŞTEREK): İMZA'nın vurdukları + MÜŞTEREK'in vurduğu tek bağda ({go.yok.üye} → {go.var.üye} üye), sırtları dönük ({go.var.sırt}), ZİNCİRLEME CİRO {(go.var.ciro ? "TETİKLENDİ" : "tetiklenmedi")}; GİZLİ PAY (+) ARBİTRAJ'ın beklemesi sıfır",
                             go.oldu && go.yok.üye == 0 && go.var.üye == 3 && go.var.sırt && !go.var.ciro && go.var.bek == 5f && go.artı.bek == 0f, go.var.üye);
 
             var sp = Üç<bool>(ComboTür.SpekülatifAtak, () =>
             {
-                Combo.SatınAl(ComboTür.SenetOrtaklığı, -1);                     // MÜŞTEREK → ÇEK de açık: üçlü önce gelmeli
+                Combo.SatınAl(ComboTür.SenetOrtaklığı, -1);                     // MÜŞTEREK → İMZA da açık: üçlü önce gelmeli
                 var a = Düşman(İleri(1.5f)); Düşman(Yer(1.5f, 0f));
                 Silahla(Kadro.ARBİTRAJ); Geç();
                 Silahla(Kadro.MÜŞTEREK);                                        // a işaretli
                 _pGo.transform.rotation = Quaternion.LookRotation(Vector3.right);
                 Silahla(Kadro.MÜŞTEREK); Ortaya(); Geç();                       // bağ (adım)
-                Silahla(Kadro.ÇEK);
+                Silahla(Kadro.İMZA);
                 return Yaptı(ComboTür.SenetOrtaklığı);
             });
-            failed += Check(ref total, $"⚠️ SPEKÜLATİF ATAK (ARBİTRAJ → MÜŞTEREK → ÇEK) SENET ORTAKLIĞI'ndan önce: üçlü tetikleniyor, ikili {(sp.var ? "TETİKLENDİ" : "tetiklenmedi")}",
+            failed += Check(ref total, $"⚠️ SPEKÜLATİF ATAK (ARBİTRAJ → MÜŞTEREK → İMZA) SENET ORTAKLIĞI'ndan önce: üçlü tetikleniyor, ikili {(sp.var ? "TETİKLENDİ" : "tetiklenmedi")}",
                             sp.oldu && !sp.var, 0f);
             return failed;
         }
@@ -1729,8 +1713,6 @@ namespace TekCan.EditorTools
         {
             foreach (var e in Enemy.All.ToArray()) if (e != null) Object.DestroyImmediate(e.gameObject);
             Enemy.All.Clear();
-            foreach (var u in CekUcusu.Uçanlar.ToArray()) if (u != null) Object.DestroyImmediate(u.gameObject);
-            CekUcusu.Uçanlar.Clear();
             foreach (var b in MusterekBag.Tümü.ToArray()) if (b != null) b.Bitir();
             MusterekBag.Tümü.Clear();
             foreach (var k in KiraKulesi.Tümü.ToArray()) if (k != null) k.Bitir();

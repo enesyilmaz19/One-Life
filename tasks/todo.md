@@ -16,8 +16,8 @@
 | 15–19 | 🤖 **Faz 34–37 his testleri → botta** | Enes (2026-10-22): *"testi de bota yaptır, oradan botun zorlanma ölçüsüne göre ilerleyelim şimdilik"*. P34–P37 ✅. Ölçü: mini zorlasın ama botu öldürmesin (saat kaybı < giriş saati) — Faz 38'de uygulandı, P34–P38 ✅ | — |
 | 20 | ⏱️ *(önerilir, ~10 dk)* **İnsan çarpanı** | Enes (2026-10-23): aksiyon İNSAN oynayışıyla ≥ 7 saat, kalanı ara sahne + anlatım (hikâye/olay odası yok). Botun ölçtüğünü insana çeviren çarpanı bilmiyoruz (×1.2 → bot 5.8 sa gerek, ×1.5 → bugünkü yeter). **F6**, 1. ara bölgeyi (7 oda + mini + sunak, bot ~9 dk — Faz 40'tan sonra) bir kez normal oyna, süreyi söyle | Mesajla yaz |
 | 21 | ⚖️ **Saat ekonomisi** | Bot orta oyunda 4000–6600 sn ile geziyor (tavan 456–830), odalar onu hiç zorlamıyor; sıkılırsa geç boss'lar yine öldürür (aşağıda FAZ 39). Şimdi mi, hikâyeden sonra mı? | Mesajla yaz |
-| 29 | 🔗 **Combo Parti 4 — kodlandı, bak (120 tamam)** | `docs/COMBOLAR.md` Parti 4: "+" hâlleri benim önerim · "sadeleşenler" (BORÇ ESARETİ hasat kuralıyla, VADELİ KARŞILIK en az ×2, KULE HACZİ "kule dururken"). Commit için "commitle" | Mesajla yaz |
-| 30 | 🔫 **ÇİFT İMZA (ÇEK'in yerine) — öneriye bak** | `docs/CIFT_IMZA.md`: silah (seri ateş, ONAY, TOPLU İMZA, ÇAPRAZ ATEŞ), 8 yükseltme, 24 combo'nun yeni hâli (sıra ve tür aynı → 120 kalır). Ad ve sayılar senin; onaylarsan kodlarım | Mesajla ya da dosyaya yaz |
+| 29 | 🔗 *(commit'li)* **Combo Parti 4 — bak** | `docs/COMBOLAR.md` Parti 4: "+" hâlleri benim önerim · "sadeleşenler" (BORÇ ESARETİ hasat kuralıyla, VADELİ KARŞILIK en az ×2, KULE HACZİ "kule dururken") | Mesajla yaz |
+| 30 | 🔫 **ÇİFT İMZA — oyna, his** | **F6** yeni koşu · **N** · **B** → 2. boss'u öldür → ÇİFT İMZA açılır → KADRO sunağından envantere al · sol tıkı BASILI TUT (seri), aynı düşmana peş peşe ikinci mermi ONAY · sağ tık TOPLU İMZA · dash + sol tık ÇAPRAZ ATEŞ · değince **2** HACİZ = SENET HACZİ. His: saniyede 6 mermi fazla/az mı, ateşte yürüyüş ×0.7, ONAY okunuyor mu. Kodlarken değişenler `docs/CIFT_IMZA.md` §5 | Mesajla yaz |
 | 22 | 📖 **Hikâye — ortak** | `docs/HIKAYE.md`: senin üç notun yazılı, 6 açık soru (adlar · borcu kim aldı · ekipmanı kim geliştirdi · başlangıç zamanı neden o kadar · son · perdelerin olay sırası). Hangisinden başlayalım? | Mesajla ya da doğrudan dosyaya yaz |
 
 ---
@@ -269,19 +269,22 @@ Enes: *"saatin cömertliğini düzeltelim oyun zorlamalı oyuncuları"* · *"bit
 
 ---
 
-## 🔫 FAZ 43 — ÇİFT İMZA: ÇEK'in yerine çifte tabanca — **öneri Enes'in onayında** (2026-10-30)
+## 🔫 FAZ 43 — ÇİFT İMZA: ÇEK'in yerine çifte tabanca — **KODLANDI** (2026-10-30)
 
 Enes: *"silahlardan birini … çifte tabanca gibi olcak seri menzilli saldırabileceğiz. Bir silahı bununla değişelim ve comboları da ona göre
 yeniden yazalım"* · seçim: giden **ÇEK**, ad **ÇİFT İMZA**. Öneri: `docs/CIFT_IMZA.md`. Kural: combo sayısı 120 kalır, ¼–¼–½ bozulmaz.
 
 - [x] A. ÇEK'in izini çıkar: 24 combo (4 direkt · 7 açılır · 13 satın), 8 yükseltme, `CekUcusu`, 7 kapı/bot dosyası
-- [ ] B. Öneri → **Enes onaylar** (silah · yükseltmeler · 24 combo)
-- [ ] C. Silah: `Weapon.CiftImza` (biçim `İmza`), seri ateş (anında isabet, sol/sağ), ONAY, TOPLU İMZA, ÇAPRAZ ATEŞ; `CekUcusu` silinir, "seri" `PlayerController`'da
-- [ ] D. 8 yükseltme (aynı yuva, aynı enderlik — kayıt bozulmaz)
-- [ ] E. 24 combo yeniden (sıra ve tür aynı)
-- [ ] F. Kapılar: Faz 31 · 33 · 42 (+ Faz 3, 32'deki ÇEK satırları); her yeni kontrol bir kez boz
-- [ ] G. Bot: P31, P42, P33c, fiyat ölçümü 33b — tabancayla
-- [ ] H. Belgeler: TASARIM, COMBOLAR, CLAUDE.md, FIKIR_DEFTERI (ÇEK elendi + neden) · graphify
+- [x] B. Öneri → Enes: *"tabancayı kodla sonra commitle"* (2026-10-30)
+- [x] C. Silah: `Weapon.CiftImza` (biçim `İmza`), seri ateş (anında isabet, sol/sağ), ONAY, TOPLU İMZA, ÇAPRAZ ATEŞ; `CekUcusu` silinir, "seri" `PlayerController`'da
+- [x] D. 8 yükseltme (aynı yuva, aynı enderlik — kayıt bozulmaz)
+- [x] E. 24 combo yeniden (sıra ve tür aynı)
+- [x] F. Kapılar: Faz 31 · 33 · 42 (+ Faz 3, 32'deki ÇEK satırları); her yeni kontrol bir kez boz — bozma S1 **27/27** kırmızı (Faz 31: 6 · 33: 7 · 42: 14)
+- [x] G. Bot: P31 **6/6** (2. boss → ÇİFT İMZA, 0.6 sn basılı tutunca 3 mermi, SENET HACZİ) · P42 alım + **98/98** · P33c **12/12** · fiyat ölçümü 33b: yükseltmesiz **+19.7 sn/oda** (oda 39 sn — MÜŞTEREK +33, ARBİTRAJ +19, KARŞILIK +8 arasında ortada); PROTESTO +19.9 (4.1 odada öder), SERİ EL +11.9 (3.1), DELİCİ MERMİ +6.6 (3.4), ONAY HAKKI +2.8; UZUN NAMLU / YÖNELİM ~0 (bot zaten tam nişan alıyor — karar #14'ün "bot ölçemez" grubu)
+- [x] H. Belgeler: TASARIM, COMBOLAR (üstte not), CLAUDE.md, FIKIR_DEFTERI (ÇEK elendi + neden) · graphify
+- Notlar: mermi anında iniyor (`CekUcusu` silindi); İMZA'yla biten combo ilk mermide, etkisi 1 sn'lik **seri**ye biniyor (`İmzaSerisi`).
+  Hattaki ilk düşman artık REHİN'in fırlatmasıyla ortak (`HattakiİlkDüşman`). Bot normal dövüşte İMZA'yı basılı tutuyor (oyuncu gibi);
+  sayaç `SwingsSpawned` İMZA'da mermi başına bir (eskiden savurma + çek = iki). Kayıt uyumu: yükseltme ve combo numaraları aynı.
 
 ---
 
