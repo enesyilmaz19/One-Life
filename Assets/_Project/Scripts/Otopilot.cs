@@ -2013,10 +2013,12 @@ namespace TekCan
         /// <summary>Bağ isteyen combo: MÜŞTEREK adımı ZİNCİRLEME (sağ tık) — oyuncu gibi, tek basışta bağ.</summary>
         static bool BağGerekli(ComboTür c) => c == ComboTür.MüşterekKusur || c == ComboTür.OrtaklığınTasfiyesi
                                             || c == ComboTür.Hacizİştiraki || c == ComboTür.SpekülatifAtak
-                                            || c == ComboTür.OrtakBorç || c == ComboTür.İçİşlem || c == ComboTür.OrtakKarşılık;
+                                            || c == ComboTür.OrtakBorç || c == ComboTür.İçİşlem || c == ComboTür.OrtakKarşılık
+                                            || c == ComboTür.SenetOrtaklığı || c == ComboTür.OrtakVade;                    // Parti 4
         /// <summary>İlk adımı arkadan isteyen combo: önce AÇIK POZİSYON (görünmezken her vuruş arkadan).</summary>
         static bool ArkadanGerekli(ComboTür c) => c == ComboTür.Spekülasyon || c == ComboTür.ArkadanDolanım || c == ComboTür.Hileliİflas
-                                                || c == ComboTür.GizliHaciz || c == ComboTür.Kaçırma;
+                                                || c == ComboTür.GizliHaciz || c == ComboTür.Kaçırma
+                                                || c == ComboTür.Gizliİpotek || c == ComboTür.GizliKule;                // Parti 4
         /// <summary>İlk adımı sağ tıkla yapılan combo'nun silahı (ZİNCİRLEME · AÇIK POZİSYON) — deneme beklemesi bitince başlasın.</summary>
         static int? Özeli(ComboTür c) => BağGerekli(c) ? Kadro.MÜŞTEREK
                                         : ArkadanGerekli(c) ? Kadro.ARBİTRAJ : (int?)null;
@@ -2116,7 +2118,7 @@ namespace TekCan
             _adımNotu += $" · {not} {(Oyuncu != null && Oyuncu.AdımSayısı != adım0 ? $"✓ {Şimdi - an:0.00} sn" : "✗ YAZILMADI")}";
         }
 
-        // ── FAZ 42 PLAYTEST — Parti 1–3'ün 68 combo'su GERÇEK tuşlarla (açanlar, satın alınanlar ve "+" hâlleri verilmiş) ──
+        // ── FAZ 42 PLAYTEST — Parti 1–4'ün 98 combo'su GERÇEK tuşlarla (açanlar, satın alınanlar ve "+" hâlleri verilmiş) ──
         // Önce satın alma yolu: 1. ara bölgenin sunak odasında COMBO sunağına yürü, [E] ile al.
         // İkililer 1. bölgede, üçlüler N ile 2. bölgede (üçlü kuralı). Kapı her combo'nun ETKİSİNİ ölçüyor; bu, oyuncunun tuş
         // yolunun (adım → geçiş → adım → geçiş → bitiriş) gerçekten açık olduğunu.
@@ -2145,7 +2147,7 @@ namespace TekCan
                     var c = (ComboTür)i; var tanım = Combo.Bu(c);
                     if ((tanım.Sıra().Length == 3) != (üçlü == 1)) continue;
                     if (tanım.Açan is SilahYükseltme açan) SilahSunağı.Al(açan, -1);   // Parti 2: açan yükseltme
-                    if (tanım.Satın) Combo.SatınAl(c, -1);                             // Parti 3: satın alınmış
+                    if (tanım.Satın) Combo.SatınAl(c, -1);                             // Parti 3–4: satın alınmış
                     Combo.ArtıAl(c, 0);
                     toplam++;
                     var adlar = new List<string>(); foreach (int w in tanım.Sıra()) adlar.Add(Weapon.All[w].Name);
@@ -2157,7 +2159,7 @@ namespace TekCan
                     Debug.Log($"[P42] {tanım.Ad}: {(oldu ? "oldu" : "OLMADI")} · {deneme} deneme");
                 }
             }
-            Kaydet("42", "Parti 1–3'ün 68 combo'su (20 direkt · 18 açılır · 30 satın alınır) gerçek tuşlarla: ikililer 1. bölgede, üçlüler 2. bölgede", tamam == toplam,
+            Kaydet("42", "Parti 1–4'ün 98 combo'su (20 direkt · 18 açılır · 60 satın alınır) gerçek tuşlarla: ikililer 1. bölgede, üçlüler 2. bölgede", tamam == toplam,
                    $"{tamam}/{toplam} · {string.Join(" · ", satırlar)}");
         }
 

@@ -35,6 +35,21 @@ namespace TekCan
         public float İade { get; set; }
         /// <summary>KARŞILIKSIZ+: havadayken sahibini silahsız bırakmaz (`Sahibinin` saymıyor).</summary>
         public bool Serbest { get; set; }
+        /// <summary>TOPLU TAHSİLAT (Faz 42 Parti 4): sırayla bunlara yönelir — hepsine uğrayana dek menzil bitmez.</summary>
+        public readonly List<Enemy> Rota = new List<Enemy>();
+        /// <summary>SENET ORTAKLIĞI (Faz 42 Parti 4): bağlıya çarpınca bağ tam (%100) yayar.</summary>
+        public bool TamPay { get; set; }
+        /// <summary>KARŞILIKLI ÇEK (Faz 42 Parti 4): her isabet sahibinin birikenine bu kadar sn yazar.</summary>
+        public float Biriktirir { get; set; }
+
+        /// <summary>VADELİ ÇEK · İFLAS SENEDİ (Faz 42 Parti 4): fırlatıldıktan sonra hasar ×çarpan, fazladan sekme.</summary>
+        public void Güçlendir(float çarpan, int ekSekme) { _hasar *= çarpan; _sekme += ekSekme; }
+
+        /// <summary>KARŞILIKLI ÇEK: sahibinin havadaki bütün çekleri birikene yazar.</summary>
+        public static void Biriktir(PlayerController p, float sn)
+        {
+            foreach (var u in Uçanlar) if (u != null && u._sahibi == p) u.Biriktirir = sn;
+        }
 
         public bool Dönüyor { get; private set; }
         public int Sekti { get; private set; }
@@ -119,6 +134,13 @@ namespace TekCan
             Vector3 p = transform.position;
             if (!Dönüyor)
             {
+                while (Rota.Count > 0 && (Rota[0] == null || !Enemy.All.Contains(Rota[0]) || _vurulan.Contains(Rota[0]))) Rota.RemoveAt(0);
+                if (Rota.Count > 0)                                     // TOPLU TAHSİLAT: sıradakine yönel
+                {
+                    _yön = Rota[0].transform.position - p; _yön.y = 0f;
+                    if (_yön.sqrMagnitude > 0.0001f) _yön.Normalize();
+                    _kalan = Mathf.Max(_kalan, _hız * dt);
+                }
                 float adım = Mathf.Min(_hız * dt, _kalan);
                 p += _yön * adım;
                 _kalan -= adım;
@@ -174,8 +196,12 @@ namespace TekCan
                 }
                 else e.Push(Dönüyor ? -_yön : _yön, 2f);
                 if (Susturur) e.Sustur(1f);                         // TEDBİR — vuruştan ÖNCE (öldürebilir)
+                bool tam = TamPay && e.Bağ != null;                 // SENET ORTAKLIĞI
+                if (tam) MusterekBag.TamPay = true;
                 e.TakeDamage(_hasar * (Dönüyor ? _dönüşÇarpanı : 1f), _hasat);
+                if (tam) MusterekBag.TamPay = false;
                 İsabet++;
+                if (Biriktirir > 0f) _sahibi.Biriktir(Biriktirir);  // KARŞILIKLI ÇEK
                 if (Dönüyor && Tahsilat > 0f && Clock.Instance != null) Clock.Instance.Add(Tahsilat * Clock.Instance.HasatDoyması);
                 if (İade > 0f && Clock.Instance != null) Clock.Instance.Add(İade);   // FAİZLİ SENET
                 _sahibi.Çekİsabeti(yer, e);

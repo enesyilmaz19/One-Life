@@ -35,6 +35,10 @@ namespace TekCan
         public readonly HashSet<Enemy> Öncelikli = new HashSet<Enemy>();
         /// <summary>İŞGAL (Faz 42): kirayı bu düşman öder (yaşadıkça) — ORTAK GİDER'in bağı gibi, tek kişi.</summary>
         public Enemy Kiracı { get; set; }
+        /// <summary>KİRA HACZİ (Faz 42 Parti 4): kule buna önce ve ×1.5 ateş eder.</summary>
+        public Enemy Haczedilen { get; set; }
+        /// <summary>KİRACI REHİN (Faz 42 Parti 4): son atışın vurduğu. Ölmüş olabilir.</summary>
+        public Enemy SonVurulan { get; private set; }
         bool _uzatıldı;
         bool OrtakÖdüyor => _ortak != null && !_ortak.Bitti;
 
@@ -127,11 +131,12 @@ namespace TekCan
                 float yüzey = d.magnitude - e.Radius;
                 if (yüzey > Yarıçap) continue;
                 if (_aidat && OrtakÖdüyor && e.Bağ == _ortak) yüzey -= 1000f;        // AİDAT: önce bağlılar
-                if (Öncelikli.Contains(e)) yüzey -= 1000f;                           // KİRACI SÜRÜSÜ
+                if (Öncelikli.Contains(e) || e == Haczedilen) yüzey -= 1000f;        // KİRACI SÜRÜSÜ · KİRA HACZİ
                 if (yüzey < en) { en = yüzey; hedef = e; }
             }
             if (hedef == null) return;
-            float hasar = _hasar * (_aidat && OrtakÖdüyor && hedef.Bağ == _ortak ? 1.5f : 1f);
+            SonVurulan = hedef;
+            float hasar = _hasar * (_aidat && OrtakÖdüyor && hedef.Bağ == _ortak ? 1.5f : 1f) * (hedef == Haczedilen ? 1.5f : 1f);
             Arc.Spawn(hedef.transform.position, hedef.transform.rotation, 0.6f, 360f,
                       new Color(0.95f, 0.8f, 0.45f, 0.8f), 0.15f, scaleFrom: 0.4f, scaleTo: 1.2f);
             bool öldürür = hedef.Hollow;                                         // boşu vurmak öldürür

@@ -737,3 +737,7 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   de kalkınca yakaladı — önceliği sınayan rakip ikili testte açık değildi. **Kural:** öncelik testi rakibi kendisi açsın (ZİNCİRLEME TAHSİL'de
   KİRA ÇEKİ, İPOTEK ZİNCİRİ'nde İBRAZ gibi).
 
+- **Bayrağın adı "her silah" diyor, kodu tek silaha bakıyor (Faz 42 Parti 4):** `_zorlaArka` ("vuruş arkadan sayılsın") yalnız ARBİTRAJ'ın
+  vuruşunda işliyor (`MesafeliHasar` silahın biçimine bakıyor). ARKADAN İCRA'nın bitirişi HACİZ — bayrağı açmak hiçbir şey yapmazdı, test
+  "×2.5 yok" diye kırmızı verirdi ya da beklenen değeri yanlış yazsaydım yeşil kalırdı. Kodu yazmadan önce bayrağı OKUYAN yeri açtım, gördüm.
+  **Kural:** bir kancayı yeni bir yerde kullanmadan önce onu okuyan kodu oku — adı ne kadar genel olursa olsun.

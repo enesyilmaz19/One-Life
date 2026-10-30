@@ -16,6 +16,8 @@
 | 15–19 | 🤖 **Faz 34–37 his testleri → botta** | Enes (2026-10-22): *"testi de bota yaptır, oradan botun zorlanma ölçüsüne göre ilerleyelim şimdilik"*. P34–P37 ✅. Ölçü: mini zorlasın ama botu öldürmesin (saat kaybı < giriş saati) — Faz 38'de uygulandı, P34–P38 ✅ | — |
 | 20 | ⏱️ *(önerilir, ~10 dk)* **İnsan çarpanı** | Enes (2026-10-23): aksiyon İNSAN oynayışıyla ≥ 7 saat, kalanı ara sahne + anlatım (hikâye/olay odası yok). Botun ölçtüğünü insana çeviren çarpanı bilmiyoruz (×1.2 → bot 5.8 sa gerek, ×1.5 → bugünkü yeter). **F6**, 1. ara bölgeyi (7 oda + mini + sunak, bot ~9 dk — Faz 40'tan sonra) bir kez normal oyna, süreyi söyle | Mesajla yaz |
 | 21 | ⚖️ **Saat ekonomisi** | Bot orta oyunda 4000–6600 sn ile geziyor (tavan 456–830), odalar onu hiç zorlamıyor; sıkılırsa geç boss'lar yine öldürür (aşağıda FAZ 39). Şimdi mi, hikâyeden sonra mı? | Mesajla yaz |
+| 29 | 🔗 **Combo Parti 4 — kodlandı, bak (120 tamam)** | `docs/COMBOLAR.md` Parti 4: "+" hâlleri benim önerim · "sadeleşenler" (BORÇ ESARETİ hasat kuralıyla, VADELİ KARŞILIK en az ×2, KULE HACZİ "kule dururken"). Commit için "commitle" | Mesajla yaz |
+| 30 | 🔫 **ÇİFT İMZA (ÇEK'in yerine) — öneriye bak** | `docs/CIFT_IMZA.md`: silah (seri ateş, ONAY, TOPLU İMZA, ÇAPRAZ ATEŞ), 8 yükseltme, 24 combo'nun yeni hâli (sıra ve tür aynı → 120 kalır). Ad ve sayılar senin; onaylarsan kodlarım | Mesajla ya da dosyaya yaz |
 | 22 | 📖 **Hikâye — ortak** | `docs/HIKAYE.md`: senin üç notun yazılı, 6 açık soru (adlar · borcu kim aldı · ekipmanı kim geliştirdi · başlangıç zamanı neden o kadar · son · perdelerin olay sırası). Hangisinden başlayalım? | Mesajla ya da doğrudan dosyaya yaz |
 
 ---
@@ -267,7 +269,23 @@ Enes: *"saatin cömertliğini düzeltelim oyun zorlamalı oyuncuları"* · *"bit
 
 ---
 
-## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **Parti 1–3 commit'li (90 combo) · Parti 4 KODLANIYOR** (2026-10-29)
+## 🔫 FAZ 43 — ÇİFT İMZA: ÇEK'in yerine çifte tabanca — **öneri Enes'in onayında** (2026-10-30)
+
+Enes: *"silahlardan birini … çifte tabanca gibi olcak seri menzilli saldırabileceğiz. Bir silahı bununla değişelim ve comboları da ona göre
+yeniden yazalım"* · seçim: giden **ÇEK**, ad **ÇİFT İMZA**. Öneri: `docs/CIFT_IMZA.md`. Kural: combo sayısı 120 kalır, ¼–¼–½ bozulmaz.
+
+- [x] A. ÇEK'in izini çıkar: 24 combo (4 direkt · 7 açılır · 13 satın), 8 yükseltme, `CekUcusu`, 7 kapı/bot dosyası
+- [ ] B. Öneri → **Enes onaylar** (silah · yükseltmeler · 24 combo)
+- [ ] C. Silah: `Weapon.CiftImza` (biçim `İmza`), seri ateş (anında isabet, sol/sağ), ONAY, TOPLU İMZA, ÇAPRAZ ATEŞ; `CekUcusu` silinir, "seri" `PlayerController`'da
+- [ ] D. 8 yükseltme (aynı yuva, aynı enderlik — kayıt bozulmaz)
+- [ ] E. 24 combo yeniden (sıra ve tür aynı)
+- [ ] F. Kapılar: Faz 31 · 33 · 42 (+ Faz 3, 32'deki ÇEK satırları); her yeni kontrol bir kez boz
+- [ ] G. Bot: P31, P42, P33c, fiyat ölçümü 33b — tabancayla
+- [ ] H. Belgeler: TASARIM, COMBOLAR, CLAUDE.md, FIKIR_DEFTERI (ÇEK elendi + neden) · graphify
+
+---
+
+## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **Parti 1–3 commit'li · Parti 4 KODLANDI: 120 combo tamam** (2026-10-30)
 
 Enes: *"12 silah için 28 combo bayağı az · 96 2'li combo ve 24 tane 3'lü combo olmalı · bazıları açılabilir bazıları direkt silahlarla
 yapılabilen cinsten olmalı, kalanı da satın alınabilir"* · *"combolar elle olmalı ama fikir edinmek için diğer oyundaki comboları
@@ -280,7 +298,7 @@ araştırabilirsin, oradan temel bazılarını alıp oyuna geçirir, oradan fiki
 
 **Adımlar**
 - [x] A. Araştırma → `docs/COMBO_ARASTIRMA.md`: 12 kalıp (Hades, DMC/Bayonetta, Nioh, Dead Cells, DOS2, Warframe, Vampire Survivors) + silahların combo dili (ne bırakır / ne tüketir)
-- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo partiler hâlinde, **Enes onaylar** — Parti 1 ✅ · Parti 2 ✅ kodlandı (mevcut EPİK ikilileri, EFSANEVİ üçlüleri açar) · Parti 3 ✅ kodlandı · Parti 4 ✅ onaylı (Enes 2026-10-29: *"sonraki partiye geç"*)
+- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo partiler hâlinde, **Enes onaylar** — Parti 1 ✅ · Parti 2 ✅ kodlandı (mevcut EPİK ikilileri, EFSANEVİ üçlüleri açar) · Parti 3 ✅ kodlandı · Parti 4 ✅ kodlandı (Enes 2026-10-29: *"sonraki partiye geç"*) — **liste tamam**
 - [x] C. Satın alma: combo sunağında saniyeyle (fiyat kuralı Faz 27/33'le aynı) — **karar (a)** (Enes 2026-10-28): ara bölge sunak odasında COMBO sunağı, 2 teklif / 1 alım, fiyat yükseltme kuralıyla
 - [ ] D. Kod partiler hâlinde (her partiye kapı + bir kez boz) · bot gerçek tuşlarla oynar (P33c gibi) — **Parti 1 ✅:**
   - 20 combo kodda: koni bitirişleri `Strike`'ta (vuruştan önce / sonra iki `switch`), İPOTEKLİ REHİN ve KİRALIK ARSA `PlaceLien`'de.
@@ -315,6 +333,14 @@ araştırabilirsin, oradan temel bazılarını alıp oyuna geçirir, oradan fiki
   Tam koşu botu COMBO sunağından almıyor (`SunaktanAl`, "+" sunağı gibi) — combo yapmadığı için saniyesi boşa gider, tempo ölçüsü kayardı.
   **Enes (2026-10-29):** *"combo sunağı biraz pahalı olmuş ama çok az onu ayarlayalım · combolar şimdilik dursun"* → fiyat × 0.85
   (`comboAltarPriceMul`, 1. bölgede 45 → 38 sn; kapı fiyatı kuralla karşılaştırıyor, çarpanı silince kırmızı ✅); sadeleşenler kaldı.
+- **Parti 4 ✅ (2026-10-30) — 120 combo tamam:** son 30 satın alınır (24 ikili + 6 üçlü), "+" hâlleri öneri. Yeni kancalar: çekin rotası
+  (`CekUcusu.Rota` — TOPLU TAHSİLAT), tam pay (`CekUcusu.TamPay`), birikene yazan çek (`CekUcusu.Biriktir`), sonradan güçlendirme
+  (`CekUcusu.Güçlendir`), kulenin haczedileni ve son vurduğu (`KiraKulesi.Haczedilen · SonVurulan`), BORÇ ESARETİ'nin akışı (`TickRehin`),
+  ipoteğin patlamasına bağlı TAHVİL kademesi (`GroundMark.Patladı`). Sadeleşenler `docs/COMBOLAR.md` Parti 4'te (ARKADAN İCRA'nın arka
+  çarpanı elle — `_zorlaArka` yalnız ARBİTRAJ'da işliyor; BORÇ ESARETİ hasat kuralıyla; VADELİ KARŞILIK en az ×2).
+  Kapı `Faz42SelfCheck` **109 kontrol**; bozma R1 30/30, R2 9/9 beklenen kırmızı (+2: iki bozma birbirine değdi — satın kilidi kalkınca
+  SENET ORTAKLIĞI açık, öne alınan dal Parti 2'nin SPEKÜLATİF ATAK'ını da bozdu). Bot `Playtest42`: alım ✅ (38.3 sn) + **98/98**
+  (SENET ORTAKLIĞI ikinci denemede); P33c 12/12. Tüm kapılar ✅.
 - [x] E. Tam koşu (Parti 1 sonrası, 2026-10-26): **KAZANILDI · 352 dk (5.9 sa) · saat hiç bitmedi** · oda ort. 76 sn · boss 4.0 · 4.9 · 3.9 ·
   5.1 · 8.6 dk · 107 sunak alımı. Önceki 395 dk'dan kısa ama **sebep combo değil: bot tam koşuda hiç combo yapmıyor** (bu koşuda da
   öncekilerde de 0 — tek silahla dövüşüyor). Fark koşudan koşuya: yükseltme teklifleri rastgele (B1–B3 aynı, B4–B5 15–20 dk kısa).
