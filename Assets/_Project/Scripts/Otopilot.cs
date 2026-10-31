@@ -788,7 +788,7 @@ namespace TekCan
             yield return Bekle(1f);
             Diz(İMZA, Kadro.HACİZ, Kadro.KONİ);
             Bas(Key.F5); yield return Bekle(0.3f);
-            int seri = 0, değdi = 0, enÇokMermi = 0;
+            int seri = 0, değdi = 0, enÇokMermi = 0, toplu = 0;
             c0 = Oyuncu.ComboSayısı;
             float bant = Weapon.All[Kadro.HACİZ].Range(_t) * 0.7f;
             t0 = Şimdi;
@@ -803,14 +803,23 @@ namespace TekCan
                 // ⚠️ İsabeti zincirden oku (`AdımSayısı`), havuzdan değil: havuz kendi kendine de akıyor (ÇEK'te yanılttı).
                 int mermi0 = Oyuncu.SwingsSpawned, adım0 = Oyuncu.AdımSayısı;
                 float ta = Şimdi;
-                while (Şimdi - ta < 0.6f)                                    // 0.6 sn basılı tut: seri
+                bool sağ = false;
+                int seriMermi = 0;
+                while (Şimdi - ta < 0.9f)                                    // 0.6 sn basılı tut: seri · sonra basılıyken sağ tık
                 {
                     if (d != null) NişanAl(d.transform.position);
                     _sol = true;
+                    if (!sağ && Şimdi - ta >= 0.6f)
+                    {
+                        seriMermi = Oyuncu.SwingsSpawned - mermi0;               // TOPLU İMZA'nın on mermisi sayılmasın
+                        if (Oyuncu.SpecialCooldownOf(İMZA) <= 0f) _sağ = true;
+                        sağ = true;
+                    }
                     yield return null;
                 }
+                if (Oyuncu.SpecialCooldownOf(İMZA) > 0f) toplu++;             // TOPLU İMZA ateşin arasında çıktı
                 seri++;
-                enÇokMermi = Mathf.Max(enÇokMermi, Oyuncu.SwingsSpawned - mermi0);
+                enÇokMermi = Mathf.Max(enÇokMermi, seriMermi);
                 if (Oyuncu.AdımSayısı != adım0)
                 {
                     değdi++;
@@ -820,9 +829,9 @@ namespace TekCan
                     yield return Bekle(0.5f);
                 }
             }
-            Kaydet("31-4", "ÇİFT İMZA gerçek tuşlarla: basılı tutunca seri ateş, değince (2) HACİZ = SENET HACZİ",
-                   değdi > 0 && enÇokMermi >= 3 && Oyuncu.ComboSayısı > c0,
-                   $"{seri} seri · {değdi} isabetli · bir seride en çok {enÇokMermi} mermi (0.6 sn) · {Oyuncu.ComboSayısı - c0} combo");
+            Kaydet("31-4", "ÇİFT İMZA gerçek tuşlarla: basılı tutunca seri ateş, basılıyken sağ tık TOPLU İMZA, değince (2) HACİZ = SENET HACZİ",
+                   değdi > 0 && enÇokMermi >= 3 && toplu > 0 && Oyuncu.ComboSayısı > c0,
+                   $"{seri} seri · {değdi} isabetli · bir seride en çok {enÇokMermi} mermi (0.6 sn) · basılıyken TOPLU İMZA {toplu} kez · {Oyuncu.ComboSayısı - c0} combo");
 
             Sahne("P31 5/6 KARŞILIK AÇILIŞI", "3. bölgenin 3. ara bölgesi, 4. oda: köşe");
             bool önceKarşılık = Kadro.Açık(KARŞILIK);

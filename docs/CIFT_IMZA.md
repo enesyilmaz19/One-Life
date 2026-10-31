@@ -47,13 +47,13 @@ Adı ÇEK'e bağlı olanlar değişiyor (senet, ciro, ibraz imzalı belge — on
 | İMZA → KONİ | direkt | **CİRO** | İMZA isabet etti → KONİ: son merminin değdiği yerde de yay patlar (koninin %80'i, 2.5 birim) | TAHSİL CİROSU (aynı) |
 | İMZA → MÜŞTEREK | direkt | **ZİNCİRLEME CİRO** | İMZA isabet etti → MÜŞTEREK: son mermi vurduğunu MÜŞTEREK'in vurduğuna bağlar | CİRO SİLSİLESİ (aynı) |
 | REHİN → İMZA → KONİ | direkt | **SENETLİ REHİN** | son merminin değdiği yerin 3 birim çevresi önüne çekilir, koni ×1.5 | KAMBİYO (aynı) |
-| İMZA → İFLAS | açılır (TOPLU İMZA+) | **İBRAZ** | İMZA isabet etti → İFLAS: İMZA'nın bu adımdaki her isabeti İFLAS'ın vurduğuna bir mermi daha (×1.5) olarak döner | KAMBİYO TAKİBİ (aynı) |
+| İMZA → İFLAS | açılır (TOPLU İMZA+) | **İBRAZ** | İMZA isabet etti → İFLAS: İMZA'nın bu adımdaki her isabeti (en çok bir seri: 6) İFLAS'ın vurduğuna bir mermi daha (×1.5) olarak döner | KAMBİYO TAKİBİ (aynı) |
 | KİRA → İMZA | açılır (STOPAJ) | **KİRA TAHSİLATI** | kule kur → İMZA: ilk mermide kulenin menzilindeki herkese birer mermi; öldürdükleri STOPAJ öder | VERGİ İADESİ: İMZA'nın sağ tık beklemesi sıfırlanır |
 | İPOTEK → İMZA → İFLAS | açılır (ZİNCİR TAPU) | **İPOTEK ZİNCİRİ** | aynı (İMZA ortada) | aynı |
 | İMZA → ARBİTRAJ → REHİN | açılır (PROTESTO) | **PROTESTOLU SENET** | İMZA'nın vurduğu nerede olursa olsun yakalanır, onu fırlatınca ×2 | ŞERH: İMZA'nın sağ tık beklemesi sıfırlanır |
 | ARBİTRAJ → MÜŞTEREK → İMZA | açılır (KISA POZİSYON) | **SPEKÜLATİF ATAK** | ilk mermide bağlıların her birine birer mermi "arkadan" (ARBİTRAJ'ın arka çarpanıyla) | KISA SATIŞ (aynı) |
 | FAİZLİ → İMZA | satın | **FAİZLİ SENET** | serinin ilk iki isabeti FAİZLİ'nin savurma bedelini geri öder | SENET İADESİ (aynı) |
-| İMZA → TAHVİL | satın | **SENET İSKONTOSU** *(ÇEK İSKONTOSU)* | İMZA'nın bu adımdaki her isabeti olgunluğa +0.1 sn (basılı tutma kısalır) | İSKONTO ORANI: İMZA'nın sağ tık beklemesi sıfırlanır |
+| İMZA → TAHVİL | satın | **SENET İSKONTOSU** *(ÇEK İSKONTOSU)* | İMZA'nın bu adımdaki her isabeti (en çok bir seri: 6) olgunluğa +0.1 sn (basılı tutma kısalır) | İSKONTO ORANI: İMZA'nın sağ tık beklemesi sıfırlanır |
 | İMZA → KİRA | satın | **KİRA SENEDİ** *(KİRA ÇEKİ)* | kule son merminin değdiği yere, ilk 3 sn kirasız | SENETLE ÖDEME: İMZA'nın sağ tık beklemesi sıfırlanır |
 | HACİZ → İMZA → KİRA | satın | **ZİNCİRLEME TAHSİL** | kule HACİZ'in vurduğuna kilitli; İMZA'nın her isabeti kulenin ömrüne +0.25 sn | TAHSİL EMRİ (aynı) |
 | KİRA → İFLAS → İMZA | satın | **ZAMAN KİRASI** | kule duruyorsa 3 sn saat akmaz, seri ×1.5 | ZAMAN AŞIMI (aynı) |
@@ -89,3 +89,12 @@ Adı ÇEK'e bağlı olanlar değişiyor (senet, ciro, ibraz imzalı belge — on
 - **Mermiye hit-stop yok** (saniyede altı mermi takılırdı); isabet sesi var. DELİCİ MERMİ'nin arkadakine geçişi ONAY'a sayılmıyor.
 - Tuning'de yeni kadranlar: `imzaShotsPerSecond` 6 · `imzaBulletMul` 0.35 · `imzaOnayMul` 1.5 · `imzaMoveDamping` 0.7 ·
   `specialCooldownImza` 6.5 (ÇEK'in `cekSpeed` / `cekBounces`'ı silindi; asset'te hiçbiri yoktu, değer kaybı yok).
+
+## 6. Test öncesi denetimde bulunanlar (2026-10-30)
+
+- **Basılı ateşte sağ tık kayboluyordu:** ateş ederken neredeyse her kare "saldırıda"; sağ tık yalnızca iki mermi arasındaki tek kareye
+  denk gelirse okunuyordu. Artık ateşi kesip TOPLU İMZA'ya geçiyor. Bot P31 basılıyken sağ tıkla bunu ölçüyor.
+- **Sınırsız büyüme:** İBRAZ ve SENET İSKONTOSU adımın bütün isabetlerini sayıyordu — 10 sn basılı tutup İFLAS'a geçen 60 isabeti tek
+  vuruşta geri alıyordu. Artık **en çok bir seri** (1 sn'lik ateş, 6 isabet).
+- **Iskalayan KARŞILIK birikimi iki kez yazıyordu** (KONKORDATO · REHİN KARŞILIĞI · KARŞILIKLI İMZA): KARŞILIK ıskalarsa combo tetiklenmez,
+  pencere açık kalır, ikinci savurma aynı birikimi bir daha ekliyordu. Kaynak artık birikene geçerken tükeniyor; birikim kalır, ilk isabet indirir.

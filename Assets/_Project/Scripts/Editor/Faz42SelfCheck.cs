@@ -59,6 +59,7 @@ namespace TekCan.EditorTools
             failed += Parti4Yapısı(ref total);
             failed += Parti4İkililer(ref total);
             failed += Parti4Üçlüler(ref total);
+            failed += Sınırları(ref total);
 
             Temizle();
             Object.DestroyImmediate(_root);
@@ -1705,6 +1706,55 @@ namespace TekCan.EditorTools
             });
             failed += Check(ref total, $"⚠️ SPEKÜLATİF ATAK (ARBİTRAJ → MÜŞTEREK → İMZA) SENET ORTAKLIĞI'ndan önce: üçlü tetikleniyor, ikili {(sp.var ? "TETİKLENDİ" : "tetiklenmedi")}",
                             sp.oldu && !sp.var, 0f);
+            return failed;
+        }
+
+        // ── 13) SINIRLAR (Faz 43 denetimi): basılı ateş sınırsız büyütmesin · ıskalayan KARŞILIK iki kez yazmasın ──
+        static int Sınırları(ref int total)
+        {
+            int failed = 0;
+            int seri = Mathf.RoundToInt(_t.imzaShotsPerSecond);
+
+            // SENET İSKONTOSU: on isabet de bir seri kadar (+0.6), sınırsız değil
+            YeniKoşu(); _ara = 0.2f; Combo.SatınAl(ComboTür.Senetİskontosu, -1);
+            Düşman(İleri(5f));
+            for (int i = 0; i < 10; i++) İmzaAt();
+            Geç();
+            W(Kadro.TAHVİL); Bas();
+            float vade = (float)Alan("_vade");
+
+            // İBRAZ: on isabet de bir serilik mermi olarak döner
+            (float h, float son) İbraz(float ara)
+            {
+                YeniKoşu(); _ara = ara; SilahSunağı.Al(SilahYükseltme.TopluİmzaArtı, -1);
+                var e = Düşman(İleri(1.3f));
+                for (int i = 0; i < 10; i++) İmzaAt();
+                Geç();
+                float son = ((float[])Alan("_sonHasar"))[Kadro.İMZA];
+                return (Hasar(e, () => Silahla(Kadro.İFLAS)), son);
+            }
+            var ibY = İbraz(1f); var ibV = İbraz(0.2f);
+            failed += Check(ref total, $"⚠️ basılı ateş sınırsız büyümüyor: on isabet SENET İSKONTOSU'nda +{vade:0.00} (= {seri} × 0.1), İBRAZ'da +{ibV.h - ibY.h:0.00} (= {seri} × {ibV.son:0.00} × 1.5)",
+                            Yakın(vade, 0.1f * seri) && Yakın(ibV.h - ibY.h, seri * ibV.son * 1.5f), vade);
+
+            // KARŞILIK ıskalarsa combo tetiklenmez, pencere açık kalır — ikinci savurma aynı birikimi bir daha yazmamalı
+            (float b1, float b2) İkiIska(ComboTür c, System.Action adım)
+            {
+                YeniKoşu(); _ara = 0.2f;
+                if (Combo.Bu(c).Açan is SilahYükseltme açan) SilahSunağı.Al(açan, -1);
+                if (Combo.Bu(c).Satın) Combo.SatınAl(c, -1);
+                adım(); Geç();
+                _pGo.transform.rotation = Quaternion.LookRotation(Vector3.back);   // arkada kimse yok: ıska
+                Silahla(Kadro.KARŞILIK); float b1 = _pc.Biriken;
+                Silahla(Kadro.KARŞILIK); float b2 = _pc.Biriken;
+                Ortaya();
+                return (b1, b2);
+            }
+            var ko = İkiIska(ComboTür.Konkordato, () => { Düşman(İleri(1.3f)); Silahla(Kadro.İFLAS); });
+            var rk = İkiIska(ComboTür.RehinKarşılığı, () => { Düşman(İleri(1.5f)); Düşman(İleri(4f)); Silahla(Kadro.REHİN); Silahla(Kadro.REHİN); });
+            var ki = İkiIska(ComboTür.Karşılıklıİmza, () => { Düşman(İleri(1.3f)); İmzaAt(); İmzaAt(); İmzaAt(); });
+            failed += Check(ref total, $"⚠️ ıskalayan KARŞILIK birikimi bir kez yazıyor: KONKORDATO {ko.b1:0.00} → {ko.b2:0.00}, REHİN KARŞILIĞI {rk.b1:0.00} → {rk.b2:0.00}, KARŞILIKLI İMZA {ki.b1:0.00} → {ki.b2:0.00}",
+                            ko.b1 > 0f && ko.b2 == ko.b1 && rk.b1 > 0f && rk.b2 == rk.b1 && ki.b1 > 0f && ki.b2 == ki.b1, ki.b2 - ki.b1);
             return failed;
         }
 

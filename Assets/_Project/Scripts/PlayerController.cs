@@ -512,6 +512,10 @@ namespace TekCan
         float _onayAn = -99f;
         int _imzaİsabeti;                                       // bu İMZA adımının isabeti (İBRAZ · SENET İSKONTOSU · KARŞILIKLI İMZA)
 
+        /// <summary>İBRAZ · SENET İSKONTOSU'nun saydığı isabet: en çok bir seri (1 sn'lik ateş) — yoksa basılı tutmak
+        /// sınırsız büyütürdü (10 sn ateş → 60 isabet tek vuruşta geri döner).</summary>
+        int Seriİsabeti => Mathf.Min(_imzaİsabeti, Mathf.Max(1, Mathf.RoundToInt(_t.imzaShotsPerSecond)));
+
         /// <summary>İMZA'nın ateş hızı çarpanı: SERİ EL · VADELİ SENET'in serisi.</summary>
         float AteşHızı => (Y(SilahYükseltme.SeriEl) ? 1.3f : 1f) * (Seri is İmzaSerisi s ? s.Hız : 1f);
 
@@ -760,7 +764,7 @@ namespace TekCan
             if (ComboHazır(ComboTür.TopluVade)) { _vade += 0.25f * _koniVurulanlar.Count; c = ComboTür.TopluVade; }
             else if (ComboHazır(ComboTür.VadeliAlacak) && AdımHedefi(1) is Enemy borçlu && Enemy.All.Contains(borçlu))
             { _alacaklı = borçlu; c = ComboTür.VadeliAlacak; }
-            else if (ComboHazır(ComboTür.Senetİskontosu)) { _vade += 0.1f * _imzaİsabeti; c = ComboTür.Senetİskontosu; }   // her isabet +0.1 sn
+            else if (ComboHazır(ComboTür.Senetİskontosu)) { _vade += 0.1f * Seriİsabeti; c = ComboTür.Senetİskontosu; }    // her isabet +0.1 sn (en çok bir seri)
             else if (Kule != null && ComboHazır(ComboTür.KiraGetirisi)) { _bedelsizVade = true; c = ComboTür.KiraGetirisi; }   // saat iki kat akmaz
             // Parti 4
             else if (ComboHazır(ComboTür.TapuVadesi))
@@ -1441,6 +1445,9 @@ namespace TekCan
                 return;                     // dash saldırıyı iptal eder
             }
 
+            // ÇİFT İMZA: basılı tutarken neredeyse her kare "saldırıda" — sağ tık iki mermi arasındaki tek kareye denk gelmezse
+            // kayboluyordu. Ateşi kesip özel saldırıya geçer (mermi zaten savurmanın başında çıktı).
+            if (Attacking && Weapon.Saldırı == Biçim.İmza && ReadSpecial() && _specialCd[_weaponIndex] <= 0f) { StartSpecial(input); return; }
             if (Attacking) { TickAttack(input); return; }
 
             // TAHVİL (Faz 32): sol tık basılı — olgunlaşıyor; bırakınca iner. Sağ tık olgunluğu bölüştürür.
@@ -2166,8 +2173,13 @@ namespace TekCan
                          : bitiren == ComboTür.AçığaSatış && artı ? 1.5f : 1f;
             if (bitiren == ComboTür.Kefalet) hasarÇ = 2f;                                              // KEFALET (33c): ×2, ölü bölge yok
             if (bitiren == ComboTür.Temettü) hasarÇ = 1f + 0.25f * _sonKademe;                         // TEMETTÜ (33c)
+            // Birikene yazan bitirişler (KONKORDATO · REHİN KARŞILIĞI · KARŞILIKLI İMZA) kaynağı TÜKETİR: KARŞILIK ıskalarsa combo
+            // tetiklenmez, pencere açık kalır — ikinci savurma aynı birikimi bir daha yazıyordu. Birikim kalır, bir sonraki isabet indirir.
             if (bitiren == ComboTür.Konkordato && _t.karsilikDamagePerSecond > 0f)                    // KONKORDATO (33c)
+            {
                 Biriktir(_sonHasar[Kadro.İFLAS] * 0.5f / _t.karsilikDamagePerSecond);
+                _sonHasar[Kadro.İFLAS] = 0f;
+            }
             // Faz 42 Parti 1 — vuruştan önce: çarpan, menzil, ek hasar, çekme
             float menzil = SavurmaMenzili, ek = 0f, dip = bitiren == ComboTür.Temerrüt ? 0.5f : 1f;
             switch (bitiren)
@@ -2198,6 +2210,7 @@ namespace TekCan
                 case ComboTür.RehinKarşılığı:
                     if (_t.karsilikDamagePerSecond > 0f)
                         Biriktir(_sonFırlatma / _t.karsilikDamagePerSecond);                    // fırlatmanın hasarı birikene
+                    _sonFırlatma = 0f;                                                           // tüketildi (yukarıda)
                     break;
                 case ComboTür.Karşılıksızİflas: ek = 2f * _sonBirikenHasarı; break;
                 case ComboTür.KarşıHamle: ArkasınaGeç(adımHedefi); break;
@@ -2218,7 +2231,7 @@ namespace TekCan
                 case ComboTür.TapuKredisi: hasarÇ = 2f; break;
                 case ComboTür.RehinliKredi: hasarÇ = 1.5f; break;
                 case ComboTür.İmzalıKredi: hasarÇ = 1.3f; break;
-                case ComboTür.Karşılıklıİmza: Biriktir(Mathf.Min(2f, 0.25f * _imzaİsabeti)); break;   // isabetler birikene, KARŞILIK indirir
+                case ComboTür.Karşılıklıİmza: Biriktir(Mathf.Min(2f, 0.25f * _imzaİsabeti)); _imzaİsabeti = 0; break;   // isabetler birikene (tüketildi), KARŞILIK indirir
                 case ComboTür.KarşıHaciz: ek = _sonBirikenHasarı; break;
                 case ComboTür.KuleHaczi: hasarÇ = 1.3f; break;
                 case ComboTür.TapuKarşılığı:
@@ -2370,7 +2383,7 @@ namespace TekCan
                         break;
                     case ComboTür.İbraz:
                         if (_sonVurulan != null && Enemy.All.Contains(_sonVurulan))       // İMZA'nın isabetleri ona döner, her biri ×1.5
-                            _sonVurulan.TakeDamage(_imzaİsabeti * _sonHasar[Kadro.İMZA] * 1.5f, hasat);
+                            _sonVurulan.TakeDamage(Seriİsabeti * _sonHasar[Kadro.İMZA] * 1.5f, hasat);
                         if (artı) _specialCd[Kadro.İFLAS] = 0f;                                                        // KAMBİYO TAKİBİ
                         break;
                     case ComboTür.Hacizİştiraki: if (SonBağ is MusterekBag iştirak) BağlılaraVur(iştirak, hasar, hasat, _sonVurulan); break;

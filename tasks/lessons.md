@@ -741,3 +741,11 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   vuruşunda işliyor (`MesafeliHasar` silahın biçimine bakıyor). ARKADAN İCRA'nın bitirişi HACİZ — bayrağı açmak hiçbir şey yapmazdı, test
   "×2.5 yok" diye kırmızı verirdi ya da beklenen değeri yanlış yazsaydım yeşil kalırdı. Kodu yazmadan önce bayrağı OKUYAN yeri açtım, gördüm.
   **Kural:** bir kancayı yeni bir yerde kullanmadan önce onu okuyan kodu oku — adı ne kadar genel olursa olsun.
+- **Basılı tutulan silah, "bu karede basıldı" girdisini yutar (Faz 43):** ÇİFT İMZA basılıyken neredeyse her kare "saldırıda"; sağ tık
+  (`wasPressedThisFrame`) yalnızca saldırı dışındaki karede okunuyordu — iki mermi arasındaki tek kareye denk gelmezse kayboluyordu. Kapı
+  göremezdi (girdi yok); bot gerçek tuşla gördü. **Kural:** sürekli saldıran bir şey eklerken, saldırı sırasında okunmayan her tek-kare girdiyi say.
+- **Vuruştan önce durum yazan combo, ıskada iki kez yazar (Faz 43 denetimi):** birikene yazan bitirişler vuruştan ÖNCE yazıyordu (vuruş onu
+  indirsin diye); ıskada combo tetiklenmiyor, pencere açık kalıyor, ikinci savurma aynı birikimi bir daha ekliyordu. **Kural:** vuruştan önce
+  kalıcı durum yazıyorsan kaynağı tüket — yoksa "combo tetiklenmedi" demek "etkisi uygulanmadı" demek olmaz.
+- **"Her isabet" diyen etki basılı tutulan silahta sınırsızdır (Faz 43):** ÇEK'te havadaki çek sayısı (1–5) doğal tavandı; tabancada aynı
+  cümle 10 sn ateşte 60 isabet demek. **Kural:** bir etkiyi sayaca bağlarken sayacın doğal tavanı hâlâ var mı bak.

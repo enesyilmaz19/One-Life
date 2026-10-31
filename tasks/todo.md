@@ -285,10 +285,14 @@ yeniden yazalım"* · seçim: giden **ÇEK**, ad **ÇİFT İMZA**. Öneri: `docs
 - Notlar: mermi anında iniyor (`CekUcusu` silindi); İMZA'yla biten combo ilk mermide, etkisi 1 sn'lik **seri**ye biniyor (`İmzaSerisi`).
   Hattaki ilk düşman artık REHİN'in fırlatmasıyla ortak (`HattakiİlkDüşman`). Bot normal dövüşte İMZA'yı basılı tutuyor (oyuncu gibi);
   sayaç `SwingsSpawned` İMZA'da mermi başına bir (eskiden savurma + çek = iki). Kayıt uyumu: yükseltme ve combo numaraları aynı.
+- **Test öncesi denetim (Enes: "geride kalan bir şey var mı, olası bug'lara bak"):** üç hata düzeldi — (1) basılı ateşte sağ tık
+  kayboluyordu (her kare "saldırıda"; artık ateşi kesip TOPLU İMZA) · (2) İBRAZ / SENET İSKONTOSU isabeti sınırsız sayıyordu (artık en çok
+  bir seri: 6) · (3) ıskalayan KARŞILIK birikimi iki kez yazıyordu (KONKORDATO · REHİN KARŞILIĞI · KARŞILIKLI İMZA; kaynak artık tükeniyor).
+  Kapı `Faz42SelfCheck` 111 kontrol (+2 "sınırlar"), P31 basılıyken sağ tığı ölçüyor; üçü de geri alınınca kırmızı ✅.
 
 ---
 
-## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **Parti 1–3 commit'li · Parti 4 KODLANDI: 120 combo tamam** (2026-10-30)
+## 🔗 FAZ 42 — 120 combo (96 ikili + 24 üçlü) — **Parti 1–4 commit'li: 120 combo tamam** (2026-10-30)
 
 Enes: *"12 silah için 28 combo bayağı az · 96 2'li combo ve 24 tane 3'lü combo olmalı · bazıları açılabilir bazıları direkt silahlarla
 yapılabilen cinsten olmalı, kalanı da satın alınabilir"* · *"combolar elle olmalı ama fikir edinmek için diğer oyundaki comboları
@@ -301,9 +305,9 @@ araştırabilirsin, oradan temel bazılarını alıp oyuna geçirir, oradan fiki
 
 **Adımlar**
 - [x] A. Araştırma → `docs/COMBO_ARASTIRMA.md`: 12 kalıp (Hades, DMC/Bayonetta, Nioh, Dead Cells, DOS2, Warframe, Vampire Survivors) + silahların combo dili (ne bırakır / ne tüketir)
-- [ ] B. Liste → `docs/COMBOLAR.md`: 120 combo partiler hâlinde, **Enes onaylar** — Parti 1 ✅ · Parti 2 ✅ kodlandı (mevcut EPİK ikilileri, EFSANEVİ üçlüleri açar) · Parti 3 ✅ kodlandı · Parti 4 ✅ kodlandı (Enes 2026-10-29: *"sonraki partiye geç"*) — **liste tamam**
+- [x] B. Liste → `docs/COMBOLAR.md`: 120 combo partiler hâlinde, **Enes onaylar** — Parti 1 ✅ · Parti 2 ✅ kodlandı (mevcut EPİK ikilileri, EFSANEVİ üçlüleri açar) · Parti 3 ✅ kodlandı · Parti 4 ✅ kodlandı (Enes 2026-10-29: *"sonraki partiye geç"*) — **liste tamam**
 - [x] C. Satın alma: combo sunağında saniyeyle (fiyat kuralı Faz 27/33'le aynı) — **karar (a)** (Enes 2026-10-28): ara bölge sunak odasında COMBO sunağı, 2 teklif / 1 alım, fiyat yükseltme kuralıyla
-- [ ] D. Kod partiler hâlinde (her partiye kapı + bir kez boz) · bot gerçek tuşlarla oynar (P33c gibi) — **Parti 1 ✅:**
+- [x] D. Kod partiler hâlinde (her partiye kapı + bir kez boz) · bot gerçek tuşlarla oynar (P33c gibi) — Parti 1–4 ✅ (ayrıntı aşağıda) — **Parti 1 ✅:**
   - 20 combo kodda: koni bitirişleri `Strike`'ta (vuruştan önce / sonra iki `switch`), İPOTEKLİ REHİN ve KİRALIK ARSA `PlaceLien`'de.
     Şartlı bitiriş (`Şart`): ARKADAN DOLANIM arkadan vuruş, VADESİ GELMİŞ POZİSYON 2. kademe, MÜŞTEREK KUSUR / Ü4 bağ, ZİNCİRLEME CİRO
     canlı hedef, Ü5 kule. Üçlüler `Bitirenler`'in başında (son iki adımı ikiliyle çakışabiliyor).
