@@ -539,7 +539,7 @@ namespace TekCan
 
             // ⚠️ TAHSİLDAR'la aynı sürüyordu (3.6 dk / 3.8 dk, BossTesti 2026-10-20): bölge havuzu ×1.35 büyüyor
             // ama beklenen güç ondan hızlı. Hasat faz 1'de %45, faz 2'de yok — büyük havuz ekonomiyi şişirmiyor.
-            public override float HavuzPayı => 1.25f;
+            public override float HavuzPayı => 1.15f;   // Faz 44: 1.25 → 1.15 — tavanla giren botu 338 → ~0'a indiriyordu (F5)
 
             // İMZA MEKANİĞİ: yaşadığı sürece ne çalarsan çal az eder; faz 2'de HİÇ etmez.
             public override float PlayerHarvest(int phase) => phase >= 2 ? 0f : 0.45f;
@@ -649,7 +649,7 @@ namespace TekCan
             public override string Crime => "borcu garantiye aldı";
             public override Color Tint => new Color(0.45f, 0.75f, 0.85f);
             // Faz 41: SİMSAR kredi fazı hafifleyince (5.8 dk) KEFİL'den (6.0) kısa sürdü — "her boss öncekinden uzun".
-            public override float HavuzPayı => 0.85f;
+            public override float HavuzPayı => 0.75f;   // Faz 44: 0.85 → 0.75 — KONİ kalabalıkta düşünce (yardımcıları var) 4.8 → 5.9 dk, SİMSAR'ı geçti
 
             public override bool RefillsOnEmpty => true;
 
@@ -893,7 +893,7 @@ namespace TekCan
             public override string Name => "MURABAHACI";
             public override string Crime => "borç işlemeye devam ediyor";
             // Faz 39: tam havuzla 40 dk sürdü (faz 1 tek başına 7.7 dk, faz 2–3 fullenip geri sarıyor), bot 8 kez öldü (BossTesti).
-            public override float HavuzPayı => 0.3f;   // Faz 41: ×0.4'te tavanla giren bot −1567 / 830; ×0.25'te 4.3–7.7 dk, SİMSAR'dan kısa kalabiliyor
+            public override float HavuzPayı => 0.23f;   // Faz 44: 0.3 → 0.23 — KONİ kalabalıkta düşünce dakikadaki darbe ~%25 arttı, BossTesti iki kez öldürdü (−973, −1088 / 830) · Faz 41: ×0.4'te tavanla giren bot −1567 / 830; ×0.25'te 4.3–7.7 dk, SİMSAR'dan kısa kalabiliyor
             public override Color Tint => new Color(0.55f, 0.35f, 0.8f);
 
             public override bool RefillsOnEmpty => true;
@@ -1197,7 +1197,7 @@ namespace TekCan
                 // ⚠️ Ailenin ortak huyu: TAHSİLDAR'ın aurası ×1.2 (HACİZCİ'nin imzası ×1.6; SENETÇİ'nin bedeli isabetten, aurasız). Yarım aurayla bot, saat doyma tavanında
                 // giren oyuncu gibi, KABADAYI · KOLCU · SAĞ KOL'dan saat KAZANIYORDU (+22 · +38 · +36, bot P34) — "zorlasınlar"ın tersi.
                 new Adam { Ad = "HACİZCİ", Suç = "yanındayken emer", Saldırı = new[] { "HACİZ", "TAHSİL", "İHBARNAME" }, Aura = 1.6f },
-                new Adam { Ad = "SENETÇİ", Suç = "her isabeti cebine — havuzu dolar", Saldırı = new[] { "HACİZ", "İHBARNAME", "KUŞATMA" }, ZorlaAlır = 0.02f },   // aurasız: bedeli isabetten (aurayla 1. bölgede saat bitti)   // %4'te sarmal: vurulan uzatır, uzayan vurulur — 1. bölge ölçümünde 5.9 dk, saat iki kez bitti
+                new Adam { Ad = "SENETÇİ", Suç = "her isabeti cebine — havuzu dolar", Saldırı = new[] { "HACİZ", "İHBARNAME", "KUŞATMA" }, ZorlaAlır = 0.01f },   // Faz 44: %2 → %1 — KONİ kalabalıkta düşünce tam koşuda her seferinde saat bitecekti (B1·O17; %1.5'te de)   // aurasız: bedeli isabetten (aurayla 1. bölgede saat bitti)   // %4'te sarmal: vurulan uzatır, uzayan vurulur — 1. bölge ölçümünde 5.9 dk, saat iki kez bitti
                 new Adam { Ad = "KABADAYI", Suç = "yarıda öfkelenir", Saldırı = new[] { "ZORLA ALIM", "YAKA PAÇA", "HACİZ" }, Aura = 1.2f, Öfke = 1.4f },
                 new Adam { Ad = "KOLCU", Suç = "isabeti kelepçeler — dash'le çık", Saldırı = new[] { "EL KOYMA", "TAHSİL+", "İHBARNAME+" }, Aura = 1.2f, Kelepçe = 1.2f },
                 new Adam { Ad = "SAĞ KOL", Suç = "patronun provası", Saldırı = new[] { "KUŞATMA+", "EL KOYMA", "KELEPÇE", "TAM TAHSİL" }, Aura = 1.2f, Öfke = 1.25f },

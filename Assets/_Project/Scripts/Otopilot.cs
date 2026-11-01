@@ -320,6 +320,8 @@ namespace TekCan
                 ? new[] { Kurulum(), FiyatÖlçümü(Kadro.İMZA, Kadro.KARŞILIK, Kadro.TAHVİL, Kadro.MÜŞTEREK, Kadro.ARBİTRAJ, Kadro.KİRA), Bitir() }
                 : senaryo == "fiyatimza"                                         // Faz 43b: yalnız ÇİFT İMZA (ateş hızı denemesi)
                 ? new[] { Kurulum(), FiyatÖlçümü(Kadro.İMZA), Bitir() }
+                : senaryo == "karne"                                            // Faz 44: 12 silah × 3 bölge
+                ? new[] { Kurulum(), SilahKarnesi(KarneSilahları()), Bitir() }
                 : senaryo == "p33c"
                 ? new[] { Kurulum(), P33c(), Bitir() }
                 : senaryo == "p42"
@@ -1450,6 +1452,132 @@ namespace TekCan
             Kaydet("F", "Enderlik başına (ortalama değer, fiyat, geri ödeme)", null, özet.ToString());
         }
 
+        // ── FAZ 44 SİLAH KARNESİ — Enes (2026-11-01): "72 sn ne la fazla op gibi · silah dengelemesi de yapalım" ──
+        // Fiyat ölçümü yalnız 1. bölgenin 1–2. odasıydı: az düşman, tek hedefli silah kalabalığın cezasını görmüyordu
+        // (FAİZLİ +72). Karne: her silah 1., 3., 5. bölgede, 3. ara bölgenin 2. ve 6. odasında, beklenen güçle, saat
+        // bölgenin tavanında, yükseltmesiz. NET = saat farkı − takviye (F5 bot ölmesin diye; payı düşülüyor); SÜRE oda başı.
+        // Bant KONİ'ye oranla (Enes: "zor silah daha çok kazandırsın"); oda KONİ'nin ×0.8'inden hızlı bitmesin (oyunu kısaltır).
+        static readonly int[] KarneBölgeleri = { 0, 2, 4 };
+        static readonly int[] KarneOdaları = { 2, 6 };
+        const int KarneAraBölge = 2;
+        /// <summary>Oda başı süre sınırı (oyun sn). 600'de tek hedefliler 5. bölgenin 24. odasında (KONİ'ye de en uzun oda) 5–8 düşmanla
+        /// kalıyordu — yavaşlık gerçek, "bitmedi" abartıydı.</summary>
+        const float KarneSınırı = 900f;
+
+        /// <summary>Faz 44 bantları — net saatin KONİ'ye oranı, iyi oynayan botla.</summary>
+        static (string ad, float alt, float üst) Sınıf(int w) =>
+            w == Kadro.KONİ || w == Kadro.İMZA ? ("kolay", 0.8f, 1.2f)
+            : w == Kadro.HACİZ || w == Kadro.KARŞILIK || w == Kadro.ARBİTRAJ ? ("zor", 1.3f, 1.8f)
+            : ("orta", 1f, 1.4f);
+
+        /// <summary>Ayar turunda yalnız bazı silahlar: ortam değişkeni TEKCAN_KARNE="1,3" (Kadro numarası). KONİ hep ölçülür — oran ona göre.</summary>
+        static int[] KarneSilahları()
+        {
+            var liste = new List<int> { Kadro.KONİ };
+            string seçili = System.Environment.GetEnvironmentVariable("TEKCAN_KARNE");
+            if (string.IsNullOrWhiteSpace(seçili)) { for (int w = 0; w < Weapon.All.Length; w++) if (w != Kadro.KONİ) liste.Add(w); }
+            else foreach (var x in seçili.Split(',')) if (int.TryParse(x.Trim(), out int w) && w >= 0 && w < Weapon.All.Length && !liste.Contains(w)) liste.Add(w);
+            return liste.ToArray();
+        }
+
+        IEnumerator SilahKarnesi(int[] silahlar)
+        {
+            _bekçiDk = 60f;
+            _tahvilTut = true;
+            int S = Mathf.Max(1, _t.subRegionsPerRegion), W = Weapon.All.Length, B = KarneBölgeleri.Length;
+            var net = new float[W, B]; var süre = new float[W, B]; var takviye = new int[W, B];
+            var kalan = new int[W, B];                                            // 600 sn'de bitmeyen odada kalan düşman
+            foreach (int w in silahlar)
+                for (int b = 0; b < B; b++)
+                {
+                    if (_bitti) yield break;
+                    int bölge = KarneBölgeleri[b];
+                    net[w, b] = float.NaN;
+                    Sahne($"KARNE {Weapon.All[w].Name}", $"{bölge + 1}. bölge");
+                    Bas(Key.F6); yield return Bekle(0.6f);
+                    _pc = null; _kam = null;
+                    for (int i = 0; i < bölge; i++) { Bas(Key.N); yield return Bekle(1.2f); }
+                    Kuşan(w); yield return Bekle(0.3f);
+                    BeklenenGüç(Saat, bölge * S + KarneAraBölge);
+                    float n = 0f, s = 0f; int f5 = 0; bool tamam = true;
+                    var dal0 = new Dictionary<string, float>(_dal);                   // teşhis: süre hangi dala gitti
+                    foreach (int k in KarneOdaları)
+                    {
+                        int oda = KarneAraBölge * _t.BlokBoyu + k;
+                        UnityEngine.Random.InitState(1009 * oda + 7 * bölge);    // aynı zar her silahta: fark silahtan gelsin
+                        yield return OdayaAtla(oda);
+                        var c = Saat;
+                        if (c == null || Oda == null || Oyuncu == null || Oyuncu.Weapon != Weapon.All[w]
+                            || RoomManager.Tür(_t, Oda.Room) != RoomManager.OdaTürü.Dövüş) { tamam = false; break; }
+                        c.Revive(Clock.Tavan(_t, bölge));
+                        float s0 = c.Seconds, g0 = c.TotalGranted, r0 = c.RunTime, t0 = Şimdi;
+                        int ta0 = _takviye;
+                        while (Oda != null && Oda.Room == oda && !Oda.Cleared && Şimdi - t0 < KarneSınırı && !_bitti)
+                        {
+                            if (c.Seconds < 60f && Time.time - _sonTakviye > 2f) { Bas(Key.F5); _sonTakviye = Time.time; _takviye++; }
+                            DövüşAdımı(Mod.Dövüş);
+                            yield return null;
+                        }
+                        Dur();
+                        if (Oda != null && Oda.Room == oda && !Oda.Cleared && !c.Dead && !_bitti)      // süre doldu: ölçü bu, hata değil
+                        {
+                            kalan[w, b] += Enemy.All.FindAll(e => e != null).Count;
+                            Debug.Log($"[KARNE] {Weapon.All[w].Name} · {bölge + 1}. bölge · {oda}. oda {KarneSınırı:0} sn'de bitmedi, {Enemy.All.Count} düşman kaldı: " +
+                                      string.Join(", ", Enemy.All.FindAll(e => e != null).ConvertAll(e => e.Kind?.Name)));
+                            n += c.Seconds - s0 - (c.TotalGranted - g0); s += c.RunTime - r0; f5 += _takviye - ta0;
+                            continue;
+                        }
+                        if (Oda == null || !Oda.Cleared || c.Dead)
+                        {
+                            Debug.Log($"[KARNE] {Weapon.All[w].Name} · {bölge + 1}. bölge · {oda}. oda OLMADI: " +
+                                      (c.Dead ? "öldü" : Oda == null ? "oda yok" : $"{Şimdi - t0:0} sn'de temizlenmedi, {Enemy.All.Count} düşman kaldı: " +
+                                       string.Join(", ", Enemy.All.FindAll(e => e != null).ConvertAll(e => $"{e.Kind?.Name}{(e.Dormant ? " (uyuyor)" : "")}{(e.Hollow ? " (boş)" : "")}"))));
+                            tamam = false; break;
+                        }
+                        n += c.Seconds - s0 - (c.TotalGranted - g0);
+                        s += c.RunTime - r0;
+                        f5 += _takviye - ta0;
+                    }
+                    Debug.Log($"[KARNE-DAL] {Weapon.All[w].Name} · {bölge + 1}. bölge: " + DalFarkı(dal0));
+                    if (!tamam) continue;
+                    net[w, b] = n / KarneOdaları.Length; süre[w, b] = s / KarneOdaları.Length; takviye[w, b] = f5;
+                    Debug.Log($"[KARNE] {Weapon.All[w].Name} · {bölge + 1}. bölge · net {net[w, b]:+0.0;−0.0} sn/oda · {süre[w, b]:0} sn · F5 {f5}");
+                }
+
+            // Bant: bölgelerin ORTALAMA oranı bantta, hiçbir bölge bandın altının %60'ından aşağı değil, bitmeyen oda yok, üç bölgenin
+            // TOPLAM oda süresi KONİ'ninkinin ×0.8'inden az değil (oyunu kısaltmasın — tam koşu KONİ'yle ölçülüyor; bölge başına ⚡ bilgi).
+            // Bölge bölge katı bant tutmuyor: aynı ayarla iki koşu ±%15 oynuyor, tek hedefli seyrek odada hızlı kalabalıkta yavaş
+            // (silahın kimliği — ARBİTRAJ 1. bölgede KONİ'den hızlı, 5.'de 1.7 kat yavaş).
+            int K = Kadro.KONİ;
+            foreach (int w in silahlar)
+            {
+                var (sınıf, alt, üst) = Sınıf(w);
+                var sb = new StringBuilder();
+                bool bantta = true;
+                float toplam = 0f, süreW = 0f, süreK = 0f; int sayı = 0;
+                for (int b = 0; b < B; b++)
+                {
+                    if (b > 0) sb.Append(" · ");
+                    sb.Append($"{KarneBölgeleri[b] + 1}. bölge ");
+                    if (float.IsNaN(net[w, b])) { sb.Append("OLMADI"); bantta = false; continue; }
+                    float oran = net[K, b] > 0f ? net[w, b] / net[K, b] : float.NaN;
+                    bool hızlı = süre[w, b] < süre[K, b] * 0.8f;
+                    bantta &= w == K || !float.IsNaN(oran) && oran >= alt * 0.6f && kalan[w, b] == 0;
+                    if (!float.IsNaN(oran)) { toplam += oran; sayı++; }
+                    süreW += süre[w, b]; süreK += süre[K, b];
+                    sb.Append($"{net[w, b]:+0;−0} sn/oda (×{oran:0.00}) {süre[w, b]:0} sn");
+                    if (kalan[w, b] > 0) sb.Append($" ⏱ BİTMEDİ ({kalan[w, b]} kaldı)");
+                    if (takviye[w, b] > 0) sb.Append($" F5 {takviye[w, b]}");
+                    if (hızlı) sb.Append(" ⚡hızlı");
+                }
+                float ort = sayı > 0 ? toplam / sayı : float.NaN;
+                bool kısaltır = süreW < süreK * 0.8f;
+                bantta &= w == K || sayı == B && ort >= alt && ort <= üst && !kısaltır;
+                sb.Insert(0, $"ort. ×{ort:0.00} · toplam {süreW:0} sn (KONİ {süreK:0}){(kısaltır ? " ⚡ OYUNU KISALTIR" : "")} · ");
+                Kaydet("K", $"{Weapon.All[w].Name} ({sınıf} ×{alt:0.0}–{üst:0.0})", bantta, sb.ToString());
+            }
+        }
+
         /// <summary>
         /// Bir bölgenin özgün mini boss'ları M ile, sırayla (Faz 34–35'in ortak yolu): beklenen güç (önceki her sunaktan türünden
         /// bir alım) ve saat o bölgenin doyma tavanında. Ölçülen: adı ekranda mı, öldü mü, süre, saat (bota kazandırmamalı — Enes
@@ -1573,10 +1701,7 @@ namespace TekCan
                 satırlar.Add($"{(öldü && ekranda && ok ? "✅" : "❌")} {tanım.Ad}: {(Şimdi - t0) / 60f:0.0} dk · {string.Join(" · ", imza)} · darbe −{darbe:0} · saldırılar: {string.Join(", ", sYazı)}" +
                              (ekranda ? "" : " · ⚠️ ADI EKRANDA DEĞİL") + (öldü ? "" : " · ❌ ÖLMEDİ"));
                 Debug.Log($"[{etiket}] {satırlar[satırlar.Count - 1]}");
-                var dallar = new List<(string, float)>();
-                foreach (var (ad, sn) in _dal) dallar.Add((ad, sn - (dal0.TryGetValue(ad, out var önce) ? önce : 0f)));
-                dallar.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-                Debug.Log($"[{etiket}-DAL] {tanım.Ad}: " + string.Join(" · ", dallar.FindAll(x => x.Item2 >= 1f).ConvertAll(x => $"{x.Item1} {x.Item2:0} sn")));
+                Debug.Log($"[{etiket}-DAL] {tanım.Ad}: " + DalFarkı(dal0));
             }
             Kaydet(kayıtNo, kayıtAdı, tamam, string.Join("<br>", satırlar));
         }
@@ -3024,6 +3149,15 @@ namespace TekCan
         readonly Dictionary<string, float> _dal = new Dictionary<string, float>();
         string _kaçNeden = "";
         void Dal(string ad) { _dal.TryGetValue(ad, out var s); _dal[ad] = s + Time.deltaTime; }
+
+        /// <summary>`önce`den bu yana dallara giden süre, çoktan aza (≥ 1 sn) — dövüş teşhisi.</summary>
+        string DalFarkı(Dictionary<string, float> önce)
+        {
+            var dallar = new List<(string ad, float sn)>();
+            foreach (var (ad, sn) in _dal) dallar.Add((ad, sn - (önce.TryGetValue(ad, out var ö) ? ö : 0f)));
+            dallar.Sort((a, b) => b.sn.CompareTo(a.sn));
+            return string.Join(" · ", dallar.FindAll(x => x.sn >= 1f).ConvertAll(x => $"{x.ad} {x.sn:0} sn"));
+        }
         /// <summary>Saldırı adı → (bota dönük hazırlık, isabet). Haksız aday tablosu bundan.</summary>
         readonly Dictionary<string, Vector2Int> _saldırıİst = new Dictionary<string, Vector2Int>();
         float _sonTakviye = -99f, _sonVuruş = -99f, _bossİlkHavuz, _sonSilkme = -99f;
@@ -3056,7 +3190,9 @@ namespace TekCan
         {
             // VADELİ (Faz 35): insan gibi — vadesi kapalıysa vadesi açık olana dön; hepsi kapalıysa en yakına
             // MÜHLET (Faz 40): insan gibi — solan MÜHLET önce; uzak duruyor, en yakını seçen bot ona hiç sıra vermiyordu (27'de 22 kaçtı)
-            Enemy en = null, açık = null, mühlet = null; float d = float.MaxValue, da = float.MaxValue, dm = float.MaxValue;
+            // REFİNANS (Faz 44): insan gibi — yenileyen önce; tek hedefli silah onu bırakınca 5. bölgenin odası 600 sn'de bitmedi
+            Enemy en = null, açık = null, mühlet = null, refinans = null;
+            float d = float.MaxValue, da = float.MaxValue, dm = float.MaxValue, dr = float.MaxValue;
             foreach (var e in Enemy.All)
             {
                 if (e == null || e.Dormant) continue;
@@ -3064,8 +3200,9 @@ namespace TekCan
                 if (x < d) { d = x; en = e; }
                 if (e.VadeAçık && x < da) { da = x; açık = e; }
                 if (e.Kind != null && e.Kind.MühletSüresi > 0f && !e.Hollow && x < dm) { dm = x; mühlet = e; }
+                if (e.Kind == EnemyKind.Refinance && x < dr) { dr = x; refinans = e; }
             }
-            return mühlet != null ? mühlet : açık != null ? açık : en;
+            return mühlet != null ? mühlet : refinans != null ? refinans : açık != null ? açık : en;
         }
 
         /// <summary>Her karede: gözler (uyarılar), süre takviyesi, kaçış, hedef.</summary>
@@ -3074,6 +3211,7 @@ namespace TekCan
             var pc = Oyuncu;
             if (pc == null || Saat == null || _t == null) return;
             Vector3 ben = Ben;
+            if (_tersİşlem) { _tersİşlem = false; if (pc.Dashing) { _sol = true; return; } }   // dash sürerken bas = dash-atak
 
             Gözler(ben);
             if (_rütbeÖlç) RütbeÖlç();
@@ -3093,7 +3231,16 @@ namespace TekCan
 
             bool kaçan = mod == Mod.Dövüş || mod == Mod.ÇokUzak || mod == Mod.DibindeKaçar;
             _kaçıyor = kaçan;
-            if (kaçan && Kaç(ben)) { Dal("kaç·" + _kaçNeden); return; }
+            if (kaçan && pc.Weapon.Saldırı == Biçim.Karşılık && Karşıla(ben, pc)) { Dal("karşıla"); return; }   // Faz 44: kaçma, karşıla
+            // İNAT (Faz 44): oda bitmek üzereyken (≤ 2 düşman) 6 sn'den uzun kesintisiz kaçıyorsa 2 sn kaçma, vur — insan gibi. SÜLÜK'ün
+            // hazırlığı bitmiyor; REHİN'li bot son SÜLÜK'ten 875 sn kaçtı, oda bitmedi (karne). Kalabalıkta ve boss / mini'de yok: orada kaçmak hayati.
+            bool inat = Time.time < _inatBitiş;
+            if (kaçan && !inat && Kaç(ben))
+            {
+                if (Boss() == null && SonDüşmanlar() && (_kaçmaSüresi += Time.deltaTime) > 6f) { _inatBitiş = Time.time + 2f; _kaçmaSüresi = 0f; }
+                Dal("kaç·" + _kaçNeden); return;
+            }
+            if (!inat) _kaçmaSüresi = 0f;
             if (hedef == null || hedef.Dormant) hedef = EnYakın();
             if (kaçan && İşarettenKaç(ben, mod == Mod.Dövüş ? hedef : null)) { Dal("işaret"); return; }   // uzak durma modlarında menzile çekme
 
@@ -3107,9 +3254,28 @@ namespace TekCan
                 case Mod.Dövüş:
                     float menzil = pc.Weapon.Range(_t) * 0.8f + hedef.Radius;
                     if (d > menzil) { if (AlanaGirer(ben, to) || İşareteGirer(ben, to)) { Dur(); Dal("bekle"); } else { Yürü(to); Dal("yaklaş"); } }
-                    else if (hedef.ÖndenÇarpanı < 1f && hedef.Önünde(ben))
+                    else if (pc.ÖlüBölge > 0f && d - hedef.Radius < pc.ÖlüBölge + 0.3f)
+                    {
+                        // HACİZ (Faz 44): ölü bölgedekine vurulmaz — insan gibi: dışarıda biri varsa ona vur, yoksa açıl (dash hazırsa dash'le).
+                        // Yalnız geri çekilen bot zamanının %90'ını kaçarak geçirdi (oda 209–349 sn).
+                        var dış = ÖlüBölgeDışı(ben, pc.ÖlüBölge, pc.Weapon.Range(_t) * 0.8f);
+                        if (dış != null)
+                        {
+                            NişanAl(dış.transform.position); Dur(); Dal("dışarıdakine");
+                            if (!pc.Attacking && Time.time - _sonVuruş > 0.15f) { _sol = true; _sonVuruş = Time.time; }
+                        }
+                        else { Yürü(Uzaklaş(ben, to)); if (pc.DashCooldownLeft <= 0f) Bas(Key.Space); Dal("geri çekil"); }
+                    }
+                    else if (pc.Weapon.Saldırı == Biçim.Arbitraj && !pc.Görünmez && pc.DashCooldownLeft <= 0f
+                             && pc.KonumÇarpanı(hedef) < 1f && d < _t.dashDistance * 0.6f)
+                    {
+                        Yürü(to); Bas(Key.Space); _tersİşlem = true; Dal("ters işlem");   // ARBİTRAJ (Faz 44): içinden geç, arkadan vur
+                    }
+                    else if (hedef.ÖndenÇarpanı < 1f && hedef.Önünde(ben)
+                             && hedef.DönüşHızı > 0f && _t.moveSpeed / Mathf.Max(d, 0.5f) * Mathf.Rad2Deg > hedef.DönüşHızı * 1.2f)
                     {
                         Yürü(Vector3.Cross(Vector3.up, to)); Dal("dolan");          // KALKANLI (Faz 34) · ARACI (Faz 37): insan gibi yanından dolan
+                        // ⚠️ Faz 44: yalnız dönüşünü geçebiliyorsan. Uzaktan (HACİZ) açısal hız düşük — bot 460 sn dolandı, hiç arkaya varamadı; önden vur.
                     }
                     else
                     {
@@ -3281,6 +3447,53 @@ namespace TekCan
         /// İnsan gibi kaç: uyarıyı GÖRDÜKTEN 0.25 sn sonra. Önce koşarak güvenli yer ara,
         /// olmazsa dash (dokunulmazlık), o da olmazsa uzaklaş.
         /// </summary>
+        bool _tersİşlem;
+        float _kaçmaSüresi, _inatBitiş;
+
+        /// <summary>Odada en çok iki düşman kaldı mı (İNAT yalnız orada).</summary>
+        static bool SonDüşmanlar()
+        {
+            int n = 0;
+            foreach (var e in Enemy.All) if (e != null && !e.Dormant && ++n > 2) return false;
+            return true;
+        }
+
+        /// <summary>HACİZ (Faz 44): ölü bölgenin dışında, menzilde en yakın düşman (yoksa null).</summary>
+        Enemy ÖlüBölgeDışı(Vector3 ben, float ölü, float menzil)
+        {
+            Enemy en = null; float enD = float.MaxValue;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || e.Dormant) continue;
+                float x = Düz(e.transform.position - ben).magnitude;
+                if (x - e.Radius < ölü + 0.3f || x - e.Radius > menzil || x >= enD) continue;
+                enD = x; en = e;
+            }
+            return en;
+        }
+
+        /// <summary>
+        /// KARŞILIK (Faz 44): insan gibi karşıla — darbe ~1 sn içinde gelecekse kaçma, dur, ona dön ve pencere darbeye denk
+        /// gelince bas. Toparlanmadaysan karşılayamazsın: kaç. Eskiden 0.15 sn'de bir tıklıyordu — zamanın çoğu toparlanmada
+        /// geçiyor, gelen darbeye denk gelmiyordu (fiyat ölçümünde KARŞILIK +7, oda 54 sn).
+        /// </summary>
+        bool Karşıla(Vector3 ben, PlayerController pc)
+        {
+            if (!pc.KarşılamaHazır) return false;
+            Enemy gelen = null; float kalan = 9f;
+            foreach (var kv in _gördüğüAn)
+            {
+                var e = kv.Key;
+                if (e == null || Time.time - kv.Value < İnsanTepkisi || !Tehlikede(e, ben)) continue;
+                if (e.KalanHazırlık < kalan) { kalan = e.KalanHazırlık; gelen = e; }
+            }
+            if (gelen == null || kalan > 1f) return false;
+            Dur();
+            NişanAl(gelen.transform.position);
+            if (kalan <= pc.KarşılamaPenceresi * 0.7f) _sol = true;
+            return true;
+        }
+
         bool Kaç(Vector3 ben)
         {
             var tehdit = new List<Enemy>();

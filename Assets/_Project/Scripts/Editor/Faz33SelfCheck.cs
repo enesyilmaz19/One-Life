@@ -43,6 +43,7 @@ namespace TekCan.EditorTools
             _t.startSeconds = 300f;
             _t.enemyTimePool = 200f;
             _t.enemyDecayPerSecond = 0f;
+            _t.crowdFalloff = 0f;               // Faz 44: combo'nun çarpanı ölçülüyor; kalabalık düşüşünü Faz 32 ölçüyor
             Region.Reset();
             Temizle();
 

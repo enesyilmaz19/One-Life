@@ -78,6 +78,9 @@ namespace TekCan.EditorTools
         /// <summary>Faz 43b: yalnız ÇİFT İMZA — ateş hızı / mermi ayarı denemesi (~30 sn).</summary>
         public static void FiyatOlcumImza() => Başlat(izle: false, senaryo: "fiyatimza");
 
+        /// <summary>Faz 44 silah karnesi: 12 silah × 1., 3., 5. bölge × 2 oda, beklenen güçle; net saat KONİ'ye oranla bantta mı.</summary>
+        public static void SilahKarnesi() => Başlat(izle: false, senaryo: "karne");
+
         /// <summary>Faz 33c playtest'i: 12 yeni combo gerçek tuşlarla (açanlar verilmiş). Hızlandırılmış ~1 dk.</summary>
         [MenuItem("Tek Can/Otopilot — Faz 33c combo'ları (izle)")]
         public static void Playtest33cIzle() => Başlat(izle: true, senaryo: "p33c");

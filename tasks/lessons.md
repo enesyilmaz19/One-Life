@@ -749,3 +749,19 @@ Bot 1. bölgeyi 9931 sn ile bitirdi. Geç odalarda ve mini boss'larda saat nered
   kalıcı durum yazıyorsan kaynağı tüket — yoksa "combo tetiklenmedi" demek "etkisi uygulanmadı" demek olmaz.
 - **"Her isabet" diyen etki basılı tutulan silahta sınırsızdır (Faz 43):** ÇEK'te havadaki çek sayısı (1–5) doğal tavandı; tabancada aynı
   cümle 10 sn ateşte 60 isabet demek. **Kural:** bir etkiyi sayaca bağlarken sayacın doğal tavanı hâlâ var mı bak.
+- **Ölçüm odası silahın gücünü değil odanın yoğunluğunu ölçüyordu (Faz 44):** fiyat ölçümü 1. bölgenin 1–2. odasındaydı (az düşman):
+  FAİZLİ +72 "OP" göründü, gerçek kalabalık odada en zayıfıydı; asıl baskın KONİ'ydi. **Kural:** denge ölçüsünü oyunun ağırlığının olduğu
+  yerde al (geç bölge, kalabalık oda), tek odadan güç sıralaması çıkarma.
+- **Botun beceriksizliği silahın zayıflığı gibi görünür (Faz 44):** HACİZ −74.6 botun ölü bölgeye girmesinden, KALKANLI'ya uzaktan
+  460 sn dolanmasından geliyordu. Önce botu insan gibi oynat, sonra dengele — yoksa zayıf diye güçlendirdiğin silah insanın elinde OP olur.
+- **Referans silahı değiştirmek bütün oyunun hızını değiştirir (Faz 44):** KONİ'ye kalabalık düşüşü gelince tam koşu 395 → 508 dk, 5. bölgede
+  takıldı. Oda yoğunluğu (Faz 39) KONİ'nin kalabalığı bedava biçmesine göre ayarlanmıştı. **Kural:** dengenin sıfır noktasına dokunursan
+  hemen tam koşuyu ölç; göreli denge ile mutlak tempo ayrı iki ayar.
+- **Havuz küçülmesi süreyi doğrusal kısaltmaz (Faz 44):** oda havuzu ×0.77 → süre ×0.65 — ekonomi rahatlayınca bot daha çok alım yapıyor,
+  kartopu. İki ölçümün arasından ara değer (×0.85) tuttu. **Kural:** tempo kadranını iki uçta ölç, aradan seç.
+- **"İnsan gibi" bot insanı ölçmez (Faz 44):** nişan sapması + yavaş tepki botu HIZLANDIRDI (az kaçıyor, çok dövüşüyor, 2 kat alım). İnsan
+  süresini uzatan ölüm, okuma, karar; botta yok. Araç silindi. **Kural:** bir tahmin aracı mantıksız sonuç verirse sayıyı raporlama, aracı
+  bırak ve neden işe yaramadığını yaz.
+- **Geriye sayan indeks çoklu silmeyi taşımaz (Faz 44):** `GroundMark.VurDüşmanlara` sondan başa sayıyordu; bağlı iki BOŞ düşmanı tek vuruş
+  öldürünce liste iki kısaldı → ArgumentOutOfRange. İlk tekrar testi yeşildi: düşmanlar dolu olduğu için "boş" kalıyor, ölmüyordu.
+  **Kural:** bir vuruşun başka düşmanları öldürebildiği her döngüde kopya üstünde dön; testi hatanın gerçek koşuluyla (boş + bağlı) kur.

@@ -126,7 +126,7 @@ namespace TekCan
         [Tooltip("FAİZLİ: her savurmanın peşin bedeli (saniye). Iska pahalı olsun diye var.")]
         public float faizliSwingCost = 0.5f;
         [Tooltip("FAİZLİ: hasar çarpanı. Tek hedefli silahın 'tek ama sert' iddiası.")]
-        public float faizliDamageMult = 1.75f;
+        public float faizliDamageMult = 2.0f;
         [Tooltip("FAİZLİ: vurduğunu ne kadar geri savurur (birim/sn). " +
                  "⚠️ Ağırlık hissinin ASIL kaynağı — hit-stop ve sarsıntı tek başına yetmedi.")]
         public float faizliKnockback = 9f;
@@ -141,6 +141,8 @@ namespace TekCan
         // Aynı olsaydı özel saldırı silahın değil oyuncunun ritmi olurdu.
         [Tooltip("KONİ · SÜPÜRME — çevrendeki herkese")]
         public float specialCooldownCone = 7f;
+        [Tooltip("Alan vuruşu (KONİ · İPOTEK · KİRA): aynı vuruşta her ek hedefte hasar düşer — hedef başına ×1/(1+k·(n−1)), kalabalıkta toplam en çok 1/k kat (Faz 44)")]
+        public float crowdFalloff = 0.5f;
         [Tooltip("FAİZLİ · İCRA — ağır peşin bedel, öldürünce 3 kat iade")]
         public float specialCooldownFaizli = 9f;
         [Tooltip("HACİZ · UZUN VADE — hasar uzaklıkla artar")]
@@ -160,7 +162,7 @@ namespace TekCan
         [Tooltip("İPOTEK: yer vuruşunun yarıçapı")]
         public float ipotekRadius = 2.4f;
         [Tooltip("İPOTEK: hasar çarpanı — gecikmeli ve kaçılabilir olduğu için yüksek")]
-        public float ipotekDamageMult = 1.6f;
+        public float ipotekDamageMult = 1.4f;
 
         // ⚠️ Bu iki eşik `startSeconds`e (60) GÖRE seçildi. İlk denemede 120/25
         // yazmıştım — koşu 60'ta başladığı için silah OYUNUN TAMAMINDA güçlü
@@ -194,9 +196,9 @@ namespace TekCan
         [Tooltip("Her ara bölgede düşman havuzu bu kat büyür (ara bölge İÇİNDE ayrıca roomPoolGrowth)")]
         public float subRegionPoolGrowth = 1.12f;
         [Tooltip("Mini boss havuzu = bölgenin TABAN boss havuzunun bu payı")]
-        public float miniBossPoolShare = 7f;   // Faz 40: 5'te mini'ler ort. ~2.5 dk (YAPI hedefi 3–4) — insan oynayışıyla aksiyon ≥ 7 saat
+        public float miniBossPoolShare = 6.4f;   // Faz 40: 5'te mini'ler ort. ~2.5 dk (YAPI hedefi 3–4) — insan oynayışıyla aksiyon ≥ 7 saat · Faz 44: 7 → 6.4 (KONİ kalabalıkta düştü, 5. bölgenin mini'leri 7–11 dk)
         [Tooltip("Ana boss havuzu ek çarpanı — tempo: ana boss 6–8 dk")]
-        public float mainBossPoolScale = 12f;
+        public float mainBossPoolScale = 10.9f;   // Faz 44: 12 → 10.9 (KONİ kalabalıkta düşünce tam koşuda boss'lar %13–52 uzadı)
         [Tooltip("Boss ve mini boss odasında saat akışı çarpanı — uzun dövüşte saat (can) erimesin")]
         public float bossRoomDrainMultiplier = 0.35f;
         [Tooltip("Mini boss'un GERİ GELMESİ: ölümlerde kaybettiğin saniyeler, mini boss havuzunun bu katına ulaşınca")]
@@ -264,7 +266,7 @@ namespace TekCan
         [Tooltip("REHİN: fırlatma hasarı = silah hasarı × bu")] public float rehinThrowDamageMul = 2.2f;
         [Tooltip("REHİN: rehinenin yediği vuruş, bedelinin bu katı hasar olarak ona iner")] public float rehinShieldDamagePerSecond = 3f;
         [Tooltip("ÇİFT İMZA: saniyede mermi (iki tabanca toplam)")] public float imzaShotsPerSecond = 5f;
-        [Tooltip("ÇİFT İMZA: mermi hasarı = silah hasarı × bu")] public float imzaBulletMul = 0.35f;
+        [Tooltip("ÇİFT İMZA: mermi hasarı = silah hasarı × bu")] public float imzaBulletMul = 0.65f;
         [Tooltip("ÇİFT İMZA: merminin hızı (birim/sn) — uçar, hedef kaçabilir (Faz 43b)")] public float imzaBulletSpeed = 25f;
         [Tooltip("ÇİFT İMZA · ONAY: aynı düşmana peş peşe ikinci mermi × bu")] public float imzaOnayMul = 1.5f;
         [Tooltip("ÇİFT İMZA: ateş ederken yürüyüş × bu")] [Range(0f, 1f)] public float imzaMoveDamping = 0.7f;
@@ -280,14 +282,14 @@ namespace TekCan
         [Tooltip("TAHVİL: basılı tutarken hareket hızı çarpanı")] public float tahvilMoveDamping = 0.4f;
         [Tooltip("MÜŞTEREK: bağlı düşmana yayılan hasar payı")] public float musterekShare = 0.6f;
         [Tooltip("MÜŞTEREK: bağın süresi (sn)")] public float musterekSeconds = 8f;
-        [Tooltip("ARBİTRAJ: arkadan vuruş çarpanı")] public float arbitrajBackMul = 2.5f;
-        [Tooltip("ARBİTRAJ: önden vuruş çarpanı")] public float arbitrajFrontMul = 0.5f;
+        [Tooltip("ARBİTRAJ: arkadan vuruş çarpanı")] public float arbitrajBackMul = 2.3f;
+        [Tooltip("ARBİTRAJ: önden vuruş çarpanı")] public float arbitrajFrontMul = 0.85f;
         [Tooltip("ARBİTRAJ · AÇIK POZİSYON: görünmezlik süresi (sn)")] public float arbitrajHideSeconds = 2f;
         [Tooltip("KİRA: kulenin kirası (saniyede saniye)")] public float kiraRentPerSecond = 0.6f;
         [Tooltip("KİRA: kulenin ömrü (sn)")] public float kiraSeconds = 12f;
         [Tooltip("KİRA: kulenin menzili")] public float kiraRadius = 4.5f;
         [Tooltip("KİRA: kulenin atış aralığı (sn)")] public float kiraShotInterval = 0.6f;
-        [Tooltip("KİRA: kule atışı = silah hasarı × bu")] public float kiraShotMul = 2f;
+        [Tooltip("KİRA: kule atışı = silah hasarı × bu")] public float kiraShotMul = 1.6f;
         [Tooltip("KİRA · TAHLİYE: kalan her kira saniyesi için silah hasarı × bu (kalan kira peşin ödenir)")] public float kiraEvictionPerSecond = 1.2f;
 
         [Header("── Faz 33: ENDERLİK ──")]
@@ -313,9 +315,11 @@ namespace TekCan
         [Tooltip("İlk odadaki düşman sayısı")]
         public float roomBaseCount = 4f;   // Faz 39: 3'te oda ortalaması 51 sn (hedef 60–75) — yoğunluk +%33, dalga sayısı değil
         [Tooltip("Her odada kaç düşman eklenir")]
-        public float roomCountGrowth = 2f;
+        public float roomCountGrowth = 1f;   // Faz 44: 2 → 1 — KONİ kalabalıkta düşünce (en çok ×2) ara bölgenin son odası 16 düşmanla 620 sn'yi aştı; sayı doğrudan süreye biniyor
         [Tooltip("Her odada düşman zaman havuzu bu kat büyür — odalar sertleşir")]
         public float roomPoolGrowth = 1.15f;   // Faz 40: 1.10'da oda ort. 64 sn (YAPI hedefi ~90)
+        [Tooltip("Dövüş odası düşman havuzunun genel çarpanı (Faz 44)")]
+        public float roomPoolScale = 0.85f;   // Faz 44: KONİ kalabalıkta en çok ×2 olunca odalar her bölgede %23–41 uzadı (tam koşu 61·67·68·100·140 → 75·92·96·128·183 sn)
 
         [Header("── DÜŞMAN TÜRLERİ (Faz 13) ──")]
         [Tooltip("SİGORTA: bu yarıçaptaki düşmanların hasadını kısar")]

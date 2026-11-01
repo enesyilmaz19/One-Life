@@ -33,6 +33,12 @@ namespace TekCan.EditorTools
                                   İtme = typeof(Enemy).GetField("_push", Gizli), YavaşÇarpan = typeof(Enemy).GetField("_yavaşÇarpan", Gizli);
         static readonly MethodInfo Al = typeof(Altar).GetMethod("Buy", Gizli);
 
+        /// <summary>İFLAS'ın gördüğü saat (Faz 44): saniye ÷ odanın ilerleme çarpanı — `PlayerController.İflasSaniyesi` gibi. Üçlüler
+        /// 2. bölgede (×1.35) deneniyor; ham saniyeyle beklenen değer kayıyordu. ⚠️ Denemenin odası `Üç` içinde yok ediliyor, beklenen
+        /// değer SONRA hesaplanıyor — çarpan oda kurulurken `_ilerleme`'ye yazılıyor.</summary>
+        static float İlerlemeli(float sn) => sn / _ilerleme;
+        static float _ilerleme = 1f;
+
         public static int Execute()
         {
             int failed = 0, total = 0;
@@ -40,6 +46,7 @@ namespace TekCan.EditorTools
             _t.startSeconds = 300f;
             _t.enemyTimePool = 200f;
             _t.enemyDecayPerSecond = 0f;
+            _t.crowdFalloff = 0f;               // Faz 44: combo'nun çarpanı ölçülüyor; kalabalık düşüşünü Faz 32 ölçüyor
             Region.Reset();
             Temizle();
 
@@ -72,6 +79,7 @@ namespace TekCan.EditorTools
         // ── kurgu (Faz 33'ünkiyle aynı) ─────────────────────────────────────────
         static void YeniKoşu(float saat = 300f)
         {
+            _ilerleme = 1f;
             Temizle();
             SaveFile.UseInMemory(new SaveData { upgradeSeed = 12345 });
             if (_pGo != null) Object.DestroyImmediate(_pGo);
@@ -163,6 +171,7 @@ namespace TekCan.EditorTools
                     var go = new GameObject("faz42-oda"); go.transform.SetParent(_root.transform);
                     rm = go.AddComponent<RoomManager>();
                     rm.Init(_t, _pGo.transform, null, startRoom: 1, startRegion: Combo.Bu(c).MinBölge);
+                    _ilerleme = RoomManager.İlerlemeÇarpanı(_t, rm.RegionIndex, rm.SubRegion);   // Faz 44: İFLAS'ın beklenen değeri için
                     foreach (var e in Enemy.All.ToArray()) if (e != null) Object.DestroyImmediate(e.gameObject);
                     Enemy.All.Clear();
                     Ortaya();
@@ -418,7 +427,7 @@ namespace TekCan.EditorTools
                 float h = Hasar(yakın, () => Silahla(Kadro.İFLAS));
                 return (h, _clock.Seconds - s0, s0, Yaptı(ComboTür.AlacakDevri), _pc.SpecialCooldownOf(Kadro.İFLAS));
             });
-            float İflas(float sn) => iflas.Damage(_t, _clock.AttackDamage) * iflas.DesperationMultiplier(sn, _t);
+            float İflas(float sn) => iflas.Damage(_t, _clock.AttackDamage) * iflas.DesperationMultiplier(İlerlemeli(sn), _t);
             failed += Check(ref total, $"⚠️ İCRA TAKİBİ (FAİZLİ → HACİZ → İFLAS): ALACAK DEVRİ'nden sonra zincir sürüyor ({(it.var.devir ? "devir oldu" : "DEVİR YOK")}); İFLAS saatin dörtte birindeymiş gibi ({it.yok.h:0.00} → {it.var.h:0.00} = {İflas(it.var.s0 * 0.25f):0.00}), iki bedel geri ({it.yok.saat:+0.00} → {it.var.saat:+0.00}); TAZMİNAT (+) TASFİYE'nin beklemesi sıfır",
                             it.oldu && it.var.devir && !it.yok.devir && Yakın(it.yok.h, İflas(it.yok.s0)) && Yakın(it.var.h, İflas(it.var.s0 * 0.25f)) && it.var.h > it.yok.h
                             && Yakın(it.yok.saat, 0f) && Yakın(it.var.saat, 2f * _t.faizliSwingCost) && it.var.bek == 5f && it.artı.bek == 0f, it.var.h);
@@ -589,7 +598,7 @@ namespace TekCan.EditorTools
                 float h = Hasar(e, () => Silahla(Kadro.HACİZ));                // dibinde: ölü bölgede
                 return (h, s0, (float)Yavaş.GetValue(e) > 0f);
             }, saat: 30f);
-            float İflasÇ(float sn) => Mathf.Max(1f, Weapon.All[Kadro.İFLAS].DesperationMultiplier(sn, _t));
+            float İflasÇ(float sn) => Mathf.Max(1f, Weapon.All[Kadro.İFLAS].DesperationMultiplier(İlerlemeli(sn), _t));
             failed += Check(ref total, $"İFLAS DAİRESİ (İFLAS → HACİZ): ölü bölge yok, saat {id.var.s0:0} sn'de İFLAS'ın çarpanıyla ({id.yok.h:0.00} → {id.var.h:0.00} = {haciz:0.00}×{İflasÇ(id.var.s0):0.00}); İFLAS İLANI (+) yavaşlatıyor",
                             id.oldu && id.yok.h == 0f && İflasÇ(id.var.s0) > 1.5f && Yakın(id.var.h, haciz * İflasÇ(id.var.s0)) && !id.var.yavaş && id.artı.yavaş, id.var.h);
 
@@ -693,7 +702,7 @@ namespace TekCan.EditorTools
             int failed = 0;
             float koni = Taban(Kadro.KONİ), haciz = Taban(Kadro.HACİZ), mermi = Taban(Kadro.İMZA) * _t.imzaBulletMul, rehin = Taban(Kadro.REHİN), işaret = Taban(Kadro.İPOTEK);
             var iflas = Weapon.All[Kadro.İFLAS];
-            float İflas(float sn) => iflas.Damage(_t, _clock.AttackDamage) * iflas.DesperationMultiplier(sn, _t);
+            float İflas(float sn) => iflas.Damage(_t, _clock.AttackDamage) * iflas.DesperationMultiplier(İlerlemeli(sn), _t);
 
             var ih = Üç<(bool tuttu, float h, float b, float bek)>(ComboTür.İstihkak, () =>
             {
@@ -960,7 +969,7 @@ namespace TekCan.EditorTools
                 var hedef = Düşman(Yer(1f, kiraR));
                 return (Hasar(hedef, () => k.Step(0.05f)), k.Stopaj, s);
             }, saat: 30f);
-            float dm = Mathf.Max(1f, iflas.DesperationMultiplier(tk.var.s, _t));
+            float dm = Mathf.Max(1f, iflas.DesperationMultiplier(İlerlemeli(tk.var.s), _t));
             failed += Check(ref total, $"TASFİYE KULESİ (İFLAS → KİRA): saat {tk.var.s:0} sn'de atış İFLAS'ın çarpanıyla ({tk.yok.atış:0.00} → {tk.var.atış:0.00} = ×{dm:0.00}); TASFİYE PAYI (+) STOPAJ ({tk.var.stopaj:0} → {tk.artı.stopaj:0})",
                             tk.oldu && dm > 1.5f && Yakın(tk.var.atış, tk.yok.atış * dm) && tk.var.stopaj == 0f && tk.artı.stopaj >= 1f, tk.var.atış);
 
@@ -1386,7 +1395,7 @@ namespace TekCan.EditorTools
                 Vector3 d = m.transform.position - e.transform.position; d.y = 0f;
                 return (d.magnitude, m.Kalan, m.Hasar, _pc.SpecialCooldownOf(Kadro.İFLAS), s);
             }, saat: 30f);
-            float dmİ = Mathf.Max(1f, iflas.DesperationMultiplier(iip.var.s, _t));
+            float dmİ = Mathf.Max(1f, iflas.DesperationMultiplier(İlerlemeli(iip.var.s), _t));
             failed += Check(ref total, $"İFLAS İPOTEĞİ (İFLAS → İPOTEK): işaret İFLAS'ın vurduğunun altına ({iip.yok.uzaklık:0.00} → {iip.var.uzaklık:0.00}), gecikme ×0.2 ({iip.yok.kalan:0.00} → {iip.var.kalan:0.00}), hasar ×{dmİ:0.00}; MÜHLET (+) beklemesi sıfır",
                             iip.oldu && dmİ > 1.5f && iip.yok.uzaklık > 1f && iip.var.uzaklık >= 0f && iip.var.uzaklık < 0.01f && Yakın(iip.var.kalan, iip.yok.kalan * 0.2f)
                             && Yakın(iip.var.hasar, iip.yok.hasar * dmİ) && iip.var.bek == 5f && iip.artı.bek == 0f, iip.var.hasar);
@@ -1402,7 +1411,7 @@ namespace TekCan.EditorTools
                 var bağ = _pc.SonBağ;
                 return (bağ != null && bağ.Üyeler.Contains(a) ? bağ.PayÇarpanı : -1f, (float)Yavaş.GetValue(a) > 0f, s);
             }, saat: 30f);
-            float dmO = Mathf.Min(Mathf.Max(1f, iflas.DesperationMultiplier(io.var.s, _t)), 1f / _t.musterekShare);
+            float dmO = Mathf.Min(Mathf.Max(1f, iflas.DesperationMultiplier(İlerlemeli(io.var.s), _t)), 1f / _t.musterekShare);
             failed += Check(ref total, $"İFLAS ORTAKLIĞI (İFLAS → MÜŞTEREK): İFLAS'ın vurduğu bağlanıyor, yayılma ×çaresizlik ({io.yok.payÇ:0.00} → {io.var.payÇ:0.00} = {dmO:0.00}); ORTAK İFLAS (+) bağlılar yavaş",
                             io.oldu && io.yok.payÇ < 0f && dmO > 1.2f && Yakın(io.var.payÇ, dmO) && !io.var.yavaş && io.artı.yavaş, io.var.payÇ);
 
@@ -1614,7 +1623,7 @@ namespace TekCan.EditorTools
                 float h = Hasar(e, () => Silahla(Kadro.İMZA));                  // ilk mermi
                 return (h, y0 - yan.TimeLeft, _pc.SpecialCooldownOf(Kadro.İFLAS), s);
             }, saat: 30f);
-            float dmS = Mathf.Max(1f, iflas.DesperationMultiplier(isn.var.s, _t));
+            float dmS = Mathf.Max(1f, iflas.DesperationMultiplier(İlerlemeli(isn.var.s), _t));
             failed += Check(ref total, $"⚠️ İFLAS SENEDİ (REHİN → İFLAS → İMZA): seri ×çaresizlik ({isn.yok.h:0.00} → {isn.var.h:0.00} = ×{dmS:0.00}), mermi yanındakine seker ({isn.yok.yan:0.00} → {isn.var.yan:0.00}); MASA ALACAĞI (+) İFLAS'ın beklemesi sıfır",
                             isn.oldu && dmS > 1.5f && Yakın(isn.var.h, isn.yok.h * dmS) && isn.yok.yan == 0f && Yakın(isn.var.yan, isn.var.h) && isn.var.bek == 5f && isn.artı.bek == 0f, isn.var.h);
 
@@ -1643,7 +1652,7 @@ namespace TekCan.EditorTools
                 float h = Hasar(e, () => Silahla(Kadro.HACİZ));                // ölü bölgede
                 return (h, _pc.Görünmez, Yaptı(ComboTür.GizliHaciz), s);
             }, saat: 30f);
-            float dmA = Mathf.Max(1f, iflas.DesperationMultiplier(ai.var.s, _t));
+            float dmA = Mathf.Max(1f, iflas.DesperationMultiplier(İlerlemeli(ai.var.s), _t));
             failed += Check(ref total, $"⚠️ ARKADAN İCRA (İFLAS → ARBİTRAJ → HACİZ): ölü bölge yok, ×çaresizlik ×arka ({ai.yok.h:0.00} → {ai.var.h:0.00} = {haciz:0.00} × {dmA:0.00} × {_t.arbitrajBackMul}), GİZLİ HACİZ {(ai.var.gizli ? "TETİKLENDİ" : "tetiklenmedi")}; İCRA PERDESİ (+) görünmez",
                             ai.oldu && dmA > 1.5f && ai.yok.h == 0f && Yakın(ai.var.h, haciz * dmA * _t.arbitrajBackMul) && !ai.var.gizli && !ai.var.görünmez && ai.artı.görünmez, ai.var.h);
 

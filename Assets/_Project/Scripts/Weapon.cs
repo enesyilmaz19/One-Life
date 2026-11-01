@@ -370,6 +370,9 @@ namespace TekCan
         /// <summary>Hasar başına çalınan zamanın çarpanı — silahlar arası dengenin ana kadranı.</summary>
         public virtual float HarvestMultiplier => 1f;
 
+        /// <summary>Aynı vuruşta her ek hedefte hasar düşüşü (k): hedef başına ×1/(1+k·(n−1)). 0 = düşüş yok.</summary>
+        public virtual float KalabalıkDüşüşü(Tuning t) => 0f;
+
         public virtual float Range(Tuning t) => t.attackRange;
         public virtual float Angle(Tuning t) => t.attackAngle;
         public virtual float Duration(Tuning t) => t.attackDuration;
@@ -524,6 +527,11 @@ namespace TekCan
             Tint = new Color(0.65f, 0.95f, 1f, 0.5f)
         };
         // MaxTargets sınırsız, HarvestMultiplier 1 — dengenin sıfır noktası.
+
+        /// ⚠️ KALABALIK DÜŞÜŞÜ (Faz 44, Enes: "KONİ kalabalıkta zayıflasın"). Hasat çarpanı yalnız hasadı dengeliyordu, hızı değil:
+        /// koninin üstünlüğü düşman sayısıyla sınırsız büyüyordu — silah karnesinde kalabalık odada herkesten 2–3 kat hızlı,
+        /// 5. bölgede tek hedefliler 600 sn'de bitiremezken o 147 sn'de. Tek düşmana aynı vuruyor.
+        public override float KalabalıkDüşüşü(Tuning t) => t.crowdFalloff;
     }
 
     /// <summary>
@@ -536,7 +544,7 @@ namespace TekCan
         public override string Name => "FAİZLİ";
         public override Color Tint => new Color(1f, 0.85f, 0.35f, 0.5f);
         public override int MaxTargets => 1;
-        public override float HarvestMultiplier => 2.6f;
+        public override float HarvestMultiplier => 4.2f;                        // Faz 44: 2.6 → 4.2 (kalabalıkta savurma bedeli hasadı yiyordu)
         public override float Angle(Tuning t) => t.singleTargetAngle;
 
         // ⚠️ "Oturtsun" (Enes). Ağırlık HASARDAN değil DARBEDEN geliyor: hit-stop
@@ -601,7 +609,8 @@ namespace TekCan
         public override string Name => "HACİZ";
         public override Color Tint => new Color(0.55f, 1f, 0.7f, 0.42f);
         public override int MaxTargets => 1;
-        public override float HarvestMultiplier => 2.2f;
+        public override float HarvestMultiplier => 2.5f;                        // Faz 44: 2.2 → 2.5 (zor silah, 1. bölgede bandın altında)
+        public override float Damage(Tuning t, float baseDamage) => baseDamage * 1.25f;   // Faz 44: zor silah, bandın altındaydı
         public override float Range(Tuning t) => t.attackRange * 3.4f;        // Enes: menzil buffu
         public override float Angle(Tuning t) => t.singleTargetAngle * 0.6f;  // dar: nişan
         public override float MinRange(Tuning t) => t.hacizMinRange;          // ölü bölge
@@ -647,7 +656,9 @@ namespace TekCan
         // ⚠️ Playtest sonrası SERT KISILDI (Enes: "ipotek fazla güçlü amk"). Üç kadran
         // birden çevrildi çünkü üç ayrı yerden güçlüydü: alan + yığılabilirlik + hasat.
         // Yığılma yapısal olarak kapandı (tek işaret); burada kalan ikisi.
-        public override float HarvestMultiplier => 0.7f;                    // 1.3 → 0.7
+        public override float HarvestMultiplier => 1.25f;                   // 1.3 → 0.7 → 1.25 (Faz 44: kalabalık düşüşü, hasar ×1.4)
+        /// Faz 44: işaret alan vuruşu — KONİ düşünce en hızlı silah oldu (karne: 5. bölge 111 sn, ortası ~350). Aynı düşüş.
+        public override float KalabalıkDüşüşü(Tuning t) => t.crowdFalloff;
         public override float Range(Tuning t) => t.attackRange * 2.2f;      // koyabildiğin mesafe
         public override float Duration(Tuning t) => t.attackDuration * 1.45f;  // ağır: spam'i kesiyor
         public override float GroundMarkDelay(Tuning t) => t.ipotekDelay;
@@ -693,19 +704,19 @@ namespace TekCan
     public sealed class Iflas : Weapon
     {
         /// <summary>Dolu saatteyken cezası — silahın kimliği bu: güvendeyken KÖTÜ.</summary>
-        const float GüvendekiÇarpan = 0.7f;
+        const float GüvendekiÇarpan = 0.9f;                                     // Faz 44: 0.7 → 0.9 (karne: 5. bölgede bitiremiyordu)
 
         public override string Name => "İFLAS";
         public override Color Tint => new Color(1f, 0.3f, 0.25f, 0.55f);
         public override int MaxTargets => 1;
-        public override float HarvestMultiplier => 2.1f;                        // 1.8 → 2.1
+        public override float HarvestMultiplier => 1.6f;                        // 1.8 → 2.1 → 1.6 (Faz 44: güvendeki hasar arttı)
         public override float Angle(Tuning t) => t.singleTargetAngle;
 
         // ⚠️ HIZLI, ağır değil (Enes: "iflasın saldırı hızına da buff yapalım").
         // 1.25 idi — yani dipteyken sertleşen silah tam da sertleştiği anda YAVAŞ
         // vuruyordu ve eğrisi hissedilmiyordu. Hızlı olması eğriyi görünür kılıyor:
         // dipte hem sert hem seri, yani gerçekten "son çare" gibi çalışıyor.
-        public override float Duration(Tuning t) => t.attackDuration * 0.8f;
+        public override float Duration(Tuning t) => t.attackDuration * 0.7f;    // Faz 44: 0.8 → 0.7 (5. bölgede bitiremiyordu; güvende vuruş başına zayıf kalsın)
 
         /// KAPANIŞ — saatinden büyük bir parça ödüyorsun ve çok sert vuruyorsun.
         ///
@@ -750,7 +761,7 @@ namespace TekCan
         public override Color Tint => new Color(0.8f, 0.6f, 0.4f, 0.5f);
         public override Biçim Saldırı => Biçim.Rehin;
         public override int MaxTargets => 1;
-        public override float HarvestMultiplier => 1.8f;
+        public override float HarvestMultiplier => 1.55f;                       // Faz 44: 1.8 → 1.55 (orta, bandın üstündeydi)
         public override float Range(Tuning t) => t.attackRange * 1.1f;      // tutma menzili
         public override float Angle(Tuning t) => 120f;
         public override float Duration(Tuning t) => t.attackDuration * 1.1f;
@@ -778,7 +789,7 @@ namespace TekCan
         public override string Name => "ÇİFT İMZA";
         public override Color Tint => new Color(0.6f, 0.85f, 0.95f, 0.5f);
         public override Biçim Saldırı => Biçim.İmza;
-        public override float HarvestMultiplier => 1.3f;
+        public override float HarvestMultiplier => 1.15f;                       // Faz 44: 1.3 → 1.15 (mermi güçlendi)
         public override int MaxTargets => 1;
         public override float Range(Tuning t) => t.attackRange * 3.5f;          // HACİZ kadar, ölü bölgesiz
         public override float Damage(Tuning t, float baseDamage) => baseDamage * 0.9f;   // mermi bunun `imzaBulletMul`'u
@@ -805,7 +816,7 @@ namespace TekCan
         public override string Name => "KARŞILIK";
         public override Color Tint => new Color(0.95f, 0.95f, 0.6f, 0.5f);
         public override Biçim Saldırı => Biçim.Karşılık;
-        public override float HarvestMultiplier => 1.4f;
+        public override float HarvestMultiplier => 2.2f;                        // Faz 44: 1.4 → 2.2 (zor silah, bandın altındaydı)
         public override float Angle(Tuning t) => 100f;
         /// Pencere = süre × vuruş anı ≈ 0.23 sn, ardından ~0.43 sn TOPARLANMA. Ortak vuruş anıyla (%12)
         /// pencere 0.05 sn olurdu — oynanmaz. Toparlanma yoksa (ilk hâli: pencere savurmanın %80'i)
@@ -837,7 +848,7 @@ namespace TekCan
         public override string Name => "TAHVİL";
         public override Color Tint => new Color(0.55f, 0.95f, 0.65f, 0.5f);
         public override Biçim Saldırı => Biçim.Tahvil;
-        public override float HarvestMultiplier => 1.2f;
+        public override float HarvestMultiplier => 1.6f;                        // Faz 44: 1.2 → 1.6 (orta, bandın altındaydı)
         public override string DashAtakAdı => "ERKEN BOZDURMA";
         public override string DashAtakNeYapar => "basılı tutarken dash: olgunluğun yarısı dash-atağa biner, geniş";
 
@@ -866,7 +877,7 @@ namespace TekCan
         public override float HarvestMultiplier => 1.6f;
         public override float Range(Tuning t) => t.attackRange * 1.2f;
         public override float Angle(Tuning t) => t.singleTargetAngle * 1.4f;
-        public override float Damage(Tuning t, float baseDamage) => baseDamage * 0.8f;
+        public override float Damage(Tuning t, float baseDamage) => baseDamage;   // Faz 44: ×0.8 → ×1 (karne: 5. bölgede bitmiyordu)
         public override string DashAtakAdı => "KOPARMA";
         public override string DashAtakNeYapar => "bağın üstünden dash'le geç: bağ kopar, uçlar birbirine çarpar (×2)";
 
@@ -889,7 +900,7 @@ namespace TekCan
         public override Color Tint => new Color(0.75f, 0.75f, 0.95f, 0.5f);
         public override Biçim Saldırı => Biçim.Arbitraj;
         public override int MaxTargets => 1;
-        public override float HarvestMultiplier => 1.7f;
+        public override float HarvestMultiplier => 1.5f;                        // Faz 44: 1.7 → 1.5 (önden ×0.7 oldu)
         public override float Angle(Tuning t) => t.singleTargetAngle * 1.6f;
         public override string DashAtakAdı => "TERS İŞLEM";
         public override string DashAtakNeYapar => "içinden geçtiğin düşmana dönüp arkadan vurursun";
@@ -912,9 +923,11 @@ namespace TekCan
         public override string Name => "KİRA";
         public override Color Tint => new Color(0.95f, 0.8f, 0.45f, 0.5f);
         public override Biçim Saldırı => Biçim.Kira;
-        public override float HarvestMultiplier => 1.2f;
+        public override float HarvestMultiplier => 1.5f;                        // Faz 44: 1.2 → 1.5 (orta, bandın altındaydı)
         public override float Range(Tuning t) => t.attackRange * 2.5f;     // kurma menzili
-        public override float Damage(Tuning t, float baseDamage) => baseDamage * 0.6f;
+        public override float Damage(Tuning t, float baseDamage) => baseDamage * 0.5f;   // Faz 44: 0.6 → 0.5 (her bölgede KONİ'den hızlıydı)
+        /// Faz 44: savurması koni (hedef sınırı yok) — KONİ düşünce ikinci en hızlı oldu. Aynı düşüş; kule tek hedefe, etkilenmez.
+        public override float KalabalıkDüşüşü(Tuning t) => t.crowdFalloff;
         public override string DashAtakAdı => "TAŞINMA";
         public override string DashAtakNeYapar => "kuleyi bulunduğun yere taşırsın (kira sürer)";
 

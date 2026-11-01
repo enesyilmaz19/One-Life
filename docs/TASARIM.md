@@ -361,6 +361,21 @@ elendi** — vur-kaç-topla en iyi oyun oluyordu, yani dövüşmemeyi ödüllend
 | **İPOTEK** | **uzak** | alan | ×1.3 | *nereye GİDECEKLER* — yere gecikmeli vuruş (0.85 sn) |
 | **İFLAS** | yakın | tek | ×1.8 | *ne kadar dibe inerim* — saat düştükçe hasar ×0.7 → ×2.4 |
 
+### SİLAH DENGESİ — 2026-11-01 (Faz 44)
+
+Enes: *"zor silah daha çok kazandırsın"* · *"KONİ kalabalıkta zayıflasın"*. Ölçü bot **silah karnesi** (`…OtopilotMenu.SilahKarnesi`):
+her silah 1., 3., 5. bölgenin kalabalık odalarında, beklenen güçle; net saat KONİ'ye oranla. Bantlar: **kolay** KONİ · ÇİFT İMZA ×0.8–1.2 ·
+**orta** FAİZLİ · İFLAS · REHİN · İPOTEK · TAHVİL · MÜŞTEREK · KİRA ×1.0–1.4 · **zor** HACİZ · KARŞILIK · ARBİTRAJ ×1.3–1.8; hiçbiri oyunu
+KONİ'den %20'den fazla kısaltmasın (tam koşu KONİ'yle ölçülüyor).
+
+- **Kalabalık düşüşü** (KONİ · İPOTEK · KİRA): aynı vuruşta her ek hedefte hasar ×1/(1+0.5·(n−1)) — tek düşmana aynı, kalabalıkta toplam
+  en çok ×2. Hasat çarpanı hasadı dengeliyordu, hızı değil: koninin üstünlüğü düşman sayısıyla sınırsız büyüyordu (kalabalık odada
+  herkesten 2–3 kat hızlı). "Koni her zaman baskın olur" sorununun ikinci yarısı.
+- Silah başına hasar / hasat ayarı: `tasks/todo.md` Faz 44. FAİZLİ'nin "+72 OP"u seyrek odadan geliyordu — gerçek odada en zayıfıydı.
+- **İFLAS'ın eşikleri ilerleme çarpanıyla:** darbe bölgeyle büyüyor (Faz 39), "güvende / panik" de onunla ölçekleniyor.
+- Tempo yeniden: oda yoğunluğu (Faz 39) KONİ'nin kalabalığı bedava biçmesine göre ayarlıydı → düşman artışı oda başı 2 → 1, oda havuzu ×0.85,
+  boss ×10.9 (12), mini 6.4 (7). Bot tam koşu yine ~6.2 sa.
+
 ### KADRO GENİŞLEDİ — 2026-10-18, 12 silah (Faz 30–32)
 
 Enes (2026-10-16/17): *"totalde 12 olabilir… ilk bölgede 4… kullanıcı yanına 3 tane silah alabilir…

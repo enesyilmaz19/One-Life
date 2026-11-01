@@ -157,6 +157,9 @@ namespace TekCan
         /// <summary>MÜFLİS (Faz 34): oyuncuya vuran işaret patlayınca içindeki düşmanlara da bu kadar hasar.</summary>
         public float DüşmanHasarı { get; set; }
 
+        /// <summary>İPOTEK (Faz 44): kalabalık düşüşü — içindeki her ek düşmanda hasar ×1/(1+k·(n−1)).</summary>
+        public float KalabalıkDüşüşü { get; set; }
+
         // ── COMBO kancaları (Faz 30) ──
         /// <summary>TAHLİYE (HACİZ KARARI+): patlama içindekileri dışa iter.</summary>
         public float İtme { get; set; }
@@ -236,23 +239,27 @@ namespace TekCan
             _player.GetComponent<PlayerController>()?.TakeHit(_cost, transform.position, _owner);
         }
 
+        float Yatay(Enemy e) { var d = e.transform.position - transform.position; d.y = 0f; return d.magnitude; }
+
         void VurDüşmanlara()
         {
             // ⚠️ Yarıçap düşmanın YÜZEYİNE ölçülüyor, merkezine değil — İRİ rütbeli
             // düşman halkanın kenarına taşmışken vurulmamak yanlış olurdu. Oyuncunun
             // savurma isabetinde de kural bu (ders 9: aynı kavram, aynı ölçüm).
-            for (int i = Enemy.All.Count - 1; i >= 0; i--)
+            // ⚠️ Kopya üstünde dön (Faz 44): tek vuruş birden çok düşman öldürebilir — MÜŞTEREK bağı boş öbürünü de
+            // öldürür, liste iki kısalır. Geriye sayan indeks bunu taşıyamıyordu (ArgumentOutOfRange). Ölen atlanır.
+            var içindekiler = Enemy.All.FindAll(e => e != null && Yatay(e) - e.Radius <= _radius);
+            float düşüş = 1f / (1f + KalabalıkDüşüşü * Mathf.Max(0, içindekiler.Count - 1));
+            foreach (var e in içindekiler)
             {
-                var e = Enemy.All[i];
-                if (e == null) continue;
+                if (e == null || !Enemy.All.Contains(e)) continue;
 
                 var d = e.transform.position - transform.position;
                 d.y = 0f;
-                if (d.magnitude - e.Radius > _radius) continue;
 
                 VurulanYerler.Add(e.transform.position);                       // ÖNCE: vuruş öldürebilir
                 float merkez = d.magnitude <= _radius * 0.5f ? MerkezÇarpanı : 1f;   // DERİN TEMEL (Faz 33)
-                e.TakeDamage(_enemyDamage * merkez, _harvestMult);
+                e.TakeDamage(_enemyDamage * merkez * düşüş, _harvestMult);
                 if (İtme > 0f) e.Push(d, İtme);              // TAHLİYE (Faz 30)
                 EnemiesHit++;
             }

@@ -329,6 +329,48 @@ namespace TekCan.EditorTools
             failed += Check(ref total, $"bağ {_t.musterekSeconds:0} sn sonra kopuyor (üyelerde bağ {(a.Bağ == null && b.Bağ == null ? "yok" : "KALDI")})",
                             kuruldu && bağ.Bitti && a.Bağ == null && b.Bağ == null, 0f);
 
+            // Faz 44: iki BOŞ (saati bitmiş) bağlı düşman — patlamanın tek vuruşu ikisini birden öldürür (bağ öbürüne yayar), düşman
+            // listesi iki kısalır. Patlama geriye sayan indeksle taşıyordu (silah karnesi, MÜFLİS işareti, ArgumentOutOfRange).
+            YeniKoşu();
+            (a, b) = Bağla();
+            _pc.TickCombo(1f);
+            MusterekBag.Kapalı = true; a.TakeDamage(1e6f); b.TakeDamage(1e6f); MusterekBag.Kapalı = false;   // ikisi de boş, listede
+            bool boşlar = a.Hollow && b.Hollow && Enemy.All.Contains(a) && Enemy.All.Contains(b);
+            string hata = null;
+            try { GroundMark.SpawnLien(_t, (a.transform.position + b.transform.position) * 0.5f, 5f, 0.01f, 1f, 1f, null).Step(0.05f); }
+            catch (System.Exception ex) { hata = ex.GetType().Name; }
+            failed += Check(ref total, $"⚠️ iki boş bağlıyı birden öldüren patlama listeyi taşırmıyor ({(boşlar ? "ikisi boş" : "KURULMADI")} · {hata ?? "hata yok"} · " +
+                                       $"{(Enemy.All.Contains(a) || Enemy.All.Contains(b) ? "ÖLMEDİ" : "ikisi de öldü")})",
+                            boşlar && hata == null && !Enemy.All.Contains(a) && !Enemy.All.Contains(b), 0f);
+
+            // Faz 44 — KALABALIK DÜŞÜŞÜ (Enes: "KONİ kalabalıkta zayıflasın"): aynı vuruşta n hedef → hedef başına ×1/(1+k·(n−1));
+            // tek hedefe aynı. KONİ'nin savurması ve İPOTEK'in işareti — iki ayrı yol.
+            {
+                YeniKoşu();
+                var tek = Düşman(İleri(1.5f));
+                float tekH = Hasar(tek, () => Silahla(Kadro.KONİ));
+                YeniKoşu();
+                var öndeki = Düşman(İleri(1.5f));
+                foreach (float açı in new[] { -40f, -20f, 20f, 40f }) Düşman(Yer(1.5f * Mathf.Sin(açı * Mathf.Deg2Rad), 1.5f * Mathf.Cos(açı * Mathf.Deg2Rad)));
+                float beşH = Hasar(öndeki, () => Silahla(Kadro.KONİ));
+                float bekl = tekH / (1f + _t.crowdFalloff * 4f);
+                failed += Check(ref total, $"⚠️ KALABALIK DÜŞÜŞÜ (KONİ): beş hedefte biri {beşH:0.00} = tek hedefin {tekH:0.00} × 1/(1+{_t.crowdFalloff:0.0}×4)",
+                                tekH > 0f && Mathf.Abs(beşH - bekl) < 0.01f, beşH / Mathf.Max(0.001f, tekH));
+
+                float İşaret(int kaç)
+                {
+                    YeniKoşu();
+                    var ilk = Düşman(İleri(3f));
+                    for (int i = 1; i < kaç; i++) Düşman(İleri(3f) + new Vector3(0.5f * i, 0f, 0f));
+                    var m = GroundMark.SpawnLien(_t, İleri(3f), 3f, 0.01f, 4f, 1f, null);
+                    m.KalabalıkDüşüşü = Weapon.All[Kadro.İPOTEK].KalabalıkDüşüşü(_t);
+                    return Hasar(ilk, () => m.Step(0.05f));
+                }
+                float i1 = İşaret(1), i3 = İşaret(3);
+                failed += Check(ref total, $"⚠️ KALABALIK DÜŞÜŞÜ (İPOTEK): üç düşmanlı işarette biri {i3:0.00} = tek düşmanın {i1:0.00} × 1/(1+{_t.crowdFalloff:0.0}×2)",
+                                i1 > 0f && Mathf.Abs(i3 - i1 / (1f + _t.crowdFalloff * 2f)) < 0.01f, i3 / Mathf.Max(0.001f, i1));
+            }
+
             // ZİNCİRLEME: en yakın dört düşman tek zincire, beşincisi dışarıda
             YeniKoşu();
             var dört = new[] { Düşman(Yer(1.2f, 0f)), Düşman(Yer(-1.2f, 0f)), Düşman(İleri(1.4f)), Düşman(İleri(-1.6f)) };

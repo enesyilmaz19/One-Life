@@ -1207,12 +1207,15 @@ namespace TekCan
         /// Oyuncuya dön. KALKANLI (Faz 34) yavaş döner — `dt` kadar; dt'siz çağrı (hazırlık başı) onu çevirmez,
         /// yoksa arkasına geçmek hiçbir şey kazandırmazdı: saldırının yönü bakışından kilitleniyor.
         /// </summary>
+        /// <summary>Dönüş hızı (°/sn); 0 = anında döner. ARACI (Faz 37) da yavaş döner.</summary>
+        public float DönüşHızı => Boss != null && Boss.DönüşHızı > 0f ? Boss.DönüşHızı : Kind.DönüşHızı;
+
         void FacePlayer(float dt = 0f)
         {
             Vector3 to = FlatToPlayer();
             if (to.sqrMagnitude <= 0.0001f) return;
             var yön = Quaternion.LookRotation(to.normalized);
-            float hız = Boss != null && Boss.DönüşHızı > 0f ? Boss.DönüşHızı : Kind.DönüşHızı;   // ARACI (Faz 37) da yavaş döner
+            float hız = DönüşHızı;
             transform.rotation = hız > 0f ? Quaternion.RotateTowards(transform.rotation, yön, hız * dt) : yön;
         }
 

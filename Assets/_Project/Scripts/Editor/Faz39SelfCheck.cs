@@ -38,10 +38,10 @@ namespace TekCan.EditorTools
             return failed;
         }
 
-        // ── 1) Aynı oda, aynı tür ve rütbe: 4. bölgede havuz 1.'ninkinin regionRoomGrowth³ katı ──
+        // ── 1) Aynı oda (ara bölgenin son dövüş odası), aynı tür ve rütbe: 4. bölgede havuz 1.'ninkinin regionRoomGrowth³ katı ──
         static int OdaBölgeyle(Tuning t, ref int total)
         {
-            int failed = 0, oda = 3;
+            int failed = 0, oda = 7;   // Faz 44: 3. odada 6 düşman kaldı (roomCountGrowth 1) — 1. ve 4. bölgede ortak tür + rütbe çıkmıyordu
             Dictionary<string, float> Havuzlar(int bölge)
             {
                 Temizle(null);
@@ -65,7 +65,7 @@ namespace TekCan.EditorTools
             var ortak = b1.Keys.Intersect(b4.Keys).ToList();
             float beklenen = Mathf.Pow(t.regionRoomGrowth, 3);
             var oranlar = ortak.Select(k => b4[k] / b1[k]).ToList();
-            failed += Check(ref total, $"⚠️⚠️ oda havuzu bölgeyle büyür: 3. oda, aynı tür ve rütbe ({string.Join(", ", ortak)}) — 4. bölgede ×{(oranlar.Count > 0 ? oranlar.Average() : 0f):0.000} (regionRoomGrowth³ = {beklenen:0.000})",
+            failed += Check(ref total, $"⚠️⚠️ oda havuzu bölgeyle büyür: {oda}. oda, aynı tür ve rütbe ({string.Join(", ", ortak)}) — 4. bölgede ×{(oranlar.Count > 0 ? oranlar.Average() : 0f):0.000} (regionRoomGrowth³ = {beklenen:0.000})",
                             ortak.Count > 0 && oranlar.All(o => Mathf.Abs(o - beklenen) < 0.01f), oranlar.Count > 0 ? oranlar.Average() : 0f);
             return failed;
         }

@@ -14,7 +14,7 @@
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
 | 13 | 🎮 *(isteğe bağlı)* **Faz 33 his testi** | Bot oynadı (P33 3/3, P33c 12/12 — aşağıda "BOSS SÜRELERİ" bölümü). Sana kalan yalnızca göz: **F6**, **M** → sunak renkleri okunuyor mu (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), **B** → efsanevi "vay" dedirtiyor mu | Gördüklerini yaz |
 | 15–19 | 🤖 **Faz 34–37 his testleri → botta** | Enes (2026-10-22): *"testi de bota yaptır, oradan botun zorlanma ölçüsüne göre ilerleyelim şimdilik"*. P34–P37 ✅. Ölçü: mini zorlasın ama botu öldürmesin (saat kaybı < giriş saati) — Faz 38'de uygulandı, P34–P38 ✅ | — |
-| 20 | ⏱️ *(önerilir, ~10 dk)* **İnsan çarpanı** | Enes (2026-10-23): aksiyon İNSAN oynayışıyla ≥ 7 saat, kalanı ara sahne + anlatım (hikâye/olay odası yok). Botun ölçtüğünü insana çeviren çarpanı bilmiyoruz (×1.2 → bot 5.8 sa gerek, ×1.5 → bugünkü yeter). **F6**, 1. ara bölgeyi (7 oda + mini + sunak, bot ~9 dk — Faz 40'tan sonra) bir kez normal oyna, süreyi söyle | Mesajla yaz |
+| 20 | ⏱️ *(önerilir, ~10 dk)* **İnsan çarpanı** | Faz 44: botla tahmin denendi, olmadı ("insan profili" botu hızlandırdı). Bot tam koşu artık **6.2 sa** (silah dengesi + süre ayarı sonrası) → insanla ≥ 7 sa için çarpan ≥ ×1.13 gerek. **F6**, 1. ara bölgeyi (7 oda + mini + sunak, bot ~10 dk) bir kez normal oyna, süreyi söyle | Mesajla yaz |
 | 21 | ⚖️ **Saat ekonomisi** | Bot orta oyunda 4000–6600 sn ile geziyor (tavan 456–830), odalar onu hiç zorlamıyor; sıkılırsa geç boss'lar yine öldürür (aşağıda FAZ 39). Şimdi mi, hikâyeden sonra mı? | Mesajla yaz |
 | 29 | 🔗 *(commit'li)* **Combo Parti 4 — bak** | `docs/COMBOLAR.md` Parti 4: "+" hâlleri benim önerim · "sadeleşenler" (BORÇ ESARETİ hasat kuralıyla, VADELİ KARŞILIK en az ×2, KULE HACZİ "kule dururken") | Mesajla yaz |
 | 30 | 🔫 **ÇİFT İMZA — oyna, his** | **F6** yeni koşu · **N** · **B** → 2. boss'u öldür → ÇİFT İMZA açılır → KADRO sunağından envantere al · sol tıkı BASILI TUT (seri), aynı düşmana peş peşe ikinci mermi ONAY · sağ tık TOPLU İMZA · dash + sol tık ÇAPRAZ ATEŞ · değince **2** HACİZ = SENET HACZİ. His: saniyede 5 mermi (Faz 43b'de bot 6'dan indirdi) fazla/az mı, mermi uçuyor — tutturmak kolay/zor mu, ateşte yürüyüş ×0.7, ONAY okunuyor mu. Kodlarken değişenler `docs/CIFT_IMZA.md` §5 | Mesajla yaz |
@@ -234,6 +234,102 @@ Enes: *"playtesti de bot ile yap, sorun çıkarsa düzelt."* Son koşu: hepsi �
 - [x] Uyuyan boss'un süre etiketi donuyordu → uykuda da güncelleniyor
 - [x] Otopilot K1 payı → "kapanıştan değil girişten yakın mı"
 - [x] Otopilot üst yazısı → sol üst
+
+---
+
+## ⚖️ FAZ 44 — Silah dengesi + süre ayarı — **BİTTİ, commit'li** (2026-11-01)
+
+Enes: *"süre ayarına geç · olm 72 sn ne la fazla op gibi · silah dengelemesi de yapalım"* · kararlar: ① **zor silah daha çok kazandırsın**
+(kolaylar KONİ, ÇİFT İMZA orta; zorlar HACİZ, KARŞILIK, ARBİTRAJ iyi kullanılırsa daha çok) · ② insan çarpanını bot tahmin etsin ·
+③ **KONİ kalabalıkta zayıflasın** · *"devam et bitince commitle"*.
+
+**Ölçünün açıkları (kodu okuyunca):** fiyat ölçümü 1. bölgenin 1–2. odasıydı (az düşman) — tek hedefli silah kalabalığın cezasını görmüyor,
+FAİZLİ'nin +72'si oradan · bot HACİZ'de ölü bölgeye giriyor, KARŞILIK'ta zamanlamıyor, ARBİTRAJ'da arkaya geçmiyor · tam koşu botu yalnız
+KONİ'yle oynuyor (süre ölçüsü KONİ oyuncusu için).
+
+- [x] A. **Silah karnesi** (`…OtopilotMenu.SilahKarnesi`, ~12 dk): 12 silah × 1., 3., 5. bölge × 3. ara bölgenin 2. ve 6. odası, beklenen
+      güçle, saat bölgenin tavanında, yükseltmesiz → net saat KONİ'ye oranla sınıf bandında mı (ortalama; hiçbir bölge bandın altının
+      %60'ından aşağı değil), oda 900 sn'de bitiyor mu, üç bölgenin toplam süresi KONİ'ninkinin ×0.8'inden kısa değil mi.
+- [x] B. **Bot silahı insan gibi kullanıyor:** HACİZ ölü bölgedekini bırakıp dışarıdakine vurur, yoksa dash'le açılır · kalkanlıya yalnız
+      dönüşünü geçebiliyorsa dolanır (uzaktan 460 sn dolanıyordu) · ARBİTRAJ TERS İŞLEM · KARŞILIK darbeye denk basar · REFİNANS önce ·
+      **İNAT**: sıradan düşmandan 6 sn'den uzun kesintisiz kaçarsa 2 sn vurur (REHİN'li bot SÜLÜK'ten 875 sn kaçtı; boss / mini'de yok).
+- [x] C. ~~İnsan profili~~ — **denendi, işe yaramadı, kod silindi:** nişana sapma + yavaş tepki botu HIZLANDIRDI (1. bölge 60.6 → 54.0 dk:
+      az kaçıyor, çok dövüşüyor, 10 yerine 19 sunak alımı). İnsanı uzatan ölüm, okuma, karar; bot taklit etmiyor. Masa #20 açık.
+- [x] D. **Denge** (aşağıda) · [x] E. **Süre** (aşağıda) · [x] F. Kapılar · bot · belgeler · commit.
+
+**İlk karne → son karne** (net saat, KONİ'ye oran — bölgelerin ortalaması · üç bölgenin toplam oda süresi):
+
+| silah | sınıf (bant) | ilk | son | son toplam süre |
+|---|---|---|---|---|
+| KONİ | kolay (0.8–1.2) | 1 (oda 72 · 69 · 147 sn) | 1 (oda 61 · 86 · 171 sn) | 319 sn |
+| FAİZLİ | orta (1.0–1.4) | ×0.37 | ×1.32 | 270 |
+| HACİZ | zor (1.3–1.8) | ×0.94, 5. bölgede bitmedi | ×1.66 | 406 |
+| İPOTEK | orta | ×0.84 | ×1.06 | 337 |
+| İFLAS | orta | ×0.88, bitmedi | ×1.34 | 376 |
+| REHİN | orta | ×1.15, bot takıldı | ×1.26 | 400 |
+| ÇİFT İMZA | kolay | ×0.57, bitmedi | ×0.98 | 370 |
+| KARŞILIK | zor | ×0.90 | ×1.38 | 520 |
+| TAHVİL | orta | ×0.81 | ×1.08 | 379 |
+| MÜŞTEREK | orta | ×0.91, bitmedi | ×1.30 | 315 |
+| ARBİTRAJ | zor | ×0.85, bitmedi | ×1.39 | 297 |
+| KİRA | orta | ×0.92 | ×1.06 | 323 |
+
+⚠️ Aynı ayarla iki karne ±%15 oynuyor (FAİZLİ'nin 3. bölgesi ×0.57–1.00) — son satırlar 12/12 bantta (FAİZLİ · TAHVİL son dokunuştan
+sonra ayrı koşuda). Tek hedefli silahlar seyrek 1. bölgede güçlü, kalabalıkta zayıf: silahın kimliği.
+
+**Değişen (silah):**
+
+| silah | değişen |
+|---|---|
+| KONİ · İPOTEK · KİRA | **kalabalık düşüşü** `crowdFalloff` 0.5: aynı vuruşta hedef başına ×1/(1+k·(n−1)) — tek düşmana aynı, kalabalıkta toplam en çok ×2 |
+| FAİZLİ | hasar ×1.75 → ×2.0 · hasat 2.6 → 4.2 (kalabalıkta savurma bedeli hasadı yiyordu) |
+| HACİZ | hasar ×1 → ×1.25 · hasat 2.2 → 2.5 |
+| İPOTEK | hasar ×1.6 → ×1.4 · hasat 0.7 → 1.25 |
+| İFLAS | güvendeki ×0.7 → ×0.9 · savurma ×0.8 → ×0.7 · hasat 2.1 → 1.6 · **eşikler ilerleme çarpanıyla** |
+| REHİN | hasat 1.8 → 1.55 |
+| ÇİFT İMZA | mermi ×0.35 → ×0.65 · hasat 1.3 → 1.15 |
+| KARŞILIK | hasat 1.4 → 2.2 |
+| TAHVİL | hasat 1.2 → 1.6 |
+| MÜŞTEREK | hasar ×0.8 → ×1 |
+| ARBİTRAJ | önden ×0.5 → ×0.85 · arkadan ×2.5 → ×2.3 · hasat 1.7 → 1.5 |
+| KİRA | savurma ×0.6 → ×0.5 · kule ×2 → ×1.6 · hasat 1.2 → 1.5 |
+
+İFLAS'ın eşikleri (güvende 80 / panik 15 sn) sabitti, darbe Faz 39'dan beri bölgeyle büyüyor: 5. bölgede 80 sn'ye inmek ölümdü, İFLAS geç
+bölgelerde hiç sertleşemiyordu → saati ilerleme çarpanına bölerek görüyor (`İflasSaniyesi`, combo'lar dahil).
+
+**Süre ayarı (tam koşu):** KONİ'nin kalabalık düşüşü bütün oyunu yavaşlattı — oda yoğunluğu (Faz 39) KONİ'nin kalabalığı bedava biçmesine
+göre ayarlıydı (ara bölgede düşman 4 → 16, havuz ×1.15/oda: son oda ilkin ~9 katı).
+
+| deneme | ne değişti | süre | oda ort. (bölge bölge) | F5 |
+|---|---|---|---|---|
+| Faz 41 (taban) | — | 395 dk, kazandı | 61 · 67 · 68 · 100 · 140 | 0 |
+| 1 | silah dengesi | 502.9 dk, **bitmedi** (B5·O25, 620 sn) | — | 2 |
+| 2 | `roomCountGrowth` 2 → 1 (son oda 10 düşman) | 507.9 dk | 75 · 92 · 96 · 128 · 183 | 9 |
+| 3 | `roomPoolScale` 0.77 (yeni) · `mainBossPoolScale` 12 → 10.2 · `miniBossPoolShare` 7 → 6 | 329.1 dk | 62 · 71 · 58 · 78 · 105 | 1 |
+| 4 | 0.85 · 10.9 · 6.4 (ikisinin arası) | 373.6 dk | 64 · 80 · 80 · 85 · 115 | 2 |
+| 5 | + SENETÇİ · EKSPER · MURABAHACI (aşağıda) | 372.9 dk, kazandı | 66 · 82 · 80 · 85 · 115 | 1 |
+| 6 | + SENETÇİ %1 · İNAT (geniş) · son silah ayarı | 392.5 dk, kazandı | 72 · 98 · 73 · 88 · 119 | 4 (B1–B2, 89 alım) |
+| **son** | İNAT yalnız ≤ 2 düşmanda | **356.0 dk = 5.9 sa, kazandı** | 66 · 79 · 64 · 84 · 115 (ort. 82) | **0** |
+
+- Havuz ×0.77 → süre ×0.65: doğrusal değil — ekonomi rahatlayınca bot sunaktan daha çok alıyor (89 → 103), kartopu.
+- **SENETÇİ** her koşuda F5'ti (B1·O17; tavanla giren bot da P34'te takviye istiyordu) → `ZorlaAlır` %2 → %1: P34 takviyesiz (3.1 dk, −145 / 250),
+  `Bolge1Olcum` F5 yok · **EKSPER** tavanla gireni 338 → ~0'a indiriyordu → havuz ×1.25 → ×1.15 · **MURABAHACI** `BossTesti`'nde iki kez
+  öldürdü (−973, −1088 / 830): süre aynı, dakikadaki darbe ~%25 fazla (KONİ kalabalıkta düşünce yardımcılar geç ölüyor) → ×0.3 → ×0.23 ·
+  **KEFİL** yardımcılarıyla 4.8 → 5.9 dk, SİMSAR'ı geçti → ×0.85 → ×0.75. `BossTesti` iki koşu ✅: 3.6 · 3.9 · 4.7 · 5.2–5.4 · 6.9–7.2 dk.
+- Son üç koşu (aynı ayara yakın) 356 · 373 · 393 dk — koşudan koşuya ±%5 (yükseltme teklifleri rastgele); **ortalama 374 dk = 6.2 sa**.
+  Son koşu: boss 4.3 · 3.0 · 4.1 · 4.9 · 6.5 dk, mini ort. 3.7 dk (1.8–6.8), 99 sunak alımı.
+- İNAT önce her odadaydı: 6. denemede F5 4 — kalabalıkta kaçmayı kesmek pahalı → yalnız oda bitmek üzereyken (≤ 2 düşman); REHİN karnede ✅.
+- **İnsan çarpanı ölçülemedi** (C) — bot ~6.2 sa; insanla ≥ 7 sa için çarpan ≥ ×1.13 gerek. Masa #20.
+
+**Hatalar (bulundu, düzeldi):**
+- 🐞 İki boş bağlı düşmanı birden öldüren patlama (MÜFLİS işareti, ipotek) düşman listesini geriye sayan indeksle taşırıyordu
+  (`GroundMark.VurDüşmanlara`, ArgumentOutOfRange — karne 12 silahın ortasında düştü) → kopya üstünde dönüyor.
+- İFLAS eşikleri (yukarıda).
+
+**Kapılar:** Faz 32'ye 3 kontrol — iki boş bağlıyı birden öldüren patlama · kalabalık düşüşü (KONİ savurması) · (İPOTEK işareti); üçü de bozunca
+kırmızı ✅. Combo kapıları (Faz 33 · 42) kalabalık düşüşü kapalı ölçüyor (combo'nun çarpanı); Faz 42'nin İFLAS beklenenleri ilerlemeli saatle
+(üçlülerin odası `Üç` içinde yok ediliyor, çarpan kurulurken yazılıyor). Faz 39'un "oda havuzu bölgeyle büyür"ü 7. odada (3. odada 6
+düşman kaldı, ortak tür çıkmıyordu). İPOTEK'in combo / ZİNCİR TAPU işaretleri de düşüşü taşıyor. **Tüm kapılar 1108 ✅.** Bot P31 6/6 · P32 8/8 · P42 98/98 + alım · P33c 12/12 · P34 · P35 ✅.
 
 ---
 

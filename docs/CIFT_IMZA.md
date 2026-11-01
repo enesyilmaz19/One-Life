@@ -10,7 +10,7 @@
 | | ÇEK (gidiyor) | ÇİFT İMZA (öneri) |
 |---|---|---|
 | Nereden | 2. boss'tan | **aynı** — 2. boss'tan |
-| Sol tık | fırlat; dönene kadar silahsız | **basılı tut = seri ateş**: iki tabanca sırayla (sol, sağ, sol…), saniyede **5** mermi (Faz 43b'de 6'dan — §7). Mermi nişan yönünde uçar, ilk değdiği düşmana iner (§7). Menzil ~7.7 birim (HACİZ kadar), ölü bölge yok. Mermi başına silah hasarının ~%35'i |
+| Sol tık | fırlat; dönene kadar silahsız | **basılı tut = seri ateş**: iki tabanca sırayla (sol, sağ, sol…), saniyede **5** mermi (Faz 43b'de 6'dan — §7). Mermi nişan yönünde uçar, ilk değdiği düşmana iner (§7). Menzil ~7.7 birim (HACİZ kadar), ölü bölge yok. Mermi başına silah hasarının ~%65'i (Faz 44'te %35'ten — silah dengesi, `tasks/todo.md`) |
 | Kimlik (soru) | "dönene kadar bekle" | **ONAY:** aynı düşmana iki tabancanın mermisi peş peşe değerse ikinci mermi ×1.5 ("imza onaylandı"). Nişanı tek hedefte tutan kazanır; kalabalıkta mermiler dağılır, onay düşer. Ateş ederken yürüyüş ×0.7 |
 | Sağ tık | KARŞILIKSIZ: üç çek yelpaze | **TOPLU İMZA**: 60° yelpaze, 10 mermi, her biri ×0.6 (bekleme aynı, 6.5 sn) |
 | Dash-atak | CİRO: çeki yakala, yeniden at | **ÇAPRAZ ATEŞ**: dash biterken iki yana (sağa, sola) birer tam mermi |
@@ -132,3 +132,8 @@ Adı ÇEK'e bağlı olanlar değişiyor (senet, ciro, ibraz imzalı belge — on
 
   Ölçü: ÇİFT İMZA en güçlü olmasın, ortada kalsın. 5/sn ortanın hemen altında (12'nin 7.'si); 4/sn zayıf düşüyor. Seri sınırı
   (İBRAZ / SENET İSKONTOSU) hızdan geliyor, artık 5.
+
+## 8. Silah dengesi (Faz 44, 2026-11-01)
+
+Silah karnesinde (kalabalık odalar, beklenen güç) ÇİFT İMZA kolay sınıfta ama KONİ'nin ×0.57'siydi, 5. bölgede odayı bitiremiyordu →
+mermi %35 → **%65**, hasat ×1.3 → ×1.15. Son karne ×0.98 (bantta: ×0.8–1.2). Ateş hızı 5/sn aynı.

@@ -45,14 +45,26 @@ namespace TekCan
         float SavurmaSüresi => Weapon.Duration(_t) * (Y(SilahYükseltme.GenişPencere) ? 1.6f : 1f)    // KARŞILIK
                                                    / (Weapon.Saldırı == Biçim.İmza ? AteşHızı : 1f);   // ÇİFT İMZA: bir mermi
         float SavurmaAçısı => Weapon.Angle(_t) * (Y(SilahYükseltme.GenişAğ) ? 1.35f : 1f);
-        float ÖlüBölge => Weapon.MinRange(_t) * (Y(SilahYükseltme.DarÖlüBölge) ? 0.5f : 1f);
+        public float ÖlüBölge => Weapon.MinRange(_t) * (Y(SilahYükseltme.DarÖlüBölge) ? 0.5f : 1f);
         int SavurmaHedefi => Y(SilahYükseltme.Delici) ? 2 : Weapon.MaxTargets;
         static readonly List<(Enemy e, float d)> _hedefler = new List<(Enemy e, float d)>();
+
+        /// <summary>
+        /// İFLAS'ın gördüğü saat: saniye ÷ ilerleme çarpanı — darbe de onunla büyüyor (Faz 39), eşikler (güvende / panik) onunla
+        /// ölçeklensin. ⚠️ Faz 44: eşikler sabitti (80 / 15 sn); 5. bölgede darbe ~×3.7 iken 80 sn'ye inmek ölüm demekti, İFLAS geç
+        /// bölgelerde hiç sertleşemiyordu.
+        /// </summary>
+        float İflasSaniyesi()
+        {
+            float saniye = Clock.Instance != null ? Clock.Instance.Seconds : _t.startSeconds;
+            var rm = RoomManager.Instance;
+            return rm != null ? saniye / RoomManager.İlerlemeÇarpanı(_t, rm.RegionIndex, rm.SubRegion) : saniye;
+        }
 
         /// <summary>Ne kadar dipte (0 güvende, 1 panikte) — İFLAS'ın eğrisi; DİP eşikleri ×1.5 öteliyor.</summary>
         float DipOranı()
         {
-            float saniye = Clock.Instance != null ? Clock.Instance.Seconds : _t.startSeconds;
+            float saniye = İflasSaniyesi();
             if (Y(SilahYükseltme.Dip)) saniye /= 1.5f;
             return Mathf.InverseLerp(_t.iflasSafeSeconds, _t.iflasPanicSeconds, saniye);
         }
@@ -1347,6 +1359,10 @@ namespace TekCan
         /// <summary>Dash'e kalan bekleme — otopilot SÜLÜK'ten silkelenmeden önce bakıyor (Faz 36).</summary>
         public float DashCooldownLeft => Mathf.Max(0f, _dashCd);
         public bool Attacking => _attackTimer > 0f;
+        /// <summary>KARŞILIK: toparlanma bitti, yeni karşılama açılabilir (bot, Faz 44).</summary>
+        public bool KarşılamaHazır => _karşılamaBekleme <= 0f;
+        /// <summary>KARŞILIK: karşılama penceresi (sn) — savurma süresi × vuruş anı.</summary>
+        public float KarşılamaPenceresi => SavurmaSüresi * Weapon.HitMoment(_t);
         public bool Invulnerable => _iFrames > 0f;
 
         public void Init(Tuning tuning, Transform cameraTransform)
@@ -2054,7 +2070,7 @@ namespace TekCan
         float WeaponDamage(float saatÇarpanı = 1f)
         {
             float baseDamage = Clock.Instance != null ? Clock.Instance.AttackDamage : _t.attackDamage;
-            float saniye = (Clock.Instance != null ? Clock.Instance.Seconds : _t.startSeconds) * saatÇarpanı;
+            float saniye = İflasSaniyesi() * saatÇarpanı;
             if (Y(SilahYükseltme.Dip)) saniye /= 1.5f;      // DİP (Faz 29): eşikler ×1.5, daha erken sertleşir
             return Weapon.Damage(_t, baseDamage) * Weapon.DesperationMultiplier(saniye, _t);
         }
@@ -2123,7 +2139,7 @@ namespace TekCan
         }
 
         /// <summary>İFLAS'ın şimdiki çaresizlik çarpanı (İFLAS DAİRESİ · TASFİYE KULESİ) — saat azsa sert, çoksa ×0.7.</summary>
-        float İflasÇarpanı() => Weapon.All[Kadro.İFLAS].DesperationMultiplier(Clock.Instance != null ? Clock.Instance.Seconds : _t.startSeconds, _t);
+        float İflasÇarpanı() => Weapon.All[Kadro.İFLAS].DesperationMultiplier(İflasSaniyesi(), _t);
 
         /// <summary>FAİZ YÜKÜ: bu odada kaçıncı kez (oda değişince baştan). Vuruştan önce okunur, isabette artar.</summary>
         int FaizYüküOdada()
@@ -2594,8 +2610,11 @@ namespace TekCan
             if (işaret != null) { işaret.İtme = itme; ZincireYaz(_weaponIndex, işaret.transform.position); }
             if (hat.HasValue)                                                        // çekin yolu boyunca üç küçük işaret
                 for (int i = 1; i <= 3; i++)
-                    GroundMark.SpawnLien(_t, Vector3.Lerp(transform.position, hat.Value, i / 3f), yarıçap * 0.6f,
-                                         gecikme * 0.6f, hasar * 0.7f, Weapon.HarvestMultiplier, OdaKökü);
+                {
+                    var küçük = GroundMark.SpawnLien(_t, Vector3.Lerp(transform.position, hat.Value, i / 3f), yarıçap * 0.6f,
+                                                     gecikme * 0.6f, hasar * 0.7f, Weapon.HarvestMultiplier, OdaKökü);
+                    if (küçük != null) küçük.KalabalıkDüşüşü = Weapon.All[Kadro.İPOTEK].KalabalıkDüşüşü(_t);   // Faz 44: İPOTEK işareti
+                }
             if (ikinci)
             {
                 var uzak = EnUzakDüşman(Weapon.Range(_t) * 1.5f);
@@ -2713,6 +2732,7 @@ namespace TekCan
                     _hedefler.RemoveRange(maxTargets, _hedefler.Count - maxTargets);
                 }
                 if (Y(SilahYükseltme.Kalabalık) && _hedefler.Count >= 2) harvestMult *= 1.3f;   // KALABALIK (Faz 33)
+                float düşüş = 1f / (1f + Weapon.KalabalıkDüşüşü(_t) * Mathf.Max(0, _hedefler.Count - 1));   // KONİ (Faz 44)
                 // Çok hedefli vuruşta da "son vurulan" en yakını — zincirin adım hedefi buradan (Faz 42: KARŞILIK'ın
                 // adımı hedefsiz kalıyordu, KARŞI HAMLE hiç tetiklenmiyordu). Vuruştan ÖNCE: öldürebilir.
                 float enYakın = float.MaxValue;
@@ -2724,7 +2744,7 @@ namespace TekCan
                     Etkile(e);
                     e.Push(e.transform.position - transform.position,
                            itme);
-                    e.TakeDamage(MesafeliHasar(damage, e, special), harvestMult);
+                    e.TakeDamage(MesafeliHasar(damage, e, special) * düşüş, harvestMult);
                     hits++;
                     if (wasHollow) kills++;
                 }
@@ -2864,6 +2884,7 @@ namespace TekCan
         GroundMark İpotekYükselt(GroundMark m)
         {
             if (m == null) return null;
+            m.KalabalıkDüşüşü = Weapon.All[Kadro.İPOTEK].KalabalıkDüşüşü(_t);         // Faz 44
             if (Y(SilahYükseltme.DerinTemel)) m.MerkezÇarpanı = 1.5f;
             if (Y(SilahYükseltme.Çekim)) m.Çekim = 3f;
             bool boş = Y(SilahYükseltme.BoşArsa), zincir = Y(SilahYükseltme.ZincirTapu);
@@ -2877,7 +2898,7 @@ namespace TekCan
                         for (int i = 0; i < p.VurulanYerler.Count && i < 3; i++)                // en çok 3
                         {
                             var ikinci = GroundMark.SpawnLien(_t, p.VurulanYerler[i], p.Yarıçap * 0.6f, 0.5f, p.Hasar, p.HasatÇarpanı, OdaKökü);
-                            if (ikinci != null) ikinci.İkincil = true;
+                            if (ikinci != null) { ikinci.İkincil = true; ikinci.KalabalıkDüşüşü = p.KalabalıkDüşüşü; }   // Faz 44: ilkinin düşüşü
                         }
                 };
             }

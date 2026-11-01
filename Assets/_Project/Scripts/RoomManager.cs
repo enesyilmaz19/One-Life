@@ -174,7 +174,7 @@ namespace TekCan
         public static float AnaBossHavuzu(Tuning t, int bölge) => BölgeHavuzu(t, bölge) * t.mainBossPoolScale * BossKind.For(bölge).HavuzPayı;
         /// <summary>Dövüş odası düşmanının havuz çarpanı: oda sırası (ara bölge içinde) × ara bölge × BÖLGE (Faz 39).</summary>
         public static float OdaHavuzu(Tuning t, int bölge, int araBölge, int araOda)
-            => Mathf.Pow(t.roomPoolGrowth, araOda - 1) * Mathf.Pow(t.subRegionPoolGrowth, araBölge)
+            => t.roomPoolScale * Mathf.Pow(t.roomPoolGrowth, araOda - 1) * Mathf.Pow(t.subRegionPoolGrowth, araBölge)
              * Mathf.Pow(t.regionRoomGrowth, bölge);                                  // Faz 39: odalar ilerledikçe kısalmasın
         public static float MiniBossHavuzu(Tuning t, int bölge, int s)
             => BölgeHavuzu(t, bölge) * t.miniBossPoolShare * Mathf.Pow(t.subRegionPoolGrowth, s);
