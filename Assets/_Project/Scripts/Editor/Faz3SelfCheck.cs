@@ -534,6 +534,9 @@ namespace TekCan.EditorTools
                 if (gecikme > 0f)
                     foreach (var m in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include))
                         m.Step(gecikme + 0.05f);
+                // ÇİFT İMZA (Faz 43b) mermiyle vuruyor: uçuşu sonuna kadar götür.
+                for (int k = 0; k < 300 && ImzaMermisi.Uçanlar.Count > 0; k++)
+                    foreach (var u in ImzaMermisi.Uçanlar.ToArray()) u.Step(0.02f);
                 // KİRA'nın kulesi ateş ederek vuruyor: bir saniye çalıştır, sonra kaldır.
                 foreach (var k in KiraKulesi.Tümü.ToArray()) k.Step(1f);
 

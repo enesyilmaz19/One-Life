@@ -75,6 +75,8 @@ namespace TekCan.EditorTools
 
         /// <summary>Aynı ölçüm, 33b'nin altı silahı (ÇİFT İMZA … KİRA) — rakipsiz. Hızlandırılmış ~2.5 dk.</summary>
         public static void FiyatOlcum33b() => Başlat(izle: false, senaryo: "fiyat33b");
+        /// <summary>Faz 43b: yalnız ÇİFT İMZA — ateş hızı / mermi ayarı denemesi (~30 sn).</summary>
+        public static void FiyatOlcumImza() => Başlat(izle: false, senaryo: "fiyatimza");
 
         /// <summary>Faz 33c playtest'i: 12 yeni combo gerçek tuşlarla (açanlar verilmiş). Hızlandırılmış ~1 dk.</summary>
         [MenuItem("Tek Can/Otopilot — Faz 33c combo'ları (izle)")]

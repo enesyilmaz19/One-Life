@@ -112,10 +112,12 @@ namespace TekCan.EditorTools
         static Vector3 Yer(float x, float z) => Bootstrap.ArenaCenter + new Vector3(x, 0f, z);
         static Vector3 İleri(float m) => Yer(0f, m);
         static void W(int silah) => _pc.SetWeapon(silah);
-        static void Silahla(int silah) { _pc.SetWeapon(silah); Vur.Invoke(_pc, null); }
-        static void SağTık() => Sağ.Invoke(_pc, new object[] { Vector3.forward });
+        static void Silahla(int silah) { _pc.SetWeapon(silah); Vur.Invoke(_pc, null); Uçur(); }
+        static void SağTık() { Sağ.Invoke(_pc, new object[] { Vector3.forward }); Uçur(); }
         static void Bas() => Başla.Invoke(_pc, new object[] { Vector3.forward });
-        static void Dash() => DashAtak.Invoke(_pc, null);
+        static void Dash() { DashAtak.Invoke(_pc, null); Uçur(); }
+        /// <summary>ÇİFT İMZA'nın havadaki mermilerini sonuna kadar uçur (Faz 43b — mermi artık uçuyor).</summary>
+        static void Uçur() { for (int n = 0; n < 500 && ImzaMermisi.Uçanlar.Count > 0; n++) foreach (var m in ImzaMermisi.Uçanlar.ToArray()) m.Step(0.02f); }
         static object Alan(string ad) => typeof(PlayerController).GetField(ad, Gizli).GetValue(_pc);
         static void Alan(string ad, object v) => typeof(PlayerController).GetField(ad, Gizli).SetValue(_pc, v);
         static void Yükselt(SilahYükseltme y) => SilahSunağı.Al(y, -1);
@@ -1024,7 +1026,7 @@ namespace TekCan.EditorTools
                 int c0 = _pc.ComboSayısı;
                 _pc.TickCombo(0.2f);
                 W(Kadro.İMZA);
-                float h = Hasar(e, () => Vur.Invoke(_pc, null));                // ilk mermi
+                float h = Hasar(e, () => { Vur.Invoke(_pc, null); Uçur(); }); // ilk mermi
                 return (_pc.ComboSayısı > c0, h);
             }
             var mY = Mukabele(false); var mV = Mukabele(true);
@@ -1209,7 +1211,7 @@ namespace TekCan.EditorTools
                 var e = Düşman(İleri(1.3f));
                 W(Kadro.KARŞILIK); Bas(); _pc.TakeHit(4f, İleri(2f)); Vur.Invoke(_pc, null);
                 _pc.TickCombo(0.2f);
-                W(Kadro.İMZA); Vur.Invoke(_pc, null);
+                W(Kadro.İMZA); Vur.Invoke(_pc, null); Uçur();
                 return e.Susturulmuş;
             }
             bool tdY = Tedbir(false), tdV = Tedbir(true);
@@ -1282,6 +1284,7 @@ namespace TekCan.EditorTools
 
         static void Temizle()
         {
+            ImzaMermisi.Temizle();
             HepsiniÖldür();
             foreach (var b in MusterekBag.Tümü.ToArray()) if (b != null) b.Bitir();
             MusterekBag.Tümü.Clear();

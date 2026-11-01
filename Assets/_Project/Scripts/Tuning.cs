@@ -263,8 +263,9 @@ namespace TekCan
         [Tooltip("REHİN: fırlatma menzili")] public float rehinThrowRange = 8f;
         [Tooltip("REHİN: fırlatma hasarı = silah hasarı × bu")] public float rehinThrowDamageMul = 2.2f;
         [Tooltip("REHİN: rehinenin yediği vuruş, bedelinin bu katı hasar olarak ona iner")] public float rehinShieldDamagePerSecond = 3f;
-        [Tooltip("ÇİFT İMZA: saniyede mermi (iki tabanca toplam)")] public float imzaShotsPerSecond = 6f;
+        [Tooltip("ÇİFT İMZA: saniyede mermi (iki tabanca toplam)")] public float imzaShotsPerSecond = 5f;
         [Tooltip("ÇİFT İMZA: mermi hasarı = silah hasarı × bu")] public float imzaBulletMul = 0.35f;
+        [Tooltip("ÇİFT İMZA: merminin hızı (birim/sn) — uçar, hedef kaçabilir (Faz 43b)")] public float imzaBulletSpeed = 25f;
         [Tooltip("ÇİFT İMZA · ONAY: aynı düşmana peş peşe ikinci mermi × bu")] public float imzaOnayMul = 1.5f;
         [Tooltip("ÇİFT İMZA: ateş ederken yürüyüş × bu")] [Range(0f, 1f)] public float imzaMoveDamping = 0.7f;
         [Tooltip("KARŞILIK: karşılanan her saniye bedel için bir sonraki vuruşa eklenen hasar")] public float karsilikDamagePerSecond = 2.5f;

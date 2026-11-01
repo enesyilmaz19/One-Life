@@ -105,7 +105,9 @@ namespace TekCan.EditorTools
         static Vector3 Yer(float x, float z) => Bootstrap.ArenaCenter + new Vector3(x, 0f, z);
         static Vector3 İleri(float m) => Yer(0f, m);
         static void W(int silah) => _pc.SetWeapon(silah);
-        static void Silahla(int silah) { _pc.SetWeapon(silah); Vur.Invoke(_pc, null); }
+        static void Silahla(int silah) { _pc.SetWeapon(silah); Vur.Invoke(_pc, null); Uçur(); }
+        /// <summary>ÇİFT İMZA'nın havadaki mermilerini sonuna kadar uçur (Faz 43b — mermi artık uçuyor).</summary>
+        static void Uçur() { for (int n = 0; n < 500 && ImzaMermisi.Uçanlar.Count > 0; n++) foreach (var m in ImzaMermisi.Uçanlar.ToArray()) m.Step(0.02f); }
         static void Bas() => Başla.Invoke(_pc, new object[] { Vector3.forward });
         static void TahvilBoz(float tut) { W(Kadro.TAHVİL); Bas(); _pc.Vadelen(tut); Vur.Invoke(_pc, null); }   // tut → bırak
         static object Alan(string ad) => typeof(PlayerController).GetField(ad, Gizli).GetValue(_pc);
@@ -1501,7 +1503,7 @@ namespace TekCan.EditorTools
                 TahvilBoz(1.1f); Geç();                                        // 2. kademe
                 Bekle(Kadro.İMZA, 5f);
                 W(Kadro.İMZA);
-                float h = Hasar(e, () => Vur.Invoke(_pc, null));                // ilk mermi
+                float h = Hasar(e, () => { Vur.Invoke(_pc, null); Uçur(); }); // ilk mermi
                 return (h, (float)SavurmaSüresi.GetValue(_pc), _pc.SpecialCooldownOf(Kadro.İMZA));
             });
             failed += Check(ref total, $"VADELİ SENET (TAHVİL 2. kademe → İMZA): seri ×{v2} ({vç.yok.h:0.00} → {vç.var.h:0.00}), ×1.5 hızlı (mermi aralığı {vç.yok.aralık:0.000} → {vç.var.aralık:0.000}); KEŞİDE (+) beklemesi sıfır",
@@ -1761,6 +1763,7 @@ namespace TekCan.EditorTools
         // ── yardımcılar ─────────────────────────────────────────────────────────
         static void Temizle()
         {
+            ImzaMermisi.Temizle();
             foreach (var e in Enemy.All.ToArray()) if (e != null) Object.DestroyImmediate(e.gameObject);
             Enemy.All.Clear();
             foreach (var b in MusterekBag.Tümü.ToArray()) if (b != null) b.Bitir();

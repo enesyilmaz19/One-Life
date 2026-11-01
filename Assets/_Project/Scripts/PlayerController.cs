@@ -500,9 +500,9 @@ namespace TekCan
         }
 
         // ── FAZ 43: ÇİFT İMZA (ÇEK'in yerine) ────────────────────────────────
-        // Mermi anında iner (uçuş yok). Combo İMZA'yla bitiyorsa ilk mermide tetiklenir, etkisi 1 sn'lik SERİ'ye biner —
-        // ÇEK'te "o çek"in taşıdığı her şey (çarpan, ek, iade, tam pay, sekme, susturma) burada.
-        sealed class İmzaSerisi { public float Bitiş, Çarpan = 1f, Hız = 1f, Ek; public bool TamPay, Seker, Sustur; public int İade; }
+        // Mermi uçar (Faz 43b, `ImzaMermisi`). Combo İMZA'yla bitiyorsa ilk mermide tetiklenir, etkisi 1 sn'lik SERİ'ye biner —
+        // ÇEK'te "o çek"in taşıdığı her şey (çarpan, ek, iade, tam pay, sekme, susturma) burada; seri atış anında mermiye yazılır.
+        internal sealed class İmzaSerisi { public float Bitiş, Çarpan = 1f, Hız = 1f, Ek; public bool TamPay, Seker, Sustur; public int İade; }
         İmzaSerisi _seri;
         /// <summary>Süren seri (yoksa null) — zaman `_comboAn`'dan: öz-denetim `TickCombo` ile ilerletiyor.</summary>
         İmzaSerisi Seri => _seri != null && _comboAn <= _seri.Bitiş ? _seri : null;
@@ -549,57 +549,53 @@ namespace TekCan
             return en;
         }
 
-        /// <summary>Tek mermi: iki tabanca sırayla, yönde ilk değdiğine anında iner. İz çizgisi ıskada da görünür. Vurduğu (yoksa null).</summary>
-        Enemy Mermi(Vector3 yön, float çarpan)
+        /// <summary>Tek mermi (Faz 43b: uçar): iki tabanca sırayla. YÖNELİM yönü atışta yakındakine kırar. Atış anındaki silah,
+        /// yükseltmeler ve seri mermiye yazılır — uçarken silah değişse de (combo) etki aynı. `ana` değilse ONAY'a sayılmaz.</summary>
+        void Mermi(Vector3 yön, float çarpan, bool ana = true, bool sustur = false, Enemy güdüm = null)
         {
             yön.y = 0f;
             yön = yön.sqrMagnitude > 0.0001f ? yön.normalized : transform.forward;
             _sağTabanca = !_sağTabanca;
             Vector3 baş = transform.position + Vector3.Cross(Vector3.up, yön) * (_sağTabanca ? 0.3f : -0.3f);
             float menzil = Weapon.Range(_t) * (Y(SilahYükseltme.UzunNamlu) ? 1.3f : 1f);     // UZUN NAMLU
-            var hedef = HattakiİlkDüşman(baş, yön, menzil, null, 0.25f);
-            if (hedef == null && Y(SilahYükseltme.Yönelim)) hedef = YönelimHedefi(baş, yön, menzil);   // YÖNELİM
-            Mermiİzi(baş, hedef != null ? hedef.transform.position : baş + yön * menzil, yön);
+            if (Y(SilahYükseltme.Yönelim) && HattakiİlkDüşman(baş, yön, menzil, null, ImzaMermisi.Yarıçap) == null
+                && YönelimHedefi(baş, yön, menzil) is Enemy yakın)                            // YÖNELİM: hatta kimse yoksa yakındakine
+            { yön = yakın.transform.position - baş; yön.y = 0f; yön.Normalize(); }
+            var m = ImzaMermisi.At(this, baş, yön, menzil, _t.imzaBulletSpeed, OdaKökü);
+            m.Hasar = WeaponDamage() * _t.imzaBulletMul * çarpan;
+            m.Hasat = Weapon.HarvestMultiplier;
+            m.Ana = ana; m.Sustur = sustur;
+            m.Delici = Y(SilahYükseltme.DeliciMermi);
+            m.OnayHakkı = Y(SilahYükseltme.OnayHakkı);
+            m.Protesto = Y(SilahYükseltme.Protesto);
+            m.Seri = Seri;
+            m.Güdüm = güdüm;
             SwingsSpawned++;
-            if (hedef == null) return null;
-            Vector3 hp = hedef.transform.position;                                  // ÖNCE: vuruş öldürebilir
-            float hasar = WeaponDamage() * _t.imzaBulletMul * çarpan;
-            MermiVur(hedef, hasar, true);
-            if (Y(SilahYükseltme.DeliciMermi)                                         // DELİCİ MERMİ: arkadakine yarım
-                && HattakiİlkDüşman(hp, yön, Mathf.Max(0f, menzil - Vector3.Distance(baş, hp)), hedef, 0.25f) is Enemy arka)
-                MermiVur(arka, hasar * 0.5f, false);
-            return hedef;
         }
 
-        /// <summary>Merminin iz çizgisi — ıskada da görünür (`yedekYön`: baş ile son üst üsteyse).</summary>
-        void Mermiİzi(Vector3 baş, Vector3 son, Vector3 yedekYön)
+        /// <summary>Uçan merminin isabeti: ONAY, seri, ONAY HAKKI, sekme (PROTESTO · İFLAS SENEDİ); adım İMZA'nın.
+        /// Kuşanılana değil mermiye bakar (atış anı).</summary>
+        internal void MermiDeğdi(ImzaMermisi m, Enemy e)
         {
-            Vector3 iz = son - baş; iz.y = 0f;
-            Arc.Spawn(baş, Quaternion.LookRotation(iz.sqrMagnitude > 0.0001f ? iz : yedekYön), iz.magnitude, 3f, Weapon.Tint, 0.08f);
-        }
-
-        /// <summary>Merminin isabeti: ONAY, seri, ONAY HAKKI, sekme (PROTESTO · İFLAS SENEDİ); adım İMZA'nın.
-        /// `ana` değilse (deliş, combo'nun ek mermisi) ONAY'a sayılmaz.</summary>
-        void MermiVur(Enemy e, float hasar, bool ana)
-        {
-            bool onay = ana && e == _onayBekleyen && _comboAn - _onayAn <= 0.5f;   // ONAY: aynı düşmana peş peşe ikinci mermi
-            if (ana) { _onayBekleyen = onay ? null : e; _onayAn = _comboAn; }
+            float hasar = m.Hasar;
+            bool onay = m.Ana && e == _onayBekleyen && _comboAn - _onayAn <= 0.5f;   // ONAY: aynı düşmana peş peşe ikinci mermi
+            if (m.Ana) { _onayBekleyen = onay ? null : e; _onayAn = _comboAn; }
             if (onay) hasar *= _t.imzaOnayMul;
-            var seri = Seri;
+            var seri = m.Seri;
             if (seri != null) hasar = hasar * seri.Çarpan + seri.Ek;
             Vector3 yer = e.transform.position;                                     // ÖNCE: vuruş öldürebilir
             bool boştu = e.Hollow;
-            if (seri != null && seri.Sustur) e.Sustur(1f);                          // TEDBİR — vuruştan önce
+            if (m.Sustur || seri != null && seri.Sustur) e.Sustur(1f);              // TEDBİR · TAHSİL MAKBUZU — vuruştan önce
             bool tam = seri != null && seri.TamPay && e.Bağ != null;                // SENET ORTAKLIĞI
             if (tam) MusterekBag.TamPay = true;
-            e.TakeDamage(hasar, Weapon.HarvestMultiplier);
+            e.TakeDamage(hasar, m.Hasat);
             if (tam) MusterekBag.TamPay = false;
             var saat = Clock.Instance;
-            if (onay && boştu && saat != null && Y(SilahYükseltme.OnayHakkı)) saat.Add(0.5f * saat.HasatDoyması);   // ONAY HAKKI
-            if (seri != null && seri.İade > 0 && saat != null) { saat.Add(_t.faizliSwingCost); seri.İade--; }     // FAİZLİ SENET
+            if (onay && boştu && saat != null && m.OnayHakkı) saat.Add(0.5f * saat.HasatDoyması);   // ONAY HAKKI
+            if (seri != null && seri.İade > 0 && saat != null) { saat.Add(_t.faizliSwingCost); seri.İade--; }   // FAİZLİ SENET
             _sonHasar[Kadro.İMZA] = hasar;                                          // İBRAZ
             İmzaİsabeti(yer, e);
-            if (seri != null && seri.Seker || Y(SilahYükseltme.Protesto)) Sıçrat(hasar, Weapon.HarvestMultiplier, e);   // İFLAS SENEDİ · PROTESTO
+            if (seri != null && seri.Seker || m.Protesto) Sıçrat(hasar, m.Hasat, e);   // İFLAS SENEDİ · PROTESTO
         }
 
         /// <summary>İMZA'nın isabeti zincire adım (ÇEK'in isabeti gibi). Hit-stop yok: saniyede altı mermi takılırdı.</summary>
@@ -2109,13 +2105,8 @@ namespace TekCan
             {
                 bool makbuz = Combo.Artı(ComboTür.TopluTahsilat);                    // TAHSİL MAKBUZU
                 ComboTetikle(ComboTür.TopluTahsilat);                                // önce: ek mermiler yeni adım yazsın
-                foreach (var e in _koniVurulanlar)                                   // her birine birer mermi (nişansız)
-                {
-                    if (e == null || !Enemy.All.Contains(e)) continue;
-                    if (makbuz) e.Sustur(1f);
-                    Mermiİzi(transform.position, e.transform.position, transform.forward);
-                    MermiVur(e, mermi, false);
-                }
+                foreach (var e in _koniVurulanlar)                                   // her birine birer GÜDÜMLÜ mermi (kümede öndeki araya girmesin)
+                    if (e != null && Enemy.All.Contains(e)) Mermi(e.transform.position - transform.position, 1f, false, makbuz, e);
             }
             else if (ComboHazır(ComboTür.VadeliSenet))
             {

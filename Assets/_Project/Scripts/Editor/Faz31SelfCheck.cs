@@ -109,9 +109,11 @@ namespace TekCan.EditorTools
         static Vector3 Düz(Vector3 v) { v.y = 0f; return v; }
         static float AD => _clock.AttackDamage;
         static int W(int silah) { _pc.SetWeapon(silah); return silah; }
-        static void Silahla(int silah) { _pc.SetWeapon(silah); Vur.Invoke(_pc, null); }
-        static void SağTık() => Sağ.Invoke(_pc, new object[] { Vector3.forward });
-        static void Dash() => DashAtak.Invoke(_pc, null);
+        static void Silahla(int silah) { _pc.SetWeapon(silah); Vur.Invoke(_pc, null); Uçur(); }
+        static void SağTık() { Sağ.Invoke(_pc, new object[] { Vector3.forward }); Uçur(); }
+        static void Dash() { DashAtak.Invoke(_pc, null); Uçur(); }
+        /// <summary>ÇİFT İMZA'nın havadaki mermilerini sonuna kadar uçur (Faz 43b — mermi artık uçuyor).</summary>
+        static void Uçur() { for (int n = 0; n < 500 && ImzaMermisi.Uçanlar.Count > 0; n++) foreach (var m in ImzaMermisi.Uçanlar.ToArray()) m.Step(0.02f); }
         static void Alan(string ad, object v) => typeof(PlayerController).GetField(ad, Gizli).SetValue(_pc, v);
         static void Yükselt(SilahYükseltme y) => SilahSunağı.Al(y, 0);
         static void Artı(ComboTür c) { var s = SaveFile.Current; s.comboUpgrades = new int[Combo.Sayı]; s.comboUpgrades[(int)c] = 1; }
@@ -266,6 +268,30 @@ namespace TekCan.EditorTools
             float d1 = Hasar(e, () => Silahla(Kadro.İMZA)), d2 = Hasar(e, () => Silahla(Kadro.İMZA)), d3 = Hasar(e, () => Silahla(Kadro.İMZA));
             failed += Check(ref total, $"⚠️⚠️ ÇİFT İMZA: mermi anında iniyor ({d1:0.00} = {mermi:0.00}), ikincisi ONAY'lı ({d2:0.00} = ×{_t.imzaOnayMul}), üçüncüsü düz ({d3:0.00})",
                             Mathf.Abs(d1 - mermi) < 0.01f && Mathf.Abs(d2 - mermi * _t.imzaOnayMul) < 0.01f && Mathf.Abs(d3 - mermi) < 0.01f, d2 / Mathf.Max(0.001f, d1));
+
+            // Mermi uçuyor (Faz 43b, Enes: "atış olarak gitsinler öyle tutturalım"): atışta değmiyor, uçunca değiyor; uçarken yana
+            // kaçan ıskalanıyor; silah uçuşta değişse de mermi kendi kuralıyla iniyor (PROTESTO sekmesi — combo'da silah değişiyor)
+            YeniKoşu();
+            var u = Düşman(İleri(6f)); float u0 = u.TimeLeft;
+            W(Kadro.İMZA); Vur.Invoke(_pc, null);                              // uçurmadan
+            bool havada = u.TimeLeft == u0 && ImzaMermisi.Uçanlar.Count == 1;
+            int adım = 0;
+            for (; adım < 500 && ImzaMermisi.Uçanlar.Count > 0; adım++) foreach (var m in ImzaMermisi.Uçanlar.ToArray()) m.Step(0.02f);
+            bool değdi = u.TimeLeft < u0;
+            YeniKoşu();
+            var k = Düşman(İleri(6f)); float k0 = k.TimeLeft;
+            W(Kadro.İMZA); Vur.Invoke(_pc, null);
+            k.transform.position += Vector3.right * 1.5f;                       // mermi uçarken yana kaçtı
+            Uçur();
+            bool ıska = k.TimeLeft == k0;
+            YeniKoşu(); Yükselt(SilahYükseltme.Protesto);
+            Düşman(İleri(4f)); var yan = Düşman(İleri(4f) + Vector3.right * 1.5f); float y0 = yan.TimeLeft;
+            W(Kadro.İMZA); Vur.Invoke(_pc, null);
+            W(Kadro.HACİZ);                                                     // mermi havadayken silah değişti
+            Uçur();
+            bool kendi = yan.TimeLeft < y0;
+            failed += Check(ref total, $"⚠️⚠️ ÇİFT İMZA mermisi uçuyor: atışta değmedi ({(havada ? "havada" : "DEĞDİ")}), {adım * 0.02f:0.00} sn'de vardı ({(değdi ? "değdi" : "DEĞMEDİ")}); yana kaçan ıskalandı ({(ıska ? "ıska" : "VURDU")}); silah uçuşta değişse de PROTESTO sekiyor ({(kendi ? "sekti" : "SEKMEDİ")})",
+                            havada && değdi && ıska && kendi, adım * 0.02f);
 
             // Seri: bir "savurma" bir mermi — 1/6 sn; SERİ EL (+) ×1.3 hızlı
             YeniKoşu(); W(Kadro.İMZA);
@@ -515,6 +541,7 @@ namespace TekCan.EditorTools
 
         static void Temizle()
         {
+            ImzaMermisi.Temizle();
             HepsiniÖldür();
             foreach (var m in Object.FindObjectsByType<GroundMark>(FindObjectsInactive.Include)) Object.DestroyImmediate(m.gameObject);
             foreach (var g in Object.FindObjectsByType<GizliSilah>(FindObjectsInactive.Include)) Object.DestroyImmediate(g.gameObject);

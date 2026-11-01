@@ -17,7 +17,7 @@
 | 20 | ⏱️ *(önerilir, ~10 dk)* **İnsan çarpanı** | Enes (2026-10-23): aksiyon İNSAN oynayışıyla ≥ 7 saat, kalanı ara sahne + anlatım (hikâye/olay odası yok). Botun ölçtüğünü insana çeviren çarpanı bilmiyoruz (×1.2 → bot 5.8 sa gerek, ×1.5 → bugünkü yeter). **F6**, 1. ara bölgeyi (7 oda + mini + sunak, bot ~9 dk — Faz 40'tan sonra) bir kez normal oyna, süreyi söyle | Mesajla yaz |
 | 21 | ⚖️ **Saat ekonomisi** | Bot orta oyunda 4000–6600 sn ile geziyor (tavan 456–830), odalar onu hiç zorlamıyor; sıkılırsa geç boss'lar yine öldürür (aşağıda FAZ 39). Şimdi mi, hikâyeden sonra mı? | Mesajla yaz |
 | 29 | 🔗 *(commit'li)* **Combo Parti 4 — bak** | `docs/COMBOLAR.md` Parti 4: "+" hâlleri benim önerim · "sadeleşenler" (BORÇ ESARETİ hasat kuralıyla, VADELİ KARŞILIK en az ×2, KULE HACZİ "kule dururken") | Mesajla yaz |
-| 30 | 🔫 **ÇİFT İMZA — oyna, his** | **F6** yeni koşu · **N** · **B** → 2. boss'u öldür → ÇİFT İMZA açılır → KADRO sunağından envantere al · sol tıkı BASILI TUT (seri), aynı düşmana peş peşe ikinci mermi ONAY · sağ tık TOPLU İMZA · dash + sol tık ÇAPRAZ ATEŞ · değince **2** HACİZ = SENET HACZİ. His: saniyede 6 mermi fazla/az mı, ateşte yürüyüş ×0.7, ONAY okunuyor mu. Kodlarken değişenler `docs/CIFT_IMZA.md` §5 | Mesajla yaz |
+| 30 | 🔫 **ÇİFT İMZA — oyna, his** | **F6** yeni koşu · **N** · **B** → 2. boss'u öldür → ÇİFT İMZA açılır → KADRO sunağından envantere al · sol tıkı BASILI TUT (seri), aynı düşmana peş peşe ikinci mermi ONAY · sağ tık TOPLU İMZA · dash + sol tık ÇAPRAZ ATEŞ · değince **2** HACİZ = SENET HACZİ. His: saniyede 5 mermi (Faz 43b'de bot 6'dan indirdi) fazla/az mı, mermi uçuyor — tutturmak kolay/zor mu, ateşte yürüyüş ×0.7, ONAY okunuyor mu. Kodlarken değişenler `docs/CIFT_IMZA.md` §5 | Mesajla yaz |
 | 22 | 📖 **Hikâye — ortak** | `docs/HIKAYE.md`: senin üç notun yazılı, 6 açık soru (adlar · borcu kim aldı · ekipmanı kim geliştirdi · başlangıç zamanı neden o kadar · son · perdelerin olay sırası). Hangisinden başlayalım? | Mesajla ya da doğrudan dosyaya yaz |
 
 ---
@@ -266,6 +266,25 @@ Enes: *"saatin cömertliğini düzeltelim oyun zorlamalı oyuncuları"* · *"bit
 **Sonuç (bot `TamKosu`):** **395 dk = 6.6 sa, KAZANILDI, saat hiç bitmedi** · saat / tavan medyanı 1.3 · 2.3 · 2.4 · 2.6 · 2.3, en az
 0.51 · 0.33 · 0.68 · 0.91 · 0.57 (önce medyan 9–12, hiç 1.5'in altına inmiyordu) · oda ort. 87 sn · boss 3.9 · 4.9 · 4.7 · 5.8 · 9.3 dk ·
 103 sunak alımı · tüm kapılar temiz · P34–P38 ✅.
+
+---
+
+## 🔫 FAZ 43b — ÇİFT İMZA: uçan mermi + ateş hızını bot seçer — **KODLANDI** (2026-11-01)
+
+Enes: *"commitle ve bot testini sen yap · bence bu arada saniyede 6 mermi fazla ama bot testi daha iyi sonuç verir · mermiler bence
+anlık ulaşmak yerine atış olarak gitsinler öyle tutturalım"*.
+
+- [x] A. Uçan mermi: `ImzaMermisi` (düz gider, yolu süpürür — hızlı mermi düşmanın içinden geçmesin, ilk değdiğine iner; DELİCİ bir kez delip yarımla sürer);
+  serinin etkisi ATIŞ anında mermiye yazılır (1 sn içinde atılan mermi uçarken seri bitse de taşır); kadran `imzaBulletSpeed`
+- [x] B. Kapılar: mermi ilk karede değmiyor, uçunca değiyor; yana kaçan hedef ıskalanıyor — bir kez boz; eski testler mermiyi uçurarak
+  — Faz 31'e "mermi uçuyor" (havada · değdi · ıska · silah değişse de kendi kuralı); bozma: anında iniş · güdümsüz TOPLU TAHSİLAT ·
+  atış anı yerine değme anı — üçü de kırmızı. TOPLU TAHSİLAT düz mermiyle tutmuyordu → mermileri **güdümlü** (`docs/CIFT_IMZA.md` §7)
+- [x] C. Bot: P31 isabet oranı (atılan / değen), P42 · P33c — P31 **6/6** (uçan mermi isabeti **12/14**, basılıyken TOPLU İMZA) ·
+  P42 alım + **98/98** · P33c **12/12**
+- [x] D. Ateş hızı: fiyat ölçümü (bütün silahların yükseltmesiz değeri) + İMZA birkaç hızda — ölçü: ÇİFT İMZA en güçlü silah olmasın, ortada kalsın
+  — öbür 11'in ortası **+17.0 sn/oda** (ARBİTRAJ); İMZA 6/sn **+23.3** · **5/sn +15.0** · 4/sn +3.0 → **5/sn** (12'nin 7.'si). Tablo
+  `docs/CIFT_IMZA.md` §7. Seri sınırı hızdan geliyor (artık 5). 5/sn'de TÜM kapılar temiz
+- [x] E. Belgeler · commit
 
 ---
 

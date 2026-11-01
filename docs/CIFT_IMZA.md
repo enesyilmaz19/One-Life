@@ -10,7 +10,7 @@
 | | ÇEK (gidiyor) | ÇİFT İMZA (öneri) |
 |---|---|---|
 | Nereden | 2. boss'tan | **aynı** — 2. boss'tan |
-| Sol tık | fırlat; dönene kadar silahsız | **basılı tut = seri ateş**: iki tabanca sırayla (sol, sağ, sol…), saniyede 6 mermi. Mermi nişan yönünde ilk değdiği düşmana anında iner (iz çizgisi görünür). Menzil ~7.7 birim (HACİZ kadar), ölü bölge yok. Mermi başına silah hasarının ~%35'i |
+| Sol tık | fırlat; dönene kadar silahsız | **basılı tut = seri ateş**: iki tabanca sırayla (sol, sağ, sol…), saniyede **5** mermi (Faz 43b'de 6'dan — §7). Mermi nişan yönünde uçar, ilk değdiği düşmana iner (§7). Menzil ~7.7 birim (HACİZ kadar), ölü bölge yok. Mermi başına silah hasarının ~%35'i |
 | Kimlik (soru) | "dönene kadar bekle" | **ONAY:** aynı düşmana iki tabancanın mermisi peş peşe değerse ikinci mermi ×1.5 ("imza onaylandı"). Nişanı tek hedefte tutan kazanır; kalabalıkta mermiler dağılır, onay düşer. Ateş ederken yürüyüş ×0.7 |
 | Sağ tık | KARŞILIKSIZ: üç çek yelpaze | **TOPLU İMZA**: 60° yelpaze, 10 mermi, her biri ×0.6 (bekleme aynı, 6.5 sn) |
 | Dash-atak | CİRO: çeki yakala, yeniden at | **ÇAPRAZ ATEŞ**: dash biterken iki yana (sağa, sola) birer tam mermi |
@@ -47,13 +47,13 @@ Adı ÇEK'e bağlı olanlar değişiyor (senet, ciro, ibraz imzalı belge — on
 | İMZA → KONİ | direkt | **CİRO** | İMZA isabet etti → KONİ: son merminin değdiği yerde de yay patlar (koninin %80'i, 2.5 birim) | TAHSİL CİROSU (aynı) |
 | İMZA → MÜŞTEREK | direkt | **ZİNCİRLEME CİRO** | İMZA isabet etti → MÜŞTEREK: son mermi vurduğunu MÜŞTEREK'in vurduğuna bağlar | CİRO SİLSİLESİ (aynı) |
 | REHİN → İMZA → KONİ | direkt | **SENETLİ REHİN** | son merminin değdiği yerin 3 birim çevresi önüne çekilir, koni ×1.5 | KAMBİYO (aynı) |
-| İMZA → İFLAS | açılır (TOPLU İMZA+) | **İBRAZ** | İMZA isabet etti → İFLAS: İMZA'nın bu adımdaki her isabeti (en çok bir seri: 6) İFLAS'ın vurduğuna bir mermi daha (×1.5) olarak döner | KAMBİYO TAKİBİ (aynı) |
+| İMZA → İFLAS | açılır (TOPLU İMZA+) | **İBRAZ** | İMZA isabet etti → İFLAS: İMZA'nın bu adımdaki her isabeti (en çok bir seri: 5) İFLAS'ın vurduğuna bir mermi daha (×1.5) olarak döner | KAMBİYO TAKİBİ (aynı) |
 | KİRA → İMZA | açılır (STOPAJ) | **KİRA TAHSİLATI** | kule kur → İMZA: ilk mermide kulenin menzilindeki herkese birer mermi; öldürdükleri STOPAJ öder | VERGİ İADESİ: İMZA'nın sağ tık beklemesi sıfırlanır |
 | İPOTEK → İMZA → İFLAS | açılır (ZİNCİR TAPU) | **İPOTEK ZİNCİRİ** | aynı (İMZA ortada) | aynı |
 | İMZA → ARBİTRAJ → REHİN | açılır (PROTESTO) | **PROTESTOLU SENET** | İMZA'nın vurduğu nerede olursa olsun yakalanır, onu fırlatınca ×2 | ŞERH: İMZA'nın sağ tık beklemesi sıfırlanır |
 | ARBİTRAJ → MÜŞTEREK → İMZA | açılır (KISA POZİSYON) | **SPEKÜLATİF ATAK** | ilk mermide bağlıların her birine birer mermi "arkadan" (ARBİTRAJ'ın arka çarpanıyla) | KISA SATIŞ (aynı) |
 | FAİZLİ → İMZA | satın | **FAİZLİ SENET** | serinin ilk iki isabeti FAİZLİ'nin savurma bedelini geri öder | SENET İADESİ (aynı) |
-| İMZA → TAHVİL | satın | **SENET İSKONTOSU** *(ÇEK İSKONTOSU)* | İMZA'nın bu adımdaki her isabeti (en çok bir seri: 6) olgunluğa +0.1 sn (basılı tutma kısalır) | İSKONTO ORANI: İMZA'nın sağ tık beklemesi sıfırlanır |
+| İMZA → TAHVİL | satın | **SENET İSKONTOSU** *(ÇEK İSKONTOSU)* | İMZA'nın bu adımdaki her isabeti (en çok bir seri: 5) olgunluğa +0.1 sn (basılı tutma kısalır) | İSKONTO ORANI: İMZA'nın sağ tık beklemesi sıfırlanır |
 | İMZA → KİRA | satın | **KİRA SENEDİ** *(KİRA ÇEKİ)* | kule son merminin değdiği yere, ilk 3 sn kirasız | SENETLE ÖDEME: İMZA'nın sağ tık beklemesi sıfırlanır |
 | HACİZ → İMZA → KİRA | satın | **ZİNCİRLEME TAHSİL** | kule HACİZ'in vurduğuna kilitli; İMZA'nın her isabeti kulenin ömrüne +0.25 sn | TAHSİL EMRİ (aynı) |
 | KİRA → İFLAS → İMZA | satın | **ZAMAN KİRASI** | kule duruyorsa 3 sn saat akmaz, seri ×1.5 | ZAMAN AŞIMI (aynı) |
@@ -98,3 +98,37 @@ Adı ÇEK'e bağlı olanlar değişiyor (senet, ciro, ibraz imzalı belge — on
   vuruşta geri alıyordu. Artık **en çok bir seri** (1 sn'lik ateş, 6 isabet).
 - **Iskalayan KARŞILIK birikimi iki kez yazıyordu** (KONKORDATO · REHİN KARŞILIĞI · KARŞILIKLI İMZA): KARŞILIK ıskalarsa combo tetiklenmez,
   pencere açık kalır, ikinci savurma aynı birikimi bir daha ekliyordu. Kaynak artık birikene geçerken tükeniyor; birikim kalır, ilk isabet indirir.
+
+## 7. Uçan mermi (Faz 43b — Enes 2026-10-31: *"mermiler bence anlık ulaşmak yerine atış olarak gitsinler öyle tutturalım"*)
+
+- Mermi artık **uçuyor** (`ImzaMermisi`, saniyede 25 birim — kadran `imzaBulletSpeed`): menzilin ucuna ~0.3 sn. Uçarken yana kaçan
+  düşman ıskalanır — tutturmak nişana bağlı. Yolu kare kare süpürüyor (hızlı mermi bir karede düşmanın içinden atlamasın).
+- Mermi **atış anındaki** her şeyi taşıyor: silahın hasadı, ONAY HAKKI / PROTESTO / DELİCİ, serinin etkisi. Combo'da mermi havadayken
+  silah değişiyor — değdiği an kuşanılana bakılsaydı yanlış silahın kuralı işlerdi.
+- **TOPLU TAHSİLAT'ın mermileri güdümlü:** KONİ'nin vurdukları hep kümelenmiş; düz mermide öndeki araya giriyordu (yan düşmana giden
+  çizgi ortadakinin gövdesine 0.62 birim yaklaşıyor, sınır 0.65) ve "her birine birer mermi" tutmuyordu. Güdümlü mermi yalnız kendi
+  hedefine gidip ona değiyor. Sol tıkın mermisi düz.
+- DELİCİ MERMİ artık uçarken bir kez deliyor, yarım hasarla sürüyor.
+
+- **Ateş hızı 6 → 5** (Enes: *"saniyede 6 mermi fazla ama bot testi daha iyi sonuç verir"*). Fiyat botu, yükseltmesiz, uçan mermiyle
+  (sn/oda, aynı iki oda, saat doyma tavanında):
+
+  | Silah | sn/oda |
+  |---|---|
+  | FAİZLİ | +72.0 |
+  | REHİN | +51.8 |
+  | İFLAS | +49.8 |
+  | MÜŞTEREK | +32.7 |
+  | KONİ | +25.4 |
+  | İMZA 6/sn | +23.3 (oda 37 sn) |
+  | ARBİTRAJ | +17.0 ← öbür 11'in ortası |
+  | **İMZA 5/sn** | **+15.0** (oda 42 sn) |
+  | KARŞILIK | +7.3 |
+  | İMZA 4/sn | +3.0 (oda 46 sn) |
+  | İPOTEK | +2.1 |
+  | KİRA | +1.4 |
+  | TAHVİL | −6.3 |
+  | HACİZ | −74.6 (bot iyi kullanamıyor) |
+
+  Ölçü: ÇİFT İMZA en güçlü olmasın, ortada kalsın. 5/sn ortanın hemen altında (12'nin 7.'si); 4/sn zayıf düşüyor. Seri sınırı
+  (İBRAZ / SENET İSKONTOSU) hızdan geliyor, artık 5.

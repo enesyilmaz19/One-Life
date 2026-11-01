@@ -607,6 +607,7 @@ namespace TekCan.EditorTools
 
         static void Temizle()
         {
+            ImzaMermisi.Temizle();
             HepsiniÖldür();
             foreach (var b in MusterekBag.Tümü.ToArray()) if (b != null) b.Bitir();
             MusterekBag.Tümü.Clear();
