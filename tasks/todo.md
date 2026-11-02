@@ -1,23 +1,15 @@
-## 📥 ENES'İN MASASI — 2026-09-30
+## 📥 ENES'İN MASASI — 2026-11-02
 
 > Tarihçe (Faz 0–23, eski playtest raporları, 12 maddelik playtest soruları) → [arsiv.md](arsiv.md). Hiçbir şey silinmedi.
 
 | # | Ne | Nasıl | Nereye |
 |---|---|---|---|
-| 2 | 🎮 *(isteğe bağlı)* **Faz 26 his testi** | Bot 7 maddeyi oynadı (aşağıda). Sana kalan his: TAM TAHSİL/İHALE sıçraması okunuyor mu, ×5 ısrar adil mi | Gördüklerini yaz |
 | 4 | ✏️ **Adlandırma** | Kahraman, 5 boss, 5 bölge, 3 diriliş eşyası. Şimdikiler çalışma adı | `docs/TASARIM.md` "Açık" |
-| 6 | 🎮 **Faz 28 testi** | F6 yeni koşu → dövüş odası 5 dalga · **M** sıradaki mini boss · mini ölünce sunak (kontrol noktası) · eşyasız ölümde kontrol noktasına dönüş, birkaç ölümde "… TOPARLANDI" · **B** ana boss (saat yavaş akar). His: oda süresi, dalgalar, mini boss, saatin gidişi | Gördüklerini yaz |
-| 7 | 🎮 *(isteğe bağlı)* **Faz 29 his testi** | Bot oynadı, 8/8 geçti. Sana kalan his: silah sunağı seçimi karar gibi mi, fiyatlar, MUAFİYET hissediliyor mu | Gördüklerini yaz |
-| 8 | 🎮 **Faz 30 testi** | **F6** yeni koşu: 2 silah, 3. yuva boş · **M** ile sunaklar: 2. ara bölgenin sunağında HACİZ · 4. ara bölgenin 4. odasında kenarda parlayan köşe (İPOTEK) · sunak odasında **KADRO** sunağı ([E] yuvadaki silahı değiştirir) · combo: KONİ'yle vur, hemen 2'ye geç, İPOTEK at · **B** boss → İFLAS + combo sunağı | Gördüklerini yaz: combo hissi, 0.8 sn yetiyor mu, köşe görünüyor mu |
-| 9 | 🎮 **Faz 31 testi** | **F6** yeni koşu, **N** 2. bölge · 3. ara bölgenin sunağında REHİN: sol tık yakala, tekrar sol tık fırlat, hemen **1** KONİ = SİLİP SÜPÜR · sağ tık TAKAS · dash + sol tık SÜRÜKLEME · **B** 2. boss → ÇEK (KADRO sunağından envantere al): fırlat, değince HACİZ'e geç = SENET HACZİ · 3. bölgenin 3. ara bölgesinin 4. odasında köşe → KARŞILIK: düşman vurmadan hemen önce sol tık (karşılar), sonra FAİZLİ = KARŞI İCRA | Gördüklerini yaz: KARŞILIK penceresi (0.23 sn) yetiyor mu, rehine taşıma hissi, çekin dönüşü |
-| 10 | 🎮 **Faz 32 testi** | **F6**, **N N**, **B** 3. boss → TAHVİL: sol tıkı BASILI TUT (VADE 1/2/3 yazar, saat iki kat akar), bırak · hemen **2** FAİZLİ = VADE FARKI · 4. bölgenin 3. sunağında MÜŞTEREK: bir düşmana vur, sonra başkasına → pembe çizgi = bağ; birine ne vurursan öbürü de yer · sağ tık ZİNCİRLEME · bağın üstünden dash = KOPARMA · **B** 4. boss → ARBİTRAJ: arkadan ×2.5, önden ×0.5 · sağ tık görünmezlik · düşmanın içinden dash + sol tık = TERS İŞLEM · 5. bölgenin 3. ara bölgesinin 4. odasında köşe → KİRA: kule kur, sağ tık TAHLİYE (kalan kirayı peşin ödersin) | Gördüklerini yaz: basılı tutmak sıkıcı mı, bağ okunuyor mu, arkaya geçmek zevkli mi, kule kirası adil mi |
 | 5 | 🖼️ **Referans topla** | Beğendiğin izometrik oyunlardan ekran görüntüsü (Hades, Death's Door…). Asset fazını hızlandırır | Bir klasör, yeri sen seç |
-| 13 | 🎮 *(isteğe bağlı)* **Faz 33 his testi** | Bot oynadı (P33 3/3, P33c 12/12 — aşağıda "BOSS SÜRELERİ" bölümü). Sana kalan yalnızca göz: **F6**, **M** → sunak renkleri okunuyor mu (açık gri yaygın · mavi nadir · mor epik · turuncu efsanevi), **B** → efsanevi "vay" dedirtiyor mu | Gördüklerini yaz |
-| 15–19 | 🤖 **Faz 34–37 his testleri → botta** | Enes (2026-10-22): *"testi de bota yaptır, oradan botun zorlanma ölçüsüne göre ilerleyelim şimdilik"*. P34–P37 ✅. Ölçü: mini zorlasın ama botu öldürmesin (saat kaybı < giriş saati) — Faz 38'de uygulandı, P34–P38 ✅ | — |
 | 20 | ⏱️ *(önerilir, ~10 dk)* **İnsan çarpanı** | Faz 44: botla tahmin denendi, olmadı ("insan profili" botu hızlandırdı). Bot tam koşu artık **6.2 sa** (silah dengesi + süre ayarı sonrası) → insanla ≥ 7 sa için çarpan ≥ ×1.13 gerek. **F6**, 1. ara bölgeyi (7 oda + mini + sunak, bot ~10 dk) bir kez normal oyna, süreyi söyle | Mesajla yaz |
-| 21 | ⚖️ **Saat ekonomisi** | Bot orta oyunda 4000–6600 sn ile geziyor (tavan 456–830), odalar onu hiç zorlamıyor; sıkılırsa geç boss'lar yine öldürür (aşağıda FAZ 39). Şimdi mi, hikâyeden sonra mı? | Mesajla yaz |
 | 29 | 🔗 *(commit'li)* **Combo Parti 4 — bak** | `docs/COMBOLAR.md` Parti 4: "+" hâlleri benim önerim · "sadeleşenler" (BORÇ ESARETİ hasat kuralıyla, VADELİ KARŞILIK en az ×2, KULE HACZİ "kule dururken") | Mesajla yaz |
 | 30 | 🔫 **ÇİFT İMZA — oyna, his** | **F6** yeni koşu · **N** · **B** → 2. boss'u öldür → ÇİFT İMZA açılır → KADRO sunağından envantere al · sol tıkı BASILI TUT (seri), aynı düşmana peş peşe ikinci mermi ONAY · sağ tık TOPLU İMZA · dash + sol tık ÇAPRAZ ATEŞ · değince **2** HACİZ = SENET HACZİ. His: saniyede 5 mermi (Faz 43b'de bot 6'dan indirdi) fazla/az mı, mermi uçuyor — tutturmak kolay/zor mu, ateşte yürüyüş ×0.7, ONAY okunuyor mu. Kodlarken değişenler `docs/CIFT_IMZA.md` §5 | Mesajla yaz |
+| 31 | ⚖️ **Silah dengesi — oyna, his** (Faz 44) | **F6** · birkaç silahla oyna (1–3 yuva): KONİ kalabalıkta hâlâ keyifli mi (artık her ek düşmanda vuruşu düşüyor) · zor silahlar (HACİZ · KARŞILIK · ARBİTRAJ) iyi kullanınca ödüllendiriyor mu · odalar uzun mu. Sayılar `tasks/todo.md` Faz 44 | Mesajla yaz |
 | 22 | 📖 **Hikâye — ortak** | `docs/HIKAYE.md`: senin üç notun yazılı, 6 açık soru (adlar · borcu kim aldı · ekipmanı kim geliştirdi · başlangıç zamanı neden o kadar · son · perdelerin olay sırası). Hangisinden başlayalım? | Mesajla ya da doğrudan dosyaya yaz |
 
 ---
@@ -320,6 +312,13 @@ göre ayarlıydı (ara bölgede düşman 4 → 16, havuz ×1.15/oda: son oda ilk
   Son koşu: boss 4.3 · 3.0 · 4.1 · 4.9 · 6.5 dk, mini ort. 3.7 dk (1.8–6.8), 99 sunak alımı.
 - İNAT önce her odadaydı: 6. denemede F5 4 — kalabalıkta kaçmayı kesmek pahalı → yalnız oda bitmek üzereyken (≤ 2 düşman); REHİN karnede ✅.
 - **İnsan çarpanı ölçülemedi** (C) — bot ~6.2 sa; insanla ≥ 7 sa için çarpan ≥ ×1.13 gerek. Masa #20.
+
+**Yükseltme fiyatı yeniden ölçüldü (2026-11-02, Enes: "1 ve 2'yi yap"):** `FiyatOlcum` · `FiyatOlcum33b` — enderlik başına ortalama değer
+→ geri ödeme: KONİ…REHİN yaygın +0.5 (44 oda) · nadir +4.5 (8.3) · epik +4.3 (13) · efsanevi +7.3 (11.3) — önce (10-31) +4.9 · +12.6 · +12.0 ·
++18.2 (3–5 oda) · ÇİFT İMZA…KİRA −1.1 (ödemiyor) · +3.6 (10.5) · +1.9 (30) · +5.5 (15) — önce +0.2 · +4.6 · +2.4 · +6.7. **Fiyata
+dokunulmadı** (karar A: fiyatlar aynı): nadir/epik/efsanevi 1. bölgenin 35 odasında kendini ödüyor, sıra yaygın < … < efsanevi tutuyor
+(ikinci sette epik < nadir — Faz 44'ten önce de). Düşüşün çoğu ölçü odasından: 1. bölgenin 1–2. odası bloğun en küçüğü, Faz 44'te küçüldü
+(havuz ×0.85, daha az düşman) — küçük odada yükseltme oda başı az kazandırıyor; gerçek oda ortalaması 82 sn.
 
 **Hatalar (bulundu, düzeldi):**
 - 🐞 İki boş bağlı düşmanı birden öldüren patlama (MÜFLİS işareti, ipotek) düşman listesini geriye sayan indeksle taşırıyordu
@@ -742,7 +741,7 @@ türleri, oda dizilişleri, bölge bölge"*. Bu faz 1. bölge; öbür bölgeler 
 | ara bölge | adam | imza | saldırılar (TAHSİLDAR'dan) | ders |
 |---|---|---|---|---|
 | 1 | HACİZCİ | yanındayken emer (TAHSİLDAR faz 1 aurasının tamamı) | HACİZ · TAHSİL · İHBARNAME | vur, çekil |
-| 2 | SENETÇİ | zorla alır: her isabeti havuzunu %2 doldurur | HACİZ · İHBARNAME · KUŞATMA | darbe yeme — her darbe dövüşü uzatır |
+| 2 | SENETÇİ | zorla alır: her isabeti havuzunu %2 doldurur (Faz 44: %1) | HACİZ · İHBARNAME · KUŞATMA | darbe yeme — her darbe dövüşü uzatır |
 | 3 | KABADAYI | yarıda öfkelenir: havuz yarıya inince hız ×1.4 | ZORLA ALIM · YAKA PAÇA · HACİZ | yana kaç; TAHSİLDAR'ın faz dönüşünün provası |
 | 4 | KOLCU | kelepçe: isabeti yürüyüşünü 1.2 sn ×0.6 yapar (dash serbest) | EL KOYMA · TAHSİL+ · İHBARNAME+ | ilk darbeyi yeme; yersen dash'le çık |
 | 5 | SAĞ KOL | yarım aura + yarıda öfke ×1.25 | KUŞATMA+ · EL KOYMA · KELEPÇE · TAM TAHSİL | finalin provası: kenara koş |

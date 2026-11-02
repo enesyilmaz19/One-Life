@@ -537,7 +537,7 @@ hepsini birden yapıyor."* Özgün olan **ad, imza, ders**:
 | TAHSİLDAR'ın adamı | imza | öğrettiği |
 |---|---|---|
 | HACİZCİ | yanındayken emer (TAHSİLDAR faz 1 aurasının ×1.6'sı — ailenin en çok emeni) | HACİZ · TAHSİL · İHBARNAME — vur, çekil |
-| SENETÇİ | zorla alır: her isabeti havuzunu %2 doldurur | HACİZ · İHBARNAME · KUŞATMA — darbe yeme |
+| SENETÇİ | zorla alır: her isabeti havuzunu %1 doldurur (Faz 44'te %2'den) | HACİZ · İHBARNAME · KUŞATMA — darbe yeme |
 | KABADAYI | yarıda öfkelenir: hız ×1.4 | ZORLA ALIM · YAKA PAÇA · HACİZ — yana kaç; faz dönüşünün provası |
 | KOLCU | kelepçe: isabeti yürüyüşü 1.2 sn ×0.6 yapar, dash serbest | EL KOYMA · TAHSİL+ · İHBARNAME+ — ilk darbeyi yeme |
 | SAĞ KOL | yarım aura + yarıda öfke ×1.25 | KUŞATMA+ · EL KOYMA · KELEPÇE · TAM TAHSİL — patronun provası |
